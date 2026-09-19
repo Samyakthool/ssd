@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Samata Sainik Dal (SSD) | Official National Portal | Founded by Dr. B.R. Ambedkar (1927)</title>
+  <meta name="description" content="Official National Portal of Samata Sainik Dal (SSD) - Army of Soldiers for Equality, founded by Bodhisattva Dr. B.R. Ambedkar on 24 September 1927. Dedicated to liberty, equality, fraternity, and constitutional morality.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Firebase Compat CDN -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <!-- Unified Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="font-md">
+
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="container">
+      <div class="top-bar-inner">
+        <div class="top-contact-info">
+          <span><i class="fa-solid fa-shield-halved"></i> Central Command Helpline: 1800-24-1927</span>
+          <a href="mailto:centralcommand@samatasainikdal.org"><i class="fa-solid fa-envelope"></i> centralcommand@samatasainikdal.org</a>
+          <span><i class="fa-solid fa-flag"></i> Founded: 24 Sept 1927 | Babasaheb Dr. B.R. Ambedkar</span>
+        </div>
+        <div class="top-bar-tools">
+          <div class="accessibility-tools" title="Accessibility Tools">
+            <button type="button" onclick="setFontSize('sm')" title="Decrease Font Size">A-</button>
+            <button type="button" class="active" onclick="setFontSize('md')" title="Normal Font Size">A</button>
+            <button type="button" onclick="setFontSize('lg')" title="Increase Font Size">A+</button>
+            <button type="button" onclick="toggleHighContrast()" title="High Contrast Mode"><i class="fa-solid fa-circle-half-stroke"></i></button>
+          </div>
+          <div class="social-links-top">
+            <a href="#home" title="Facebook" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="#home" title="Twitter" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+            <a href="#home" title="YouTube" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+            <a href="#home" title="Telegram" aria-label="Telegram"><i class="fa-brands fa-telegram"></i></a>
+          </div>
+          <div class="language-switcher">
+            <select id="langSelect" onchange="changeLanguage(this.value)" aria-label="Language Selector">
+              <option value="en">English</option>
+              <option value="hi">हिन्दी (Hindi)</option>
+              <option value="mr">मराठी (Marathi)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tricolor-stripe"></div>
+
+  <!-- HEADER -->
+  <header class="header-wrapper" id="mainHeader">
+    <div class="container">
+      <div class="header-main">
+        <a href="index.html" class="brand-block" id="brandBlock">
+          <div class="logo-container">
+            <img src="logo.png" alt="Samata Sainik Dal Emblem" id="orgLogo" class="org-logo" onerror="handleLogoError(this)">
+            <div id="logoFallback" class="logo-fallback">SSD</div>
+          </div>
+          <div class="brand-text">
+            <span class="org-name" id="orgNameText">SAMATA SAINIK DAL (SSD)</span>
+            <span class="org-tagline" id="orgTaglineText">समता सैनिक दल (स्थापना: १९२७) | Army of Soldiers for Equality | Founded by Dr. B.R. Ambedkar</span>
+          </div>
+        </a>
+
+        <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()" aria-label="Open Navigation Menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <nav class="main-nav" id="mainNav">
+          <button type="button" class="mobile-close-btn" onclick="toggleMobileMenu()" aria-label="Close Navigation Menu">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="index.html" class="nav-link active">Home</a></li>
+            <li class="nav-item">
+              <a href="about.html" class="nav-link" onclick="toggleMobileDropdown(event)">History & About <i class="fa-solid fa-chevron-down"></i></a>
+              <div class="dropdown-menu">
+                <a href="about.html#genesis" class="dropdown-link">Genesis by Dr. B.R. Ambedkar</a>
+                <a href="about.html#mahad" class="dropdown-link">Mahad Satyagraha (1927)</a>
+                <a href="about.html#deekshabhoomi" class="dropdown-link">1956 Deekshabhoomi Parade</a>
+                <a href="about.html#centenary" class="dropdown-link">Centenary Roadmap (1927–2027)</a>
+              </div>
+            </li>
+            <li class="nav-item">
+              <a href="cadet-corps.html" class="nav-link" onclick="toggleMobileDropdown(event)">Departments <i class="fa-solid fa-chevron-down"></i></a>
+              <div class="dropdown-menu">
+                <a href="cadet-corps.html" class="dropdown-link"><i class="fa-solid fa-shield"></i> Central Cadet Corps (Sainik Wing)</a>
+                <a href="mahila-dal.html" class="dropdown-link"><i class="fa-solid fa-venus"></i> Mahila Samata Sainik Dal</a>
+                <a href="legal-cell.html" class="dropdown-link"><i class="fa-solid fa-scale-balanced"></i> Constitutional & Legal Cell</a>
+                <a href="youth-wing.html" class="dropdown-link"><i class="fa-solid fa-graduation-cap"></i> Youth & Student Front</a>
+                <a href="sewa-relief.html" class="dropdown-link"><i class="fa-solid fa-hand-holding-heart"></i> Community Sewa & Relief Force</a>
+              </div>
+            </li>
+            <li class="nav-item"><a href="#campaigns" class="nav-link">Campaigns</a></li>
+            <li class="nav-item"><a href="#governing-body" class="nav-link">Governing Body</a></li>
+            <li class="nav-item"><a href="#gallery" class="nav-link">Gallery</a></li>
+            <li class="nav-item"><a href="#join-us" class="nav-link">Join Us</a></li>
+            <li class="nav-item"><a href="#donate" class="nav-link" style="color: var(--primary-orange); font-weight: 700;"><i class="fa-solid fa-hand-holding-heart"></i> Donate</a></li>
+            <li class="nav-item"><a href="news-events.html" class="nav-link">Gazette</a></li>
+            <li class="nav-item"><a href="contact.html" class="nav-link">Contact</a></li>
+          </ul>
+          <div class="nav-cta">
+            <a href="#join-us" class="btn btn-primary btn-sm"><i class="fa-solid fa-user-shield"></i> Enlist as Sainik</a>
+          </div>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <!-- HERO SECTION: GOVERNING BODY & NATIONAL LEADERSHIP -->
+    <section class="governing-section governing-hero-section" id="governing-body" style="padding: 70px 0 60px; background: linear-gradient(180deg, #F0F4FA 0%, #FFFFFF 100%); border-bottom: 1px solid var(--border-color);">
+      <div class="container">
+        <div class="section-header" style="margin-bottom: 30px;">
+          <span class="section-badge"><i class="fa-solid fa-landmark-dome"></i> Supreme Command & National Executive Council</span>
+          <h1 class="section-title" style="font-size: 36px; margin-bottom: 12px;">Governing Body of Samata Sainik Dal</h1>
+          <p class="section-subtitle" style="max-width: 850px; margin: 0 auto 16px;">Founded by Bodhisattva Dr. B.R. Ambedkar on 24 September 1927. Steered by seasoned Ambedkarite scholars, retired military officers, legal luminaries, and dedicated grassroots commanders across India.</p>
+          <div style="display: flex; justify-content: center; gap: 14px; margin-top: 20px; flex-wrap: wrap;">
+            <a href="#join-us" class="btn btn-primary"><i class="fa-solid fa-user-shield"></i> Enlist Under Central Command</a>
+            <a href="#donate" class="btn btn-outline-navy"><i class="fa-solid fa-hand-holding-dollar"></i> Support Movement & Centenary Fund</a>
+            <a href="about.html" class="btn btn-navy"><i class="fa-solid fa-book-bookmark"></i> SSD Constitution & 1927 History</a>
+          </div>
+        </div>
+
+        <!-- Governing Council Grid -->
+        <div class="governing-grid" id="governingContainer">
+          <!-- Rendered dynamically by loadGoverningBody() in app.js with instant fallback -->
+          <div class="governing-card">
+            <div class="governing-header">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80" alt="President" class="governing-photo">
+              <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> National Command</span>
+            </div>
+            <div class="governing-body-content">
+              <h3 class="governing-name">Dr. Siddharth M. Meshram</h3>
+              <div class="governing-designation">National President (राष्ट्रीय अध्यक्ष)</div>
+              <p class="governing-bio">Eminent Constitutional scholar and veteran Ambedkarite leader with 40+ years in social transformation; overseeing national policy and the Centenary 2027 vision.</p>
+              <div class="governing-credentials">
+                <i class="fa-solid fa-certificate" style="color: var(--primary-orange);"></i>
+                <span>Ph.D. Constitutional Law | Nagpur HQ</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="governing-card">
+            <div class="governing-header">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80" alt="General Secretary" class="governing-photo">
+              <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> Executive Council</span>
+            </div>
+            <div class="governing-body-content">
+              <h3 class="governing-name">Commander Ravindra K. Gautam</h3>
+              <div class="governing-designation">National General Secretary (राष्ट्रीय महासचिव)</div>
+              <p class="governing-bio">Former NCC Gold Medalist and grassroots organizer; coordinates operations across 28 State Chapters and directs the national cadet syllabus.</p>
+              <div class="governing-credentials">
+                <i class="fa-solid fa-certificate" style="color: var(--primary-orange);"></i>
+                <span>M.A. Public Admin | New Delhi Secretariat</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="governing-card">
+            <div class="governing-header">
+              <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80" alt="Cadet Commander" class="governing-photo">
+              <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> Drill & Defense</span>
+            </div>
+            <div class="governing-body-content">
+              <h3 class="governing-name">Col. (Retd.) Vijay Anand Thorat</h3>
+              <div class="governing-designation">Chief Cadet Commander (मुख्य सैनिक दलनायक)</div>
+              <p class="governing-bio">Indian Armed Forces Veteran; leads cadet drill curriculum, ceremonial parade standards, emergency disaster rescue wings, and physical fitness camps.</p>
+              <div class="governing-credentials">
+                <i class="fa-solid fa-certificate" style="color: var(--primary-orange);"></i>
+                <span>Ex-Indian Army | Central Cadet Directorate</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="governing-card">
+            <div class="governing-header">
+              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80" alt="Mahila Convener" class="governing-photo">
+              <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> Mahila Front</span>
+            </div>
+            <div class="governing-body-content">
+              <h3 class="governing-name">Smt. Anuradha Tai Kamble</h3>
+              <div class="governing-designation">National Convener, Mahila Dal (राष्ट्रीय संयोजिका)</div>
+              <p class="governing-bio">Social activist and educator; leading women's frontline self-defense wings, legal crisis support networks, and Savitribai Phule girls' educational scholarships.</p>
+              <div class="governing-credentials">
+                <i class="fa-solid fa-certificate" style="color: var(--primary-orange);"></i>
+                <span>M.S.W., LL.B. | Mumbai State HQ</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="governing-card">
+            <div class="governing-header">
+              <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80" alt="Legal Head" class="governing-photo">
+              <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> Supreme Court Panel</span>
+            </div>
+            <div class="governing-body-content">
+              <h3 class="governing-name">Senior Adv. B. P. Sonwane</h3>
+              <div class="governing-designation">Chairman, National Legal Cell (अध्यक्ष, विधिक प्रकोष्ठ)</div>
+              <p class="governing-bio">Senior Advocate with extensive experience in the Supreme Court of India; spearheading pro-bono defense, SC/ST Act enforcement, and constitutional litigation.</p>
+              <div class="governing-credentials">
+                <i class="fa-solid fa-certificate" style="color: var(--primary-orange);"></i>
+                <span>LL.M. Constitutional Law | Supreme Court of India</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="governing-card">
+            <div class="governing-header">
+              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80" alt="Treasurer" class="governing-photo">
+              <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> Finance & Audit</span>
+            </div>
+            <div class="governing-body-content">
+              <h3 class="governing-name">Prof. Mahendra V. Khobragade</h3>
+              <div class="governing-designation">National Treasurer & Comptroller (राष्ट्रीय कोषाध्यक्ष)</div>
+              <p class="governing-bio">Chartered Accountant and academician; ensures 100% organizational transparency, public audit compliance, 80G tax exemptions, and Centenary 2027 trust governance.</p>
+              <div class="governing-credentials">
+                <i class="fa-solid fa-certificate" style="color: var(--primary-orange);"></i>
+                <span>FCA, M.Com | Central Audit Bureau</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Senior Advisory Council Box -->
+        <div class="advisory-council-box">
+          <h4 style="font-size: 16px; color: var(--dark-navy); font-weight: 800; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-landmark" style="color: var(--primary-orange);"></i> Senior Advisory Council & Movement Veterans
+          </h4>
+          <div class="advisory-grid" id="advisoryContainer">
+            <div class="advisory-member">
+              <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80" alt="Advisor" class="advisory-avatar">
+              <div>
+                <div class="advisory-name">Prof. Yashwantrao More</div>
+                <div class="advisory-role">Senior Ambedkarite Historian & Author</div>
+              </div>
+            </div>
+            <div class="advisory-member">
+              <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=150&q=80" alt="Advisor" class="advisory-avatar">
+              <div>
+                <div class="advisory-name">Adv. Rekha Gaikwad</div>
+                <div class="advisory-role">Human Rights Defender & Constitutional Scholar</div>
+              </div>
+            </div>
+            <div class="advisory-member">
+              <img src="https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=150&q=80" alt="Advisor" class="advisory-avatar">
+              <div>
+                <div class="advisory-name">Commander Suresh Jadhav</div>
+                <div class="advisory-role">Veteran 1956 Deekshabhoomi Parade Organizer</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TICKER -->
+    <div class="notice-ticker">
+      <div class="container" style="display: flex; align-items: center; width: 100%;">
+        <div class="ticker-label"><i class="fa-solid fa-bullhorn"></i> SSD Official Gazette</div>
+        <div class="ticker-content" id="tickerContent">
+          <span class="ticker-item">SSD Centenary Preparations (1927–2027) National Executive Meeting scheduled at Nagpur Headquarters.</span>
+          <span class="ticker-item">National Sainik Cadet Enrollment Q3 2026 is now underway across all State & District units.</span>
+          <span class="ticker-item">Annual Mahad Satyagraha & Water Rights Memorial March preparations launched.</span>
+          <span class="ticker-item">Constitution Day (26 Nov) Mass Preamble Reading Campaign activated across 500+ districts.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <section class="stats-section" id="stats">
+      <div class="container">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-user-shield"></i></div>
+            <div class="stat-number" id="statMembers" data-target="100000">0</div>
+            <div class="stat-label">Active Sainiks & Volunteers</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-map-location-dot"></i></div>
+            <div class="stat-number" id="statStates" data-target="28">0</div>
+            <div class="stat-label">States & UT Chapters</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-flag"></i></div>
+            <div class="stat-number" id="statEvents" data-target="5200">0</div>
+            <div class="stat-label">Parades, Camps & Rallies</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-dharmachakra"></i></div>
+            <div class="stat-number" id="statYears" data-target="99">0</div>
+            <div class="stat-label">Years of Service (Since 1927)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: ONGOING CAMPAIGNS -->
+    <section style="padding: 85px 0; background-color: var(--white);" id="campaigns">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge"><i class="fa-solid fa-bullhorn"></i> Active National Missions</span>
+          <h2 class="section-title">Ongoing Campaigns & Centenary Drives</h2>
+          <p class="section-subtitle">Grassroots initiatives mobilizing thousands of cadets, legal advocates, and community volunteers across 28 states of India.</p>
+        </div>
+
+        <div class="campaigns-grid" id="campaignsContainer">
+          <!-- Rendered dynamically via loadCampaigns() in app.js with instant fallback -->
+          <div class="campaign-card">
+            <div class="campaign-img-wrapper">
+              <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80" alt="Centenary Mission" class="campaign-img">
+              <span class="campaign-badge"><i class="fa-solid fa-flag"></i> Centenary Drive</span>
+            </div>
+            <div class="campaign-body">
+              <h3 class="campaign-title">SSD Centenary 1927–2027 Mission (शताब्दी महोत्सव)</h3>
+              <p class="campaign-desc">Nationwide 100-Year commemorative march pasts, building 1,000 Ambedkar Study Libraries, and establishing the Centenary National Memorial at Mahad & Nagpur.</p>
+              <div class="campaign-progress-container">
+                <div class="campaign-progress-header">
+                  <span>Goal: ₹50.0 Lakh</span>
+                  <span style="color: var(--primary-orange);">73% Raised</span>
+                </div>
+                <div class="campaign-progress-bar">
+                  <div class="campaign-progress-fill" style="width: 73%;"></div>
+                </div>
+                <div class="campaign-stats-row">
+                  <span><i class="fa-solid fa-users"></i> 15,000+ Volunteers</span>
+                  <span><i class="fa-solid fa-location-dot"></i> 250+ Districts</span>
+                </div>
+              </div>
+              <div class="campaign-actions">
+                <button type="button" class="btn btn-primary btn-sm" onclick="openDonationModal('Centenary 2027 Trust Fund', 1000)"><i class="fa-solid fa-hand-holding-dollar"></i> Support</button>
+                <a href="#join-us" class="btn btn-outline-navy btn-sm"><i class="fa-solid fa-user-plus"></i> Enlist</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="campaign-card">
+            <div class="campaign-img-wrapper">
+              <img src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80" alt="Constitutional Literacy" class="campaign-img">
+              <span class="campaign-badge"><i class="fa-solid fa-flag"></i> Legal & Rights</span>
+            </div>
+            <div class="campaign-body">
+              <h3 class="campaign-title">National Constitutional Literacy & Preamble Yatra</h3>
+              <p class="campaign-desc">Distributing pocket Constitutions in rural villages, mass Preamble recitation camps, and training grassroots advocates to resist caste atrocities legally.</p>
+              <div class="campaign-progress-container">
+                <div class="campaign-progress-header">
+                  <span>Goal: ₹25.0 Lakh</span>
+                  <span style="color: var(--primary-orange);">68% Raised</span>
+                </div>
+                <div class="campaign-progress-bar">
+                  <div class="campaign-progress-fill" style="width: 68%;"></div>
+                </div>
+                <div class="campaign-stats-row">
+                  <span><i class="fa-solid fa-users"></i> 8,200+ Volunteers</span>
+                  <span><i class="fa-solid fa-location-dot"></i> 500+ Districts</span>
+                </div>
+              </div>
+              <div class="campaign-actions">
+                <button type="button" class="btn btn-primary btn-sm" onclick="openDonationModal('Constitutional Literacy', 1000)"><i class="fa-solid fa-hand-holding-dollar"></i> Support</button>
+                <a href="#join-us" class="btn btn-outline-navy btn-sm"><i class="fa-solid fa-user-plus"></i> Enlist</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="campaign-card">
+            <div class="campaign-img-wrapper">
+              <img src="https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=600&q=80" alt="Mahila Self-Defense" class="campaign-img">
+              <span class="campaign-badge"><i class="fa-solid fa-flag"></i> Women Wing</span>
+            </div>
+            <div class="campaign-body">
+              <h3 class="campaign-title">Mahila Self-Defense & Savitribai Phule Academy</h3>
+              <p class="campaign-desc">Physical stick drill, martial self-defense training, anti-harassment rapid action units, and educational scholarships for Bahujan female students.</p>
+              <div class="campaign-progress-container">
+                <div class="campaign-progress-header">
+                  <span>Goal: ₹30.0 Lakh</span>
+                  <span style="color: var(--primary-orange);">65% Raised</span>
+                </div>
+                <div class="campaign-progress-bar">
+                  <div class="campaign-progress-fill" style="width: 65%;"></div>
+                </div>
+                <div class="campaign-stats-row">
+                  <span><i class="fa-solid fa-users"></i> 12,000+ Volunteers</span>
+                  <span><i class="fa-solid fa-location-dot"></i> 180+ Districts</span>
+                </div>
+              </div>
+              <div class="campaign-actions">
+                <button type="button" class="btn btn-primary btn-sm" onclick="openDonationModal('Mahila Dal Welfare', 1000)"><i class="fa-solid fa-hand-holding-dollar"></i> Support</button>
+                <a href="#join-us" class="btn btn-outline-navy btn-sm"><i class="fa-solid fa-user-plus"></i> Enlist</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="campaign-card">
+            <div class="campaign-img-wrapper">
+              <img src="https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=600&q=80" alt="Blood Relief" class="campaign-img">
+              <span class="campaign-badge"><i class="fa-solid fa-flag"></i> Community Sewa</span>
+            </div>
+            <div class="campaign-body">
+              <h3 class="campaign-title">Samata 24/7 Voluntary Blood Donor & Disaster Force</h3>
+              <p class="campaign-desc">Nationwide emergency voluntary blood donor registry, flood rescue battalions, free medical diagnosis, and community health camps in underprivileged bastis.</p>
+              <div class="campaign-progress-container">
+                <div class="campaign-progress-header">
+                  <span>Goal: ₹20.0 Lakh</span>
+                  <span style="color: var(--primary-orange);">79% Raised</span>
+                </div>
+                <div class="campaign-progress-bar">
+                  <div class="campaign-progress-fill" style="width: 79%;"></div>
+                </div>
+                <div class="campaign-stats-row">
+                  <span><i class="fa-solid fa-users"></i> 25,000+ Volunteers</span>
+                  <span><i class="fa-solid fa-location-dot"></i> 320+ Districts</span>
+                </div>
+              </div>
+              <div class="campaign-actions">
+                <button type="button" class="btn btn-primary btn-sm" onclick="openDonationModal('Disaster Relief & Sewa', 1000)"><i class="fa-solid fa-hand-holding-dollar"></i> Support</button>
+                <a href="#join-us" class="btn btn-outline-navy btn-sm"><i class="fa-solid fa-user-plus"></i> Enlist</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: DEPARTMENTS & SPECIALIZED WINGS -->
+    <section style="padding: 85px 0 60px; background-color: var(--off-white); border-top: 1px solid var(--border-color);">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge"><i class="fa-solid fa-sitemap"></i> Operational Divisions</span>
+          <h2 class="section-title">Departments & Specialized Wings of SSD</h2>
+          <p class="section-subtitle">Structured like a disciplined non-violent defense force to educate, agitate, and organize at grassroots, state, and national levels.</p>
+        </div>
+
+        <div class="dept-grid">
+          <!-- Cadet Corps -->
+          <div class="dept-card">
+            <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=600&q=80" alt="Cadet Corps" class="dept-card-img">
+            <div class="dept-card-body">
+              <div class="dept-card-icon"><i class="fa-solid fa-person-military-pointing"></i></div>
+              <h3 class="dept-card-title">Central Cadet Corps</h3>
+              <p class="dept-card-text">Rigorous physical drill, parade ranks, uniform code of conduct, flag ceremonies, and non-violent social defense training.</p>
+              <a href="cadet-corps.html" class="btn btn-outline-navy btn-sm">Explore Cadet Wing &rarr;</a>
+            </div>
+          </div>
+
+          <!-- Mahila Dal -->
+          <div class="dept-card">
+            <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80" alt="Mahila Dal" class="dept-card-img">
+            <div class="dept-card-body">
+              <div class="dept-card-icon"><i class="fa-solid fa-venus"></i></div>
+              <h3 class="dept-card-title">Mahila Samata Sainik Dal</h3>
+              <p class="dept-card-text">Frontline women defense wing focusing on leadership academy, anti-atrocity legal assistance, self-reliance, and education.</p>
+              <a href="mahila-dal.html" class="btn btn-outline-navy btn-sm">Explore Mahila Dal &rarr;</a>
+            </div>
+          </div>
+
+          <!-- Legal Cell -->
+          <div class="dept-card">
+            <img src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80" alt="Legal Cell" class="dept-card-img">
+            <div class="dept-card-body">
+              <div class="dept-card-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+              <h3 class="dept-card-title">Legal & Constitutional Cell</h3>
+              <p class="dept-card-text">Nationwide advocate network offering pro-bono legal defense, constitutional literacy camps, and emergency legal hotlines.</p>
+              <a href="legal-cell.html" class="btn btn-outline-navy btn-sm">Explore Legal Cell &rarr;</a>
+            </div>
+          </div>
+
+          <!-- Youth Front -->
+          <div class="dept-card">
+            <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=600&q=80" alt="Youth Front" class="dept-card-img">
+            <div class="dept-card-body">
+              <div class="dept-card-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+              <h3 class="dept-card-title">Youth & Student Front</h3>
+              <p class="dept-card-text">Dr. Ambedkar study circles, civil services & competitive exam mentorship, digital skills, and annual youth leadership summits.</p>
+              <a href="youth-wing.html" class="btn btn-outline-navy btn-sm">Explore Youth Front &rarr;</a>
+            </div>
+          </div>
+
+          <!-- Community Sewa & Relief -->
+          <div class="dept-card">
+            <img src="https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=600&q=80" alt="Community Sewa" class="dept-card-img">
+            <div class="dept-card-body">
+              <div class="dept-card-icon"><i class="fa-solid fa-hand-holding-heart"></i></div>
+              <h3 class="dept-card-title">Community Sewa & Relief</h3>
+              <p class="dept-card-text">Voluntary blood donor registry, emergency disaster rescue task force, free health diagnostic camps, and community libraries.</p>
+              <a href="sewa-relief.html" class="btn btn-outline-navy btn-sm">Explore Relief Task Force &rarr;</a>
+            </div>
+          </div>
+
+          <!-- Dedicated Enlistment Link Card -->
+          <div class="dept-card" style="background: linear-gradient(135deg, var(--dark-navy) 0%, var(--medium-blue) 100%); color: white;">
+            <div class="dept-card-body" style="justify-content: center; text-align: center;">
+              <div class="dept-card-icon" style="background: var(--primary-orange); color: white; margin: 0 auto 16px;"><i class="fa-solid fa-user-plus"></i></div>
+              <h3 class="dept-card-title" style="color: white;">Online Sainik Enlistment</h3>
+              <p class="dept-card-text" style="color: #E0E0E0;">Step forward to serve equality and democracy. Enlist online in any of our 5 specialized operational divisions.</p>
+              <a href="membership.html" class="btn btn-primary btn-sm" style="margin: 0 auto;">Full Enlistment Portal &rarr;</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: JOIN US / ENLISTMENT -->
+    <section class="join-home-section" id="join-us">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge"><i class="fa-solid fa-user-shield"></i> Direct Enlistment</span>
+          <h2 class="section-title">Join Samata Sainik Dal — Take the Solemn Pledge</h2>
+          <p class="section-subtitle">Answer the historic call of Bodhisattva Babasaheb Dr. B.R. Ambedkar. Become a disciplined volunteer for equality, human dignity, and constitutional morality.</p>
+        </div>
+
+        <div class="join-grid-layout">
+          <!-- Left: 4-Step Enlistment Guide -->
+          <div class="join-workflow-box">
+            <h3 style="font-size: 20px; color: var(--dark-navy); margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-clipboard-check" style="color: var(--primary-orange);"></i> 4-Step Enlistment Process
+            </h3>
+
+            <div class="workflow-step">
+              <div class="step-num-badge">1</div>
+              <div class="step-content">
+                <h4>Select Your Operational Wing</h4>
+                <p>Choose from Cadet Corps (Drill & Discipline), Mahila Dal (Women's Leadership), Legal Cell (Advocacy), Youth Front, or Sewa Relief.</p>
+              </div>
+            </div>
+
+            <div class="workflow-step">
+              <div class="step-num-badge">2</div>
+              <div class="step-content">
+                <h4>Submit District & Contact Details</h4>
+                <p>Provide your local address to be connected directly with your District Commander and local State Chapter.</p>
+              </div>
+            </div>
+
+            <div class="workflow-step">
+              <div class="step-num-badge">3</div>
+              <div class="step-content">
+                <h4>Take the Solemn Volunteer Pledge</h4>
+                <p>Commit to the principles of self-respect, moral character, non-violence, and total dedication to liberty, equality, and fraternity.</p>
+              </div>
+            </div>
+
+            <div class="workflow-step">
+              <div class="step-num-badge">4</div>
+              <div class="step-content">
+                <h4>Receive SSD Digital ID & Unit Assignment</h4>
+                <p>Central Command verifies your application, registers you in the national roll, and invites you to the next drill camp.</p>
+              </div>
+            </div>
+
+            <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-color); text-align: center;">
+              <a href="membership.html" class="btn btn-outline-navy btn-sm" style="width: 100%;">View Complete Enlistment Criteria & Rules &rarr;</a>
+            </div>
+          </div>
+
+          <!-- Right: Quick Enlistment Form -->
+          <div class="join-form-card">
+            <h3 style="font-size: 20px; color: var(--dark-navy); margin-bottom: 18px; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-id-card" style="color: var(--primary-orange);"></i> Quick Sainik Enlistment Form
+            </h3>
+
+            <form id="quickJoinForm" onsubmit="handleQuickJoinSubmit(event)">
+              <div class="form-group" style="margin-bottom: 14px;">
+                <label class="form-label" for="quickName">Full Name *</label>
+                <input type="text" id="quickName" class="form-control" placeholder="e.g., Rajesh Gaikwad" required>
+              </div>
+
+              <div class="form-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                <div class="form-group">
+                  <label class="form-label" for="quickEmail">Email ID *</label>
+                  <input type="email" id="quickEmail" class="form-control" placeholder="name@domain.com" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="quickPhone">Mobile Number *</label>
+                  <input type="tel" id="quickPhone" class="form-control" placeholder="10-digit number" required>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 14px;">
+                <label class="form-label" for="quickWing">Preferred Wing / Department *</label>
+                <select id="quickWing" class="form-control" required>
+                  <option value="Central Cadet Corps (Sainik Wing)">Central Cadet Corps (Sainik Wing)</option>
+                  <option value="Mahila Samata Sainik Dal">Mahila Samata Sainik Dal</option>
+                  <option value="Constitutional & Legal Cell">Constitutional & Legal Cell</option>
+                  <option value="Youth & Student Front">Youth & Student Front</option>
+                  <option value="Community Sewa & Relief Taskforce">Community Sewa & Relief Taskforce</option>
+                </select>
+              </div>
+
+              <div class="form-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+                <div class="form-group">
+                  <label class="form-label" for="quickState">State / UT *</label>
+                  <select id="quickState" class="form-control" required>
+                    <option value="">Select State</option>
+                    <option value="Maharashtra">Maharashtra</option>
+                    <option value="Delhi NCR">Delhi NCR</option>
+                    <option value="Uttar Pradesh">Uttar Pradesh</option>
+                    <option value="Madhya Pradesh">Madhya Pradesh</option>
+                    <option value="Karnataka">Karnataka</option>
+                    <option value="Punjab">Punjab</option>
+                    <option value="Telangana">Telangana</option>
+                    <option value="Tamil Nadu">Tamil Nadu</option>
+                    <option value="Bihar">Bihar</option>
+                    <option value="Rajasthan">Rajasthan</option>
+                    <option value="Gujarat">Gujarat</option>
+                    <option value="West Bengal">West Bengal</option>
+                    <option value="Other">Other State/UT</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="quickCity">District / City *</label>
+                  <input type="text" id="quickCity" class="form-control" placeholder="e.g., Nagpur" required>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 12.5px; color: #444; cursor: pointer;">
+                  <input type="checkbox" id="quickPledge" required style="margin-top: 3px;">
+                  <span>I solemnly pledge to uphold the Constitution of India, follow the teachings of Dr. B.R. Ambedkar, and serve Samata Sainik Dal with discipline and moral integrity.</span>
+                </label>
+              </div>
+
+              <button type="submit" id="quickJoinSubmitBtn" class="btn btn-primary" style="width: 100%;">
+                <span class="btn-text"><i class="fa-solid fa-user-shield"></i> Submit Enlistment Application</span>
+                <span class="btn-spinner" style="display: none;"><div class="spinner" style="width: 18px; height: 18px; border-width: 2px;"></div> Enlisting...</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: PHOTO GALLERY & ARCHIVES -->
+    <section class="gallery-section-home" id="gallery">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge"><i class="fa-solid fa-camera"></i> Visual History & March Past Archives</span>
+          <h2 class="section-title">Photo Gallery & Field Action Archives</h2>
+          <p class="section-subtitle">Moments of discipline, historic struggles, Deekshabhoomi parades, and grassroots community defense.</p>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="gallery-filter-bar">
+          <button type="button" class="filter-pill-btn active" data-category="all" onclick="filterHomeGallery('all')">All Photos</button>
+          <button type="button" class="filter-pill-btn" data-category="cadet" onclick="filterHomeGallery('cadet')">Cadet Drills & Parades</button>
+          <button type="button" class="filter-pill-btn" data-category="mahila" onclick="filterHomeGallery('mahila')">Mahila Samata Dal</button>
+          <button type="button" class="filter-pill-btn" data-category="historical" onclick="filterHomeGallery('historical')">Historical Memorials</button>
+          <button type="button" class="filter-pill-btn" data-category="sewa" onclick="filterHomeGallery('sewa')">Community Sewa & Relief</button>
+        </div>
+
+        <!-- Compact Gallery Grid -->
+        <div class="gallery-grid-compact" id="homeGalleryContainer">
+          <!-- Rendered dynamically by loadHomeGallery() in app.js with instant fallback -->
+          <div class="gallery-card-compact" onclick="openLightbox(0)">
+            <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=800&q=80" alt="Cadet March Past">
+            <div class="gallery-overlay-compact">
+              <span>Cadet Drills</span>
+              <h5>SSD Uniform Cadet Corps Ceremonial March Past - Deekshabhoomi Nagpur</h5>
+            </div>
+          </div>
+          <div class="gallery-card-compact" onclick="openLightbox(1)">
+            <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80" alt="Mahila Dal">
+            <div class="gallery-overlay-compact">
+              <span>Mahila Dal</span>
+              <h5>Mahila Samata Sainik Dal Volunteers at National Equality Rally</h5>
+            </div>
+          </div>
+          <div class="gallery-card-compact" onclick="openLightbox(2)">
+            <img src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80" alt="Constitution Reading">
+            <div class="gallery-overlay-compact">
+              <span>Constitution</span>
+              <h5>Constitution Day Mass Preamble Reading Assembly</h5>
+            </div>
+          </div>
+          <div class="gallery-card-compact" onclick="openLightbox(3)">
+            <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80" alt="Youth Drill">
+            <div class="gallery-overlay-compact">
+              <span>Youth Front</span>
+              <h5>Youth Cadet Physical Training & Non-Violent Defense Drill</h5>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 35px;">
+          <a href="gallery.html" class="btn btn-navy"><i class="fa-solid fa-images"></i> View Complete High-Resolution Photo Archives &rarr;</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: DONATE US / COMMUNITY SUPPORT -->
+    <section class="donation-section" id="donate">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge" style="background: rgba(255, 255, 255, 0.1); color: var(--primary-orange); border-color: rgba(255, 107, 0, 0.4);"><i class="fa-solid fa-hand-holding-dollar"></i> Transparent Community Support</span>
+          <h2 class="section-title section-title-white">Support the Movement — Fuel the Fight for Equality</h2>
+          <p class="section-subtitle section-subtitle-white">Samata Sainik Dal is self-funded by conscious citizens. Every rupee directly strengthens grassroots cadet training, pro-bono legal defense, and disaster relief.</p>
+        </div>
+
+        <div class="donation-grid">
+          <!-- Left: Interactive Donation Calculator Card -->
+          <div class="donation-calculator-card">
+            <h3 style="font-size: 20px; color: var(--white); margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-coins" style="color: var(--primary-orange);"></i> Choose Your Contribution
+            </h3>
+
+            <!-- Frequency Toggle -->
+            <div class="donation-frequency-toggle">
+              <button type="button" class="freq-btn active" data-freq="once" onclick="setDonationFrequency('once')">One-Time Contribution</button>
+              <button type="button" class="freq-btn" data-freq="monthly" onclick="setDonationFrequency('monthly')">Monthly Supporter</button>
+            </div>
+
+            <!-- Amount Preset Chips -->
+            <label class="form-label" style="color: #DDD; font-size: 13px;">Select Contribution Amount</label>
+            <div class="amount-presets-grid">
+              <div class="preset-chip" data-amount="500" onclick="selectDonationPreset(500)">₹500</div>
+              <div class="preset-chip active" data-amount="1000" onclick="selectDonationPreset(1000)">₹1,000</div>
+              <div class="preset-chip" data-amount="2500" onclick="selectDonationPreset(2500)">₹2,500</div>
+              <div class="preset-chip" data-amount="5000" onclick="selectDonationPreset(5000)">₹5,000</div>
+            </div>
+
+            <!-- Custom Amount Input -->
+            <div class="custom-amount-group">
+              <span class="custom-amount-symbol">₹</span>
+              <input type="number" id="customDonationAmount" class="custom-amount-input" placeholder="Enter custom amount" value="1000" oninput="onCustomAmountChange(this.value)">
+            </div>
+
+            <!-- Cause Allocation Dropdown -->
+            <label class="form-label" style="color: #DDD; font-size: 13px;">Direct Allocation Cause</label>
+            <select id="donationCauseSelector" class="donation-cause-select" onchange="onDonationCauseChange(this)">
+              <option value="Bal Sainik Uniform & Drill">Bal Sainik Uniforms & Drill Equipment</option>
+              <option value="Constitutional Literacy" selected>Constitutional Literacy & Preamble Booklets</option>
+              <option value="Legal Defense Corpus">Pro-Bono Legal Defense Fund (SC/ST Cases)</option>
+              <option value="Disaster Relief & Sewa">Disaster Rescue & 24/7 Blood Task Force</option>
+              <option value="Centenary 2027 Trust Fund">SSD Centenary 2027 Trust & Library Corpus</option>
+              <option value="General Organization Fund">General Organizational Fund</option>
+            </select>
+
+            <!-- Dynamic Impact Description -->
+            <div class="impact-description-box" id="donationImpactDesc">
+              <strong><i class="fa-solid fa-sparkles"></i> Direct Impact:</strong> Prints and distributes 50 pocket Constitutions and Preamble learning cards in rural school clusters.
+            </div>
+
+            <!-- Proceed Button -->
+            <button type="button" class="btn btn-primary" style="width: 100%; font-size: 15px;" onclick="openDonationModal()">
+              <i class="fa-solid fa-shield-heart"></i> Proceed to Contribute Online &rarr;
+            </button>
+          </div>
+
+          <!-- Right: Direct Bank & UPI Details -->
+          <div class="bank-info-card">
+            <div class="upi-qr-box">
+              <div class="upi-qr-img">
+                <i class="fa-solid fa-qrcode" style="font-size: 90px; color: var(--dark-navy);"></i>
+              </div>
+              <div style="font-size: 12px; color: #555; margin-bottom: 6px;">Scan with any UPI App (GPay, PhonePe, Paytm, BHIM)</div>
+              <span class="upi-id-badge"><i class="fa-solid fa-wallet"></i> ssdcentral@upi</span>
+            </div>
+
+            <h4 style="color: var(--white); font-size: 16px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 8px;">
+              <i class="fa-solid fa-building-columns" style="color: var(--primary-orange);"></i> Official Bank Account Details
+            </h4>
+
+            <div class="bank-details-list">
+              <div><strong>Account Name:</strong> Samata Sainik Dal Central Fund</div>
+              <div><strong>Account Number:</strong> 39820192700</div>
+              <div><strong>IFSC Code:</strong> SBIN0001234</div>
+              <div><strong>Bank Name:</strong> State Bank of India (Main Branch, Nagpur)</div>
+              <div><strong>Branch:</strong> Civil Lines, Nagpur, Maharashtra - 440001</div>
+            </div>
+
+            <div class="tax-exemption-pill">
+              <i class="fa-solid fa-stamp"></i> 80G Tax Exemption Receipts Issued Automatically
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BABASAHEB FOUNDING COMMAND & HISTORY CALLOUT -->
+    <section style="padding: 60px 0; background-color: var(--white); border-top: 1px solid var(--border-color);">
+      <div class="container">
+        <div class="history-quote-box">
+          <i class="fa-solid fa-quote-right quote-bg"></i>
+          <h4><i class="fa-solid fa-award"></i> The Foundational Command of Dr. B.R. Ambedkar</h4>
+          <p>"My soldiers of equality! You must maintain strict discipline and self-respect. A volunteer of Samata Sainik Dal must be ready to sacrifice personal comfort for the collective dignity, equality, and rights of the oppressed. Let your conduct be an embodiment of character and non-violent courage."</p>
+          <div class="author">— Dr. Bhimrao Ramji Ambedkar, Founder, Samata Sainik Dal (24 September 1927)</div>
+        </div>
+        <div style="text-align: center; margin-top: 25px;">
+          <a href="about.html" class="btn btn-navy"><i class="fa-solid fa-book-open"></i> Read Complete History & Centenary Roadmap (1927–2027)</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- DYNAMIC NEWS & EVENTS SECTION -->
+    <section class="news-events-section" id="news-events">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge"><i class="fa-solid fa-newspaper"></i> SSD Bulletins & Gazette</span>
+          <h2 class="section-title">Latest Central Command Dispatches & Events</h2>
+          <p class="section-subtitle">Real-time announcements, drill camp schedules, and national conclaves synchronized live with our central database.</p>
+        </div>
+
+        <div class="news-events-container">
+          <div class="news-column">
+            <div class="section-subheading-group">
+              <h3><i class="fa-solid fa-newspaper"></i> Official Dispatches</h3>
+              <a href="news-events.html" style="font-size: 13px; color: var(--primary-orange); font-weight: 600;">View All Dispatches &rarr;</a>
+            </div>
+            <div class="news-grid" id="newsContainer">
+              <div class="loading-spinner-container">
+                <div class="spinner"></div>
+                <div class="loading-text">Fetching latest SSD dispatches from Firebase...</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="events-column">
+            <div class="section-subheading-group">
+              <h3><i class="fa-solid fa-calendar-days"></i> Upcoming Events</h3>
+              <a href="news-events.html" style="font-size: 13px; color: var(--primary-orange); font-weight: 600;">Full Calendar &rarr;</a>
+            </div>
+            <div class="events-list" id="eventsContainer">
+              <div class="loading-spinner-container">
+                <div class="spinner"></div>
+                <div class="loading-text">Fetching upcoming events from Firebase...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALS SLIDER -->
+    <section class="testimonials-section" id="testimonials">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge" style="background: rgba(255, 255, 255, 0.1); color: var(--primary-orange); border-color: rgba(255, 107, 0, 0.3);"><i class="fa-solid fa-quote-left"></i> Voices from the Frontline</span>
+          <h2 class="section-title section-title-white">Words of Commitment & Courage</h2>
+          <p class="section-subtitle section-subtitle-white">Hear from our State Commanders, veteran Sainiks, Mahila Dal organizers, and grassroots community defenders.</p>
+        </div>
+
+        <div class="testimonial-slider-container" id="testimonialContainer">
+          <div class="loading-spinner-container" style="color: white;">
+            <div class="spinner"></div>
+            <div class="loading-text" style="color: #E0E0E0;">Loading testimonies from Firebase...</div>
+          </div>
+        </div>
+
+        <div class="testimonial-dots" id="testimonialDots"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- DONATION MODAL -->
+  <div class="donation-modal" id="donationModal" onclick="closeDonationModalOnBackdrop(event)">
+    <div class="donation-modal-content">
+      <div class="donation-modal-header">
+        <h3><i class="fa-solid fa-hand-holding-heart"></i> Complete Contribution</h3>
+        <button type="button" onclick="closeDonationModal()" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">&times;</button>
+      </div>
+      <div class="donation-modal-body">
+        <form id="donationSubmitForm" onsubmit="handleDonationSubmit(event)">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label" for="modalDonationAmount">Contribution Amount (₹) *</label>
+            <input type="number" id="modalDonationAmount" class="form-control" required min="100" value="1000">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label" for="modalDonationCause">Earmarked Purpose *</label>
+            <select id="modalDonationCause" class="form-control" required>
+              <option value="Bal Sainik Uniform & Drill">Bal Sainik Uniforms & Drill Equipment</option>
+              <option value="Constitutional Literacy">Constitutional Literacy & Preamble Booklets</option>
+              <option value="Legal Defense Corpus">Pro-Bono Legal Defense Fund (SC/ST Cases)</option>
+              <option value="Disaster Relief & Sewa">Disaster Rescue & 24/7 Blood Task Force</option>
+              <option value="Centenary 2027 Trust Fund">SSD Centenary 2027 Trust & Library Corpus</option>
+              <option value="General Organization Fund">General Organizational Fund</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label" for="donorName">Donor Full Name *</label>
+            <input type="text" id="donorName" class="form-control" placeholder="Your name" required>
+          </div>
+
+          <div class="form-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <div class="form-group">
+              <label class="form-label" for="donorEmail">Email ID *</label>
+              <input type="email" id="donorEmail" class="form-control" placeholder="name@domain.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="donorPhone">Mobile No *</label>
+              <input type="tel" id="donorPhone" class="form-control" placeholder="Phone number" required>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" for="donorPan">PAN Card Number (for 80G Tax Exemption Receipt)</label>
+            <input type="text" id="donorPan" class="form-control" placeholder="ABCDE1234F (Optional)" maxlength="10">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 18px;">
+            <label class="form-label">Payment Method</label>
+            <div style="display: flex; gap: 15px; font-size: 13px; color: #444;">
+              <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                <input type="radio" name="donationPayMethod" value="UPI / QR" checked> UPI / QR
+              </label>
+              <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                <input type="radio" name="donationPayMethod" value="Net Banking / NEFT"> Net Banking / NEFT
+              </label>
+              <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                <input type="radio" name="donationPayMethod" value="Debit / Credit Card"> Card
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" id="donationSubmitBtn" class="btn btn-primary" style="width: 100%;">
+            <span class="btn-text"><i class="fa-solid fa-shield-heart"></i> Confirm & Record Contribution</span>
+            <span class="btn-spinner" style="display: none;"><div class="spinner" style="width: 18px; height: 18px; border-width: 2px;"></div> Recording...</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX MODAL -->
+  <div class="lightbox-modal" id="lightboxModal" onclick="closeLightboxOnBackdrop(event)">
+    <button type="button" class="lightbox-close" onclick="closeLightbox()" aria-label="Close Lightbox">&times;</button>
+    <button type="button" class="lightbox-btn-prev" onclick="prevLightboxImage()" aria-label="Previous Image"><i class="fa-solid fa-chevron-left"></i></button>
+    <button type="button" class="lightbox-btn-next" onclick="nextLightboxImage()" aria-label="Next Image"><i class="fa-solid fa-chevron-right"></i></button>
+    <div class="lightbox-content">
+      <img src="" alt="Enlarged Archive Photograph" id="lightboxMainImg" class="lightbox-img">
+      <div class="lightbox-caption" id="lightboxCaption"></div>
+    </div>
+  </div>
+
+  <!-- NEWS MODAL -->
+  <div class="news-modal" id="newsModal" onclick="closeNewsModalOnBackdrop(event)">
+    <div class="news-modal-content">
+      <div class="news-modal-header">
+        <h3 id="newsModalTitle">SSD Central Gazette Dispatch</h3>
+        <button type="button" class="news-modal-close" onclick="closeNewsModal()">&times;</button>
+      </div>
+      <div class="news-modal-body">
+        <img src="" alt="Dispatch Image" id="newsModalImg" class="news-modal-img">
+        <div class="news-modal-meta">
+          <span id="newsModalDate"><i class="fa-solid fa-calendar"></i> Date</span>
+          <span id="newsModalCategory"><i class="fa-solid fa-tag"></i> Category</span>
+        </div>
+        <div id="newsModalText" class="news-modal-text"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- FLOATING FIREBASE ADMIN SEED PANEL -->
+  <div class="admin-widget-panel" id="adminWidgetPanel">
+    <div class="admin-panel-header">
+      <span class="admin-panel-title"><i class="fa-solid fa-database"></i> SSD Database Status</span>
+      <button type="button" class="admin-close-btn" onclick="toggleAdminPanel()">&times;</button>
+    </div>
+    <div class="admin-panel-body">
+      <div class="admin-status-text" id="adminPanelStatus">Checking Firebase connection...</div>
+      <p style="font-size: 11.5px; color: #666; margin-bottom: 12px;">Seed authentic Samata Sainik Dal sample datasets directly into your Firebase database.</p>
+      <button type="button" class="admin-seed-btn" onclick="seedSampleFirebaseData()"><i class="fa-solid fa-cloud-arrow-up"></i> Seed / Reset SSD Data</button>
+    </div>
+  </div>
+
+  <div class="firebase-status-badge" onclick="toggleAdminPanel()" title="Click to view database controls">
+    <div class="status-indicator" id="fbStatusDot"></div>
+    <span id="fbStatusLabel"><i class="fa-solid fa-shield"></i> SSD Demo Ready</span>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer-wrapper">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <img src="logo.png" alt="SSD Logo" class="footer-logo" onerror="handleLogoError(this)" style="height: 60px; width: 60px; margin-bottom: 12px;">
+          <h4 style="margin-bottom: 8px;">Samata Sainik Dal</h4>
+          <p class="footer-about-text">Army of Soldiers for Equality, founded by Bodhisattva Dr. B.R. Ambedkar on 24 September 1927. Dedicated to non-violent social defense, constitutional rights, and human dignity across India.</p>
+          <div class="social-links-top" style="margin-top: 15px;">
+            <a href="#home" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="#home" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+            <a href="#home" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+            <a href="#home" aria-label="Telegram"><i class="fa-brands fa-telegram"></i></a>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4>SSD Departments</h4>
+          <ul class="footer-links">
+            <li><a href="cadet-corps.html"><i class="fa-solid fa-angle-right"></i> Central Cadet Corps</a></li>
+            <li><a href="mahila-dal.html"><i class="fa-solid fa-angle-right"></i> Mahila Samata Sainik Dal</a></li>
+            <li><a href="legal-cell.html"><i class="fa-solid fa-angle-right"></i> Constitutional & Legal Cell</a></li>
+            <li><a href="youth-wing.html"><i class="fa-solid fa-angle-right"></i> Youth & Student Front</a></li>
+            <li><a href="sewa-relief.html"><i class="fa-solid fa-angle-right"></i> Community Sewa & Relief Force</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Quick Portals</h4>
+          <ul class="footer-links">
+            <li><a href="#campaigns"><i class="fa-solid fa-angle-right"></i> Ongoing Campaigns</a></li>
+            <li><a href="#join-us"><i class="fa-solid fa-angle-right"></i> Online Sainik Enlistment</a></li>
+            <li><a href="#donate"><i class="fa-solid fa-angle-right"></i> Donate & Support SSD</a></li>
+            <li><a href="#governing-body"><i class="fa-solid fa-angle-right"></i> Governing Body Council</a></li>
+            <li><a href="#gallery"><i class="fa-solid fa-angle-right"></i> Photo Archives & Lightbox</a></li>
+            <li><a href="about.html"><i class="fa-solid fa-angle-right"></i> History & Genesis (1927)</a></li>
+            <li><a href="contact.html"><i class="fa-solid fa-angle-right"></i> National Command Desk</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>SSD Official Gazette</h4>
+          <p style="font-size: 13px; color: #B5B5B5; margin-bottom: 12px;">Subscribe to receive official circulars, drill schedules, and centenary announcements.</p>
+          <div class="newsletter-box">
+            <form id="newsletterForm" onsubmit="handleNewsletterSubscription(event)">
+              <div class="newsletter-form-group">
+                <input type="email" id="newsletterEmail" class="newsletter-input" placeholder="Enter your email ID" required aria-label="Newsletter Email">
+                <button type="submit" id="newsletterBtn" class="newsletter-btn" aria-label="Subscribe to Gazette"><i class="fa-solid fa-paper-plane"></i></button>
+              </div>
+              <div id="newsletterStatus" class="newsletter-status"></div>
+            </form>
+          </div>
+          <div style="font-size: 11.5px; color: #888; margin-top: 8px;">
+            <i class="fa-solid fa-lock"></i> Liberty, Equality, Fraternity. No spam.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="copyright-bar">
+      <div class="container">
+        <div class="copyright-inner">
+          <div>
+            &copy; 1927–2026 Samata Sainik Dal (SSD). Founded by Bodhisattva Dr. B.R. Ambedkar. Jai Bhim | Equality For All.
+          </div>
+          <div class="copyright-links">
+            <a href="about.html">Constitution of SSD</a>
+            <a href="contact.html">State Directory</a>
+            <a href="contact.html">Grievance Desk</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Unified Application Script -->
+  <script src="app.js"></script>
+</body>
+</html>

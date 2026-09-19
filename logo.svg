@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <radialGradient id="hubGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1A3A6B"/>
+      <stop offset="100%" stop-color="#0A1F44"/>
+    </radialGradient>
+    <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#dropShadow)">
+    <!-- 8 Gear Teeth -->
+    <g fill="#0A1F44">
+      <!-- Top -->
+      <path d="M182 25 L218 25 L212 75 L188 75 Z" />
+      <!-- Top Right -->
+      <path d="M295 72 L320 98 L285 133 L267 115 Z" />
+      <!-- Right -->
+      <path d="M375 182 L375 218 L325 212 L325 188 Z" />
+      <!-- Bottom Right -->
+      <path d="M320 302 L295 328 L267 285 L285 267 Z" />
+      <!-- Bottom -->
+      <path d="M218 375 L182 375 L188 325 L212 325 Z" />
+      <!-- Bottom Left -->
+      <path d="M105 328 L80 302 L115 267 L133 285 Z" />
+      <!-- Left -->
+      <path d="M25 218 L25 182 L75 188 L75 212 Z" />
+      <!-- Top Left -->
+      <path d="M80 98 L105 72 L133 115 L115 133 Z" />
+    </g>
+
+    <!-- Outer Rim Ring -->
+    <circle cx="200" cy="200" r="145" fill="none" stroke="#0A1F44" stroke-width="26"/>
+    <circle cx="200" cy="200" r="158" fill="none" stroke="#FF6B00" stroke-width="3"/>
+    <circle cx="200" cy="200" r="132" fill="none" stroke="#FF6B00" stroke-width="3"/>
+
+    <!-- Inner Track Ring -->
+    <circle cx="200" cy="200" r="115" fill="none" stroke="#0A1F44" stroke-width="8"/>
+    <circle cx="200" cy="200" r="108" fill="#F8FAFC" />
+
+    <!-- 24 Dharma Chakra Spokes -->
+    <g stroke="#0A1F44" stroke-width="3.5" stroke-linecap="round">
+      <line x1="200" y1="200" x2="200" y2="92"/>
+      <line x1="200" y1="200" x2="228" y2="95"/>
+      <line x1="200" y1="200" x2="254" y2="107"/>
+      <line x1="200" y1="200" x2="276" y2="124"/>
+      <line x1="200" y1="200" x2="293" y2="147"/>
+      <line x1="200" y1="200" x2="304" y2="172"/>
+      <line x1="200" y1="200" x2="308" y2="200"/>
+      <line x1="200" y1="200" x2="304" y2="228"/>
+      <line x1="200" y1="200" x2="293" y2="253"/>
+      <line x1="200" y1="200" x2="276" y2="276"/>
+      <line x1="200" y1="200" x2="254" y2="293"/>
+      <line x1="200" y1="200" x2="228" y2="305"/>
+      <line x1="200" y1="200" x2="200" y2="308"/>
+      <line x1="200" y1="200" x2="172" y2="305"/>
+      <line x1="200" y1="200" x2="146" y2="293"/>
+      <line x1="200" y1="200" x2="124" y2="276"/>
+      <line x1="200" y1="200" x2="107" y2="253"/>
+      <line x1="200" y1="200" x2="96" y2="228"/>
+      <line x1="200" y1="200" x2="92" y2="200"/>
+      <line x1="200" y1="200" x2="96" y2="172"/>
+      <line x1="200" y1="200" x2="107" y2="147"/>
+      <line x1="200" y1="200" x2="124" y2="124"/>
+      <line x1="200" y1="200" x2="146" y2="107"/>
+      <line x1="200" y1="200" x2="172" y2="95"/>
+    </g>
+
+    <!-- 24 Small Outer Dots/Teeth on Rim -->
+    <g fill="#0A1F44">
+      <circle cx="200" cy="85" r="4.5"/>
+      <circle cx="229" cy="88" r="4.5"/>
+      <circle cx="257" cy="100" r="4.5"/>
+      <circle cx="281" cy="119" r="4.5"/>
+      <circle cx="300" cy="143" r="4.5"/>
+      <circle cx="311" cy="170" r="4.5"/>
+      <circle cx="315" cy="200" r="4.5"/>
+      <circle cx="311" cy="230" r="4.5"/>
+      <circle cx="300" cy="257" r="4.5"/>
+      <circle cx="281" cy="281" r="4.5"/>
+      <circle cx="257" cy="300" r="4.5"/>
+      <circle cx="229" cy="312" r="4.5"/>
+      <circle cx="200" cy="315" r="4.5"/>
+      <circle cx="171" cy="312" r="4.5"/>
+      <circle cx="143" cy="300" r="4.5"/>
+      <circle cx="119" cy="281" r="4.5"/>
+      <circle cx="100" cy="257" r="4.5"/>
+      <circle cx="89" cy="230" r="4.5"/>
+      <circle cx="85" cy="200" r="4.5"/>
+      <circle cx="89" cy="170" r="4.5"/>
+      <circle cx="100" cy="143" r="4.5"/>
+      <circle cx="119" cy="119" r="4.5"/>
+      <circle cx="143" cy="100" r="4.5"/>
+      <circle cx="171" cy="88" r="4.5"/>
+    </g>
+
+    <!-- Central Hub -->
+    <circle cx="200" cy="200" r="28" fill="url(#hubGrad)" stroke="#FF6B00" stroke-width="3"/>
+    <circle cx="200" cy="200" r="10" fill="#FFFFFF"/>
+  </g>
+</svg>

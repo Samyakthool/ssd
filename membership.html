@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Online Sainik Enlistment Portal | Samata Sainik Dal (SSD)</title>
+  <meta name="description" content="Official Online Enlistment Portal of Samata Sainik Dal: Apply to join the Central Cadet Corps, Mahila Dal, Youth Front, Legal Cell, or Relief Task Force.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="font-md">
+
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="container">
+      <div class="top-bar-inner">
+        <div class="top-contact-info">
+          <span><i class="fa-solid fa-user-shield"></i> Enlistment Helpdesk: 1800-24-1927</span>
+          <a href="mailto:membership@samatasainikdal.org"><i class="fa-solid fa-envelope"></i> membership@samatasainikdal.org</a>
+          <span><i class="fa-solid fa-id-card"></i> Official Sainik Cadre Registration</span>
+        </div>
+        <div class="top-bar-tools">
+          <div class="accessibility-tools">
+            <button type="button" onclick="setFontSize('sm')">A-</button>
+            <button type="button" class="active" onclick="setFontSize('md')">A</button>
+            <button type="button" onclick="setFontSize('lg')">A+</button>
+            <button type="button" onclick="toggleHighContrast()"><i class="fa-solid fa-circle-half-stroke"></i></button>
+          </div>
+          <div class="language-switcher">
+            <select id="langSelect" onchange="changeLanguage(this.value)">
+              <option value="en">English</option>
+              <option value="hi">हिन्दी (Hindi)</option>
+              <option value="mr">मराठी (Marathi)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tricolor-stripe"></div>
+
+  <!-- HEADER -->
+  <header class="header-wrapper" id="mainHeader">
+    <div class="container">
+      <div class="header-main">
+        <a href="index.html" class="brand-block">
+          <div class="logo-container">
+            <img src="logo.png" alt="Samata Sainik Dal Emblem" id="orgLogo" class="org-logo" onerror="handleLogoError(this)">
+            <div id="logoFallback" class="logo-fallback">SSD</div>
+          </div>
+          <div class="brand-text">
+            <span class="org-name" id="orgNameText">SAMATA SAINIK DAL (SSD)</span>
+            <span class="org-tagline" id="orgTaglineText">सैनिक भर्ती पोर्टल | Official Online Enlistment Portal</span>
+          </div>
+        </a>
+
+        <button type="button" class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="fa-solid fa-bars"></i></button>
+
+        <nav class="main-nav" id="mainNav">
+          <button type="button" class="mobile-close-btn" onclick="toggleMobileMenu()"><i class="fa-solid fa-xmark"></i></button>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+            <li class="nav-item"><a href="about.html" class="nav-link">History & About</a></li>
+            <li class="nav-item">
+              <a href="cadet-corps.html" class="nav-link" onclick="toggleMobileDropdown(event)">Departments & Wings <i class="fa-solid fa-chevron-down"></i></a>
+              <div class="dropdown-menu">
+                <a href="cadet-corps.html" class="dropdown-link"><i class="fa-solid fa-shield"></i> Central Cadet Corps (Sainik Wing)</a>
+                <a href="mahila-dal.html" class="dropdown-link"><i class="fa-solid fa-venus"></i> Mahila Samata Sainik Dal</a>
+                <a href="legal-cell.html" class="dropdown-link"><i class="fa-solid fa-scale-balanced"></i> Constitutional & Legal Cell</a>
+                <a href="youth-wing.html" class="dropdown-link"><i class="fa-solid fa-graduation-cap"></i> Youth & Student Front</a>
+                <a href="sewa-relief.html" class="dropdown-link"><i class="fa-solid fa-hand-holding-heart"></i> Community Sewa & Relief Force</a>
+              </div>
+            </li>
+            <li class="nav-item"><a href="membership.html" class="nav-link active">Sainik Enlistment</a></li>
+            <li class="nav-item"><a href="gallery.html" class="nav-link">Photo Archives</a></li>
+            <li class="nav-item"><a href="news-events.html" class="nav-link">Gazette & Events</a></li>
+            <li class="nav-item"><a href="contact.html" class="nav-link">Contact</a></li>
+          </ul>
+          <div class="nav-cta">
+            <a href="#membershipForm" class="btn btn-primary btn-sm"><i class="fa-solid fa-file-pen"></i> Fill Form Below</a>
+          </div>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- BANNER -->
+  <section class="page-banner" style="background: linear-gradient(rgba(10, 31, 68, 0.85), rgba(10, 31, 68, 0.85)), url('https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;">
+    <div class="container">
+      <div class="page-banner-badge"><i class="fa-solid fa-user-shield"></i> National Call of Duty</div>
+      <h1 class="page-banner-title">Official Sainik Enlistment Portal</h1>
+      <p class="page-banner-subtitle">Answer the clarion call of Dr. Babasaheb Ambedkar. Enlist as a disciplined soldier of equality dedicated to constitutional values and social defense.</p>
+      <div class="breadcrumb">
+        <a href="index.html">Home</a> <span>/</span> <span>Sainik Enlistment</span>
+      </div>
+    </div>
+  </section>
+
+  <main id="main-content">
+    <section class="membership-section">
+      <div class="container">
+        <!-- 4-Step Process -->
+        <div class="membership-steps-wrapper">
+          <div class="section-header">
+            <span class="section-badge"><i class="fa-solid fa-list-ol"></i> Step-by-Step Procedure</span>
+            <h2 class="section-title">Enlistment & Verification Process</h2>
+            <p class="section-subtitle">How your application is processed from registration to digital ID issuance and drill deployment.</p>
+          </div>
+
+          <div class="membership-steps">
+            <div class="step-card">
+              <div class="step-number">1</div>
+              <h4>Submit Application</h4>
+              <p>Provide verified personal, contact, state chapter, and preferred wing details.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-number">2</div>
+              <h4>District Command Review</h4>
+              <p>Application reviewed by the District Executive Board and State Command.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-number">3</div>
+              <h4>Digital ID & Uniform Guide</h4>
+              <p>Receive your official digital Sainik ID, uniform specifications, and badge.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-number">4</div>
+              <h4>Cadet Drill & Deployment</h4>
+              <p>Participate in physical drills, constitutional camps, and community sewa.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FORM BOX -->
+        <div class="form-container-box" id="membershipForm">
+          <div class="form-header-box">
+            <h3>Official Sainik Application Form</h3>
+            <p>Please enter accurate details for administrative registration and identity verification.</p>
+          </div>
+
+          <form id="memberRegistrationForm" onsubmit="handleMemberRegistration(event)">
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="memberName">Full Legal Name <span class="req">*</span></label>
+                <input type="text" id="memberName" class="form-control" placeholder="e.g. Rahul B. Meshram" required>
+              </div>
+              <div class="form-group">
+                <label for="memberEmail">Email Address <span class="req">*</span></label>
+                <input type="email" id="memberEmail" class="form-control" placeholder="e.g. rahul.meshram@example.com" required>
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="memberPhone">Mobile / WhatsApp Number <span class="req">*</span></label>
+                <input type="tel" id="memberPhone" class="form-control" placeholder="e.g. +91 98765 43210" pattern="[0-9+ -]{10,15}" required>
+              </div>
+              <div class="form-group">
+                <label for="memberWing">Preferred SSD Wing / Division <span class="req">*</span></label>
+                <select id="memberWing" class="form-control" required>
+                  <option value="">-- Select Wing / Division --</option>
+                  <option value="Central Cadet Corps (Sainik Wing)">Central Cadet Corps (Sainik Wing)</option>
+                  <option value="Mahila Samata Sainik Dal (Women Wing)">Mahila Samata Sainik Dal (Women Wing)</option>
+                  <option value="Constitutional Rights & Legal Cell">Constitutional Rights & Legal Cell</option>
+                  <option value="Youth & Student Front">Youth & Student Front</option>
+                  <option value="Community Sewa & Relief Force">Community Sewa & Relief Force</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="memberOccupation">Occupation / Profession <span class="req">*</span></label>
+                <select id="memberOccupation" class="form-control" required>
+                  <option value="">-- Select Occupation --</option>
+                  <option value="Government Service">Government / Public Sector</option>
+                  <option value="Advocate / Legal Professional">Advocate / Legal Professional</option>
+                  <option value="Doctor / Healthcare Worker">Doctor / Healthcare Professional</option>
+                  <option value="Teacher / Academician">Teacher / Academician</option>
+                  <option value="Student / Youth Scholar">Student / Youth Scholar</option>
+                  <option value="Private Sector Employee">Private Sector Employee</option>
+                  <option value="Business / Entrepreneur">Business / Self-Employed</option>
+                  <option value="Social Worker">Social Worker / Activist</option>
+                  <option value="Retired Defense / Police Officer">Retired Defense / Police Officer</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="memberState">State / Union Territory <span class="req">*</span></label>
+                <select id="memberState" class="form-control" required>
+                  <option value="">-- Select State / UT --</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Delhi (NCT)">Delhi (NCT)</option>
+                  <option value="Uttar Pradesh">Uttar Pradesh</option>
+                  <option value="Madhya Pradesh">Madhya Pradesh</option>
+                  <option value="Bihar">Bihar</option>
+                  <option value="Karnataka">Karnataka</option>
+                  <option value="Telangana">Telangana</option>
+                  <option value="Andhra Pradesh">Andhra Pradesh</option>
+                  <option value="Tamil Nadu">Tamil Nadu</option>
+                  <option value="Punjab">Punjab</option>
+                  <option value="Rajasthan">Rajasthan</option>
+                  <option value="Gujarat">Gujarat</option>
+                  <option value="Haryana">Haryana</option>
+                  <option value="Chhattisgarh">Chhattisgarh</option>
+                  <option value="Jharkhand">Jharkhand</option>
+                  <option value="Odisha">Odisha</option>
+                  <option value="West Bengal">West Bengal</option>
+                  <option value="Assam">Assam</option>
+                  <option value="Kerala">Kerala</option>
+                  <option value="Himachal Pradesh">Himachal Pradesh</option>
+                  <option value="Uttarakhand">Uttarakhand</option>
+                  <option value="Goa">Goa</option>
+                  <option value="Jammu & Kashmir">Jammu & Kashmir</option>
+                  <option value="Other">Other State / UT</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="memberCity">District / City <span class="req">*</span></label>
+              <input type="text" id="memberCity" class="form-control" placeholder="e.g. Nagpur / Mumbai / Lucknow / New Delhi" required>
+            </div>
+
+            <div class="form-group">
+              <label for="memberMessage">Prior Service or Special Skills (Optional)</label>
+              <textarea id="memberMessage" class="form-control" placeholder="Mention experience in drill training, legal aid, first-aid, event management, or community organizing..."></textarea>
+            </div>
+
+            <div class="form-disclaimer">
+              <input type="checkbox" id="memberConsent" required>
+              <label for="memberConsent"><strong>Solemn Sainik Pledge:</strong> "I solemnly pledge to uphold the values of Liberty, Equality, and Fraternity, maintain iron discipline, resist all forms of caste discrimination, and dedicate myself to the social defense movement founded by Dr. B.R. Ambedkar."</label>
+            </div>
+
+            <div class="form-submit-row">
+              <button type="submit" id="memberSubmitBtn" class="btn btn-primary">
+                <span class="btn-text"><i class="fa-solid fa-user-shield"></i> Submit Enlistment Application</span>
+                <span class="btn-spinner" style="display: none;"><i class="fa-solid fa-circle-notch fa-spin"></i> Enlisting...</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer-wrapper">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <img src="logo.png" alt="SSD Logo" class="footer-logo" onerror="handleLogoError(this)" style="height: 60px; width: 60px; margin-bottom: 12px;">
+          <h4 style="margin-bottom: 8px;">Samata Sainik Dal</h4>
+          <p class="footer-about-text">Army of Soldiers for Equality, founded by Bodhisattva Dr. B.R. Ambedkar on 24 September 1927. Dedicated to non-violent social defense, constitutional rights, and human dignity across India.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Departments</h4>
+          <ul class="footer-links">
+            <li><a href="cadet-corps.html"><i class="fa-solid fa-angle-right"></i> Central Cadet Corps</a></li>
+            <li><a href="mahila-dal.html"><i class="fa-solid fa-angle-right"></i> Mahila Samata Sainik Dal</a></li>
+            <li><a href="legal-cell.html"><i class="fa-solid fa-angle-right"></i> Constitutional & Legal Cell</a></li>
+            <li><a href="youth-wing.html"><i class="fa-solid fa-angle-right"></i> Youth & Student Front</a></li>
+            <li><a href="sewa-relief.html"><i class="fa-solid fa-angle-right"></i> Community Sewa & Relief Force</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Quick Portals</h4>
+          <ul class="footer-links">
+            <li><a href="about.html"><i class="fa-solid fa-angle-right"></i> History & Genesis (1927)</a></li>
+            <li><a href="membership.html"><i class="fa-solid fa-angle-right"></i> Online Sainik Enlistment</a></li>
+            <li><a href="gallery.html"><i class="fa-solid fa-angle-right"></i> Drill & March Archives</a></li>
+            <li><a href="news-events.html"><i class="fa-solid fa-angle-right"></i> Official Gazette</a></li>
+            <li><a href="contact.html"><i class="fa-solid fa-angle-right"></i> National Command Desk</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>SSD Official Gazette</h4>
+          <p style="font-size: 13px; color: #B5B5B5; margin-bottom: 12px;">Subscribe to receive official circulars, drill schedules, and centenary announcements.</p>
+          <div class="newsletter-box">
+            <form id="newsletterForm" onsubmit="handleNewsletterSubscription(event)">
+              <div class="newsletter-form-group">
+                <input type="email" id="newsletterEmail" class="newsletter-input" placeholder="Enter your email ID" required aria-label="Newsletter Email">
+                <button type="submit" id="newsletterBtn" class="newsletter-btn"><i class="fa-solid fa-paper-plane"></i></button>
+              </div>
+              <div id="newsletterStatus" class="newsletter-status"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="copyright-bar">
+      <div class="container">
+        <div class="copyright-inner">
+          <div>&copy; 1927–2026 Samata Sainik Dal (SSD). Founded by Dr. B.R. Ambedkar. Jai Bhim.</div>
+          <div class="copyright-links">
+            <a href="about.html">Constitution</a>
+            <a href="membership.html">Code of Conduct</a>
+            <a href="contact.html">Contact</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast-container" id="toastContainer"></div>
+  <script src="app.js"></script>
+</body>
+</html>

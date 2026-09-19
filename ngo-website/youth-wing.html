@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Youth & Student Front | Samata Sainik Dal (SSD)</title>
+  <meta name="description" content="Youth & Student Front of Samata Sainik Dal: Dr. Ambedkar study circles, civil services exam mentorship, digital skills, and youth leadership conclaves.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="font-md">
+
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="container">
+      <div class="top-bar-inner">
+        <div class="top-contact-info">
+          <span><i class="fa-solid fa-graduation-cap"></i> SSD Youth Desk: 1800-24-1927</span>
+          <a href="mailto:youth@samatasainikdal.org"><i class="fa-solid fa-envelope"></i> youth@samatasainikdal.org</a>
+          <span><i class="fa-solid fa-lightbulb"></i> "Cultivation of Mind Should be the Ultimate Aim of Human Existence"</span>
+        </div>
+        <div class="top-bar-tools">
+          <div class="accessibility-tools">
+            <button type="button" onclick="setFontSize('sm')">A-</button>
+            <button type="button" class="active" onclick="setFontSize('md')">A</button>
+            <button type="button" onclick="setFontSize('lg')">A+</button>
+            <button type="button" onclick="toggleHighContrast()"><i class="fa-solid fa-circle-half-stroke"></i></button>
+          </div>
+          <div class="language-switcher">
+            <select id="langSelect" onchange="changeLanguage(this.value)">
+              <option value="en">English</option>
+              <option value="hi">हिन्दी (Hindi)</option>
+              <option value="mr">मराठी (Marathi)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tricolor-stripe"></div>
+
+  <!-- HEADER -->
+  <header class="header-wrapper" id="mainHeader">
+    <div class="container">
+      <div class="header-main">
+        <a href="index.html" class="brand-block">
+          <div class="logo-container">
+            <img src="logo.png" alt="Samata Sainik Dal Emblem" id="orgLogo" class="org-logo" onerror="handleLogoError(this)">
+            <div id="logoFallback" class="logo-fallback">SSD</div>
+          </div>
+          <div class="brand-text">
+            <span class="org-name" id="orgNameText">SAMATA SAINIK DAL (SSD)</span>
+            <span class="org-tagline" id="orgTaglineText">युवा एवं छात्र मोर्चा | Youth & Student Empowerment Front</span>
+          </div>
+        </a>
+
+        <button type="button" class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="fa-solid fa-bars"></i></button>
+
+        <nav class="main-nav" id="mainNav">
+          <button type="button" class="mobile-close-btn" onclick="toggleMobileMenu()"><i class="fa-solid fa-xmark"></i></button>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+            <li class="nav-item"><a href="about.html" class="nav-link">History & About</a></li>
+            <li class="nav-item">
+              <a href="youth-wing.html" class="nav-link active" onclick="toggleMobileDropdown(event)">Departments & Wings <i class="fa-solid fa-chevron-down"></i></a>
+              <div class="dropdown-menu">
+                <a href="cadet-corps.html" class="dropdown-link"><i class="fa-solid fa-shield"></i> Central Cadet Corps (Sainik Wing)</a>
+                <a href="mahila-dal.html" class="dropdown-link"><i class="fa-solid fa-venus"></i> Mahila Samata Sainik Dal</a>
+                <a href="legal-cell.html" class="dropdown-link"><i class="fa-solid fa-scale-balanced"></i> Constitutional & Legal Cell</a>
+                <a href="youth-wing.html" class="dropdown-link"><i class="fa-solid fa-graduation-cap"></i> Youth & Student Front</a>
+                <a href="sewa-relief.html" class="dropdown-link"><i class="fa-solid fa-hand-holding-heart"></i> Community Sewa & Relief Force</a>
+              </div>
+            </li>
+            <li class="nav-item"><a href="membership.html" class="nav-link">Sainik Enlistment</a></li>
+            <li class="nav-item"><a href="gallery.html" class="nav-link">Photo Archives</a></li>
+            <li class="nav-item"><a href="news-events.html" class="nav-link">Gazette & Events</a></li>
+            <li class="nav-item"><a href="contact.html" class="nav-link">Contact</a></li>
+          </ul>
+          <div class="nav-cta">
+            <a href="membership.html" class="btn btn-primary btn-sm"><i class="fa-solid fa-graduation-cap"></i> Join Youth Front</a>
+          </div>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- BANNER -->
+  <section class="page-banner" style="background: linear-gradient(rgba(10, 31, 68, 0.85), rgba(10, 31, 68, 0.85)), url('https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;">
+    <div class="container">
+      <div class="page-banner-badge"><i class="fa-solid fa-graduation-cap"></i> Youth & Student Front</div>
+      <h1 class="page-banner-title">Youth & Student Empowerment Front (युवा मोर्चा)</h1>
+      <p class="page-banner-subtitle">Fostering intellectual excellence, scientific temper, competitive examination guidance, and fearless leadership among the youth of India.</p>
+      <div class="breadcrumb">
+        <a href="index.html">Home</a> <span>/</span> <span>Departments</span> <span>/</span> <span>Youth & Student Front</span>
+      </div>
+    </div>
+  </section>
+
+  <main id="main-content">
+    <section style="padding: 70px 0; background-color: var(--white);">
+      <div class="container">
+        <!-- Overview Grid -->
+        <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 45px; align-items: center; margin-bottom: 60px;">
+          <div>
+            <div class="section-badge"><i class="fa-solid fa-book-open-reader"></i> Educate • Agitate • Organize</div>
+            <h2 style="font-family: var(--font-heading); font-size: 30px; color: var(--dark-navy); margin-bottom: 18px;">Empowering the Next Generation of Intellectual Cadres</h2>
+            <p style="color: var(--muted-gray); font-size: 15px; line-height: 1.7; margin-bottom: 15px;">
+              Babasaheb Dr. B.R. Ambedkar believed that real liberation comes through rigorous modern education and intellectual mastery. The <strong>Youth & Student Front of Samata Sainik Dal</strong> operates on campuses and in rural communities to channel the vibrant energy of students into constructive nation-building and social justice.
+            </p>
+            <p style="color: var(--muted-gray); font-size: 15px; line-height: 1.7; margin-bottom: 20px;">
+              We run Dr. Ambedkar study circles, organize free coaching and study groups for UPSC, State PSCs, SSC, and Banking exams, and teach critical digital literacy to first-generation learners.
+            </p>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+              <a href="membership.html" class="btn btn-primary"><i class="fa-solid fa-user-plus"></i> Join Youth Wing</a>
+              <a href="news-events.html" class="btn btn-navy"><i class="fa-solid fa-calendar-check"></i> Youth Events & Workshops</a>
+            </div>
+          </div>
+
+          <div>
+            <div class="history-quote-box" style="margin-bottom: 0;">
+              <i class="fa-solid fa-quote-right quote-bg"></i>
+              <h4><i class="fa-solid fa-quote-left"></i> Babasaheb to Students</h4>
+              <p>"You must have a firm resolve to study. Education is milk of tigress and one who drinks it will roar. Do not depend on fate. Work hard and seize your rightful place in society through knowledge and character."</p>
+              <div class="author">— Dr. B.R. Ambedkar</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Key Youth Programs -->
+        <div style="margin-bottom: 60px;">
+          <div class="section-header">
+            <span class="section-badge"><i class="fa-solid fa-trophy"></i> Key Programs</span>
+            <h2 class="section-title">Core Initiatives for Students & Youth</h2>
+            <p class="section-subtitle">Guiding youth from secondary schools to higher research and administrative careers.</p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;">
+            <div class="pillar-card">
+              <div class="pillar-icon"><i class="fa-solid fa-book-journal-whills"></i></div>
+              <h4>Ambedkar Study Circles</h4>
+              <p>Weekly reading groups analyzing the Writings & Speeches of Dr. Ambedkar, Constitution, and socio-economic history.</p>
+            </div>
+            <div class="pillar-card">
+              <div class="pillar-icon"><i class="fa-solid fa-laptop-code"></i></div>
+              <h4>Civil Services Mentorship</h4>
+              <p>Free mentoring, mock interviews, and test series for civil service aspirants led by serving civil servants and senior Sainiks.</p>
+            </div>
+            <div class="pillar-card">
+              <div class="pillar-icon"><i class="fa-solid fa-microphone-lines"></i></div>
+              <h4>Debate & Leadership Conclaves</h4>
+              <p>Annual national elocution, public speaking, and youth policy conferences to nurture articulate public leaders.</p>
+            </div>
+            <div class="pillar-card">
+              <div class="pillar-icon"><i class="fa-solid fa-computer"></i></div>
+              <h4>Digital Skills & AI Labs</h4>
+              <p>Workshops on programming, web development, and digital entrepreneurship for first-generation college students.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Call to action -->
+        <div style="background: var(--off-white); border: 1px solid var(--border-color); border-top: 4px solid var(--primary-orange); border-radius: 8px; padding: 40px; text-align: center;">
+          <h3 style="font-family: var(--font-heading); color: var(--dark-navy); font-size: 24px; margin-bottom: 12px;">Start a Samata Sainik Dal Youth Chapter on Your Campus</h3>
+          <p style="color: var(--muted-gray); max-width: 700px; margin: 0 auto 24px; font-size: 15px;">
+            Establish an active study circle or cadet team in your university, college, or district to promote constitutional values and student solidarity.
+          </p>
+          <a href="membership.html" class="btn btn-primary"><i class="fa-solid fa-user-plus"></i> Register as Youth Volunteer</a>
+          <a href="contact.html" class="btn btn-outline-navy" style="margin-left: 12px;"><i class="fa-solid fa-paper-plane"></i> Contact Youth Convener</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer-wrapper">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <img src="logo.png" alt="SSD Logo" class="footer-logo" onerror="handleLogoError(this)" style="height: 60px; width: 60px; margin-bottom: 12px;">
+          <h4 style="margin-bottom: 8px;">Samata Sainik Dal</h4>
+          <p class="footer-about-text">Army of Soldiers for Equality, founded by Bodhisattva Dr. B.R. Ambedkar on 24 September 1927. Dedicated to non-violent social defense, constitutional rights, and human dignity across India.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Departments</h4>
+          <ul class="footer-links">
+            <li><a href="cadet-corps.html"><i class="fa-solid fa-angle-right"></i> Central Cadet Corps</a></li>
+            <li><a href="mahila-dal.html"><i class="fa-solid fa-angle-right"></i> Mahila Samata Sainik Dal</a></li>
+            <li><a href="legal-cell.html"><i class="fa-solid fa-angle-right"></i> Constitutional & Legal Cell</a></li>
+            <li><a href="youth-wing.html"><i class="fa-solid fa-angle-right"></i> Youth & Student Front</a></li>
+            <li><a href="sewa-relief.html"><i class="fa-solid fa-angle-right"></i> Community Sewa & Relief Force</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Quick Portals</h4>
+          <ul class="footer-links">
+            <li><a href="about.html"><i class="fa-solid fa-angle-right"></i> History & Genesis (1927)</a></li>
+            <li><a href="membership.html"><i class="fa-solid fa-angle-right"></i> Online Sainik Enlistment</a></li>
+            <li><a href="gallery.html"><i class="fa-solid fa-angle-right"></i> Drill & March Archives</a></li>
+            <li><a href="news-events.html"><i class="fa-solid fa-angle-right"></i> Official Gazette</a></li>
+            <li><a href="contact.html"><i class="fa-solid fa-angle-right"></i> National Command Desk</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>SSD Official Gazette</h4>
+          <p style="font-size: 13px; color: #B5B5B5; margin-bottom: 12px;">Subscribe to receive official circulars, drill schedules, and centenary announcements.</p>
+          <div class="newsletter-box">
+            <form id="newsletterForm" onsubmit="handleNewsletterSubscription(event)">
+              <div class="newsletter-form-group">
+                <input type="email" id="newsletterEmail" class="newsletter-input" placeholder="Enter your email ID" required aria-label="Newsletter Email">
+                <button type="submit" id="newsletterBtn" class="newsletter-btn"><i class="fa-solid fa-paper-plane"></i></button>
+              </div>
+              <div id="newsletterStatus" class="newsletter-status"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="copyright-bar">
+      <div class="container">
+        <div class="copyright-inner">
+          <div>&copy; 1927–2026 Samata Sainik Dal (SSD). Founded by Dr. B.R. Ambedkar. Jai Bhim.</div>
+          <div class="copyright-links">
+            <a href="about.html">Constitution</a>
+            <a href="membership.html">Code of Conduct</a>
+            <a href="contact.html">Contact</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast-container" id="toastContainer"></div>
+  <script src="app.js"></script>
+</body>
+</html>

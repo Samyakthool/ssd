@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About & History | Samata Sainik Dal (SSD) | Founded by Dr. B.R. Ambedkar (1927)</title>
+  <meta name="description" content="Detailed historical genesis, ideology, milestones, and centenary roadmap (1927–2027) of Samata Sainik Dal, founded by Dr. B.R. Ambedkar.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="font-md">
+
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="container">
+      <div class="top-bar-inner">
+        <div class="top-contact-info">
+          <span><i class="fa-solid fa-shield-halved"></i> Central Command Helpline: 1800-24-1927</span>
+          <a href="mailto:centralcommand@samatasainikdal.org"><i class="fa-solid fa-envelope"></i> centralcommand@samatasainikdal.org</a>
+          <span><i class="fa-solid fa-flag"></i> Founded: 24 Sept 1927 | Babasaheb Dr. B.R. Ambedkar</span>
+        </div>
+        <div class="top-bar-tools">
+          <div class="accessibility-tools">
+            <button type="button" onclick="setFontSize('sm')">A-</button>
+            <button type="button" class="active" onclick="setFontSize('md')">A</button>
+            <button type="button" onclick="setFontSize('lg')">A+</button>
+            <button type="button" onclick="toggleHighContrast()"><i class="fa-solid fa-circle-half-stroke"></i></button>
+          </div>
+          <div class="language-switcher">
+            <select id="langSelect" onchange="changeLanguage(this.value)">
+              <option value="en">English</option>
+              <option value="hi">हिन्दी (Hindi)</option>
+              <option value="mr">मराठी (Marathi)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tricolor-stripe"></div>
+
+  <!-- HEADER -->
+  <header class="header-wrapper" id="mainHeader">
+    <div class="container">
+      <div class="header-main">
+        <a href="index.html" class="brand-block">
+          <div class="logo-container">
+            <img src="logo.png" alt="Samata Sainik Dal Emblem" id="orgLogo" class="org-logo" onerror="handleLogoError(this)">
+            <div id="logoFallback" class="logo-fallback">SSD</div>
+          </div>
+          <div class="brand-text">
+            <span class="org-name" id="orgNameText">SAMATA SAINIK DAL (SSD)</span>
+            <span class="org-tagline" id="orgTaglineText">समता सैनिक दल (स्थापना: १९२७) | Army of Soldiers for Equality | Founded by Dr. B.R. Ambedkar</span>
+          </div>
+        </a>
+
+        <button type="button" class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="fa-solid fa-bars"></i></button>
+
+        <nav class="main-nav" id="mainNav">
+          <button type="button" class="mobile-close-btn" onclick="toggleMobileMenu()"><i class="fa-solid fa-xmark"></i></button>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+            <li class="nav-item"><a href="about.html" class="nav-link active">History & About</a></li>
+            <li class="nav-item">
+              <a href="cadet-corps.html" class="nav-link" onclick="toggleMobileDropdown(event)">Departments & Wings <i class="fa-solid fa-chevron-down"></i></a>
+              <div class="dropdown-menu">
+                <a href="cadet-corps.html" class="dropdown-link"><i class="fa-solid fa-shield"></i> Central Cadet Corps (Sainik Wing)</a>
+                <a href="mahila-dal.html" class="dropdown-link"><i class="fa-solid fa-venus"></i> Mahila Samata Sainik Dal</a>
+                <a href="legal-cell.html" class="dropdown-link"><i class="fa-solid fa-scale-balanced"></i> Constitutional & Legal Cell</a>
+                <a href="youth-wing.html" class="dropdown-link"><i class="fa-solid fa-graduation-cap"></i> Youth & Student Front</a>
+                <a href="sewa-relief.html" class="dropdown-link"><i class="fa-solid fa-hand-holding-heart"></i> Community Sewa & Relief Force</a>
+              </div>
+            </li>
+            <li class="nav-item"><a href="membership.html" class="nav-link">Sainik Enlistment</a></li>
+            <li class="nav-item"><a href="gallery.html" class="nav-link">Photo Archives</a></li>
+            <li class="nav-item"><a href="news-events.html" class="nav-link">Gazette & Events</a></li>
+            <li class="nav-item"><a href="contact.html" class="nav-link">Contact</a></li>
+          </ul>
+          <div class="nav-cta">
+            <a href="membership.html" class="btn btn-primary btn-sm"><i class="fa-solid fa-user-shield"></i> Enlist as Sainik</a>
+          </div>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- PAGE BANNER -->
+  <section class="page-banner">
+    <div class="container">
+      <div class="page-banner-badge"><i class="fa-solid fa-landmark"></i> Historical Heritage</div>
+      <h1 class="page-banner-title">History, Ideology & Centenary Horizon</h1>
+      <p class="page-banner-subtitle">The genesis, struggle, and historic achievements of Samata Sainik Dal, founded on 24 September 1927 by Bodhisattva Dr. B.R. Ambedkar.</p>
+      <div class="breadcrumb">
+        <a href="index.html">Home</a> <span>/</span> <span>History & About</span>
+      </div>
+    </div>
+  </section>
+
+  <main id="main-content">
+    <section style="padding: 70px 0; background-color: var(--white);">
+      <div class="container">
+        <!-- Genesis by Dr. Ambedkar -->
+        <div id="genesis" style="margin-bottom: 60px;">
+          <div class="section-header">
+            <span class="section-badge"><i class="fa-solid fa-star"></i> Foundation 1927</span>
+            <h2 class="section-title">Genesis of the Soldiers for Equality</h2>
+            <p class="section-subtitle">Born out of the historic demand for civil rights, self-respect, and the eradication of caste oppression.</p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; align-items: center; margin-bottom: 40px;">
+            <div>
+              <h3 style="font-family: var(--font-heading); font-size: 26px; color: var(--dark-navy); margin-bottom: 16px;">Why Babasaheb Formed Samata Sainik Dal</h3>
+              <p style="color: var(--muted-gray); margin-bottom: 16px; font-size: 15px; line-height: 1.7;">
+                In the 1920s, as Dr. B.R. Ambedkar spearheaded the mass awakening of the depressed and marginalized classes in India, orthodox reactionary forces constantly sought to disrupt public meetings, water access struggles, and social reform assemblies.
+              </p>
+              <p style="color: var(--muted-gray); margin-bottom: 16px; font-size: 15px; line-height: 1.7;">
+                Recognizing that a non-violent social movement requires ironclad discipline, physical defense, and organized youth volunteerism, Babasaheb formally instituted the <strong>Samata Sainik Dal (समता सैनिक दल)</strong> on <strong>24 September 1927</strong> at Damodar Hall, Parel, Bombay, during the preparatory phases of the historic Mahad Satyagraha.
+              </p>
+              <div class="feature-box">
+                <h4><i class="fa-solid fa-quote-left"></i> The Core Motto of SSD</h4>
+                <p><strong>"Liberty, Equality, Fraternity" (समता, स्वतंत्रता, बंधुता)</strong> and <strong>"Educate, Agitate, Organize" (शिक्षित बनो, संघर्ष करो, संगठित रहो)</strong>. Every Sainik is sworn to protect democratic freedom, constitutional values, and community self-respect.</p>
+              </div>
+            </div>
+
+            <div>
+              <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80" alt="Historical SSD Archives" style="border-radius: 8px; box-shadow: var(--card-shadow-hover); border: 2px solid var(--border-color);">
+            </div>
+          </div>
+        </div>
+
+        <!-- Historic Milestones Detail -->
+        <div id="mahad" style="margin-bottom: 60px;">
+          <div class="section-header">
+            <span class="section-badge"><i class="fa-solid fa-timeline"></i> Epoch-Making Struggles</span>
+            <h2 class="section-title">Historic Milestones of the Movement</h2>
+            <p class="section-subtitle">Moments where Samata Sainik Dal stood as an unyielding wall of peaceful defense for human dignity.</p>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="feature-box">
+              <h4><i class="fa-solid fa-droplet"></i> 1. Mahad Chavdar Tale Satyagraha & Manusmriti Dahan (1927)</h4>
+              <p>During the historic Mahad movement on 19–20 March 1927 and 25 December 1927, thousands of delegates assembled to assert the right to drink water from the public Chavdar Lake. Over 1,000 disciplined SSD volunteers guarded the Satyagraha camp day and night, ensured zero violence, and protected Dr. Ambedkar during the historic burning of the Manusmriti on 25 December 1927 (celebrated annually as Bharatiya Stree Mukti Din / Social Equality Day).</p>
+            </div>
+
+            <div class="feature-box">
+              <h4><i class="fa-solid fa-landmark-dome"></i> 2. Kalaram Mandir Entry Movement, Nashik (1930–1935)</h4>
+              <p>Under the direct guidance of Babasaheb and Bhaurao Gaikwad, hundreds of SSD cadets in crisp white uniforms marched in military precision to assert civil and temple entry rights at the Kalaram Temple in Nashik, demonstrating unprecedented non-violent endurance in the face of brutal police lathicharges and conservative resistance.</p>
+            </div>
+
+            <div class="feature-box" id="deekshabhoomi">
+              <h4><i class="fa-solid fa-dharmachakra"></i> 3. Historic Deekshabhoomi Dhamma Deeksha Parade (14 October 1956)</h4>
+              <p>When Bodhisattva Dr. B.R. Ambedkar embraced Buddhism along with over 500,000 followers at Nagpur, Samata Sainik Dal took full charge of the ceremonial parade, guard of honor, crowd mobilization, and public safety across the sprawling Deekshabhoomi grounds. The magnificent uniform march-past remains one of the proudest chapters in Ambedkarite history.</p>
+            </div>
+
+            <div class="feature-box" id="centenary">
+              <h4><i class="fa-solid fa-hourglass-half"></i> 4. Centenary of SSD (1927–2027)</h4>
+              <p>As Samata Sainik Dal approaches its 100th Foundation Anniversary in 2027, the National Central Command is leading nationwide constitutional awareness yatras, modernizing youth cadet drills, establishing 100 Dr. Ambedkar study libraries, and training 100,000 new Sainiks for national service.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Governing Structure & Code of Conduct -->
+        <div>
+          <div class="section-header">
+            <span class="section-badge"><i class="fa-solid fa-gavel"></i> Constitution & Bylaws</span>
+            <h2 class="section-title">Organizational Structure & Sainik Code</h2>
+            <p class="section-subtitle">Governed by the democratic principles of the Constitution of India and Dr. Ambedkar's directives.</p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
+            <div class="pillar-card">
+              <div class="pillar-icon"><i class="fa-solid fa-user-check"></i></div>
+              <h4>Strict Secular & Democratic Ethos</h4>
+              <p>Open to every citizen committed to social equality, anti-caste fraternity, and constitutional morality regardless of caste, gender, or religion.</p>
+            </div>
+            <div class="pillar-card">
+              <div class="pillar-icon"><i class="fa-solid fa-shirt"></i></div>
+              <h4>The Official Uniform</h4>
+              <p>White/Khaki uniform, blue cap/beret, black belt, and the Dhamma Wheel brass insignia representing discipline, vigilance, and self-respect.</p>
+            </div>
+            <div class="pillar-card">
+              <div class="pillar-icon"><i class="fa-solid fa-handshake"></i></div>
+              <h4>Democratic Leadership</h4>
+              <p>Central Command, State Commanders, District Nayaks, and Unit Captains democratically coordinated for community welfare and legal aid.</p>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin-top: 40px;">
+            <a href="membership.html" class="btn btn-primary"><i class="fa-solid fa-user-shield"></i> Apply to Join Samata Sainik Dal</a>
+            <a href="cadet-corps.html" class="btn btn-navy" style="margin-left: 12px;"><i class="fa-solid fa-shield"></i> Explore Central Cadet Corps</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer-wrapper">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <img src="logo.png" alt="SSD Logo" class="footer-logo" onerror="handleLogoError(this)" style="height: 60px; width: 60px; margin-bottom: 12px;">
+          <h4 style="margin-bottom: 8px;">Samata Sainik Dal</h4>
+          <p class="footer-about-text">Army of Soldiers for Equality, founded by Bodhisattva Dr. B.R. Ambedkar on 24 September 1927. Dedicated to non-violent social defense, constitutional rights, and human dignity across India.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Departments</h4>
+          <ul class="footer-links">
+            <li><a href="cadet-corps.html"><i class="fa-solid fa-angle-right"></i> Central Cadet Corps</a></li>
+            <li><a href="mahila-dal.html"><i class="fa-solid fa-angle-right"></i> Mahila Samata Sainik Dal</a></li>
+            <li><a href="legal-cell.html"><i class="fa-solid fa-angle-right"></i> Constitutional & Legal Cell</a></li>
+            <li><a href="youth-wing.html"><i class="fa-solid fa-angle-right"></i> Youth & Student Front</a></li>
+            <li><a href="sewa-relief.html"><i class="fa-solid fa-angle-right"></i> Community Sewa & Relief Force</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Quick Portals</h4>
+          <ul class="footer-links">
+            <li><a href="about.html"><i class="fa-solid fa-angle-right"></i> History & Genesis (1927)</a></li>
+            <li><a href="membership.html"><i class="fa-solid fa-angle-right"></i> Online Sainik Enlistment</a></li>
+            <li><a href="gallery.html"><i class="fa-solid fa-angle-right"></i> Drill & March Archives</a></li>
+            <li><a href="news-events.html"><i class="fa-solid fa-angle-right"></i> Official Gazette</a></li>
+            <li><a href="contact.html"><i class="fa-solid fa-angle-right"></i> National Command Desk</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>SSD Official Gazette</h4>
+          <p style="font-size: 13px; color: #B5B5B5; margin-bottom: 12px;">Subscribe to receive official circulars, drill schedules, and centenary announcements.</p>
+          <div class="newsletter-box">
+            <form id="newsletterForm" onsubmit="handleNewsletterSubscription(event)">
+              <div class="newsletter-form-group">
+                <input type="email" id="newsletterEmail" class="newsletter-input" placeholder="Enter your email ID" required aria-label="Newsletter Email">
+                <button type="submit" id="newsletterBtn" class="newsletter-btn"><i class="fa-solid fa-paper-plane"></i></button>
+              </div>
+              <div id="newsletterStatus" class="newsletter-status"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="copyright-bar">
+      <div class="container">
+        <div class="copyright-inner">
+          <div>&copy; 1927–2026 Samata Sainik Dal (SSD). Founded by Dr. B.R. Ambedkar. Jai Bhim.</div>
+          <div class="copyright-links">
+            <a href="about.html">Constitution</a>
+            <a href="membership.html">Code of Conduct</a>
+            <a href="contact.html">Contact</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast-container" id="toastContainer"></div>
+  <script src="app.js"></script>
+</body>
+</html>
