@@ -2667,133 +2667,7 @@ body.nav-open {
 }
 
 @media (max-width: 1024px) {
-  .dept-grid { grid-template-columns: repeat(2, 1fr); }
-  .governing-grid { grid-template-columns: repeat(2, 1fr); }
-  .gallery-grid-compact { grid-template-columns: repeat(2, 1fr); }
-  .advisory-grid { grid-template-columns: repeat(2, 1fr); }
-  .donation-grid, .join-grid-layout { grid-template-columns: 1fr; }
-  .footer-grid { grid-template-columns: repeat(2, 1fr); }
-  .lightbox-btn-prev { left: 10px; }
-  .lightbox-btn-next { right: 10px; }
-}
-
-@media (max-width: 768px) {
-  /* Container & Body Padding */
-  .container {
-    padding: 0 16px;
-  }
-
-  body {
-    padding-bottom: 60px; /* Space for sticky bottom bar */
-  }
-
-  /* Section Spacing & Fluid Headings */
-  .governing-section, 
-  .campaigns-section, 
-  .gallery-section-home, 
-  .donation-section, 
-  .join-us-section, 
-  .news-events-section, 
-  .testimonials-section, 
-  .dept-section, 
-  .page-banner {
-    padding: 45px 0 !important;
-  }
-
-  .section-title, .page-banner-title {
-    font-size: clamp(22px, 5.2vw, 30px) !important;
-    line-height: 1.25 !important;
-  }
-
-  .section-subtitle, .page-banner-desc {
-    font-size: 13.5px !important;
-    line-height: 1.55 !important;
-  }
-
-  .section-header {
-    margin-bottom: 25px !important;
-  }
-
-  /* Compact Mobile Top Bar */
-  .top-bar {
-    padding: 6px 0;
-  }
-
-  .top-bar-inner {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .top-contact-info span:not(:first-child),
-  .social-links-top,
-  .accessibility-tools {
-    display: none;
-  }
-
-  .top-contact-info span:first-child {
-    font-size: 11px;
-    font-weight: 600;
-    color: #E2E8F0;
-  }
-
-  .top-contact-info span:first-child i {
-    color: var(--primary-orange);
-  }
-
-  .language-switcher select {
-    padding: 2px 6px;
-    font-size: 11.5px;
-  }
-
-  /* Header & Logo */
-  .header-main {
-    padding: 10px 0;
-  }
-
-  .header-wrapper.scrolled .header-main {
-    padding: 8px 0;
-  }
-
-  .brand-block {
-    gap: 12px;
-    max-width: calc(100% - 56px);
-  }
-
-  .logo-container {
-    min-width: 60px;
-    padding-right: 12px;
-    border-right: 2px solid var(--primary-orange);
-  }
-
-  .org-logo {
-    height: 58px !important;
-    width: 58px !important;
-  }
-
-  .header-wrapper.scrolled .org-logo {
-    height: 48px !important;
-    width: 48px !important;
-  }
-
-  .org-name {
-    font-size: clamp(15px, 4.2vw, 19px) !important;
-    line-height: 1.15;
-    font-weight: 800;
-  }
-
-  .org-tagline {
-    font-size: 10.5px !important;
-    line-height: 1.25;
-    margin-top: 2px;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  /* Mobile Hamburger Button */
+  /* Activate Mobile Drawer Navigation on all Tablets & Phones */
   .mobile-menu-btn {
     display: flex;
     align-items: center;
@@ -2816,12 +2690,11 @@ body.nav-open {
     transform: scale(0.95);
   }
 
-  /* Mobile Drawer Navigation */
   .main-nav {
     position: fixed;
     top: 0;
     right: -100%;
-    width: min(330px, 86vw);
+    width: min(340px, 86vw);
     height: 100vh;
     height: 100dvh;
     background: var(--white);
@@ -2982,6 +2855,240 @@ body.nav-open {
     font-size: 14.5px;
   }
 
+  /* Tablet Grids */
+  .dept-grid { grid-template-columns: repeat(2, 1fr); }
+  .governing-grid { grid-template-columns: repeat(2, 1fr); }
+  .campaigns-grid { grid-template-columns: repeat(2, 1fr); }
+  .news-grid { grid-template-columns: repeat(2, 1fr); }
+  .gallery-grid-compact { grid-template-columns: repeat(2, 1fr); }
+  .advisory-grid { grid-template-columns: repeat(2, 1fr); }
+  .donation-grid, .join-grid-layout { grid-template-columns: 1fr; max-width: 720px; margin: 0 auto; }
+  .footer-grid { grid-template-columns: repeat(2, 1fr); }
+  .lightbox-btn-prev { left: 10px; }
+  .lightbox-btn-next { right: 10px; }
+
+  /* Tablet Header Sizing */
+  .org-logo {
+    height: 52px !important;
+    width: 52px !important;
+  }
+  .org-name {
+    font-size: 17.5px !important;
+  }
+  .org-tagline {
+    font-size: 11px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Container & Body Padding */
+  .container {
+    padding: 0 16px;
+  }
+
+  body {
+    padding-bottom: 60px; /* Space for sticky bottom bar */
+  }
+
+  /* Section Spacing & Fluid Headings */
+  .governing-section, 
+  .campaigns-section, 
+  .gallery-section-home, 
+  .donation-section, 
+  .join-us-section, 
+  .news-events-section, 
+  .testimonials-section, 
+  .dept-section, 
+  .page-banner {
+    padding: 40px 0 !important;
+  }
+
+  .section-title, .page-banner-title {
+    font-size: clamp(21px, 5.5vw, 28px) !important;
+    line-height: 1.25 !important;
+  }
+
+  .section-subtitle, .page-banner-desc {
+    font-size: 13.5px !important;
+    line-height: 1.55 !important;
+  }
+
+  .section-header {
+    margin-bottom: 22px !important;
+  }
+
+  /* Compact Mobile Top Bar */
+  .top-bar {
+    padding: 6px 0;
+  }
+
+  .top-bar-inner {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .top-contact-info span:not(:first-child),
+  .social-links-top,
+  .accessibility-tools {
+    display: none;
+  }
+
+  .top-contact-info span:first-child {
+    font-size: 11px;
+    font-weight: 600;
+    color: #E2E8F0;
+  }
+
+  .top-contact-info span:first-child i {
+    color: var(--primary-orange);
+  }
+
+  .language-switcher select {
+    padding: 2px 6px;
+    font-size: 11.5px;
+  }
+
+  /* Header & Logo */
+  .header-main {
+    padding: 8px 0;
+  }
+
+  .header-wrapper.scrolled .header-main {
+    padding: 6px 0;
+  }
+
+  .brand-block {
+    gap: 10px;
+    max-width: calc(100% - 54px);
+  }
+
+  .logo-container {
+    min-width: 48px;
+    padding-right: 10px;
+    border-right: 2px solid var(--primary-orange);
+  }
+
+  .org-logo {
+    height: 48px !important;
+    width: 48px !important;
+  }
+
+  .header-wrapper.scrolled .org-logo {
+    height: 42px !important;
+    width: 42px !important;
+  }
+
+  .org-name {
+    font-size: clamp(14px, 4.2vw, 17px) !important;
+    line-height: 1.15;
+    font-weight: 800;
+  }
+
+  .org-tagline {
+    font-size: 10px !important;
+    line-height: 1.2;
+    margin-top: 2px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Notice Ticker on Mobile */
+  .notice-ticker {
+    padding: 6px 0;
+  }
+
+  .notice-ticker .container {
+    gap: 8px;
+  }
+
+  .ticker-label {
+    padding: 4px 8px;
+    font-size: 10.5px;
+    gap: 4px;
+  }
+
+  .ticker-content {
+    font-size: 12px;
+  }
+
+  .ticker-item {
+    padding-right: 25px;
+  }
+
+  .ticker-item::after {
+    margin-left: 25px;
+  }
+
+  .ticker-view-all {
+    padding: 3px 8px;
+    font-size: 10.5px;
+  }
+
+  /* Hero Section Action Buttons Stack */
+  .governing-hero-section .section-header > div:last-child {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px !important;
+  }
+
+  .governing-hero-section .btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 46px;
+    font-size: 13.5px;
+  }
+
+  /* Governing Tiers & State Pills on Mobile */
+  .governing-tier-nav {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+    margin: 15px 0 12px;
+  }
+
+  .governing-tier-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .governing-state-pills {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 4px 6px 12px;
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .governing-state-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .state-pill {
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 6px 12px;
+    font-size: 11.5px;
+  }
+
+  .governing-search-box {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .governing-search-box input {
+    min-height: 46px;
+    font-size: 14px;
+  }
+
   /* Single Column Grids for Mobile */
   .dept-grid, 
   .form-grid-2, 
@@ -2991,24 +3098,25 @@ body.nav-open {
   .news-events-container, 
   .news-grid,
   .donation-grid,
-  .join-grid-layout {
+  .join-grid-layout,
+  .campaigns-grid {
     grid-template-columns: 1fr !important;
-    gap: 20px;
+    gap: 18px;
   }
 
   .gallery-grid-compact {
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 10px;
   }
 
   /* Form & Input Touch Optimization (Prevents iOS Auto Zoom) */
   input, select, textarea, .form-control {
     font-size: 16px !important;
-    min-height: 46px;
+    min-height: 48px;
   }
 
   .form-container-box, .join-form-card {
-    padding: 22px 18px !important;
+    padding: 20px 16px !important;
   }
 
   .form-group {
@@ -3017,18 +3125,18 @@ body.nav-open {
 
   /* Donation Calculator Mobile Optimization */
   .donation-calculator-card {
-    padding: 22px 16px !important;
+    padding: 20px 14px !important;
   }
 
   .amount-presets-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 8px;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px;
   }
 
   .preset-chip {
-    min-height: 48px;
-    padding: 12px 6px;
-    font-size: 15px;
+    min-height: 46px;
+    padding: 10px 4px;
+    font-size: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3037,12 +3145,12 @@ body.nav-open {
   .freq-btn {
     min-height: 42px;
     font-size: 13px;
-    padding: 8px 10px;
+    padding: 8px 6px;
   }
 
   /* Campaign & Department Cards Mobile Optimization */
   .campaign-card, .dept-card, .governing-card, .news-card {
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
   .campaign-actions {
@@ -3106,26 +3214,35 @@ body.nav-open {
     grid-template-columns: 1fr;
   }
 
+  .amount-presets-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
   .brand-block {
     gap: 8px;
   }
 
   .logo-container {
-    min-width: 52px;
+    min-width: 42px;
     padding-right: 8px;
   }
 
   .org-logo {
-    height: 52px !important;
-    width: 52px !important;
+    height: 42px !important;
+    width: 42px !important;
   }
 
   .org-name {
-    font-size: 15px !important;
+    font-size: 14.5px !important;
+  }
+
+  .org-tagline {
+    font-size: 9.5px !important;
   }
 
   .campaign-actions {
     grid-template-columns: 1fr;
+    gap: 6px;
   }
 }
 
