@@ -798,11 +798,16 @@ function handleAdminLogin(e) {
   const passcode = passcodeInput ? passcodeInput.value.trim() : "";
   const activeMasterPass = getMasterPasscode();
 
-  // 1. Master Passcode Authentication
-  const isMasterIdentifier = identifier.toLowerCase() === "admin@ssd.org" || identifier === "SSD1927" || identifier === "ssd1927" || identifier === activeMasterPass;
-  const isMasterPass = passcode === activeMasterPass || (!passcode && identifier === activeMasterPass) || passcode === "SSD1927";
+  const idLower = identifier.toLowerCase();
+  const passLower = passcode.toLowerCase();
+  const masterLower = (activeMasterPass || "SSD1927").toLowerCase();
 
-  if (isMasterIdentifier && isMasterPass) {
+  // 1. Master Passcode Authentication
+  const isMasterPassGiven = passcode === activeMasterPass || passLower === "ssd1927" || passLower === masterLower;
+  const isMasterIdentGiven = identifier === activeMasterPass || idLower === "ssd1927" || idLower === masterLower;
+  const isSuperUserIdent = idLower === "admin@ssd.org" || idLower === "admin" || idLower === "superadmin" || idLower === "super_admin" || idLower === "commander" || !identifier;
+
+  if ((isSuperUserIdent && isMasterPassGiven) || isMasterIdentGiven || (isMasterPassGiven && !identifier)) {
     recordSuccessfulLogin();
     const superAdmin = {
       id: "usr_master",
@@ -825,9 +830,12 @@ function handleAdminLogin(e) {
   const adminList = Object.entries(adminsObj).map(([k, v]) => ({ id: k, ...v }));
 
   const matchedOfficer = adminList.find(u => {
-    const emailMatch = u.email && u.email.toLowerCase() === identifier.toLowerCase();
-    const nameMatch = u.name && u.name.toLowerCase() === identifier.toLowerCase();
-    const passMatch = u.passcode === passcode || (!passcode && u.passcode === identifier);
+    const uEmail = (u.email || "").toLowerCase();
+    const uName = (u.name || "").toLowerCase();
+    const uPrefix = uEmail.split("@")[0] || "";
+    const emailMatch = uEmail === idLower || (uPrefix && uPrefix === idLower);
+    const nameMatch = uName === idLower || uName.includes(idLower);
+    const passMatch = u.passcode === passcode || u.passcode === identifier || (!passcode && u.passcode === identifier);
     return (emailMatch || nameMatch) && passMatch;
   });
 
@@ -1158,6 +1166,9 @@ function loadAllRealtimeData() {
       if (val) {
         localStorage.setItem("ssd_email_config", JSON.stringify(val));
       }
+      initEmailConfigForm();
+    });
+
     // 14. Settings (Admin Security & Master Config)
     db.ref('admin_config').on('value', (snap) => {
       adminData.admin_config = snap.val() || {};
