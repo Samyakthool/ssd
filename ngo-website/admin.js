@@ -332,6 +332,9 @@ const ssdInitialSeed = {
 // INITIALIZATION & AUTHENTICATION
 // ==========================================================================
 function getActiveFirebaseConfig() {
+  if (firebaseConfig && firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
+    return firebaseConfig;
+  }
   try {
     const custom = localStorage.getItem("ssd_firebase_config");
     if (custom) return JSON.parse(custom);
