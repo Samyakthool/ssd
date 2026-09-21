@@ -4258,15 +4258,120 @@ function closeAdminModal(modalId) {
 
 function updateImagePreview(imgElementId, url) {
   const img = document.getElementById(imgElementId);
+  const clearBtn = document.getElementById(imgElementId.replace("Preview", "ClearBtn"));
+  const infoEl = document.getElementById(imgElementId + "Info");
   if (img) {
-    if (url && url.startsWith("http")) {
+    if (url && (url.startsWith("http") || url.startsWith("data:image/") || url.startsWith("blob:") || url.includes("."))) {
       img.src = url;
       img.style.display = "block";
+      if (clearBtn) clearBtn.style.display = "inline-flex";
+      if (infoEl && !url.startsWith("data:image/")) {
+        infoEl.innerHTML = `<span style="color: var(--text-muted); font-size: 11px;"><i class="fa-solid fa-link"></i> Web URL Source</span>`;
+        infoEl.style.display = "block";
+      }
     } else {
       img.style.display = "none";
+      if (clearBtn) clearBtn.style.display = "none";
+      if (infoEl) {
+        infoEl.innerHTML = "";
+        infoEl.style.display = "none";
+      }
     }
   }
 }
+
+// Local Image File Upload & Auto-Compressor
+function handleLocalImageUpload(inputElement, targetUrlInputId, previewImgId, maxWidth = 800, quality = 0.85) {
+  if (!inputElement || !inputElement.files || !inputElement.files[0]) return;
+  const file = inputElement.files[0];
+
+  if (!file.type.startsWith("image/")) {
+    showToast("Please select a valid image file (JPG, PNG, WebP, etc.).", "error");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const rawDataUrl = e.target.result;
+    
+    // Create an image object to compress
+    const tempImg = new Image();
+    tempImg.onload = function() {
+      const canvas = document.createElement("canvas");
+      let width = tempImg.width;
+      let height = tempImg.height;
+
+      // Scale down if larger than maxWidth
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(tempImg, 0, 0, width, height);
+
+      // Convert to compressed WebP/JPEG Data URL
+      const compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
+
+      // Populate the target URL input
+      const targetInput = document.getElementById(targetUrlInputId);
+      if (targetInput) {
+        targetInput.value = compressedDataUrl;
+        targetInput.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+
+      // Update Preview
+      const previewImg = document.getElementById(previewImgId);
+      if (previewImg) {
+        previewImg.src = compressedDataUrl;
+        previewImg.style.display = "block";
+      }
+
+      const clearBtn = document.getElementById(previewImgId.replace("Preview", "ClearBtn"));
+      if (clearBtn) clearBtn.style.display = "inline-flex";
+
+      const infoEl = document.getElementById(previewImgId + "Info");
+      if (infoEl) {
+        const sizeKb = Math.round((compressedDataUrl.length * 0.75) / 1024);
+        infoEl.innerHTML = `<span style="color: #10B981; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Loaded from system: <strong>${escapeHtml(file.name)}</strong> (~${sizeKb} KB)</span>`;
+        infoEl.style.display = "block";
+      }
+
+      showToast(`Image "${file.name}" loaded successfully from device!`, "success");
+    };
+    tempImg.src = rawDataUrl;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImageUpload(targetUrlInputId, previewImgId, fileInputId) {
+  const targetInput = document.getElementById(targetUrlInputId);
+  if (targetInput) {
+    targetInput.value = "";
+    targetInput.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  const previewImg = document.getElementById(previewImgId);
+  if (previewImg) {
+    previewImg.src = "";
+    previewImg.style.display = "none";
+  }
+  const fileInput = document.getElementById(fileInputId);
+  if (fileInput) fileInput.value = "";
+  
+  const clearBtn = document.getElementById(previewImgId.replace("Preview", "ClearBtn"));
+  if (clearBtn) clearBtn.style.display = "none";
+
+  const infoEl = document.getElementById(previewImgId + "Info");
+  if (infoEl) {
+    infoEl.innerHTML = "";
+    infoEl.style.display = "none";
+  }
+}
+
+window.handleLocalImageUpload = handleLocalImageUpload;
+window.clearImageUpload = clearImageUpload;
 
 function showToast(message, type = "success") {
   const toast = document.getElementById("adminToast");

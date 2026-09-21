@@ -1159,9 +1159,28 @@
             </div>
           </div>
           <div class="form-group-modal">
-            <label for="newsImageUrl">Image Banner URL</label>
-            <input type="url" id="newsImageUrl" required placeholder="https://images.unsplash.com/..." oninput="updateImagePreview('newsImagePreview', this.value)">
-            <img id="newsImagePreview" src="" alt="Preview" style="max-height: 120px; object-fit: cover; border-radius: 6px; margin-top: 8px; display: none;">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+              <span>Featured Image Banner</span>
+              <small style="color: var(--text-muted); font-weight: normal;">Upload from Device or paste URL</small>
+            </label>
+            <div class="admin-image-upload-box">
+              <div class="admin-file-picker-wrapper">
+                <label class="btn-admin-file-upload">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                  <span>Upload Image from Device</span>
+                  <input type="file" id="newsImageFileInput" accept="image/*" style="display: none;" onchange="handleLocalImageUpload(this, 'newsImageUrl', 'newsImagePreview')">
+                </label>
+                <span class="upload-or-divider">OR</span>
+              </div>
+              <input type="text" id="newsImageUrl" required placeholder="Paste direct image URL (https://...) or choose file above" oninput="updateImagePreview('newsImagePreview', this.value)">
+              <div class="image-preview-wrapper" style="margin-top: 10px; display: flex; align-items: center; gap: 14px;">
+                <img id="newsImagePreview" src="" alt="Preview" style="max-height: 100px; max-width: 140px; object-fit: cover; border-radius: 8px; border: 2px solid var(--primary-orange); display: none;">
+                <div id="newsImagePreviewInfo" style="font-size: 12px; line-height: 1.4; display: none;"></div>
+                <button type="button" class="btn-clear-img" onclick="clearImageUpload('newsImageUrl', 'newsImagePreview', 'newsImageFileInput')" style="margin-left: auto; border: 1px solid #CBD5E1; background: #FFF; color: #DC2626; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; display: none;" id="newsImageClearBtn">
+                  <i class="fa-solid fa-trash-can"></i> Remove
+                </button>
+              </div>
+            </div>
           </div>
           <div class="form-group-modal">
             <label for="newsExcerpt">Executive Summary / Excerpt</label>
@@ -1266,8 +1285,28 @@
             </div>
           </div>
           <div class="form-group-modal">
-            <label for="campaignImageUrl">Image URL</label>
-            <input type="url" id="campaignImageUrl" required placeholder="https://images.unsplash.com/...">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+              <span>Campaign Banner Image</span>
+              <small style="color: var(--text-muted); font-weight: normal;">Upload from Device or paste URL</small>
+            </label>
+            <div class="admin-image-upload-box">
+              <div class="admin-file-picker-wrapper">
+                <label class="btn-admin-file-upload">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                  <span>Upload Image from Device</span>
+                  <input type="file" id="campaignImageFileInput" accept="image/*" style="display: none;" onchange="handleLocalImageUpload(this, 'campaignImageUrl', 'campaignImagePreview')">
+                </label>
+                <span class="upload-or-divider">OR</span>
+              </div>
+              <input type="text" id="campaignImageUrl" required placeholder="Paste direct image URL (https://...) or choose file above" oninput="updateImagePreview('campaignImagePreview', this.value)">
+              <div class="image-preview-wrapper" style="margin-top: 10px; display: flex; align-items: center; gap: 14px;">
+                <img id="campaignImagePreview" src="" alt="Preview" style="max-height: 100px; max-width: 140px; object-fit: cover; border-radius: 8px; border: 2px solid var(--primary-orange); display: none;">
+                <div id="campaignImagePreviewInfo" style="font-size: 12px; line-height: 1.4; display: none;"></div>
+                <button type="button" class="btn-clear-img" onclick="clearImageUpload('campaignImageUrl', 'campaignImagePreview', 'campaignImageFileInput')" style="margin-left: auto; border: 1px solid #CBD5E1; background: #FFF; color: #DC2626; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; display: none;" id="campaignImageClearBtn">
+                  <i class="fa-solid fa-trash-can"></i> Remove
+                </button>
+              </div>
+            </div>
           </div>
           <div class="form-group-modal">
             <label for="campaignDescription">Campaign Purpose</label>
@@ -1292,9 +1331,28 @@
       <form id="formGallery" onsubmit="handleSaveGallery(event)">
         <div class="admin-modal-body">
           <div class="form-group-modal">
-            <label for="galleryImageUrl">Image URL</label>
-            <input type="url" id="galleryImageUrl" required placeholder="https://images.unsplash.com/..." oninput="updateImagePreview('galleryImagePreview', this.value)">
-            <img id="galleryImagePreview" src="" alt="Preview" style="max-height: 120px; object-fit: cover; border-radius: 6px; margin-top: 8px; display: none;">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+              <span>Archive Photograph</span>
+              <small style="color: var(--text-muted); font-weight: normal;">Upload from Device or paste URL</small>
+            </label>
+            <div class="admin-image-upload-box">
+              <div class="admin-file-picker-wrapper">
+                <label class="btn-admin-file-upload">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                  <span>Upload Photo from Device</span>
+                  <input type="file" id="galleryImageFileInput" accept="image/*" style="display: none;" onchange="handleLocalImageUpload(this, 'galleryImageUrl', 'galleryImagePreview')">
+                </label>
+                <span class="upload-or-divider">OR</span>
+              </div>
+              <input type="text" id="galleryImageUrl" required placeholder="Paste direct image URL (https://...) or choose file above" oninput="updateImagePreview('galleryImagePreview', this.value)">
+              <div class="image-preview-wrapper" style="margin-top: 10px; display: flex; align-items: center; gap: 14px;">
+                <img id="galleryImagePreview" src="" alt="Preview" style="max-height: 100px; max-width: 140px; object-fit: cover; border-radius: 8px; border: 2px solid var(--primary-orange); display: none;">
+                <div id="galleryImagePreviewInfo" style="font-size: 12px; line-height: 1.4; display: none;"></div>
+                <button type="button" class="btn-clear-img" onclick="clearImageUpload('galleryImageUrl', 'galleryImagePreview', 'galleryImageFileInput')" style="margin-left: auto; border: 1px solid #CBD5E1; background: #FFF; color: #DC2626; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; display: none;" id="galleryImageClearBtn">
+                  <i class="fa-solid fa-trash-can"></i> Remove
+                </button>
+              </div>
+            </div>
           </div>
           <div class="form-group-modal">
             <label for="galleryCaption">Photo Caption</label>
@@ -1478,9 +1536,28 @@
             </div>
           </div>
           <div class="form-group-modal">
-            <label for="leadPhotoUrl">Officer Photograph URL</label>
-            <input type="url" id="leadPhotoUrl" required placeholder="https://..." oninput="updateImagePreview('leadPhotoPreview', this.value)">
-            <img id="leadPhotoPreview" src="" alt="Officer Photo Preview" style="display: none; width: 60px; height: 60px; object-fit: cover; border-radius: 50%; margin-top: 8px; border: 2px solid var(--primary-orange);">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+              <span>Officer Photograph</span>
+              <small style="color: var(--text-muted); font-weight: normal;">Upload from Device or paste URL</small>
+            </label>
+            <div class="admin-image-upload-box">
+              <div class="admin-file-picker-wrapper">
+                <label class="btn-admin-file-upload">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                  <span>Upload Photo from Device</span>
+                  <input type="file" id="leadPhotoFileInput" accept="image/*" style="display: none;" onchange="handleLocalImageUpload(this, 'leadPhotoUrl', 'leadPhotoPreview', 600, 0.88)">
+                </label>
+                <span class="upload-or-divider">OR</span>
+              </div>
+              <input type="text" id="leadPhotoUrl" required placeholder="Paste direct image URL (https://...) or choose photo above" oninput="updateImagePreview('leadPhotoPreview', this.value)">
+              <div class="image-preview-wrapper" style="margin-top: 10px; display: flex; align-items: center; gap: 14px;">
+                <img id="leadPhotoPreview" src="" alt="Officer Photo Preview" style="display: none; width: 68px; height: 68px; object-fit: cover; border-radius: 50%; border: 3px solid var(--primary-orange); box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+                <div id="leadPhotoPreviewInfo" style="font-size: 12px; line-height: 1.4; display: none;"></div>
+                <button type="button" class="btn-clear-img" onclick="clearImageUpload('leadPhotoUrl', 'leadPhotoPreview', 'leadPhotoFileInput')" style="margin-left: auto; border: 1px solid #CBD5E1; background: #FFF; color: #DC2626; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; display: none;" id="leadPhotoClearBtn">
+                  <i class="fa-solid fa-trash-can"></i> Remove
+                </button>
+              </div>
+            </div>
           </div>
           <div class="form-group-modal">
             <label for="leadCredentials">Official Credentials & Location</label>

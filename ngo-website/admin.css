@@ -1560,4 +1560,65 @@ body {
   border-radius: 0 0 14px 14px;
 }
 
+/* ==========================================================================
+   ADMIN IMAGE UPLOAD BOX & LOCAL FILE PICKER
+   ========================================================================== */
+.admin-image-upload-box {
+  background: #F8FAFC;
+  border: 1.5px dashed #CBD5E1;
+  border-radius: 10px;
+  padding: 14px 16px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.admin-image-upload-box:hover {
+  border-color: var(--primary-orange);
+  background: #FFFFFF;
+}
+
+.admin-file-picker-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.btn-admin-file-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--dark-navy, #001F3F);
+  color: #FFFFFF !important;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 31, 63, 0.15);
+  user-select: none;
+}
+
+.btn-admin-file-upload:hover {
+  background: var(--primary-orange, #FF6B00);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.25);
+}
+
+.upload-or-divider {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-muted, #64748B);
+  letter-spacing: 0.6px;
+}
+
+.btn-clear-img {
+  transition: all 0.2s ease;
+}
+
+.btn-clear-img:hover {
+  background: #FEE2E2 !important;
+  border-color: #EF4444 !important;
+}
+
 
