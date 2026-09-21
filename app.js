@@ -343,6 +343,7 @@ function seedSampleFirebaseData() {
 document.addEventListener("DOMContentLoaded", () => {
   initStickyHeader();
   initMobileInteractions();
+  updateDbStatus(isFirebaseLive, isFirebaseLive ? "Connected to Live SSD Firebase Database" : "SSD Official Demo Ready (Connect Firebase in Admin Panel)");
   if (document.getElementById("statMembers")) loadStats();
   if (document.getElementById("campaignsContainer")) loadCampaigns();
   if (document.getElementById("newsContainer")) loadNews();
