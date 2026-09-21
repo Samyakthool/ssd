@@ -464,19 +464,40 @@ const ssdSampleData = {
   },
   advisoryBoard: [
     {
+      id: "adv_1",
       name: "Prof. Yashwantrao More",
-      role: "Senior Ambedkarite Historian & Author",
-      photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80"
+      designation: "Senior Advisory & Elders Council Member (मार्गदर्शक मंडल सदस्य)",
+      category: "Advisory Board",
+      level: "national",
+      state: "National HQ",
+      rankBadge: "Senior Ideologue & Historian",
+      credentials: "Ph.D. History, Author & Senior Historian | Pune HQ",
+      bio: "Prof. Yashwantrao More is a veteran Ambedkarite scholar with over 45 years dedicated to social movement historiography. Author of 12+ authoritative treatises on Babasaheb Ambedkar's Satyagrahas and the founding of Samata Sainik Dal, he guides the Central Command on ideological preservation and youth cadet curriculum.",
+      photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80"
     },
     {
+      id: "adv_2",
       name: "Adv. Rekha Gaikwad",
-      role: "Human Rights Defender & Constitutional Scholar",
-      photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=150&q=80"
+      designation: "Senior Advisory & Elders Council Member (मार्गदर्शक मंडल सदस्य)",
+      category: "Advisory Board",
+      level: "national",
+      state: "National HQ",
+      rankBadge: "Constitutional & Human Rights Jurist",
+      credentials: "Senior Human Rights Defender, High Court Advocate | Mumbai Central HQ",
+      bio: "Adv. Rekha Gaikwad is an eminent constitutional lawyer and social activist with four decades of frontline advocacy in western India. She mentors SSD's National Legal Cell on high-impact public interest litigations, atrocities defense tribunals, and grassroots women self-defense workshops.",
+      photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80"
     },
     {
+      id: "adv_3",
       name: "Commander Suresh Jadhav",
-      role: "Veteran 1956 Deekshabhoomi Parade Organizer",
-      photoUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=150&q=80"
+      designation: "Senior Advisory & Elders Council Member (मार्गदर्शक मंडल सदस्य)",
+      category: "Advisory Board",
+      level: "national",
+      state: "National HQ",
+      rankBadge: "1956 Deekshabhoomi Parade Organizer",
+      credentials: "Veteran Guard of Honor Dalpati | Nagpur HQ",
+      bio: "Commander Suresh Jadhav stands as a living legend of the movement, having personally marshaled the volunteer cadet platoons during the historic 14 October 1956 Deekshabhoomi Dhamma Deeksha in Nagpur under Dr. Babasaheb Ambedkar. He continues to instruct Dalpatis in parade discipline and ceremonial honor drills.",
+      photoUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=400&q=80"
     }
   ]
 };
@@ -1356,6 +1377,7 @@ function initMobileInteractions() {
       closeNewsModal();
       closeLightbox();
       closeDonationModal();
+      closeOfficerPortfolioModal();
     }
   });
 
@@ -1623,7 +1645,7 @@ function renderGoverningCards(leadersList) {
       }
 
       return `
-        <div class="governing-card" data-level="${isDistrict ? 'district' : (isState ? 'state' : 'national')}" data-state="${escapeHtml(stateName)}">
+        <div class="governing-card" data-level="${isDistrict ? 'district' : (isState ? 'state' : 'national')}" data-state="${escapeHtml(stateName)}" onclick="openOfficerPortfolioModal('${escapeHtml(lead.id || lead.name)}', false)" title="Click to view ${escapeHtml(lead.name)}'s official portfolio dossier">
           <div class="governing-header">
             <img src="${lead.photoUrl}" alt="${escapeHtml(lead.name)}" class="governing-photo" onerror="this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80'">
             <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> ${escapeHtml(badgeText)}</span>
@@ -1637,6 +1659,10 @@ function renderGoverningCards(leadersList) {
               <i class="fa-solid fa-certificate" style="color: var(--primary-orange);"></i>
               <span>${escapeHtml(lead.credentials || (lead.district ? lead.district + ' | ' + stateName : stateName))}</span>
             </div>
+            <div class="view-portfolio-action">
+              <span><i class="fa-solid fa-id-card"></i> Official Dossier</span>
+              <span>View Full Portfolio &rarr;</span>
+            </div>
           </div>
         </div>
       `;
@@ -1644,15 +1670,16 @@ function renderGoverningCards(leadersList) {
   }
 
   if (advisoryContainer) {
-    const advisoryMembers = window._allGoverningLeaders.filter(l => l.category === "Advisory Board");
+    const advisoryMembers = (window._allGoverningLeaders || []).filter(l => l.category === "Advisory Board");
     const advToUse = advisoryMembers.length > 0 ? advisoryMembers : (ssdSampleData.advisoryBoard || []);
-    advisoryContainer.innerHTML = advToUse.map(adv => `
-      <div class="advisory-member">
-        <img src="${adv.photoUrl}" alt="${adv.name}" class="advisory-avatar" onerror="this.src='https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80'">
-        <div>
-          <div class="advisory-name">${adv.name}</div>
-          <div class="advisory-role">${adv.credentials || adv.role || 'Senior Advisory Member'}</div>
+    advisoryContainer.innerHTML = advToUse.map((adv, idx) => `
+      <div class="advisory-member" onclick="openOfficerPortfolioModal('${escapeHtml(adv.id || adv.name || idx)}', true)" title="Click to view ${escapeHtml(adv.name)}'s complete advisory portfolio & movement history">
+        <img src="${adv.photoUrl}" alt="${escapeHtml(adv.name)}" class="advisory-avatar" onerror="this.src='https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80'">
+        <div style="flex: 1; min-width: 0;">
+          <div class="advisory-name">${escapeHtml(adv.name)}</div>
+          <div class="advisory-role">${escapeHtml(adv.credentials || adv.role || 'Senior Advisory Member')}</div>
         </div>
+        <span class="advisory-portfolio-badge"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open Portfolio</span>
       </div>
     `).join('');
   }
@@ -1808,6 +1835,156 @@ function loadGoverningBody() {
     renderGoverningCards(Object.values(ssdSampleData.governingBody).filter(isContentApproved));
   }
 }
+
+// ==========================================================================
+// OFFICER & SENIOR ADVISORY PORTFOLIO MODAL
+// ==========================================================================
+function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
+  let leader = null;
+  const allLeaders = window._allGoverningLeaders || Object.values(ssdSampleData.governingBody || {});
+  const advList = (window._allGoverningLeaders || []).filter(l => l.category === "Advisory Board").length > 0 
+    ? (window._allGoverningLeaders || []).filter(l => l.category === "Advisory Board") 
+    : (ssdSampleData.advisoryBoard || []);
+
+  if (typeof leaderOrId === 'string' || typeof leaderOrId === 'number') {
+    const idOrName = String(leaderOrId).toLowerCase().trim();
+    
+    // 1. Check Advisory List first if isAdvisory is true
+    if (isAdvisory) {
+      if (typeof leaderOrId === 'number' || (!isNaN(leaderOrId) && leaderOrId !== '')) {
+        leader = advList[Number(leaderOrId)];
+      }
+      if (!leader) {
+        leader = advList.find(a => (a.id && String(a.id).toLowerCase() === idOrName) || (a.name && a.name.toLowerCase().includes(idOrName)));
+      }
+    }
+
+    // 2. Search in all leaders
+    if (!leader) {
+      leader = allLeaders.find(l => (l.id && String(l.id).toLowerCase() === idOrName) || (l.name && l.name.toLowerCase().includes(idOrName)));
+    }
+
+    // 3. Fallback search in advisory list if not found yet
+    if (!leader) {
+      leader = advList.find(a => (a.id && String(a.id).toLowerCase() === idOrName) || (a.name && a.name.toLowerCase().includes(idOrName)));
+    }
+  } else if (typeof leaderOrId === 'object' && leaderOrId !== null) {
+    leader = leaderOrId;
+  }
+
+  if (!leader) {
+    console.warn("Officer portfolio not found for:", leaderOrId);
+    return;
+  }
+
+  const modal = document.getElementById("officerPortfolioModal");
+  if (!modal) return;
+
+  const photoEl = document.getElementById("portfolioOfficerPhoto");
+  const nameEl = document.getElementById("portfolioOfficerName");
+  const desigEl = document.getElementById("portfolioOfficerDesignation");
+  const tierBadgeEl = document.getElementById("portfolioOfficerTierBadge");
+  const rankBadgeEl = document.getElementById("portfolioOfficerRankBadge");
+  const credEl = document.getElementById("portfolioOfficerCredentials");
+  const hqEl = document.getElementById("portfolioOfficerHQ");
+  const bioEl = document.getElementById("portfolioOfficerBio");
+  const focusAreasEl = document.getElementById("portfolioOfficerFocusAreas");
+  const wingEl = document.getElementById("portfolioOfficerWing");
+
+  const isAdv = leader.category === "Advisory Board" || (leader.designation && leader.designation.includes("Advisory")) || (leader.rankBadge && leader.rankBadge.includes("Advisory")) || isAdvisory;
+  const isDistrict = (leader.level === 'district');
+  const isState = (leader.level === 'state') || (!isDistrict && leader.state && leader.state !== 'National HQ' && leader.state !== 'All-India');
+  const stateName = leader.state || (isDistrict || isState ? 'Maharashtra' : 'National HQ');
+
+  if (photoEl) {
+    photoEl.src = leader.photoUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80";
+    photoEl.alt = leader.name || "Officer Portfolio";
+  }
+  if (nameEl) nameEl.textContent = leader.name || "Command Leader";
+  if (desigEl) desigEl.textContent = leader.designation || leader.role || (isAdv ? "Senior Advisory & Elders Council Member (मार्गदर्शक मंडल सदस्य)" : "Executive Officer");
+  
+  if (tierBadgeEl) {
+    if (isAdv) {
+      tierBadgeEl.innerHTML = `<i class="fa-solid fa-scale-balanced"></i> Senior Advisory & Elders Council (मार्गदर्शक मंडल)`;
+      tierBadgeEl.className = "portfolio-tier-badge advisory";
+    } else if (isDistrict) {
+      tierBadgeEl.innerHTML = `<i class="fa-solid fa-location-dot"></i> District Directorate (${escapeHtml(leader.district || stateName)})`;
+      tierBadgeEl.className = "portfolio-tier-badge district";
+    } else if (isState) {
+      tierBadgeEl.innerHTML = `<i class="fa-solid fa-map-pin"></i> ${escapeHtml(stateName)} State Chapter Command`;
+      tierBadgeEl.className = "portfolio-tier-badge state";
+    } else {
+      tierBadgeEl.innerHTML = `<i class="fa-solid fa-landmark"></i> National Supreme Command Council`;
+      tierBadgeEl.className = "portfolio-tier-badge national";
+    }
+  }
+
+  if (rankBadgeEl) {
+    rankBadgeEl.textContent = leader.rankBadge || (isAdv ? "Senior Advisory Council" : (isDistrict ? `${leader.district || stateName} District Command` : (isState ? `${stateName} State Command` : "National Central HQ")));
+  }
+
+  if (credEl) {
+    credEl.textContent = leader.credentials || (leader.district ? `${leader.district} | ${stateName}` : (isAdv ? "Senior Advisory Fellow & Movement Scholar" : stateName));
+  }
+
+  if (hqEl) {
+    hqEl.textContent = isDistrict ? `${leader.district || 'Nagpur'}, ${stateName}` : (isState ? `${stateName} State HQ` : 'National HQ (New Delhi / Nagpur)');
+  }
+
+  if (wingEl) {
+    wingEl.textContent = leader.category || (isAdv ? "Senior Advisory (मार्गदर्शक मंडल)" : "Supreme Council");
+  }
+
+  if (bioEl) {
+    let bioText = leader.bio || "";
+    if (!bioText || bioText.length < 50) {
+      if (isAdv) {
+        bioText = `${leader.name} serves on the Senior Advisory & Elders Council (मार्गदर्शक मंडल) of Samata Sainik Dal, providing veteran ideological direction, historical research guidance, and policy oversight for nationwide movement expansion in accordance with Bodhisattva Dr. B.R. Ambedkar's foundational 1927 charter.`;
+      } else {
+        bioText = `${leader.name} serves as ${leader.designation || 'Command Officer'} in Samata Sainik Dal, actively leading volunteer mobilizations, legal protection protocols, and constitutional awareness programs across the nation.`;
+      }
+    }
+    bioEl.textContent = bioText;
+  }
+
+  if (focusAreasEl) {
+    let tags = [];
+    if (isAdv) {
+      tags = ["Movement Ideology & Ethics", "Historical Archives & Treatises", "Constitutional Guidance", "Elders Mentorship", "Youth Direction", "Centenary 2027 Counsel"];
+    } else if (leader.designation && leader.designation.toLowerCase().includes("legal")) {
+      tags = ["Constitutional Law Defense", "SC/ST Atrocities Tribunal Support", "High Court & Supreme Court Petitions", "Cadet Civil Rights", "Pro-Bono Network"];
+    } else if (leader.designation && leader.designation.toLowerCase().includes("cadet")) {
+      tags = ["Military Drill Training", "Parade Protocols", "Physical Endurance Standards", "Cadet Discipline", "Guard of Honor Command"];
+    } else if (leader.designation && leader.designation.toLowerCase().includes("mahila")) {
+      tags = ["Mahila Dal Expansion", "Women Self-Defense", "Grassroots Legal Literacy", "Equal Rights Advocacy", "Community Organizing"];
+    } else if (leader.designation && leader.designation.toLowerCase().includes("treasur")) {
+      tags = ["Centenary Fund Audit", "80G Tax Exempt Compliances", "Financial Governance", "Transparent Public Accounting", "Resource Mobilization"];
+    } else {
+      tags = ["National Command Coordination", "State Chapter Administration", "Democratic Governance", "Sainik Enlistment", "Centenary 2027 Vision"];
+    }
+    focusAreasEl.innerHTML = tags.map(t => `<span class="portfolio-tag"><i class="fa-solid fa-check"></i> ${escapeHtml(t)}</span>`).join('');
+  }
+
+  modal.classList.add("active");
+  document.body.style.overflow = "hidden";
+}
+
+function closeOfficerPortfolioModal() {
+  const modal = document.getElementById("officerPortfolioModal");
+  if (modal) {
+    modal.classList.remove("active");
+    document.body.style.overflow = "auto";
+  }
+}
+
+function closeOfficerPortfolioModalOnBackdrop(e) {
+  if (e.target.id === "officerPortfolioModal") closeOfficerPortfolioModal();
+}
+
+window.openOfficerPortfolioModal = openOfficerPortfolioModal;
+window.closeOfficerPortfolioModal = closeOfficerPortfolioModal;
+window.closeOfficerPortfolioModalOnBackdrop = closeOfficerPortfolioModalOnBackdrop;
+
 
 // ==========================================================================
 // DONATION CALCULATOR & MODAL CONTROLLERS

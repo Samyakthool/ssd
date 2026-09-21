@@ -305,34 +305,42 @@
 
         <!-- Advisory Council Accordion -->
         <div style="margin-top: 50px; background: var(--white); border: 1px solid var(--border-color); border-radius: 12px; padding: 28px; box-shadow: var(--card-shadow);">
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
-            <i class="fa-solid fa-scale-balanced" style="font-size: 24px; color: var(--primary-orange);"></i>
-            <div>
-              <h3 style="font-family: var(--font-heading); font-size: 20px; color: var(--dark-navy); margin: 0;">Senior Advisory & Elders Council (मार्गदर्शक मंडल)</h3>
-              <p style="color: var(--muted-gray); font-size: 13px; margin: 3px 0 0;">Distinguished Ambedkarite thinkers, veteran freedom fighters, and movement elders guiding policy.</p>
-            </div>
-          </div>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 15px;">
-            <div style="display: flex; align-items: center; gap: 14px; padding: 14px; background: #F8FAFC; border-radius: 8px; border: 1px solid #E2E8F0;">
-              <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80" alt="Advisor" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-orange);">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 18px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <i class="fa-solid fa-scale-balanced" style="font-size: 24px; color: var(--primary-orange);"></i>
               <div>
+                <h3 style="font-family: var(--font-heading); font-size: 20px; color: var(--dark-navy); margin: 0;">Senior Advisory & Elders Council (मार्गदर्शक मंडल)</h3>
+                <p style="color: var(--muted-gray); font-size: 13px; margin: 3px 0 0;">Distinguished Ambedkarite thinkers, veteran freedom fighters, and movement elders guiding policy. Click any portfolio to view full dossier.</p>
+              </div>
+            </div>
+            <span style="font-size: 12px; font-weight: 700; color: var(--primary-orange); background: rgba(255,107,0,0.08); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,107,0,0.2);">
+              <i class="fa-solid fa-hand-pointer"></i> Click Profile to Open Portfolio
+            </span>
+          </div>
+          <div id="advisoryContainer" class="advisory-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 15px;">
+            <div class="advisory-member" onclick="openOfficerPortfolioModal('Prof. Yashwantrao More', true)" title="Click to view Prof. Yashwantrao More's complete advisory portfolio & movement history">
+              <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80" alt="Advisor" class="advisory-avatar" onerror="this.src='https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80'">
+              <div style="flex: 1; min-width: 0;">
                 <div class="advisory-name">Prof. Yashwantrao More</div>
                 <div class="advisory-role">Senior Ambedkarite Historian & Author</div>
               </div>
+              <span class="advisory-portfolio-badge"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open Portfolio</span>
             </div>
-            <div style="display: flex; align-items: center; gap: 14px; padding: 14px; background: #F8FAFC; border-radius: 8px; border: 1px solid #E2E8F0;">
-              <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=150&q=80" alt="Advisor" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-orange);">
-              <div>
+            <div class="advisory-member" onclick="openOfficerPortfolioModal('Adv. Rekha Gaikwad', true)" title="Click to view Adv. Rekha Gaikwad's complete advisory portfolio & movement history">
+              <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=150&q=80" alt="Advisor" class="advisory-avatar" onerror="this.src='https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=150&q=80'">
+              <div style="flex: 1; min-width: 0;">
                 <div class="advisory-name">Adv. Rekha Gaikwad</div>
                 <div class="advisory-role">Human Rights Defender & Scholar</div>
               </div>
+              <span class="advisory-portfolio-badge"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open Portfolio</span>
             </div>
-            <div style="display: flex; align-items: center; gap: 14px; padding: 14px; background: #F8FAFC; border-radius: 8px; border: 1px solid #E2E8F0;">
-              <img src="https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=150&q=80" alt="Advisor" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-orange);">
-              <div>
+            <div class="advisory-member" onclick="openOfficerPortfolioModal('Commander Suresh Jadhav', true)" title="Click to view Commander Suresh Jadhav's complete advisory portfolio & movement history">
+              <img src="https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=150&q=80" alt="Advisor" class="advisory-avatar" onerror="this.src='https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=150&q=80'">
+              <div style="flex: 1; min-width: 0;">
                 <div class="advisory-name">Commander Suresh Jadhav</div>
                 <div class="advisory-role">Veteran 1956 Deekshabhoomi Parade Organizer</div>
               </div>
+              <span class="advisory-portfolio-badge"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open Portfolio</span>
             </div>
           </div>
         </div>
@@ -1044,6 +1052,74 @@
           <span id="newsModalCategory"><i class="fa-solid fa-tag"></i> Category</span>
         </div>
         <div id="newsModalText" class="news-modal-text"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OFFICER & SENIOR ADVISORY PORTFOLIO MODAL -->
+  <div class="officer-portfolio-modal" id="officerPortfolioModal" onclick="closeOfficerPortfolioModalOnBackdrop(event)" role="dialog" aria-modal="true" aria-labelledby="portfolioOfficerName">
+    <div class="officer-portfolio-content" onclick="event.stopPropagation()">
+      <div class="officer-portfolio-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img src="logo.png" alt="SSD" onerror="handleLogoError(this)" style="height: 28px; width: 28px;">
+          <span style="font-weight: 700; font-size: 14px; letter-spacing: 0.5px; text-transform: uppercase;">Samata Sainik Dal &bull; Leadership Dossier</span>
+        </div>
+        <button type="button" class="portfolio-modal-close" onclick="closeOfficerPortfolioModal()" aria-label="Close Portfolio Modal">&times;</button>
+      </div>
+
+      <div class="officer-portfolio-body">
+        <!-- Hero Section -->
+        <div class="portfolio-hero-grid">
+          <div class="portfolio-photo-wrap">
+            <img src="" alt="Officer Profile" id="portfolioOfficerPhoto" class="portfolio-avatar">
+            <div class="portfolio-verified-badge"><i class="fa-solid fa-circle-check"></i> Verified SSD</div>
+          </div>
+          <div class="portfolio-hero-info">
+            <span id="portfolioOfficerTierBadge" class="portfolio-tier-badge advisory">
+              <i class="fa-solid fa-scale-balanced"></i> Senior Advisory & Elders Council (मार्गदर्शक मंडल)
+            </span>
+            <h2 id="portfolioOfficerName" class="portfolio-name">-</h2>
+            <div id="portfolioOfficerDesignation" class="portfolio-designation">-</div>
+            <div class="portfolio-meta-pills">
+              <span class="portfolio-pill"><i class="fa-solid fa-shield-halved" style="color: var(--primary-orange);"></i> <span id="portfolioOfficerRankBadge">Council Member</span></span>
+              <span class="portfolio-pill"><i class="fa-solid fa-location-dot" style="color: #0284C7;"></i> <span id="portfolioOfficerHQ">National Central HQ</span></span>
+              <span class="portfolio-pill"><i class="fa-solid fa-sitemap" style="color: #10B981;"></i> <span id="portfolioOfficerWing">Advisory Board</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="portfolio-divider"></div>
+
+        <!-- 2 Column Details -->
+        <div class="portfolio-details-grid">
+          <div>
+            <h4 class="portfolio-section-title"><i class="fa-solid fa-award" style="color: var(--primary-orange);"></i> Credentials & Background</h4>
+            <div class="portfolio-credentials-box" id="portfolioOfficerCredentials">-</div>
+          </div>
+          <div>
+            <h4 class="portfolio-section-title"><i class="fa-solid fa-compass" style="color: var(--primary-orange);"></i> Key Focus & Movement Portfolios</h4>
+            <div class="portfolio-tags-grid" id="portfolioOfficerFocusAreas"></div>
+          </div>
+        </div>
+
+        <div class="portfolio-divider"></div>
+
+        <!-- Biography / Movement Service Record -->
+        <div>
+          <h4 class="portfolio-section-title"><i class="fa-solid fa-scroll" style="color: var(--primary-orange);"></i> Movement Service Record & Biographical Dossier</h4>
+          <p class="portfolio-bio-text" id="portfolioOfficerBio">-</p>
+        </div>
+
+        <!-- Quote / Charter Pledge Box -->
+        <div class="portfolio-quote-box">
+          <i class="fa-solid fa-quote-left portfolio-quote-icon"></i>
+          <p class="portfolio-quote-text">"Samata Sainik Dal was established on 24 September 1927 by Bodhisattva Dr. B.R. Ambedkar to organize a disciplined, self-respecting non-violent vanguard for the defense of constitutional morality and social democracy."</p>
+        </div>
+      </div>
+
+      <div class="officer-portfolio-footer">
+        <a href="contact.html" class="btn btn-outline-navy btn-sm"><i class="fa-solid fa-envelope"></i> Contact Secretariat</a>
+        <button type="button" class="btn btn-navy btn-sm" onclick="closeOfficerPortfolioModal()"><i class="fa-solid fa-check"></i> Close Dossier</button>
       </div>
     </div>
   </div>

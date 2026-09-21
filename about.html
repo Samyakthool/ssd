@@ -277,6 +277,74 @@
     </div>
   </footer>
 
+  <!-- OFFICER & SENIOR ADVISORY PORTFOLIO MODAL -->
+  <div class="officer-portfolio-modal" id="officerPortfolioModal" onclick="closeOfficerPortfolioModalOnBackdrop(event)" role="dialog" aria-modal="true" aria-labelledby="portfolioOfficerName">
+    <div class="officer-portfolio-content" onclick="event.stopPropagation()">
+      <div class="officer-portfolio-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img src="logo.png" alt="SSD" onerror="handleLogoError(this)" style="height: 28px; width: 28px;">
+          <span style="font-weight: 700; font-size: 14px; letter-spacing: 0.5px; text-transform: uppercase;">Samata Sainik Dal &bull; Leadership Dossier</span>
+        </div>
+        <button type="button" class="portfolio-modal-close" onclick="closeOfficerPortfolioModal()" aria-label="Close Portfolio Modal">&times;</button>
+      </div>
+
+      <div class="officer-portfolio-body">
+        <!-- Hero Section -->
+        <div class="portfolio-hero-grid">
+          <div class="portfolio-photo-wrap">
+            <img src="" alt="Officer Profile" id="portfolioOfficerPhoto" class="portfolio-avatar">
+            <div class="portfolio-verified-badge"><i class="fa-solid fa-circle-check"></i> Verified SSD</div>
+          </div>
+          <div class="portfolio-hero-info">
+            <span id="portfolioOfficerTierBadge" class="portfolio-tier-badge advisory">
+              <i class="fa-solid fa-scale-balanced"></i> Senior Advisory & Elders Council (मार्गदर्शक मंडल)
+            </span>
+            <h2 id="portfolioOfficerName" class="portfolio-name">-</h2>
+            <div id="portfolioOfficerDesignation" class="portfolio-designation">-</div>
+            <div class="portfolio-meta-pills">
+              <span class="portfolio-pill"><i class="fa-solid fa-shield-halved" style="color: var(--primary-orange);"></i> <span id="portfolioOfficerRankBadge">Council Member</span></span>
+              <span class="portfolio-pill"><i class="fa-solid fa-location-dot" style="color: #0284C7;"></i> <span id="portfolioOfficerHQ">National Central HQ</span></span>
+              <span class="portfolio-pill"><i class="fa-solid fa-sitemap" style="color: #10B981;"></i> <span id="portfolioOfficerWing">Advisory Board</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="portfolio-divider"></div>
+
+        <!-- 2 Column Details -->
+        <div class="portfolio-details-grid">
+          <div>
+            <h4 class="portfolio-section-title"><i class="fa-solid fa-award" style="color: var(--primary-orange);"></i> Credentials & Background</h4>
+            <div class="portfolio-credentials-box" id="portfolioOfficerCredentials">-</div>
+          </div>
+          <div>
+            <h4 class="portfolio-section-title"><i class="fa-solid fa-compass" style="color: var(--primary-orange);"></i> Key Focus & Movement Portfolios</h4>
+            <div class="portfolio-tags-grid" id="portfolioOfficerFocusAreas"></div>
+          </div>
+        </div>
+
+        <div class="portfolio-divider"></div>
+
+        <!-- Biography / Movement Service Record -->
+        <div>
+          <h4 class="portfolio-section-title"><i class="fa-solid fa-scroll" style="color: var(--primary-orange);"></i> Movement Service Record & Biographical Dossier</h4>
+          <p class="portfolio-bio-text" id="portfolioOfficerBio">-</p>
+        </div>
+
+        <!-- Quote / Charter Pledge Box -->
+        <div class="portfolio-quote-box">
+          <i class="fa-solid fa-quote-left portfolio-quote-icon"></i>
+          <p class="portfolio-quote-text">"Samata Sainik Dal was established on 24 September 1927 by Bodhisattva Dr. B.R. Ambedkar to organize a disciplined, self-respecting non-violent vanguard for the defense of constitutional morality and social democracy."</p>
+        </div>
+      </div>
+
+      <div class="officer-portfolio-footer">
+        <a href="contact.html" class="btn btn-outline-navy btn-sm"><i class="fa-solid fa-envelope"></i> Contact Secretariat</a>
+        <button type="button" class="btn btn-navy btn-sm" onclick="closeOfficerPortfolioModal()"><i class="fa-solid fa-check"></i> Close Dossier</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast-container" id="toastContainer"></div>
     <!-- MOBILE BOTTOM QUICK-ACTION BAR -->
   <nav class="mobile-bottom-bar" aria-label="Mobile Quick Actions">
