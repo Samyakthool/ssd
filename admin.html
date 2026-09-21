@@ -22,7 +22,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
   <!-- Admin Stylesheet -->
-  <link rel="stylesheet" href="admin.css?v=3.8">
+  <link rel="stylesheet" href="admin.css?v=3.9">
 </head>
 <body>
 
@@ -446,11 +446,12 @@
               </div>
               <div class="card-panel-actions">
                 <select id="leadershipTierFilter" class="filter-select" onchange="filterLeadershipTable()">
-                  <option value="all">All Command Tiers</option>
-                  <option value="national">National Command</option>
-                  <option value="state">State Governing Bodies</option>
+                  <option value="all">All Command Tiers (3 Tiers)</option>
+                  <option value="national">Tier 1: National Supreme Command</option>
+                  <option value="state">Tier 2: State Governing Bodies</option>
+                  <option value="district">Tier 3: District Governing Bodies</option>
                 </select>
-                <select id="leadershipStateFilter" class="filter-select" onchange="filterLeadershipTable()">
+                <select id="leadershipStateFilter" class="filter-select" onchange="onAdminStateFilterChange()">
                   <option value="all">All States</option>
                   <option value="National HQ">National HQ</option>
                   <option value="Maharashtra">Maharashtra</option>
@@ -461,6 +462,9 @@
                   <option value="Rajasthan">Rajasthan</option>
                   <option value="Punjab">Punjab</option>
                   <option value="Bihar">Bihar</option>
+                </select>
+                <select id="leadershipDistrictFilter" class="filter-select" onchange="filterLeadershipTable()">
+                  <option value="all">All Districts</option>
                 </select>
                 <select id="leadershipFilter" class="filter-select" onchange="filterLeadershipTable()">
                   <option value="all">All Wings & Boards</option>
@@ -1313,8 +1317,9 @@
             <div class="form-group-modal">
               <label for="leadLevel">Command Tier / Level</label>
               <select id="leadLevel" onchange="onLeadTierChange()">
-                <option value="national">National Supreme Command</option>
-                <option value="state">State Governing Body (राज्य कार्यकारिणी)</option>
+                <option value="national">Tier 1: National Supreme Command (राष्ट्रीय सर्वोच्च कमान)</option>
+                <option value="state">Tier 2: State Governing Body (प्रदेश कार्यकारिणी)</option>
+                <option value="district">Tier 3: District Governing Body (जिल्हा कार्यकारिणी)</option>
               </select>
             </div>
             <div class="form-group-modal">
@@ -1338,7 +1343,7 @@
                   <i class="fa-solid fa-plus"></i> Add District
                 </button>
               </div>
-              <input type="text" id="leadDistrict" list="districtDataList" placeholder="e.g. Nagpur / Mumbai State Directorate">
+              <input type="text" id="leadDistrict" list="districtDataList" placeholder="e.g. Nagpur / Mumbai State Directorate" oninput="onLeadDistrictInputChange(this.value)">
               <datalist id="districtDataList">
                 <option value="Nagpur">
                 <option value="Mumbai City">
@@ -1359,13 +1364,13 @@
             <div class="form-group-modal">
               <label for="leadCategory">Council Wing / Category</label>
               <select id="leadCategory" required>
-                <option value="Supreme Council">Supreme Council</option>
-                <option value="Executive Council">Executive Council</option>
-                <option value="Cadet Directorate">Cadet Directorate</option>
-                <option value="Mahila Dal">Mahila Dal</option>
-                <option value="Legal Cell">Legal Cell</option>
-                <option value="Finance & Audit">Finance & Audit</option>
-                <option value="Advisory Board">Advisory Board</option>
+                <option value="Supreme Council">Supreme Council (सर्वोच्च परिषद)</option>
+                <option value="Executive Council">Executive Council (कार्यकारिणी)</option>
+                <option value="Cadet Directorate">Cadet Directorate (दल संचलनालय)</option>
+                <option value="Mahila Dal">Mahila Dal (महिला दल)</option>
+                <option value="Legal Cell">Legal Cell (विधिक प्रकोष्ठ)</option>
+                <option value="Finance & Audit">Finance & Audit (कोषागार)</option>
+                <option value="Advisory Board">Advisory Board (सल्लागार मंडळ)</option>
               </select>
             </div>
             <div class="form-group-modal">
@@ -1688,6 +1693,6 @@
   </div>
 
   <!-- Admin Application Script -->
-  <script src="admin.js?v=3.8"></script>
+  <script src="admin.js?v=3.9"></script>
 </body>
 </html>

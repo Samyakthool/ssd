@@ -337,6 +337,78 @@ const ssdSampleData = {
       bio: "High Court Advocate leading pro-bono defense, SC/ST Act implementation monitoring, and legal assistance for grassroots volunteers across Maharashtra.",
       credentials: "LL.M. | Bombay High Court",
       order: 14
+    },
+    "lead_dist_mh_1": {
+      name: "Sainik Rajesh T. Shinde",
+      designation: "District Dalpati (नागपूर जिल्हा दलनायक)",
+      level: "district",
+      state: "Maharashtra",
+      district: "Nagpur",
+      rankBadge: "Nagpur District Command",
+      photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+      bio: "Leads field cadet battalions and Deekshabhoomi rally security cordons across Nagpur district urban and rural divisions.",
+      credentials: "Ex-Cadet Instructor | Nagpur Urban & Rural HQ",
+      order: 20
+    },
+    "lead_dist_mh_2": {
+      name: "Adv. Amit S. Bansode",
+      designation: "District President (मुंबई शहर जिल्हाध्यक्ष)",
+      level: "district",
+      state: "Maharashtra",
+      district: "Mumbai City",
+      rankBadge: "Mumbai City Command",
+      photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+      bio: "Coordinates Chaityabhoomi VIP volunteer protocols, legal assistance clinics, and harbor-line youth cadet units across Mumbai City.",
+      credentials: "LL.B. High Court Advocate | Mumbai City District HQ",
+      order: 21
+    },
+    "lead_dist_mh_3": {
+      name: "Prof. Sanjay B. Gaikwad",
+      designation: "District General Secretary (पुणे जिल्हा महासचिव)",
+      level: "district",
+      state: "Maharashtra",
+      district: "Pune",
+      rankBadge: "Pune District Command",
+      photoUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=400&q=80",
+      bio: "Oversees student study circles, Koregaon Bhima peace volunteer platoons, and youth physical training camps across Pune district.",
+      credentials: "M.Sc., B.Ed. | Pune District Directorate",
+      order: 22
+    },
+    "lead_dist_mh_4": {
+      name: "Smt. Pratibha D. Wankhede",
+      designation: "District Convener, Mahila Dal (अमरावती जिल्हा संयोजिका)",
+      level: "district",
+      state: "Maharashtra",
+      district: "Amravati",
+      rankBadge: "Amravati District Wing",
+      photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+      bio: "Directs women's rights awareness wings, self-defense workshops, and Savitribai Phule girls' education cells in Amravati district.",
+      credentials: "M.S.W. | Amravati District Council",
+      order: 23
+    },
+    "lead_dist_mh_5": {
+      name: "Commander Sunil K. More",
+      designation: "District Chief Organiser (ठाणे जिल्हा मुख्य संघटक)",
+      level: "district",
+      state: "Maharashtra",
+      district: "Thane",
+      rankBadge: "Thane District Command",
+      photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80",
+      bio: "Spearheads industrial belt worker rights defense, civic disaster assistance squads, and cadet induction in Thane & Navi Mumbai.",
+      credentials: "Dip. Mech. Engg. | Thane District HQ",
+      order: 24
+    },
+    "lead_dist_mh_6": {
+      name: "Sainik Deepak R. Bhalerao",
+      designation: "District Youth Commander (नाशिक जिल्हा युवा दलनायक)",
+      level: "district",
+      state: "Maharashtra",
+      district: "Nashik",
+      rankBadge: "Nashik District Command",
+      photoUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80",
+      bio: "Oversees Kalaram Temple memorial heritage security, youth blood donation networks, and cadet parades throughout Nashik district.",
+      credentials: "B.A. Public Admin | Nashik District Unit",
+      order: 25
     }
   },
   stateChapters: {
@@ -1439,6 +1511,7 @@ function renderHomeGallery() {
 // ==========================================================================
 let currentGoverningTier = 'all';
 let currentGoverningState = 'all';
+let currentGoverningDistrict = 'all';
 let currentGoverningSearch = '';
 
 function renderGoverningCards(leadersList) {
@@ -1451,13 +1524,22 @@ function renderGoverningCards(leadersList) {
   let filtered = window._allGoverningLeaders.filter(lead => {
     if (lead.category === "Advisory Board") return false;
 
-    const isState = (lead.level === 'state') || (lead.state && lead.state !== 'National HQ' && lead.state !== 'All-India');
-    if (currentGoverningTier === 'national' && isState) return false;
+    const isDistrict = (lead.level === 'district');
+    const isState = (lead.level === 'state') || (!isDistrict && lead.state && lead.state !== 'National HQ' && lead.state !== 'All-India');
+    const isNational = (lead.level === 'national') || (!lead.level && (!lead.state || lead.state === 'National HQ' || lead.state === 'All-India'));
+
+    if (currentGoverningTier === 'national' && !isNational) return false;
     if (currentGoverningTier === 'state' && !isState) return false;
+    if (currentGoverningTier === 'district' && !isDistrict) return false;
 
     if (currentGoverningState !== 'all') {
       const matchState = (lead.state || '').toLowerCase().includes(currentGoverningState.toLowerCase());
       if (!matchState) return false;
+    }
+
+    if (currentGoverningDistrict !== 'all') {
+      const matchDist = (lead.district || '').toLowerCase().includes(currentGoverningDistrict.toLowerCase());
+      if (!matchDist) return false;
     }
 
     if (currentGoverningSearch) {
@@ -1467,7 +1549,8 @@ function renderGoverningCards(leadersList) {
                           (lead.state || '').toLowerCase().includes(q) ||
                           (lead.district || '').toLowerCase().includes(q) ||
                           (lead.rankBadge || '').toLowerCase().includes(q) ||
-                          (lead.bio || '').toLowerCase().includes(q);
+                          (lead.bio || '').toLowerCase().includes(q) ||
+                          (lead.credentials || '').toLowerCase().includes(q);
       if (!matchSearch) return false;
     }
 
@@ -1475,45 +1558,62 @@ function renderGoverningCards(leadersList) {
   });
 
   // Update counts
-  const totalCount = window._allGoverningLeaders.filter(l => l.category !== "Advisory Board").length;
-  const nationalCount = window._allGoverningLeaders.filter(l => (l.level === 'national' || !l.level || l.state === 'National HQ') && l.category !== "Advisory Board").length;
-  const stateCount = window._allGoverningLeaders.filter(l => (l.level === 'state' || (l.state && l.state !== 'National HQ')) && l.category !== "Advisory Board").length;
+  const nonAdvisory = window._allGoverningLeaders.filter(l => l.category !== "Advisory Board");
+  const totalCount = nonAdvisory.length;
+  const nationalCount = nonAdvisory.filter(l => l.level === 'national' || (!l.level && (!l.state || l.state === 'National HQ'))).length;
+  const stateCount = nonAdvisory.filter(l => l.level === 'state' || (l.state && l.state !== 'National HQ' && l.level !== 'district')).length;
+  const districtCount = nonAdvisory.filter(l => l.level === 'district').length;
 
   const countAllEl = document.getElementById("govCountAll");
   const countNatEl = document.getElementById("govCountNational");
   const countStateEl = document.getElementById("govCountState");
+  const countDistEl = document.getElementById("govCountDistrict");
   if (countAllEl) countAllEl.textContent = totalCount;
   if (countNatEl) countNatEl.textContent = nationalCount;
   if (countStateEl) countStateEl.textContent = stateCount;
+  if (countDistEl) countDistEl.textContent = districtCount;
 
+  // Visibility of State & District pills
   const statePillsRow = document.getElementById("governingStatePills");
   if (statePillsRow) {
     statePillsRow.style.display = (currentGoverningTier === 'national') ? 'none' : 'flex';
   }
+
+  renderDistrictPills();
 
   if (filtered.length === 0) {
     councilContainer.innerHTML = `
       <div style="grid-column: 1/-1; text-align: center; padding: 50px 20px; background: #fff; border: 1px dashed var(--border-color); border-radius: 8px;">
         <i class="fa-solid fa-users-viewfinder" style="font-size: 38px; color: var(--primary-orange); margin-bottom: 14px;"></i>
         <h3 style="color: var(--dark-navy); font-size: 18px; margin-bottom: 6px;">No Governing Officers Found</h3>
-        <p style="color: var(--muted-gray); font-size: 13.5px; max-width: 500px; margin: 0 auto 16px;">No council leaders match the selected tier, state, or search filters.</p>
-        <button type="button" class="btn btn-outline-navy" onclick="setGoverningTier('all'); setGoverningState('all');" style="padding: 6px 16px; font-size: 12.5px;">
+        <p style="color: var(--muted-gray); font-size: 13.5px; max-width: 500px; margin: 0 auto 16px;">No council leaders match the selected tier, state, district, or search filters.</p>
+        <button type="button" class="btn btn-outline-navy" onclick="setGoverningTier('all'); setGoverningState('all'); setGoverningDistrict('all');" style="padding: 6px 16px; font-size: 12.5px;">
           <i class="fa-solid fa-rotate-left"></i> Reset All Filters
         </button>
       </div>
     `;
   } else {
     councilContainer.innerHTML = filtered.map(lead => {
-      const isState = (lead.level === 'state') || (lead.state && lead.state !== 'National HQ');
-      const stateName = lead.state || (isState ? 'State Unit' : 'National HQ');
-      const badgeText = lead.rankBadge || (isState ? `${stateName} Command` : 'National Command');
+      const isDistrict = (lead.level === 'district');
+      const isState = (lead.level === 'state') || (!isDistrict && lead.state && lead.state !== 'National HQ');
+      const stateName = lead.state || (isDistrict || isState ? 'Maharashtra' : 'National HQ');
+      const badgeText = lead.rankBadge || (isDistrict ? `${lead.district || 'District'} Command` : (isState ? `${stateName} Command` : 'National Command'));
+
+      let tierBadgeHtml = '';
+      if (isDistrict) {
+        tierBadgeHtml = `<span class="governing-badge-state" style="background: rgba(217, 93, 0, 0.92);"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(lead.district || stateName)}</span>`;
+      } else if (isState) {
+        tierBadgeHtml = `<span class="governing-badge-state" style="background: rgba(0, 31, 63, 0.9);"><i class="fa-solid fa-map-location-dot"></i> ${escapeHtml(stateName)} State</span>`;
+      } else {
+        tierBadgeHtml = `<span class="governing-badge-state" style="background: rgba(255, 107, 0, 0.95);"><i class="fa-solid fa-landmark"></i> Central HQ</span>`;
+      }
 
       return `
-        <div class="governing-card" data-level="${isState ? 'state' : 'national'}" data-state="${escapeHtml(stateName)}">
+        <div class="governing-card" data-level="${isDistrict ? 'district' : (isState ? 'state' : 'national')}" data-state="${escapeHtml(stateName)}">
           <div class="governing-header">
             <img src="${lead.photoUrl}" alt="${escapeHtml(lead.name)}" class="governing-photo" onerror="this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80'">
             <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> ${escapeHtml(badgeText)}</span>
-            ${isState ? `<span class="governing-badge-state"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(stateName)}</span>` : `<span class="governing-badge-state" style="background: rgba(255, 107, 0, 0.9);"><i class="fa-solid fa-landmark"></i> Central HQ</span>`}
+            ${tierBadgeHtml}
           </div>
           <div class="governing-body-content">
             <h3 class="governing-name">${escapeHtml(lead.name)}</h3>
@@ -1544,6 +1644,59 @@ function renderGoverningCards(leadersList) {
   }
 }
 
+function renderDistrictPills() {
+  const container = document.getElementById("governingDistrictPills");
+  if (!container) return;
+
+  // Show district pills if tier is district, or if state tier/all tier is active with a specific state selected
+  const shouldShow = (currentGoverningTier === 'district') || (currentGoverningTier !== 'national' && currentGoverningState !== 'all');
+  if (!shouldShow) {
+    container.style.display = 'none';
+    return;
+  }
+
+  // Find districts from stateChapters or leaders list
+  const chapters = ssdSampleData.stateChapters || {};
+  let districts = [];
+
+  if (currentGoverningState !== 'all') {
+    for (const s of Object.values(chapters)) {
+      if ((s.name || '').toLowerCase() === currentGoverningState.toLowerCase()) {
+        districts = Array.isArray(s.districts) ? s.districts : [];
+        break;
+      }
+    }
+  }
+
+  // If no districts found from state chapters, extract unique districts from governing leaders
+  if (districts.length === 0 && window._allGoverningLeaders) {
+    const dSet = new Set();
+    window._allGoverningLeaders.forEach(l => {
+      if (l.district && l.district.trim() && l.state !== 'National HQ') {
+        dSet.add(l.district.split('&')[0].trim());
+      }
+    });
+    districts = Array.from(dSet);
+  }
+
+  if (districts.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'flex';
+  container.innerHTML = `
+    <button type="button" class="district-pill ${currentGoverningDistrict === 'all' ? 'active' : ''}" data-district="all" onclick="setGoverningDistrict('all')">
+      <i class="fa-solid fa-layer-group"></i> All Districts
+    </button>
+    ${districts.slice(0, 12).map(d => `
+      <button type="button" class="district-pill ${currentGoverningDistrict.toLowerCase() === d.toLowerCase() ? 'active' : ''}" data-district="${escapeHtml(d)}" onclick="setGoverningDistrict('${escapeHtml(d)}')">
+        ${escapeHtml(d)}
+      </button>
+    `).join('')}
+  `;
+}
+
 function renderStatePills(stateChaptersObj) {
   const container = document.getElementById("governingStatePills");
   if (!container) return;
@@ -1564,6 +1717,10 @@ function renderStatePills(stateChaptersObj) {
 
 function setGoverningTier(tier) {
   currentGoverningTier = tier;
+  if (tier === 'national') {
+    currentGoverningState = 'all';
+    currentGoverningDistrict = 'all';
+  }
   document.querySelectorAll('.governing-tier-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tier === tier);
   });
@@ -1572,8 +1729,17 @@ function setGoverningTier(tier) {
 
 function setGoverningState(state) {
   currentGoverningState = state;
+  currentGoverningDistrict = 'all';
   document.querySelectorAll('.state-pill').forEach(pill => {
     pill.classList.toggle('active', pill.dataset.state.toLowerCase() === state.toLowerCase());
+  });
+  renderGoverningCards(window._allGoverningLeaders);
+}
+
+function setGoverningDistrict(district) {
+  currentGoverningDistrict = district;
+  document.querySelectorAll('.district-pill').forEach(pill => {
+    pill.classList.toggle('active', (pill.dataset.district || '').toLowerCase() === district.toLowerCase());
   });
   renderGoverningCards(window._allGoverningLeaders);
 }
@@ -1585,6 +1751,7 @@ function filterGoverningSearch(query) {
 
 window.setGoverningTier = setGoverningTier;
 window.setGoverningState = setGoverningState;
+window.setGoverningDistrict = setGoverningDistrict;
 window.filterGoverningSearch = filterGoverningSearch;
 
 function loadGoverningBody() {

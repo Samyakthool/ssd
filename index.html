@@ -24,7 +24,7 @@
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
   <!-- Unified Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=3.8">
+  <link rel="stylesheet" href="styles.css?v=3.9">
 </head>
 <body class="font-md">
 
@@ -166,23 +166,26 @@
           </div>
         </div>
 
-        <!-- Leadership Tier Navigation (National vs State Governing Body) -->
+        <!-- Leadership Tier Navigation (National vs State vs District Governing Body) -->
         <div class="governing-tier-nav">
           <button type="button" class="governing-tier-btn active" data-tier="all" onclick="setGoverningTier('all')">
-            <i class="fa-solid fa-users"></i> All Leadership <span class="badge-count" id="govCountAll">16</span>
+            <i class="fa-solid fa-users"></i> All Leadership <span class="badge-count" id="govCountAll">17</span>
           </button>
           <button type="button" class="governing-tier-btn" data-tier="national" onclick="setGoverningTier('national')">
             <i class="fa-solid fa-landmark-dome"></i> National Supreme Command <span class="badge-count" id="govCountNational">6</span>
           </button>
           <button type="button" class="governing-tier-btn" data-tier="state" onclick="setGoverningTier('state')">
-            <i class="fa-solid fa-map-location-dot"></i> State Governing Bodies (प्रदेश कार्यकारिणी) <span class="badge-count" id="govCountState">10</span>
+            <i class="fa-solid fa-map-location-dot"></i> State Governing Bodies (प्रदेश कार्यकारिणी) <span class="badge-count" id="govCountState">5</span>
+          </button>
+          <button type="button" class="governing-tier-btn" data-tier="district" onclick="setGoverningTier('district')">
+            <i class="fa-solid fa-location-crosshairs"></i> District Governing Bodies (जिल्हा कार्यकारिणी) <span class="badge-count" id="govCountDistrict">6</span>
           </button>
         </div>
 
         <!-- Search Box -->
         <div class="governing-search-box">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" placeholder="Search governing officer by name, state, designation..." oninput="filterGoverningSearch(this.value)">
+          <input type="text" placeholder="Search governing officer by name, state, district, designation..." oninput="filterGoverningSearch(this.value)">
         </div>
 
         <!-- State Filter Pills -->
@@ -193,6 +196,11 @@
           <button type="button" class="state-pill" data-state="Maharashtra" onclick="setGoverningState('Maharashtra')">
             Maharashtra (महाराष्ट्र)
           </button>
+        </div>
+
+        <!-- District Filter Pills (Dynamic when State or District Tier is selected) -->
+        <div class="governing-district-pills" id="governingDistrictPills" style="display: none;">
+          <!-- Auto-populated dynamically in app.js -->
         </div>
 
         <!-- Governing Council Grid -->
@@ -1158,6 +1166,6 @@
   </nav>
 
   <!-- Unified Application Script -->
-  <script src="app.js?v=3.8"></script>
+  <script src="app.js?v=3.9"></script>
 </body>
 </html>

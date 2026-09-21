@@ -400,6 +400,84 @@ const ssdInitialSeed = {
       credentials: "M.A. History | Patna State HQ",
       order: 19
     },
+    "lead_dist_mh_1": {
+      name: "Sainik Rajesh T. Shinde",
+      designation: "District Dalpati (नागपूर जिल्हा दलनायक)",
+      category: "Cadet Directorate",
+      level: "district",
+      state: "Maharashtra",
+      district: "Nagpur",
+      rankBadge: "Nagpur District Command",
+      photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+      bio: "Leads field cadet battalions and Deekshabhoomi rally security cordons across Nagpur district urban and rural divisions.",
+      credentials: "Ex-Cadet Instructor | Nagpur Urban & Rural HQ",
+      order: 20
+    },
+    "lead_dist_mh_2": {
+      name: "Adv. Amit S. Bansode",
+      designation: "District President (मुंबई शहर जिल्हाध्यक्ष)",
+      category: "Executive Council",
+      level: "district",
+      state: "Maharashtra",
+      district: "Mumbai City",
+      rankBadge: "Mumbai City Command",
+      photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+      bio: "Coordinates Chaityabhoomi VIP volunteer protocols, legal assistance clinics, and harbor-line youth cadet units across Mumbai City.",
+      credentials: "LL.B. High Court Advocate | Mumbai City District HQ",
+      order: 21
+    },
+    "lead_dist_mh_3": {
+      name: "Prof. Sanjay B. Gaikwad",
+      designation: "District General Secretary (पुणे जिल्हा महासचिव)",
+      category: "Executive Council",
+      level: "district",
+      state: "Maharashtra",
+      district: "Pune",
+      rankBadge: "Pune District Command",
+      photoUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=400&q=80",
+      bio: "Oversees student study circles, Koregaon Bhima peace volunteer platoons, and youth physical training camps across Pune district.",
+      credentials: "M.Sc., B.Ed. | Pune District Directorate",
+      order: 22
+    },
+    "lead_dist_mh_4": {
+      name: "Smt. Pratibha D. Wankhede",
+      designation: "District Convener, Mahila Dal (अमरावती जिल्हा संयोजिका)",
+      category: "Mahila Dal",
+      level: "district",
+      state: "Maharashtra",
+      district: "Amravati",
+      rankBadge: "Amravati District Wing",
+      photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+      bio: "Directs women's rights awareness wings, self-defense workshops, and Savitribai Phule girls' education cells in Amravati district.",
+      credentials: "M.S.W. | Amravati District Council",
+      order: 23
+    },
+    "lead_dist_mh_5": {
+      name: "Commander Sunil K. More",
+      designation: "District Chief Organiser (ठाणे जिल्हा मुख्य संघटक)",
+      category: "Cadet Directorate",
+      level: "district",
+      state: "Maharashtra",
+      district: "Thane",
+      rankBadge: "Thane District Command",
+      photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80",
+      bio: "Spearheads industrial belt worker rights defense, civic disaster assistance squads, and cadet induction in Thane & Navi Mumbai.",
+      credentials: "Dip. Mech. Engg. | Thane District HQ",
+      order: 24
+    },
+    "lead_dist_mh_6": {
+      name: "Sainik Deepak R. Bhalerao",
+      designation: "District Youth Commander (नाशिक जिल्हा युवा दलनायक)",
+      category: "Cadet Directorate",
+      level: "district",
+      state: "Maharashtra",
+      district: "Nashik",
+      rankBadge: "Nashik District Command",
+      photoUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80",
+      bio: "Oversees Kalaram Temple memorial heritage security, youth blood donation networks, and cadet parades throughout Nashik district.",
+      credentials: "B.A. Public Admin | Nashik District Unit",
+      order: 25
+    },
     "lead_7": {
       name: "Prof. Yashwantrao More",
       designation: "Senior Advisory Member",
@@ -1681,8 +1759,24 @@ function renderLeadershipTable(filteredList = null) {
   }
 
   tbody.innerHTML = list.map(m => {
-    const isState = (m.level === 'state') || (m.state && m.state !== 'National HQ');
-    const stateName = m.state || (isState ? 'State Unit' : 'National HQ');
+    const isDistrict = (m.level === 'district');
+    const isState = (m.level === 'state') || (!isDistrict && m.state && m.state !== 'National HQ' && m.state !== 'All-India');
+    const isNational = !isDistrict && !isState;
+    const stateName = m.state || (isDistrict || isState ? 'Maharashtra' : 'National HQ');
+
+    let tierBadge = '';
+    let rankBadgeClass = 'badge-approved';
+    if (isDistrict) {
+      tierBadge = `<span class="badge-status badge-district"><i class="fa-solid fa-location-crosshairs"></i> ${escapeHtml(m.district || 'District')} (${escapeHtml(stateName)})</span>`;
+      rankBadgeClass = 'badge-district';
+    } else if (isState) {
+      tierBadge = `<span class="badge-status badge-info"><i class="fa-solid fa-map-pin"></i> ${escapeHtml(stateName)} State</span>`;
+      rankBadgeClass = 'badge-info';
+    } else {
+      tierBadge = `<span class="badge-status badge-approved"><i class="fa-solid fa-landmark"></i> National HQ</span>`;
+      rankBadgeClass = 'badge-approved';
+    }
+
     return `
       <tr>
         <td>
@@ -1690,19 +1784,17 @@ function renderLeadershipTable(filteredList = null) {
         </td>
         <td>
           <strong>${escapeHtml(m.name)}</strong>
-          ${m.district ? `<br><small style="color: var(--text-muted);">${escapeHtml(m.district)}</small>` : ''}
+          ${m.district ? `<br><small style="color: var(--text-muted);"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(m.district)}</small>` : ''}
         </td>
         <td>
-          <span class="badge-status ${isState ? 'badge-info' : 'badge-approved'}">
-            <i class="fa-solid ${isState ? 'fa-map-pin' : 'fa-landmark'}"></i> ${escapeHtml(stateName)}
-          </span>
+          ${tierBadge}
         </td>
         <td>
           <div><strong>${escapeHtml(m.designation)}</strong></div>
-          <small class="badge-status badge-approved" style="font-size: 10px; margin-top: 3px; display: inline-block;">${escapeHtml(m.rankBadge || (isState ? stateName + ' Command' : 'National Command'))}</small>
+          <small class="badge-status ${rankBadgeClass}" style="font-size: 10px; margin-top: 3px; display: inline-block;">${escapeHtml(m.rankBadge || (isDistrict ? (m.district || stateName) + ' Command' : (isState ? stateName + ' Command' : 'National Command')))}</small>
         </td>
         <td><span class="badge-status badge-info">${escapeHtml(m.category || 'Supreme Council')}</span></td>
-        <td><small style="color: var(--text-muted);">${escapeHtml(m.credentials || 'HQ')}</small></td>
+        <td><small style="color: var(--text-muted);">${escapeHtml(m.credentials || (m.district ? m.district + ' | ' + stateName : stateName))}</small></td>
         <td style="text-align: right;">
           <div class="action-btn-group" style="justify-content: flex-end;">
             <button type="button" class="action-icon-btn" onclick="openEditLeadershipModal('${m.id}')" title="Edit Member">
@@ -1721,17 +1813,27 @@ function renderLeadershipTable(filteredList = null) {
 function filterLeadershipTable() {
   const tier = document.getElementById("leadershipTierFilter")?.value || "all";
   const state = document.getElementById("leadershipStateFilter")?.value || "all";
+  const district = document.getElementById("leadershipDistrictFilter")?.value || "all";
   const cat = document.getElementById("leadershipFilter")?.value || "all";
 
   const all = Object.entries(adminData.leadership || ssdInitialSeed.leadership).map(([key, val]) => ({ id: key, ...val }));
   const filtered = all.filter(m => {
-    const isState = (m.level === 'state') || (m.state && m.state !== 'National HQ' && m.state !== 'All-India');
-    if (tier === 'national' && isState) return false;
+    const isDistrict = (m.level === 'district');
+    const isState = (m.level === 'state') || (!isDistrict && m.state && m.state !== 'National HQ' && m.state !== 'All-India');
+    const isNational = (m.level === 'national') || (!m.level && (!m.state || m.state === 'National HQ' || m.state === 'All-India'));
+
+    if (tier === 'national' && !isNational) return false;
     if (tier === 'state' && !isState) return false;
+    if (tier === 'district' && !isDistrict) return false;
 
     if (state !== 'all') {
       const matchState = (m.state || '').toLowerCase() === state.toLowerCase();
       if (!matchState) return false;
+    }
+
+    if (district !== 'all') {
+      const matchDist = (m.district || '').toLowerCase().includes(district.toLowerCase());
+      if (!matchDist) return false;
     }
 
     if (cat !== 'all') {
@@ -1744,33 +1846,79 @@ function filterLeadershipTable() {
   renderLeadershipTable(filtered);
 }
 
+function onAdminStateFilterChange() {
+  const stateFilter = document.getElementById("leadershipStateFilter")?.value || "all";
+  const distSelect = document.getElementById("leadershipDistrictFilter");
+  
+  if (distSelect) {
+    const chapters = adminData.state_chapters || ssdInitialSeed.state_chapters || {};
+    let districts = [];
+    if (stateFilter !== 'all') {
+      for (const s of Object.values(chapters)) {
+        if ((s.name || '').toLowerCase() === stateFilter.toLowerCase()) {
+          districts = Array.isArray(s.districts) ? s.districts : [];
+          break;
+        }
+      }
+    } else {
+      // Collect all unique districts
+      const dSet = new Set();
+      Object.values(chapters).forEach(s => {
+        if (Array.isArray(s.districts)) s.districts.forEach(d => dSet.add(d));
+      });
+      districts = Array.from(dSet);
+    }
+    
+    distSelect.innerHTML = `
+      <option value="all">All Districts</option>
+      ${districts.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('')}
+    `;
+    distSelect.value = "all";
+  }
+
+  filterLeadershipTable();
+}
+
 function openAddLeadershipModal() {
   populateLeadershipStateAndDistrictOptions();
   setInputValue("leadItemKey", "");
   setInputValue("leadName", "");
   setInputValue("leadDesignation", "");
   
-  const currentTierFilter = document.getElementById("leadershipTierFilter")?.value;
-  const isStateTier = currentTierFilter === 'state';
-  setInputValue("leadLevel", isStateTier ? 'state' : 'national');
-  
+  const currentTierFilter = document.getElementById("leadershipTierFilter")?.value || 'national';
   const stateFilter = document.getElementById("leadershipStateFilter")?.value;
-  if (stateFilter && stateFilter !== 'all' && stateFilter !== 'National HQ') {
-    setInputValue("leadState", stateFilter);
+  const districtFilter = document.getElementById("leadershipDistrictFilter")?.value;
+
+  if (currentTierFilter === 'district') {
+    setInputValue("leadLevel", 'district');
+    const defaultState = (stateFilter && stateFilter !== 'all' && stateFilter !== 'National HQ') ? stateFilter : 'Maharashtra';
+    setInputValue("leadState", defaultState);
+    const defaultDistrict = (districtFilter && districtFilter !== 'all') ? districtFilter : 'Nagpur';
+    setInputValue("leadDistrict", defaultDistrict);
+    setInputValue("leadRankBadge", `${defaultDistrict} District Command`);
+    setInputValue("leadCategory", "Cadet Directorate");
+  } else if (currentTierFilter === 'state') {
+    setInputValue("leadLevel", 'state');
+    const defaultState = (stateFilter && stateFilter !== 'all' && stateFilter !== 'National HQ') ? stateFilter : 'Maharashtra';
+    setInputValue("leadState", defaultState);
+    setInputValue("leadDistrict", "");
+    setInputValue("leadRankBadge", `${defaultState} State Command`);
+    setInputValue("leadCategory", "Executive Council");
   } else {
-    setInputValue("leadState", isStateTier ? 'Maharashtra' : 'National HQ');
+    setInputValue("leadLevel", 'national');
+    setInputValue("leadState", 'National HQ');
+    setInputValue("leadDistrict", "");
+    setInputValue("leadRankBadge", 'National Command');
+    setInputValue("leadCategory", "Supreme Council");
   }
-  
-  setInputValue("leadDistrict", "");
-  setInputValue("leadCategory", "Supreme Council");
-  setInputValue("leadRankBadge", isStateTier ? 'Maharashtra State Command' : 'National Command');
+
   setInputValue("leadPhotoUrl", "");
   setInputValue("leadCredentials", "");
   setInputValue("leadBio", "");
   setInputValue("leadOrder", "1");
   updateImagePreview("leadPhotoPreview", "");
   updateLeadDistrictDatalist();
-  setText("modalLeadershipHeading", "Appoint Council Officer / State Commander");
+  setText("modalLeadershipHeading", "Appoint Council Officer / Commander");
   openAdminModal("modalLeadership");
 }
 
@@ -1780,13 +1928,14 @@ function openEditLeadershipModal(id) {
   const m = leadObj[id];
   if (!m) return;
 
-  const isState = (m.level === 'state') || (m.state && m.state !== 'National HQ');
+  const isDistrict = (m.level === 'district');
+  const isState = (m.level === 'state') || (!isDistrict && m.state && m.state !== 'National HQ');
 
   setInputValue("leadItemKey", id);
   setInputValue("leadName", m.name || "");
   setInputValue("leadDesignation", m.designation || "");
-  setInputValue("leadLevel", m.level || (isState ? 'state' : 'national'));
-  setInputValue("leadState", m.state || (isState ? 'Maharashtra' : 'National HQ'));
+  setInputValue("leadLevel", m.level || (isDistrict ? 'district' : (isState ? 'state' : 'national')));
+  setInputValue("leadState", m.state || (isDistrict || isState ? 'Maharashtra' : 'National HQ'));
   setInputValue("leadDistrict", m.district || "");
   setInputValue("leadCategory", m.category || "Supreme Council");
   setInputValue("leadRankBadge", m.rankBadge || "");
@@ -1804,7 +1953,7 @@ function handleSaveLeadership(e) {
   e.preventDefault();
   const key = document.getElementById("leadItemKey").value;
   const level = document.getElementById("leadLevel")?.value || "national";
-  const state = document.getElementById("leadState")?.value || (level === 'state' ? 'Maharashtra' : 'National HQ');
+  const state = document.getElementById("leadState")?.value || (level === 'national' ? 'National HQ' : 'Maharashtra');
   const district = document.getElementById("leadDistrict")?.value.trim() || "";
 
   const memberData = {
@@ -2186,7 +2335,23 @@ function populateLeadershipStateAndDistrictOptions() {
     if (currentVal) leadStateFilter.value = currentVal;
   }
 
-  // 2. State select in modalLeadership
+  // 2. Leadership District Filter in Leadership View
+  const leadDistFilter = document.getElementById("leadershipDistrictFilter");
+  if (leadDistFilter) {
+    const currentVal = leadDistFilter.value || "all";
+    const dSet = new Set();
+    statesList.forEach(s => {
+      if (Array.isArray(s.districts)) s.districts.forEach(d => dSet.add(d));
+    });
+    const districts = Array.from(dSet);
+    leadDistFilter.innerHTML = `
+      <option value="all">All Districts</option>
+      ${districts.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('')}
+    `;
+    if (currentVal) leadDistFilter.value = currentVal;
+  }
+
+  // 3. State select in modalLeadership
   const leadStateSelect = document.getElementById("leadState");
   if (leadStateSelect) {
     const currentVal = leadStateSelect.value;
@@ -2197,7 +2362,7 @@ function populateLeadershipStateAndDistrictOptions() {
     if (currentVal) leadStateSelect.value = currentVal;
   }
 
-  // 3. State select in modalAddDistrict
+  // 4. State select in modalAddDistrict
   const districtTargetState = document.getElementById("districtTargetState");
   if (districtTargetState) {
     const currentVal = districtTargetState.value;
@@ -2207,7 +2372,7 @@ function populateLeadershipStateAndDistrictOptions() {
     if (currentVal) districtTargetState.value = currentVal;
   }
 
-  // 4. Update datalist for leadDistrict based on current selected state in modalLeadership
+  // 5. Update datalist for leadDistrict based on current selected state in modalLeadership
   updateLeadDistrictDatalist();
 }
 
@@ -2227,7 +2392,11 @@ function updateLeadDistrictDatalist() {
     }
   }
 
-  const districts = (targetStateObj && Array.isArray(targetStateObj.districts)) ? targetStateObj.districts : [];
+  let districts = (targetStateObj && Array.isArray(targetStateObj.districts)) ? targetStateObj.districts : [];
+  if (districts.length === 0) {
+    districts = ["Nagpur", "Mumbai City", "Mumbai Suburban", "Pune", "Amravati", "Nashik", "Chhatrapati Sambhaji Nagar", "Kolhapur", "Thane", "Nanded", "Solapur"];
+  }
+
   datalist.innerHTML = districts.map(d => `<option value="${escapeHtml(d)}">`).join('');
 }
 
@@ -2236,23 +2405,44 @@ function onLeadTierChange() {
   const stateSelect = document.getElementById("leadState");
   const rankBadge = document.getElementById("leadRankBadge");
   const districtInput = document.getElementById("leadDistrict");
+  const catSelect = document.getElementById("leadCategory");
 
   if (tier === 'national') {
     if (stateSelect) stateSelect.value = "National HQ";
-    if (rankBadge && (!rankBadge.value || rankBadge.value.includes("State Command"))) {
-      rankBadge.value = "National Command";
+    if (districtInput) {
+      districtInput.value = "";
+      districtInput.placeholder = "National HQ / All-India Central Office";
     }
-    if (districtInput) districtInput.placeholder = "National HQ / All-India Central Office";
-  } else {
-    // State tier
+    if (rankBadge) rankBadge.value = "National Command";
+    if (catSelect && catSelect.value !== "Supreme Council" && catSelect.value !== "Advisory Board") {
+      catSelect.value = "Supreme Council";
+    }
+  } else if (tier === 'state') {
     if (stateSelect && stateSelect.value === "National HQ") {
       stateSelect.value = "Maharashtra";
     }
     const stateName = stateSelect ? stateSelect.value : "Maharashtra";
-    if (rankBadge && (!rankBadge.value || rankBadge.value.includes("National Command"))) {
-      rankBadge.value = `${stateName} State Command`;
+    if (districtInput) {
+      districtInput.placeholder = `e.g. ${stateName} State Directorate`;
     }
-    if (districtInput) districtInput.placeholder = `e.g. Nagpur / ${stateName} State Directorate`;
+    if (rankBadge) rankBadge.value = `${stateName} State Command`;
+    if (catSelect && catSelect.value === "Supreme Council") {
+      catSelect.value = "Executive Council";
+    }
+  } else if (tier === 'district') {
+    if (stateSelect && stateSelect.value === "National HQ") {
+      stateSelect.value = "Maharashtra";
+    }
+    const stateName = stateSelect ? stateSelect.value : "Maharashtra";
+    if (districtInput) {
+      if (!districtInput.value.trim()) districtInput.value = "Nagpur";
+      districtInput.placeholder = `e.g. Nagpur / ${stateName} District Directorate`;
+    }
+    const distName = (districtInput && districtInput.value.trim()) ? districtInput.value.trim() : "Nagpur";
+    if (rankBadge) rankBadge.value = `${distName} District Command`;
+    if (catSelect && catSelect.value === "Supreme Council") {
+      catSelect.value = "Cadet Directorate";
+    }
   }
   updateLeadDistrictDatalist();
 }
@@ -2261,20 +2451,37 @@ function onLeadStateChange() {
   const stateSelect = document.getElementById("leadState");
   const rankBadge = document.getElementById("leadRankBadge");
   const tierSelect = document.getElementById("leadLevel");
+  const districtInput = document.getElementById("leadDistrict");
   const selectedState = stateSelect ? stateSelect.value : 'National HQ';
+  const currentTier = tierSelect ? tierSelect.value : 'national';
 
-  if (selectedState !== 'National HQ') {
-    if (tierSelect) tierSelect.value = 'state';
-    if (rankBadge && (rankBadge.value === "National Command" || rankBadge.value.endsWith("State Command"))) {
-      rankBadge.value = `${selectedState} State Command`;
-    }
-  } else {
+  if (selectedState === 'National HQ') {
     if (tierSelect) tierSelect.value = 'national';
-    if (rankBadge && rankBadge.value.endsWith("State Command")) {
-      rankBadge.value = "National Command";
+    if (districtInput) districtInput.value = "";
+    if (rankBadge) rankBadge.value = "National Command";
+  } else {
+    if (currentTier === 'national' && tierSelect) {
+      tierSelect.value = 'state';
+    }
+    const activeTier = tierSelect ? tierSelect.value : 'state';
+    if (activeTier === 'district') {
+      const distName = (districtInput && districtInput.value.trim()) ? districtInput.value.trim() : "District";
+      if (rankBadge) rankBadge.value = `${distName} District Command`;
+    } else {
+      if (rankBadge) rankBadge.value = `${selectedState} State Command`;
     }
   }
   updateLeadDistrictDatalist();
+}
+
+function onLeadDistrictInputChange(val) {
+  const tierSelect = document.getElementById("leadLevel");
+  const rankBadge = document.getElementById("leadRankBadge");
+  if (tierSelect && tierSelect.value === 'district' && rankBadge && val.trim()) {
+    if (!rankBadge.value || rankBadge.value.endsWith("District Command")) {
+      rankBadge.value = `${val.trim()} District Command`;
+    }
+  }
 }
 
 // Global window exposure
@@ -2287,6 +2494,13 @@ window.handleSaveDistrict = handleSaveDistrict;
 window.deleteDistrictChip = deleteDistrictChip;
 window.onLeadTierChange = onLeadTierChange;
 window.onLeadStateChange = onLeadStateChange;
+window.onLeadDistrictInputChange = onLeadDistrictInputChange;
+window.onAdminStateFilterChange = onAdminStateFilterChange;
+window.filterLeadershipTable = filterLeadershipTable;
+window.openAddLeadershipModal = openAddLeadershipModal;
+window.openEditLeadershipModal = openEditLeadershipModal;
+window.handleSaveLeadership = handleSaveLeadership;
+window.deleteLeadershipMember = deleteLeadershipMember;
 
 // ==========================================================================
 // RENDERERS: AUTHORIZED ADMIN USERS & ROLES (/admin_users)
