@@ -215,50 +215,188 @@ const ssdSampleData = {
     "lead_1": {
       name: "Dr. Siddharth M. Meshram",
       designation: "National President (राष्ट्रीय अध्यक्ष)",
+      level: "national",
+      state: "National HQ",
       rankBadge: "National Command",
       photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
       bio: "Eminent Constitutional scholar and veteran Ambedkarite leader with 40+ years in social transformation; overseeing national policy and the Centenary 2027 vision.",
-      credentials: "Ph.D. Constitutional Law | Nagpur HQ"
+      credentials: "Ph.D. Constitutional Law | Nagpur HQ",
+      order: 1
     },
     "lead_2": {
       name: "Commander Ravindra K. Gautam",
       designation: "National General Secretary (राष्ट्रीय महासचिव)",
+      level: "national",
+      state: "National HQ",
       rankBadge: "Executive Council",
       photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
       bio: "Former NCC Gold Medalist and grassroots organizer; coordinates operations across 28 State Chapters and directs the national cadet syllabus.",
-      credentials: "M.A. Public Admin | New Delhi Secretariat"
+      credentials: "M.A. Public Admin | New Delhi Secretariat",
+      order: 2
     },
     "lead_3": {
       name: "Col. (Retd.) Vijay Anand Thorat",
       designation: "Chief Cadet Commander (मुख्य सैनिक दलनायक)",
+      level: "national",
+      state: "National HQ",
       rankBadge: "Drill & Defense",
       photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80",
       bio: "Indian Armed Forces Veteran; leads cadet drill curriculum, ceremonial parade standards, emergency disaster rescue wings, and physical fitness camps.",
-      credentials: "Ex-Indian Army | Central Cadet Directorate"
+      credentials: "Ex-Indian Army | Central Cadet Directorate",
+      order: 3
     },
     "lead_4": {
       name: "Smt. Anuradha Tai Kamble",
       designation: "National Convener, Mahila Dal (राष्ट्रीय संयोजिका)",
+      level: "national",
+      state: "National HQ",
       rankBadge: "Mahila Front",
       photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
       bio: "Social activist and educator; leading women's frontline self-defense wings, legal crisis support networks, and Savitribai Phule girls' educational scholarships.",
-      credentials: "M.S.W., LL.B. | Mumbai State HQ"
+      credentials: "M.S.W., LL.B. | Mumbai State HQ",
+      order: 4
     },
     "lead_5": {
       name: "Senior Adv. B. P. Sonwane",
       designation: "Chairman, National Legal Cell (अध्यक्ष, विधिक प्रकोष्ठ)",
+      level: "national",
+      state: "National HQ",
       rankBadge: "Supreme Court Panel",
       photoUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80",
       bio: "Senior Advocate with extensive experience in the Supreme Court of India; spearheading pro-bono defense, SC/ST Act enforcement, and constitutional litigation.",
-      credentials: "LL.M. Constitutional Law | Supreme Court of India"
+      credentials: "LL.M. Constitutional Law | Supreme Court of India",
+      order: 5
     },
     "lead_6": {
       name: "Prof. Mahendra V. Khobragade",
       designation: "National Treasurer & Comptroller (राष्ट्रीय कोषाध्यक्ष)",
+      level: "national",
+      state: "National HQ",
       rankBadge: "Finance & Audit",
       photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
       bio: "Chartered Accountant and academician; ensures 100% organizational transparency, public audit compliance, 80G tax exemptions, and Centenary 2027 trust governance.",
-      credentials: "FCA, M.Com | Central Audit Bureau"
+      credentials: "FCA, M.Com | Central Audit Bureau",
+      order: 6
+    },
+    "lead_state_mh_1": {
+      name: "Commander Pramod R. Moon",
+      designation: "State President (महाराष्ट्र प्रदेशाध्यक्ष)",
+      level: "state",
+      state: "Maharashtra",
+      district: "Nagpur & Mumbai State Office",
+      rankBadge: "Maharashtra State Command",
+      photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80",
+      bio: "Spearheads statewide cadre building across 36 districts of Maharashtra; organizes annual Deekshabhoomi rally defense drills and Dr. Ambedkar youth camps.",
+      credentials: "M.A. Social Work | Mumbai & Nagpur State HQ",
+      order: 10
+    },
+    "lead_state_mh_2": {
+      name: "Adv. Nitin V. Dongre",
+      designation: "State General Secretary (महाराष्ट्र प्रदेश महासचिव)",
+      level: "state",
+      state: "Maharashtra",
+      district: "Pune & Western Maharashtra",
+      rankBadge: "State Executive",
+      photoUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=400&q=80",
+      bio: "Coordinates district dalpatis and administers constitutional awareness camps across Vidarbha, Marathwada, and Western Maharashtra.",
+      credentials: "B.A., LL.B. | Pune State Secretariat",
+      order: 11
+    },
+    "lead_state_up_1": {
+      name: "Shri Ramcharan Gautam",
+      designation: "State President (उत्तर प्रदेश प्रदेशाध्यक्ष)",
+      level: "state",
+      state: "Uttar Pradesh",
+      district: "Lucknow Central Command",
+      rankBadge: "UP State Command",
+      photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+      bio: "Leading SSD organizational growth across 75 districts of Uttar Pradesh; championing community self-defense wings and student literacy centers.",
+      credentials: "M.Sc., B.Ed. | Lucknow State Office",
+      order: 12
+    },
+    "lead_state_up_2": {
+      name: "Commander Sunil Kumar Rawat",
+      designation: "State Chief Dalpati (उत्तर प्रदेश मुख्य दलनायक)",
+      level: "state",
+      state: "Uttar Pradesh",
+      district: "Agra & Kanpur Division",
+      rankBadge: "UP Cadet Directorate",
+      photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80",
+      bio: "Oversees physical drills, parade formations, and district volunteer regiments across Eastern and Western Uttar Pradesh.",
+      credentials: "Ex-Police Instructor | Agra Command",
+      order: 13
+    },
+    "lead_state_mp_1": {
+      name: "Dr. Kailash Chandra Ahirwar",
+      designation: "State President (मध्य प्रदेश प्रदेशाध्यक्ष)",
+      level: "state",
+      state: "Madhya Pradesh",
+      district: "Bhopal & Indore Command",
+      rankBadge: "MP State Command",
+      photoUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80",
+      bio: "Educationist and activist leading the revival of Samata Sainik Dal units in Madhya Pradesh; coordinating Dr. Ambedkar birth centenary drives.",
+      credentials: "Ph.D. Sociology | Bhopal State HQ",
+      order: 14
+    },
+    "lead_state_delhi_1": {
+      name: "Adv. R. K. Mourya",
+      designation: "State President, Delhi NCR (दिल्ली प्रदेशाध्यक्ष)",
+      level: "state",
+      state: "Delhi NCR",
+      district: "National Capital Region",
+      rankBadge: "Delhi NCR Command",
+      photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+      bio: "Directs Delhi NCR legal support desks, civil rights rallies, and national centenary parade delegations in the capital.",
+      credentials: "Advocate, Delhi High Court | New Delhi Office",
+      order: 15
+    },
+    "lead_state_ka_1": {
+      name: "Prof. Anand Kumar Swamy",
+      designation: "State President (कर्नाटक प्रदेशाध्यक्ष)",
+      level: "state",
+      state: "Karnataka",
+      district: "Bengaluru & Mysuru Command",
+      rankBadge: "Karnataka State Command",
+      photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+      bio: "Coordinates SSD Southern Zone expansion, multilingual Ambedkarite literature publication, and campus cadet corps in Karnataka.",
+      credentials: "M.A., Ph.D. | Bengaluru State Secretariat",
+      order: 16
+    },
+    "lead_state_rj_1": {
+      name: "Shri Bharat Lal Bairwa",
+      designation: "State President (राजस्थान प्रदेशाध्यक्ष)",
+      level: "state",
+      state: "Rajasthan",
+      district: "Jaipur Command",
+      rankBadge: "Rajasthan State Command",
+      photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80",
+      bio: "Grassroots organizer championing SC/ST atrocities monitoring, rural education cells, and district youth drill regiments across Rajasthan.",
+      credentials: "M.A. Political Science | Jaipur State Office",
+      order: 17
+    },
+    "lead_state_pb_1": {
+      name: "Col. (Retd.) Harjit Singh Rahi",
+      designation: "State President (पंजाब प्रदेशाध्यक्ष)",
+      level: "state",
+      state: "Punjab",
+      district: "Jalandhar & Chandigarh Command",
+      rankBadge: "Punjab State Command",
+      photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+      bio: "Army Veteran managing Punjab state sainik units, honoring Dr. Ambedkar's historical 1936 Punjab visits and training youth cadres.",
+      credentials: "Ex-Indian Army | Jalandhar Command",
+      order: 18
+    },
+    "lead_state_br_1": {
+      name: "Shri Dharmendra Kumar Paswan",
+      designation: "State President (बिहार प्रदेशाध्यक्ष)",
+      level: "state",
+      state: "Bihar",
+      district: "Patna Command",
+      rankBadge: "Bihar State Command",
+      photoUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=400&q=80",
+      bio: "Directs democratic rights defense, disaster flood relief teams, and village level equality brigades throughout Bihar.",
+      credentials: "M.A. History | Patna State HQ",
+      order: 19
     }
   },
   advisoryBoard: [
@@ -1306,53 +1444,143 @@ function renderHomeGallery() {
 }
 
 // ==========================================================================
-// GOVERNING BODY & NATIONAL LEADERSHIP RENDERER
+// GOVERNING BODY & STATE/NATIONAL LEADERSHIP RENDERER
 // ==========================================================================
-function loadGoverningBody() {
+let currentGoverningTier = 'all';
+let currentGoverningState = 'all';
+let currentGoverningSearch = '';
+
+function renderGoverningCards(leadersList) {
   const councilContainer = document.getElementById("governingContainer");
   const advisoryContainer = document.getElementById("advisoryContainer");
+  if (!councilContainer) return;
 
-  const renderData = (leadersList) => {
-    if (!leadersList || leadersList.length === 0) {
-      leadersList = Object.values(ssdSampleData.governingBody);
+  window._allGoverningLeaders = leadersList || Object.values(ssdSampleData.governingBody);
+
+  let filtered = window._allGoverningLeaders.filter(lead => {
+    if (lead.category === "Advisory Board") return false;
+
+    const isState = (lead.level === 'state') || (lead.state && lead.state !== 'National HQ' && lead.state !== 'All-India');
+    if (currentGoverningTier === 'national' && isState) return false;
+    if (currentGoverningTier === 'state' && !isState) return false;
+
+    if (currentGoverningState !== 'all') {
+      const matchState = (lead.state || '').toLowerCase().includes(currentGoverningState.toLowerCase());
+      if (!matchState) return false;
     }
 
-    if (councilContainer) {
-      const councilMembers = leadersList.filter(l => l.category !== "Advisory Board");
-      const listToUse = councilMembers.length > 0 ? councilMembers : leadersList;
-      councilContainer.innerHTML = listToUse.map(lead => `
-        <div class="governing-card">
+    if (currentGoverningSearch) {
+      const q = currentGoverningSearch.toLowerCase();
+      const matchSearch = (lead.name || '').toLowerCase().includes(q) ||
+                          (lead.designation || '').toLowerCase().includes(q) ||
+                          (lead.state || '').toLowerCase().includes(q) ||
+                          (lead.district || '').toLowerCase().includes(q) ||
+                          (lead.rankBadge || '').toLowerCase().includes(q) ||
+                          (lead.bio || '').toLowerCase().includes(q);
+      if (!matchSearch) return false;
+    }
+
+    return true;
+  });
+
+  // Update counts
+  const totalCount = window._allGoverningLeaders.filter(l => l.category !== "Advisory Board").length;
+  const nationalCount = window._allGoverningLeaders.filter(l => (l.level === 'national' || !l.level || l.state === 'National HQ') && l.category !== "Advisory Board").length;
+  const stateCount = window._allGoverningLeaders.filter(l => (l.level === 'state' || (l.state && l.state !== 'National HQ')) && l.category !== "Advisory Board").length;
+
+  const countAllEl = document.getElementById("govCountAll");
+  const countNatEl = document.getElementById("govCountNational");
+  const countStateEl = document.getElementById("govCountState");
+  if (countAllEl) countAllEl.textContent = totalCount;
+  if (countNatEl) countNatEl.textContent = nationalCount;
+  if (countStateEl) countStateEl.textContent = stateCount;
+
+  const statePillsRow = document.getElementById("governingStatePills");
+  if (statePillsRow) {
+    statePillsRow.style.display = (currentGoverningTier === 'national') ? 'none' : 'flex';
+  }
+
+  if (filtered.length === 0) {
+    councilContainer.innerHTML = `
+      <div style="grid-column: 1/-1; text-align: center; padding: 50px 20px; background: #fff; border: 1px dashed var(--border-color); border-radius: 8px;">
+        <i class="fa-solid fa-users-viewfinder" style="font-size: 38px; color: var(--primary-orange); margin-bottom: 14px;"></i>
+        <h3 style="color: var(--dark-navy); font-size: 18px; margin-bottom: 6px;">No Governing Officers Found</h3>
+        <p style="color: var(--muted-gray); font-size: 13.5px; max-width: 500px; margin: 0 auto 16px;">No council leaders match the selected tier, state, or search filters.</p>
+        <button type="button" class="btn btn-outline-navy" onclick="setGoverningTier('all'); setGoverningState('all');" style="padding: 6px 16px; font-size: 12.5px;">
+          <i class="fa-solid fa-rotate-left"></i> Reset All Filters
+        </button>
+      </div>
+    `;
+  } else {
+    councilContainer.innerHTML = filtered.map(lead => {
+      const isState = (lead.level === 'state') || (lead.state && lead.state !== 'National HQ');
+      const stateName = lead.state || (isState ? 'State Unit' : 'National HQ');
+      const badgeText = lead.rankBadge || (isState ? `${stateName} Command` : 'National Command');
+
+      return `
+        <div class="governing-card" data-level="${isState ? 'state' : 'national'}" data-state="${escapeHtml(stateName)}">
           <div class="governing-header">
-            <img src="${lead.photoUrl}" alt="${lead.name}" class="governing-photo" onerror="this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80'">
-            <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> ${lead.rankBadge || 'National Command'}</span>
+            <img src="${lead.photoUrl}" alt="${escapeHtml(lead.name)}" class="governing-photo" onerror="this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80'">
+            <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> ${escapeHtml(badgeText)}</span>
+            ${isState ? `<span class="governing-badge-state"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(stateName)}</span>` : `<span class="governing-badge-state" style="background: rgba(255, 107, 0, 0.9);"><i class="fa-solid fa-landmark"></i> Central HQ</span>`}
           </div>
           <div class="governing-body-content">
-            <h3 class="governing-name">${lead.name}</h3>
-            <div class="governing-designation">${lead.designation}</div>
-            <p class="governing-bio">${lead.bio}</p>
+            <h3 class="governing-name">${escapeHtml(lead.name)}</h3>
+            <div class="governing-designation">${escapeHtml(lead.designation)}</div>
+            <p class="governing-bio">${escapeHtml(lead.bio)}</p>
             <div class="governing-credentials">
               <i class="fa-solid fa-certificate" style="color: var(--primary-orange);"></i>
-              <span>${lead.credentials}</span>
+              <span>${escapeHtml(lead.credentials || (lead.district ? lead.district + ' | ' + stateName : stateName))}</span>
             </div>
           </div>
         </div>
-      `).join('');
-    }
+      `;
+    }).join('');
+  }
 
-    if (advisoryContainer) {
-      const advisoryMembers = leadersList.filter(l => l.category === "Advisory Board");
-      const advToUse = advisoryMembers.length > 0 ? advisoryMembers : (ssdSampleData.advisoryBoard || []);
-      advisoryContainer.innerHTML = advToUse.map(adv => `
-        <div class="advisory-member">
-          <img src="${adv.photoUrl}" alt="${adv.name}" class="advisory-avatar" onerror="this.src='https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80'">
-          <div>
-            <div class="advisory-name">${adv.name}</div>
-            <div class="advisory-role">${adv.credentials || adv.role || 'Senior Advisory Member'}</div>
-          </div>
+  if (advisoryContainer) {
+    const advisoryMembers = window._allGoverningLeaders.filter(l => l.category === "Advisory Board");
+    const advToUse = advisoryMembers.length > 0 ? advisoryMembers : (ssdSampleData.advisoryBoard || []);
+    advisoryContainer.innerHTML = advToUse.map(adv => `
+      <div class="advisory-member">
+        <img src="${adv.photoUrl}" alt="${adv.name}" class="advisory-avatar" onerror="this.src='https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80'">
+        <div>
+          <div class="advisory-name">${adv.name}</div>
+          <div class="advisory-role">${adv.credentials || adv.role || 'Senior Advisory Member'}</div>
         </div>
-      `).join('');
-    }
-  };
+      </div>
+    `).join('');
+  }
+}
+
+function setGoverningTier(tier) {
+  currentGoverningTier = tier;
+  document.querySelectorAll('.governing-tier-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tier === tier);
+  });
+  renderGoverningCards(window._allGoverningLeaders);
+}
+
+function setGoverningState(state) {
+  currentGoverningState = state;
+  document.querySelectorAll('.state-pill').forEach(pill => {
+    pill.classList.toggle('active', pill.dataset.state.toLowerCase() === state.toLowerCase());
+  });
+  renderGoverningCards(window._allGoverningLeaders);
+}
+
+function filterGoverningSearch(query) {
+  currentGoverningSearch = (query || '').trim();
+  renderGoverningCards(window._allGoverningLeaders);
+}
+
+window.setGoverningTier = setGoverningTier;
+window.setGoverningState = setGoverningState;
+window.filterGoverningSearch = filterGoverningSearch;
+
+function loadGoverningBody() {
+  const councilContainer = document.getElementById("governingContainer");
+  if (!councilContainer) return;
 
   if (db) {
     db.ref('leadership').on('value', snapshot => {
@@ -1360,9 +1588,9 @@ function loadGoverningBody() {
       if (val) {
         let list = Object.entries(val).map(([k, v]) => ({ id: k, ...v }));
         list.sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
-        renderData(list);
+        renderGoverningCards(list);
       } else {
-        renderData(Object.values(ssdSampleData.governingBody));
+        renderGoverningCards(Object.values(ssdSampleData.governingBody));
       }
     });
   } else {
@@ -1373,12 +1601,12 @@ function loadGoverningBody() {
         if (parsed && parsed.leadership) {
           let list = Object.entries(parsed.leadership).map(([k, v]) => ({ id: k, ...v }));
           list.sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
-          renderData(list);
+          renderGoverningCards(list);
           return;
         }
       } catch (e) {}
     }
-    renderData(Object.values(ssdSampleData.governingBody));
+    renderGoverningCards(Object.values(ssdSampleData.governingBody));
   }
 }
 

@@ -426,6 +426,23 @@
                 <h3>Governing Body & National Leadership Council (/leadership)</h3>
               </div>
               <div class="card-panel-actions">
+                <select id="leadershipTierFilter" class="filter-select" onchange="filterLeadershipTable()">
+                  <option value="all">All Command Tiers</option>
+                  <option value="national">National Command</option>
+                  <option value="state">State Governing Bodies</option>
+                </select>
+                <select id="leadershipStateFilter" class="filter-select" onchange="filterLeadershipTable()">
+                  <option value="all">All States</option>
+                  <option value="National HQ">National HQ</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Uttar Pradesh">Uttar Pradesh</option>
+                  <option value="Madhya Pradesh">Madhya Pradesh</option>
+                  <option value="Delhi NCR">Delhi NCR</option>
+                  <option value="Karnataka">Karnataka</option>
+                  <option value="Rajasthan">Rajasthan</option>
+                  <option value="Punjab">Punjab</option>
+                  <option value="Bihar">Bihar</option>
+                </select>
                 <select id="leadershipFilter" class="filter-select" onchange="filterLeadershipTable()">
                   <option value="all">All Wings & Boards</option>
                   <option value="Supreme Council">Supreme Council</option>
@@ -447,10 +464,10 @@
                   <tr>
                     <th style="width: 50px;">Photo</th>
                     <th>Officer Name</th>
+                    <th>Tier & State</th>
                     <th>Designation & Rank</th>
                     <th>Council Wing</th>
                     <th>Credentials</th>
-                    <th>Bio Summary</th>
                     <th style="text-align: right;">Actions</th>
                   </tr>
                 </thead>
@@ -1207,6 +1224,39 @@
             <div class="form-group-modal">
               <label for="leadDesignation">Designation / Title (English & Hindi)</label>
               <input type="text" id="leadDesignation" required placeholder="e.g. National President (राष्ट्रीय अध्यक्ष)">
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="leadLevel">Command Tier / Level</label>
+              <select id="leadLevel">
+                <option value="national">National Supreme Command</option>
+                <option value="state">State Governing Body (राज्य कार्यकारिणी)</option>
+              </select>
+            </div>
+            <div class="form-group-modal">
+              <label for="leadState">State / Province</label>
+              <select id="leadState">
+                <option value="National HQ">National HQ (All-India)</option>
+                <option value="Maharashtra">Maharashtra (महाराष्ट्र)</option>
+                <option value="Uttar Pradesh">Uttar Pradesh (उत्तर प्रदेश)</option>
+                <option value="Madhya Pradesh">Madhya Pradesh (मध्य प्रदेश)</option>
+                <option value="Delhi NCR">Delhi NCR (दिल्ली एनसीआर)</option>
+                <option value="Karnataka">Karnataka (कर्नाटक)</option>
+                <option value="Rajasthan">Rajasthan (राजस्थान)</option>
+                <option value="Punjab">Punjab (पंजाब)</option>
+                <option value="Bihar">Bihar (बिहार)</option>
+                <option value="Gujarat">Gujarat (गुजरात)</option>
+                <option value="Telangana">Telangana (तेलंगाना)</option>
+                <option value="Tamil Nadu">Tamil Nadu (तमिलनाडु)</option>
+                <option value="West Bengal">West Bengal (पश्चिम बंगाल)</option>
+                <option value="Haryana">Haryana (हरियाणा)</option>
+                <option value="Chhattisgarh">Chhattisgarh (छत्तीसगढ़)</option>
+                <option value="Jharkhand">Jharkhand (झारखंड)</option>
+                <option value="Odisha">Odisha (ओडिशा)</option>
+                <option value="Kerala">Kerala (केरल)</option>
+                <option value="Andhra Pradesh">Andhra Pradesh (आंध्र प्रदेश)</option>
+              </select>
             </div>
           </div>
           <div class="form-grid-modal">

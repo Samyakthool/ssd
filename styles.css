@@ -2143,6 +2143,143 @@ textarea.form-control {
   gap: 6px;
 }
 
+/* State Governing Body Tabs & Filter Bar */
+.governing-tier-nav {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 25px 0 15px;
+  flex-wrap: wrap;
+}
+
+.governing-tier-btn {
+  background: var(--white);
+  border: 1.5px solid var(--border-color);
+  color: var(--dark-navy);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 22px;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.governing-tier-btn:hover {
+  border-color: var(--primary-orange);
+  color: var(--primary-orange);
+  transform: translateY(-2px);
+}
+
+.governing-tier-btn.active {
+  background: var(--primary-orange);
+  border-color: var(--primary-orange);
+  color: var(--white);
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+}
+
+.governing-tier-btn .badge-count {
+  background: rgba(0, 0, 0, 0.12);
+  color: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.governing-tier-btn.active .badge-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: var(--white);
+}
+
+.governing-state-pills {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 15px 0 25px;
+  flex-wrap: wrap;
+  padding: 0 10px;
+}
+
+.state-pill {
+  background: rgba(0, 31, 63, 0.05);
+  border: 1px solid rgba(0, 31, 63, 0.1);
+  color: var(--dark-navy);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.state-pill:hover {
+  background: rgba(255, 107, 0, 0.1);
+  border-color: var(--primary-orange);
+  color: var(--primary-orange);
+}
+
+.state-pill.active {
+  background: var(--dark-navy);
+  border-color: var(--dark-navy);
+  color: var(--white);
+  box-shadow: 0 2px 8px rgba(0, 31, 63, 0.25);
+}
+
+.governing-badge-state {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 31, 63, 0.85);
+  backdrop-filter: blur(4px);
+  color: var(--white);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.governing-search-box {
+  max-width: 450px;
+  margin: 0 auto 20px;
+  position: relative;
+}
+
+.governing-search-box input {
+  width: 100%;
+  padding: 10px 16px 10px 40px;
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  font-size: 13px;
+  background: var(--white);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  transition: border-color 0.2s;
+}
+
+.governing-search-box input:focus {
+  border-color: var(--primary-orange);
+  outline: none;
+}
+
+.governing-search-box i {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted-gray);
+  font-size: 13px;
+}
+
 .advisory-council-box {
   background: var(--white);
   border: 1px solid var(--border-color);

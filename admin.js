@@ -202,6 +202,8 @@ const ssdInitialSeed = {
       name: "Dr. Siddharth M. Meshram",
       designation: "National President (राष्ट्रीय अध्यक्ष)",
       category: "Supreme Council",
+      level: "national",
+      state: "National HQ",
       rankBadge: "National Command",
       photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
       bio: "Eminent Constitutional scholar and veteran Ambedkarite leader with 40+ years in social transformation; overseeing national policy and the Centenary 2027 vision.",
@@ -212,6 +214,8 @@ const ssdInitialSeed = {
       name: "Commander Ravindra K. Gautam",
       designation: "National General Secretary (राष्ट्रीय महासचिव)",
       category: "Executive Council",
+      level: "national",
+      state: "National HQ",
       rankBadge: "Executive Council",
       photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
       bio: "Former NCC Gold Medalist and grassroots organizer; coordinates operations across 28 State Chapters and directs the national cadet syllabus.",
@@ -222,6 +226,8 @@ const ssdInitialSeed = {
       name: "Col. (Retd.) Vijay Anand Thorat",
       designation: "Chief Cadet Commander (मुख्य सैनिक दलनायक)",
       category: "Cadet Directorate",
+      level: "national",
+      state: "National HQ",
       rankBadge: "Drill & Defense",
       photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80",
       bio: "Indian Armed Forces Veteran; leads cadet drill curriculum, ceremonial parade standards, emergency disaster rescue wings, and physical fitness camps.",
@@ -232,6 +238,8 @@ const ssdInitialSeed = {
       name: "Smt. Anuradha Tai Kamble",
       designation: "National Convener, Mahila Dal (राष्ट्रीय संयोजिका)",
       category: "Mahila Dal",
+      level: "national",
+      state: "National HQ",
       rankBadge: "Mahila Front",
       photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
       bio: "Social activist and educator; leading women's frontline self-defense wings, legal crisis support networks, and Savitribai Phule girls' educational scholarships.",
@@ -242,6 +250,8 @@ const ssdInitialSeed = {
       name: "Senior Adv. B. P. Sonwane",
       designation: "Chairman, National Legal Cell (अध्यक्ष, विधिक प्रकोष्ठ)",
       category: "Legal Cell",
+      level: "national",
+      state: "National HQ",
       rankBadge: "Supreme Court Panel",
       photoUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80",
       bio: "Senior Advocate with extensive experience in the Supreme Court of India; spearheading pro-bono defense, SC/ST Act enforcement, and constitutional litigation.",
@@ -252,41 +262,179 @@ const ssdInitialSeed = {
       name: "Prof. Mahendra V. Khobragade",
       designation: "National Treasurer & Comptroller (राष्ट्रीय कोषाध्यक्ष)",
       category: "Finance & Audit",
+      level: "national",
+      state: "National HQ",
       rankBadge: "Finance & Audit",
       photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
       bio: "Chartered Accountant and academician; ensures 100% organizational transparency, public audit compliance, 80G tax exemptions, and Centenary 2027 trust governance.",
       credentials: "FCA, M.Com | Central Audit Bureau",
       order: 6
     },
+    "lead_state_mh_1": {
+      name: "Commander Pramod R. Moon",
+      designation: "State President (महाराष्ट्र प्रदेशाध्यक्ष)",
+      category: "Executive Council",
+      level: "state",
+      state: "Maharashtra",
+      district: "Nagpur & Mumbai State Office",
+      rankBadge: "Maharashtra State Command",
+      photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80",
+      bio: "Spearheads statewide cadre building across 36 districts of Maharashtra; organizes annual Deekshabhoomi rally defense drills and Dr. Ambedkar youth camps.",
+      credentials: "M.A. Social Work | Mumbai & Nagpur State HQ",
+      order: 10
+    },
+    "lead_state_mh_2": {
+      name: "Adv. Nitin V. Dongre",
+      designation: "State General Secretary (महाराष्ट्र प्रदेश महासचिव)",
+      category: "Executive Council",
+      level: "state",
+      state: "Maharashtra",
+      district: "Pune & Western Maharashtra",
+      rankBadge: "State Executive",
+      photoUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=400&q=80",
+      bio: "Coordinates district dalpatis and administers constitutional awareness camps across Vidarbha, Marathwada, and Western Maharashtra.",
+      credentials: "B.A., LL.B. | Pune State Secretariat",
+      order: 11
+    },
+    "lead_state_up_1": {
+      name: "Shri Ramcharan Gautam",
+      designation: "State President (उत्तर प्रदेश प्रदेशाध्यक्ष)",
+      category: "Executive Council",
+      level: "state",
+      state: "Uttar Pradesh",
+      district: "Lucknow Central Command",
+      rankBadge: "UP State Command",
+      photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+      bio: "Leading SSD organizational growth across 75 districts of Uttar Pradesh; championing community self-defense wings and student literacy centers.",
+      credentials: "M.Sc., B.Ed. | Lucknow State Office",
+      order: 12
+    },
+    "lead_state_up_2": {
+      name: "Commander Sunil Kumar Rawat",
+      designation: "State Chief Dalpati (उत्तर प्रदेश मुख्य दलनायक)",
+      category: "Cadet Directorate",
+      level: "state",
+      state: "Uttar Pradesh",
+      district: "Agra & Kanpur Division",
+      rankBadge: "UP Cadet Directorate",
+      photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80",
+      bio: "Oversees physical drills, parade formations, and district volunteer regiments across Eastern and Western Uttar Pradesh.",
+      credentials: "Ex-Police Instructor | Agra Command",
+      order: 13
+    },
+    "lead_state_mp_1": {
+      name: "Dr. Kailash Chandra Ahirwar",
+      designation: "State President (मध्य प्रदेश प्रदेशाध्यक्ष)",
+      category: "Executive Council",
+      level: "state",
+      state: "Madhya Pradesh",
+      district: "Bhopal & Indore Command",
+      rankBadge: "MP State Command",
+      photoUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80",
+      bio: "Educationist and activist leading the revival of Samata Sainik Dal units in Madhya Pradesh; coordinating Dr. Ambedkar birth centenary drives.",
+      credentials: "Ph.D. Sociology | Bhopal State HQ",
+      order: 14
+    },
+    "lead_state_delhi_1": {
+      name: "Adv. R. K. Mourya",
+      designation: "State President, Delhi NCR (दिल्ली प्रदेशाध्यक्ष)",
+      category: "Executive Council",
+      level: "state",
+      state: "Delhi NCR",
+      district: "National Capital Region",
+      rankBadge: "Delhi NCR Command",
+      photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+      bio: "Directs Delhi NCR legal support desks, civil rights rallies, and national centenary parade delegations in the capital.",
+      credentials: "Advocate, Delhi High Court | New Delhi Office",
+      order: 15
+    },
+    "lead_state_ka_1": {
+      name: "Prof. Anand Kumar Swamy",
+      designation: "State President (कर्नाटक प्रदेशाध्यक्ष)",
+      category: "Executive Council",
+      level: "state",
+      state: "Karnataka",
+      district: "Bengaluru & Mysuru Command",
+      rankBadge: "Karnataka State Command",
+      photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+      bio: "Coordinates SSD Southern Zone expansion, multilingual Ambedkarite literature publication, and campus cadet corps in Karnataka.",
+      credentials: "M.A., Ph.D. | Bengaluru State Secretariat",
+      order: 16
+    },
+    "lead_state_rj_1": {
+      name: "Shri Bharat Lal Bairwa",
+      designation: "State President (राजस्थान प्रदेशाध्यक्ष)",
+      category: "Executive Council",
+      level: "state",
+      state: "Rajasthan",
+      district: "Jaipur Command",
+      rankBadge: "Rajasthan State Command",
+      photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80",
+      bio: "Grassroots organizer championing SC/ST atrocities monitoring, rural education cells, and district youth drill regiments across Rajasthan.",
+      credentials: "M.A. Political Science | Jaipur State Office",
+      order: 17
+    },
+    "lead_state_pb_1": {
+      name: "Col. (Retd.) Harjit Singh Rahi",
+      designation: "State President (पंजाब प्रदेशाध्यक्ष)",
+      category: "Executive Council",
+      level: "state",
+      state: "Punjab",
+      district: "Jalandhar & Chandigarh Command",
+      rankBadge: "Punjab State Command",
+      photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+      bio: "Army Veteran managing Punjab state sainik units, honoring Dr. Ambedkar's historical 1936 Punjab visits and training youth cadres.",
+      credentials: "Ex-Indian Army | Jalandhar Command",
+      order: 18
+    },
+    "lead_state_br_1": {
+      name: "Shri Dharmendra Kumar Paswan",
+      designation: "State President (बिहार प्रदेशाध्यक्ष)",
+      category: "Executive Council",
+      level: "state",
+      state: "Bihar",
+      district: "Patna Command",
+      rankBadge: "Bihar State Command",
+      photoUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=400&q=80",
+      bio: "Directs democratic rights defense, disaster flood relief teams, and village level equality brigades throughout Bihar.",
+      credentials: "M.A. History | Patna State HQ",
+      order: 19
+    },
     "lead_7": {
       name: "Prof. Yashwantrao More",
       designation: "Senior Advisory Member",
       category: "Advisory Board",
+      level: "national",
+      state: "National HQ",
       rankBadge: "Advisory Council",
       photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80",
       bio: "Senior Ambedkarite Historian, author of multiple research treatises on Dr. Ambedkar's social movements and Satyagrahas.",
       credentials: "Author & Senior Historian | Pune",
-      order: 7
+      order: 20
     },
     "lead_8": {
       name: "Adv. Rekha Gaikwad",
       designation: "Senior Advisory Member",
       category: "Advisory Board",
+      level: "national",
+      state: "National HQ",
       rankBadge: "Advisory Council",
       photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=150&q=80",
       bio: "Human Rights Defender and Constitutional scholar actively engaged in social justice and women empowerment initiatives.",
       credentials: "Advocate & Scholar | Mumbai",
-      order: 8
+      order: 21
     },
     "lead_9": {
       name: "Commander Suresh Jadhav",
       designation: "Senior Advisory Member",
       category: "Advisory Board",
+      level: "national",
+      state: "National HQ",
       rankBadge: "Advisory Council",
       photoUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=150&q=80",
-      bio: "Veteran organizer of the historic 1956 Deekshabhoomi parade, bringing 70+ years of institutional wisdom to Central Command.",
-      credentials: "Veteran Sainik Leader | Nagpur",
-      order: 9
+      bio: "Veteran organizer of the historic 1956 Deekshabhoomi Dhamma Deeksha volunteer corps; mentor to youth training battalions.",
+      credentials: "1956 Deeksha Veteran | Nagpur",
+      order: 22
     }
   },
   admin_users: {
@@ -1143,48 +1291,76 @@ function renderLeadershipTable(filteredList = null) {
     return;
   }
 
-  tbody.innerHTML = list.map(m => `
-    <tr>
-      <td>
-        <img src="${escapeHtml(m.photoUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80')}" alt="${escapeHtml(m.name)}" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-orange);">
-      </td>
-      <td><strong>${escapeHtml(m.name)}</strong></td>
-      <td>
-        <div><strong>${escapeHtml(m.designation)}</strong></div>
-        <small class="badge-status badge-approved" style="font-size: 10px; margin-top: 3px; display: inline-block;">${escapeHtml(m.rankBadge || 'National Command')}</small>
-      </td>
-      <td><span class="badge-status badge-info">${escapeHtml(m.category || 'Supreme Council')}</span></td>
-      <td><small style="color: var(--text-muted);">${escapeHtml(m.credentials || 'HQ')}</small></td>
-      <td><div style="max-width: 250px; font-size: 12px; color: var(--text-muted); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(m.bio || '')}</div></td>
-      <td style="text-align: right;">
-        <div class="action-btn-group" style="justify-content: flex-end;">
-          <button type="button" class="action-icon-btn" onclick="openEditLeadershipModal('${m.id}')" title="Edit Member">
-            <i class="fa-solid fa-pen-to-square"></i>
-          </button>
-          <button type="button" class="action-icon-btn delete" onclick="deleteLeadershipMember('${m.id}')" title="Remove Member">
-            <i class="fa-solid fa-trash"></i>
-          </button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = list.map(m => {
+    const isState = (m.level === 'state') || (m.state && m.state !== 'National HQ');
+    const stateName = m.state || (isState ? 'State Unit' : 'National HQ');
+    return `
+      <tr>
+        <td>
+          <img src="${escapeHtml(m.photoUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80')}" alt="${escapeHtml(m.name)}" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-orange);">
+        </td>
+        <td>
+          <strong>${escapeHtml(m.name)}</strong>
+          ${m.district ? `<br><small style="color: var(--text-muted);">${escapeHtml(m.district)}</small>` : ''}
+        </td>
+        <td>
+          <span class="badge-status ${isState ? 'badge-info' : 'badge-approved'}">
+            <i class="fa-solid ${isState ? 'fa-map-pin' : 'fa-landmark'}"></i> ${escapeHtml(stateName)}
+          </span>
+        </td>
+        <td>
+          <div><strong>${escapeHtml(m.designation)}</strong></div>
+          <small class="badge-status badge-approved" style="font-size: 10px; margin-top: 3px; display: inline-block;">${escapeHtml(m.rankBadge || (isState ? stateName + ' Command' : 'National Command'))}</small>
+        </td>
+        <td><span class="badge-status badge-info">${escapeHtml(m.category || 'Supreme Council')}</span></td>
+        <td><small style="color: var(--text-muted);">${escapeHtml(m.credentials || 'HQ')}</small></td>
+        <td style="text-align: right;">
+          <div class="action-btn-group" style="justify-content: flex-end;">
+            <button type="button" class="action-icon-btn" onclick="openEditLeadershipModal('${m.id}')" title="Edit Member">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button type="button" class="action-icon-btn delete" onclick="deleteLeadershipMember('${m.id}')" title="Remove Member">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 function filterLeadershipTable() {
+  const tier = document.getElementById("leadershipTierFilter")?.value || "all";
+  const state = document.getElementById("leadershipStateFilter")?.value || "all";
   const cat = document.getElementById("leadershipFilter")?.value || "all";
+
   const all = Object.entries(adminData.leadership || ssdInitialSeed.leadership).map(([key, val]) => ({ id: key, ...val }));
-  if (cat === "all") {
-    renderLeadershipTable(all);
-  } else {
-    const filtered = all.filter(m => m.category === cat);
-    renderLeadershipTable(filtered);
-  }
+  const filtered = all.filter(m => {
+    const isState = (m.level === 'state') || (m.state && m.state !== 'National HQ' && m.state !== 'All-India');
+    if (tier === 'national' && isState) return false;
+    if (tier === 'state' && !isState) return false;
+
+    if (state !== 'all') {
+      const matchState = (m.state || '').toLowerCase() === state.toLowerCase();
+      if (!matchState) return false;
+    }
+
+    if (cat !== 'all') {
+      if (m.category !== cat) return false;
+    }
+
+    return true;
+  });
+
+  renderLeadershipTable(filtered);
 }
 
 function openAddLeadershipModal() {
   setInputValue("leadItemKey", "");
   setInputValue("leadName", "");
   setInputValue("leadDesignation", "");
+  setInputValue("leadLevel", document.getElementById("leadershipTierFilter")?.value === 'state' ? 'state' : 'national');
+  setInputValue("leadState", document.getElementById("leadershipStateFilter")?.value !== 'all' ? document.getElementById("leadershipStateFilter").value : 'National HQ');
   setInputValue("leadCategory", "Supreme Council");
   setInputValue("leadRankBadge", "National Command");
   setInputValue("leadPhotoUrl", "");
@@ -1192,7 +1368,7 @@ function openAddLeadershipModal() {
   setInputValue("leadBio", "");
   setInputValue("leadOrder", "1");
   updateImagePreview("leadPhotoPreview", "");
-  setText("modalLeadershipHeading", "Appoint New Council Member");
+  setText("modalLeadershipHeading", "Appoint Council Officer / State Commander");
   openAdminModal("modalLeadership");
 }
 
@@ -1201,9 +1377,13 @@ function openEditLeadershipModal(id) {
   const m = leadObj[id];
   if (!m) return;
 
+  const isState = (m.level === 'state') || (m.state && m.state !== 'National HQ');
+
   setInputValue("leadItemKey", id);
   setInputValue("leadName", m.name || "");
   setInputValue("leadDesignation", m.designation || "");
+  setInputValue("leadLevel", m.level || (isState ? 'state' : 'national'));
+  setInputValue("leadState", m.state || (isState ? 'Maharashtra' : 'National HQ'));
   setInputValue("leadCategory", m.category || "Supreme Council");
   setInputValue("leadRankBadge", m.rankBadge || "");
   setInputValue("leadPhotoUrl", m.photoUrl || "");
@@ -1211,16 +1391,21 @@ function openEditLeadershipModal(id) {
   setInputValue("leadBio", m.bio || "");
   setInputValue("leadOrder", m.order || "1");
   updateImagePreview("leadPhotoPreview", m.photoUrl || "");
-  setText("modalLeadershipHeading", `Edit Council Member: ${m.name}`);
+  setText("modalLeadershipHeading", `Edit Officer: ${m.name}`);
   openAdminModal("modalLeadership");
 }
 
 function handleSaveLeadership(e) {
   e.preventDefault();
   const key = document.getElementById("leadItemKey").value;
+  const level = document.getElementById("leadLevel")?.value || "national";
+  const state = document.getElementById("leadState")?.value || (level === 'state' ? 'Maharashtra' : 'National HQ');
+
   const memberData = {
     name: document.getElementById("leadName").value.trim(),
     designation: document.getElementById("leadDesignation").value.trim(),
+    level: level,
+    state: state,
     category: document.getElementById("leadCategory").value,
     rankBadge: document.getElementById("leadRankBadge").value.trim(),
     photoUrl: document.getElementById("leadPhotoUrl").value.trim(),
