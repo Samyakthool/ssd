@@ -750,6 +750,7 @@ function renderMembersTable(filteredList = null) {
 
   tbody.innerHTML = list.map(m => {
     const regDate = m.timestamp ? new Date(m.timestamp).toLocaleDateString() : 'Recent';
+    const isApproved = (m.status || '').toLowerCase() === 'approved';
     return `
       <tr>
         <td style="color: var(--text-muted);">${regDate}</td>
@@ -767,9 +768,13 @@ function renderMembersTable(filteredList = null) {
         </td>
         <td style="text-align: right;">
           <div class="action-btn-group" style="justify-content: flex-end;">
-            <button type="button" class="action-icon-btn verify" onclick="approveMember('${m.id}')" title="Approve & Verify">
+            ${!isApproved ? `
+            <button type="button" class="action-icon-btn verify" onclick="approveMember('${m.id}')" title="Approve & Send Official Welcome Email">
               <i class="fa-solid fa-check"></i>
-            </button>
+            </button>` : `
+            <button type="button" class="action-icon-btn" onclick="resendApprovalEmail('${m.id}')" title="Resend Official Approval Email" style="color: var(--primary-orange);">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>`}
             <button type="button" class="action-icon-btn delete" onclick="deleteMember('${m.id}')" title="Delete Entry">
               <i class="fa-solid fa-trash"></i>
             </button>
@@ -800,19 +805,131 @@ function filterMembersTable() {
   renderMembersTable(filtered);
 }
 
+function sendMemberApprovalEmail(m) {
+  if (!m) return Promise.reject(new Error("No member data provided"));
+  const email = (m.email || "").trim();
+  if (!email) {
+    showToast("Notice: Cadet has no email address. Status updated without email.", "info");
+    return Promise.resolve({ success: true, noEmail: true });
+  }
+
+  const cfg = getEmailConfig();
+  const senderEmail = cfg.senderEmail || "samyak.ssd@gmail.com";
+  const senderName = cfg.senderName || "Samata Sainik Dal (SSD)";
+  const enlistId = m.enlistmentId || ("SSD-CADET-" + (m.id ? m.id.slice(-6).toUpperCase() : Math.floor(1000 + Math.random() * 9000)));
+
+  const payload = {
+    type: 'approval',
+    senderEmail: senderEmail,
+    recipientEmail: email,
+    recipientName: m.fullName || m.name || "Sainik Cadet",
+    appPassword: cfg.appPassword,
+    data: {
+      ...m,
+      name: m.fullName || m.name || "Sainik Cadet",
+      fullName: m.fullName || m.name || "Sainik Cadet",
+      email: email,
+      enlistmentId: enlistId,
+      status: "Approved",
+      approvedAt: Date.now()
+    }
+  };
+
+  showToast(`Dispatching official approval email to ${email}...`, "info");
+
+  return fetch('/api/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(res => res.json())
+  .then(res => {
+    if (res.success) {
+      showToast(`Success! Official Approval Letter sent via ${res.provider} to ${email}!`, "success");
+    } else {
+      showToast(`Email Warning: ${res.error || res.message}`, "warning");
+    }
+
+    if (typeof emailjs !== "undefined" && cfg.publicKey && cfg.serviceId) {
+      try {
+        emailjs.init({ publicKey: cfg.publicKey });
+        emailjs.send(cfg.serviceId, cfg.enrollmentTemplateId || "template_cadet_welcome", {
+          from_name: senderName,
+          from_email: senderEmail,
+          reply_to: senderEmail,
+          cadet_name: m.fullName || m.name || "Cadet",
+          to_name: m.fullName || m.name || "Cadet",
+          to_email: email,
+          cadet_phone: m.phone || "N/A",
+          cadet_wing: m.wing || "Central Cadet Corps",
+          cadet_state: m.state || "Maharashtra",
+          cadet_city: m.city || "District Command",
+          enlistment_id: enlistId,
+          status: "Officially Approved",
+          date: new Date().toLocaleDateString('en-IN')
+        }).catch(e => console.warn("EmailJS approval error:", e));
+      } catch (err) {
+        console.warn("EmailJS error:", err);
+      }
+    }
+
+    if (db) {
+      db.ref('email_dispatches').push({
+        type: "Cadet Enlistment Approved",
+        senderEmail: senderEmail,
+        recipientEmail: email,
+        recipientName: m.fullName || m.name || "Cadet",
+        enlistmentId: enlistId,
+        wing: m.wing || "Cadet Corps",
+        state: m.state || "",
+        status: res.success ? "Dispatched" : "Attempted",
+        timestamp: Date.now()
+      }).catch(e => console.warn("Dispatch log error:", e));
+    }
+
+    return res;
+  })
+  .catch(err => {
+    console.error("Approval email network error:", err);
+    showToast(`Network error sending approval email: ${err.message}`, "error");
+  });
+}
+
 function approveMember(id) {
+  const member = (adminData.members && adminData.members[id]) ? { id, ...adminData.members[id] } : null;
+
   if (db) {
-    db.ref('members/' + id).update({ status: 'Approved' })
-      .then(() => showToast("Sainik enlistment verified & approved!", "success"))
-      .catch(err => showToast("Update error: " + err.message, "error"));
+    db.ref('members/' + id).update({
+      status: 'Approved',
+      approvedAt: Date.now()
+    })
+    .then(() => {
+      showToast("Sainik enlistment verified & approved!", "success");
+      if (member) {
+        member.status = 'Approved';
+        sendMemberApprovalEmail(member);
+      }
+    })
+    .catch(err => showToast("Update error: " + err.message, "error"));
   } else {
-    if (adminData.members[id]) {
+    if (adminData.members && adminData.members[id]) {
       adminData.members[id].status = "Approved";
+      adminData.members[id].approvedAt = Date.now();
       saveLocalStore();
       renderMembersTable();
       showToast("Sainik enlistment verified & approved!", "success");
+      sendMemberApprovalEmail(adminData.members[id]);
     }
   }
+}
+
+function resendApprovalEmail(id) {
+  const member = (adminData.members && adminData.members[id]) ? { id, ...adminData.members[id] } : null;
+  if (!member) {
+    showToast("Member record not found.", "error");
+    return;
+  }
+  sendMemberApprovalEmail(member);
 }
 
 function deleteMember(id) {
@@ -851,6 +968,7 @@ function handleManualAddMember(e) {
     city: city,
     wing: wing,
     status: "Approved",
+    approvedAt: Date.now(),
     timestamp: Date.now()
   };
 
@@ -859,6 +977,9 @@ function handleManualAddMember(e) {
       .then(() => {
         showToast("Sainik enlisted successfully to Firebase!", "success");
         closeAdminModal("modalAddMember");
+        if (email) {
+          sendMemberApprovalEmail(newEntry);
+        }
       })
       .catch(err => showToast("Error: " + err.message, "error"));
   } else {
@@ -868,6 +989,9 @@ function handleManualAddMember(e) {
     renderMembersTable();
     showToast("Sainik enlisted successfully!", "success");
     closeAdminModal("modalAddMember");
+    if (email) {
+      sendMemberApprovalEmail(newEntry);
+    }
   }
 }
 
@@ -933,6 +1057,8 @@ function openAdminReceiptModal(id) {
     d = list.find(x => x.id === id) || { id, donorName: "Contributor", amount: 1000, cause: "Centenary Fund" };
   }
 
+  window._currentAdminReceiptData = { ...d, id: d.id || id };
+
   const noEl = document.getElementById("admReceiptNo");
   const payIdEl = document.getElementById("admReceiptPayId");
   const dateEl = document.getElementById("admReceiptDate");
@@ -950,6 +1076,50 @@ function openAdminReceiptModal(id) {
   if (amountEl) amountEl.textContent = "₹" + (Number(d.amount) || 1000).toLocaleString("en-IN");
 
   openAdminModal("modalAdminReceipt");
+}
+
+function resendAdminReceiptEmail() {
+  const d = window._currentAdminReceiptData;
+  if (!d) {
+    showToast("No donation receipt selected.", "error");
+    return;
+  }
+  const defaultEmail = d.email || d.donorEmail || "";
+  const recipientEmail = prompt("Enter donor email address to send official 80G receipt:", defaultEmail || "samyak.ssd@gmail.com");
+  if (!recipientEmail) return;
+
+  const cfg = getEmailConfig();
+  const senderEmail = cfg.senderEmail || "samyak.ssd@gmail.com";
+  showToast(`Dispatching official 80G Contribution Receipt to ${recipientEmail}...`, "info");
+
+  fetch('/api/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'donation',
+      recipientEmail: recipientEmail,
+      recipientName: d.donorName || d.name || "Supporter",
+      appPassword: cfg.appPassword,
+      data: {
+        ...d,
+        name: d.donorName || d.name || "Supporter",
+        email: recipientEmail,
+        receiptNumber: d.receiptNumber || ("SSD-REC-2026-" + (d.id || '2026').slice(-4)),
+        paymentId: d.paymentId || "pay_captured"
+      }
+    })
+  })
+  .then(res => res.json())
+  .then(res => {
+    if (res.success) {
+      showToast(`Success! 80G Receipt sent via ${res.provider} to ${recipientEmail}!`, "success");
+    } else {
+      showToast(`Email Warning: ${res.error || res.message}`, "warning");
+    }
+  })
+  .catch(err => {
+    showToast("Error sending receipt: " + err.message, "error");
+  });
 }
 
 function printAdminReceiptArea() {
