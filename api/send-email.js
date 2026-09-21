@@ -22,7 +22,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { type, recipientEmail, recipientName, data, appPassword } = req.body || {};
+    const { type, recipientEmail, recipientName, data, appPassword, resendApiKey } = req.body || {};
 
     if (!recipientEmail) {
       return res.status(400).json({ success: false, message: 'Recipient email is required.' });
@@ -31,6 +31,7 @@ export default async function handler(req, res) {
     const timestamp = new Date().toISOString();
     const dispatchId = 'disp_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
     const gmailAppPassword = (process.env.GMAIL_APP_PASSWORD || appPassword || '').trim().replace(/\s+/g, '');
+    const resendKey = (process.env.RESEND_API_KEY || resendApiKey || '').trim();
     const senderEmail = process.env.SENDER_EMAIL || 'samyak.ssd@gmail.com';
     const senderName = 'Samata Sainik Dal (SSD)';
 
@@ -41,7 +42,41 @@ export default async function handler(req, res) {
 
     const html = isDonation ? generateDonationReceiptHtml(data) : generateEnrollmentWelcomeHtml(data);
 
-    // 1. If Gmail App Password is provided, send real email directly via Nodemailer Gmail SMTP
+    // 1. If Resend API Key is provided, dispatch via Resend
+    if (resendKey) {
+      try {
+        const resendRes = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: 'Samata Sainik Dal <onboarding@resend.dev>',
+            reply_to: senderEmail,
+            to: [recipientEmail],
+            subject: subject,
+            html: html
+          })
+        });
+
+        const resendData = await resendRes.json();
+        if (resendData && resendData.id) {
+          return res.status(200).json({
+            success: true,
+            provider: 'Resend API',
+            messageId: resendData.id,
+            dispatchId: dispatchId,
+            recipient: recipientEmail,
+            status: 'Delivered to Inbox'
+          });
+        }
+      } catch (rErr) {
+        console.warn('Resend error:', rErr);
+      }
+    }
+
+    // 2. If Gmail App Password is provided, send real email directly via Nodemailer Gmail SMTP
     if (gmailAppPassword) {
       try {
         const transporter = nodemailer.createTransport({
@@ -72,10 +107,15 @@ export default async function handler(req, res) {
         });
       } catch (smtpErr) {
         console.error('Gmail SMTP error:', smtpErr);
+        const isAuthFail = smtpErr.responseCode === 535 || (smtpErr.message && smtpErr.message.includes('535'));
+        const errorMessage = isAuthFail
+          ? 'Google Error 535: Username and password not accepted. You must use a 16-character Google App Password from https://myaccount.google.com/apppasswords (NOT your regular Gmail account password).'
+          : (smtpErr.message || 'SMTP Authentication failed.');
+
         return res.status(500).json({
           success: false,
           provider: 'Gmail SMTP',
-          error: smtpErr.message || 'SMTP Authentication failed. Please check your 16-character Gmail App Password.',
+          error: errorMessage,
           dispatchId: dispatchId
         });
       }
