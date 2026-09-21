@@ -689,7 +689,8 @@ function handleMemberRegistration(e) {
 
   const onError = (err) => {
     console.error("Member registration error:", err);
-    showToast("Something went wrong. Please try again.", "error");
+    const msg = err && err.message ? `Registration failed: ${err.message}` : "Database error. Please verify Firebase permissions.";
+    showToast(msg, "error");
     submitBtn.disabled = false;
     btnText.style.display = "inline-flex";
     btnSpinner.style.display = "none";
@@ -729,8 +730,10 @@ function handleContactSubmission(e) {
     btnSpinner.style.display = "none";
   };
 
-  const onError = () => {
-    showToast("Something went wrong. Please try again.", "error");
+  const onError = (err) => {
+    console.error("Contact message error:", err);
+    const msg = err && err.message ? `Dispatch error: ${err.message}` : "Something went wrong. Please check database permissions.";
+    showToast(msg, "error");
     submitBtn.disabled = false;
     btnText.style.display = "inline-flex";
     btnSpinner.style.display = "none";
@@ -762,9 +765,9 @@ function handleNewsletterSubscription(e) {
     setTimeout(() => { status.textContent = ""; }, 5000);
   };
 
-  const onError = () => {
+  const onError = (err) => {
     status.className = "newsletter-status error";
-    status.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error subscribing. Please try again.';
+    status.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Error: ${err && err.message ? err.message : 'Please try again.'}`;
   };
 
   if (db) {
@@ -1514,7 +1517,8 @@ function handleQuickJoinSubmit(e) {
 
   const onError = (err) => {
     console.error("Quick join error:", err);
-    showToast("Error enlisting. Please verify all fields and try again.", "error");
+    const msg = err && err.message ? `Enlistment error: ${err.message}` : "Error enlisting. Please verify database permissions.";
+    showToast(msg, "error");
     submitBtn.disabled = false;
     if (btnText) btnText.style.display = "inline-flex";
     if (btnSpinner) btnSpinner.style.display = "none";

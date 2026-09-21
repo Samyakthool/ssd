@@ -1376,18 +1376,34 @@ function testFirebasePing() {
     showToast("Database not initialized. Please save your credentials first.", "error");
     return;
   }
-  showToast("Testing Realtime Database ping...", "info");
-  db.ref('.info/connected').once('value', (snap) => {
-    if (snap.val() === true) {
-      showToast("Database Ping Successful: Live Realtime Database Connected!", "success");
-    } else {
-      db.ref('stats').once('value')
-        .then(() => showToast("Firebase Realtime Database Ping Successful & Responsive!", "success"))
-        .catch(err => showToast("Firebase Ping Warning: " + err.message, "warning"));
-    }
-  }).catch(err => {
-    showToast("Database Ping Failed: " + err.message, "error");
-  });
+  showToast("Testing Realtime Database read & write access...", "info");
+
+  const testKey = "_ping_health_check";
+  const testPayload = { testTime: Date.now(), ping: "pong" };
+
+  // 1. Test Write Access
+  db.ref(testKey).set(testPayload)
+    .then(() => {
+      // 2. Test Read Access
+      return db.ref(testKey).once('value');
+    })
+    .then((snap) => {
+      // 3. Clean up test record
+      db.ref(testKey).remove();
+      if (snap.exists() && snap.val().ping === "pong") {
+        showToast("Database Test PASSED: Full Live Read & Write Permissions Verified! Real-time sync active.", "success");
+      } else {
+        showToast("Database connected but read verification returned unexpected response.", "warning");
+      }
+    })
+    .catch((err) => {
+      console.error("Firebase Test Error:", err);
+      if (err.message && err.message.toLowerCase().includes("permission_denied")) {
+        showToast("PERMISSION DENIED! Please go to Firebase Console > Realtime Database > Rules and set .read: true, .write: true", "error");
+      } else {
+        showToast("Database Connection Error: " + err.message, "error");
+      }
+    });
 }
 
 function resetFirebaseConfigDefault() {
