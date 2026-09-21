@@ -67,7 +67,18 @@
         <button type="button" class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="fa-solid fa-bars"></i></button>
 
         <nav class="main-nav" id="mainNav">
-          <button type="button" class="mobile-close-btn" onclick="toggleMobileMenu()"><i class="fa-solid fa-xmark"></i></button>
+          <div class="drawer-header">
+            <div class="drawer-title-group">
+              <img src="logo.png" alt="SSD Logo" class="drawer-logo" onerror="handleLogoError(this)">
+              <div>
+                <div class="drawer-heading">SAMATA SAINIK DAL</div>
+                <div class="drawer-subheading">Est. 1927 | Central Command</div>
+              </div>
+            </div>
+            <button type="button" class="mobile-close-btn" onclick="toggleMobileMenu()" aria-label="Close Navigation Menu">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
           <ul class="nav-list">
             <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
             <li class="nav-item"><a href="about.html" class="nav-link">History & About</a></li>
@@ -313,6 +324,26 @@
   </footer>
 
   <div class="toast-container" id="toastContainer"></div>
+    <!-- MOBILE BOTTOM QUICK-ACTION BAR -->
+  <nav class="mobile-bottom-bar" aria-label="Mobile Quick Actions">
+    <a href="tel:1800241927" class="bottom-bar-item" title="Helpline">
+      <i class="fa-solid fa-phone-volume"></i>
+      <span>Helpline</span>
+    </a>
+    <a href="index.html#join-us" class="bottom-bar-item highlight" title="Enlist as Sainik">
+      <i class="fa-solid fa-user-shield"></i>
+      <span>Enlist</span>
+    </a>
+    <a href="index.html#donate" class="bottom-bar-item" title="Support Movement">
+      <i class="fa-solid fa-hand-holding-heart"></i>
+      <span>Donate</span>
+    </a>
+    <a href="javascript:void(0)" onclick="window.scrollTo({top:0, behavior:'smooth'})" class="bottom-bar-item" title="Back to Top">
+      <i class="fa-solid fa-chevron-up"></i>
+      <span>Top</span>
+    </a>
+  </nav>
+
   <script src="app.js"></script>
 </body>
 </html>

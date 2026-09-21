@@ -327,6 +327,7 @@ function seedSampleFirebaseData() {
 // Global Lifecycle
 document.addEventListener("DOMContentLoaded", () => {
   initStickyHeader();
+  initMobileInteractions();
   if (document.getElementById("statMembers")) loadStats();
   if (document.getElementById("campaignsContainer")) loadCampaigns();
   if (document.getElementById("newsContainer")) loadNews();
@@ -876,19 +877,118 @@ function changeLanguage(lang) {
 
 function toggleMobileMenu() {
   const nav = document.getElementById("mainNav");
-  if (nav) nav.classList.toggle("mobile-active");
+  const backdrop = document.getElementById("navBackdrop");
+  if (!nav) return;
+  
+  const isActive = nav.classList.toggle("mobile-active");
+  if (backdrop) {
+    backdrop.classList.toggle("active", isActive);
+  }
+  document.body.classList.toggle("nav-open", isActive);
 }
 
 function closeMobileMenu() {
   const nav = document.getElementById("mainNav");
+  const backdrop = document.getElementById("navBackdrop");
   if (nav) nav.classList.remove("mobile-active");
+  if (backdrop) backdrop.classList.remove("active");
+  document.body.classList.remove("nav-open");
 }
 
 function toggleMobileDropdown(e) {
   if (window.innerWidth <= 768) {
     e.preventDefault();
+    e.stopPropagation();
     const dropdown = e.currentTarget.nextElementSibling;
-    if (dropdown) dropdown.classList.toggle("mobile-open");
+    if (dropdown) {
+      dropdown.classList.toggle("mobile-open");
+      const icon = e.currentTarget.querySelector("i.fa-chevron-down");
+      if (icon) {
+        icon.style.transform = dropdown.classList.contains("mobile-open") ? "rotate(180deg)" : "rotate(0deg)";
+      }
+    }
+  }
+}
+
+// Mobile & Touch Ergonomics Initializer
+function initMobileInteractions() {
+  // 1. Setup Navigation Backdrop Overlay
+  let backdrop = document.getElementById("navBackdrop");
+  if (!backdrop) {
+    backdrop = document.createElement("div");
+    backdrop.id = "navBackdrop";
+    backdrop.className = "nav-backdrop";
+    document.body.appendChild(backdrop);
+  }
+  backdrop.addEventListener("click", closeMobileMenu);
+
+  // 2. Auto-close mobile drawer when clicking anchor links
+  document.querySelectorAll(".main-nav a[href^='#']").forEach(link => {
+    link.addEventListener("click", () => {
+      if (window.innerWidth <= 768) {
+        closeMobileMenu();
+      }
+    });
+  });
+
+  // 3. Back to Top Button
+  let backToTopBtn = document.getElementById("backToTopBtn");
+  if (!backToTopBtn) {
+    backToTopBtn = document.createElement("button");
+    backToTopBtn.id = "backToTopBtn";
+    backToTopBtn.className = "back-to-top-btn";
+    backToTopBtn.setAttribute("aria-label", "Scroll back to top of page");
+    backToTopBtn.innerHTML = '<i class="fa-solid fa-arrow-up"></i>';
+    document.body.appendChild(backToTopBtn);
+  }
+
+  backToTopBtn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  window.addEventListener("scroll", () => {
+    if (window.scrollY > 280) {
+      backToTopBtn.classList.add("show");
+    } else {
+      backToTopBtn.classList.remove("show");
+    }
+  }, { passive: true });
+
+  // 4. Keyboard Dismissal for Mobile Menu & Modals
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeMobileMenu();
+      closeNewsModal();
+      closeLightbox();
+      closeDonationModal();
+    }
+  });
+
+  // 5. Lightbox Touch Swipe Support
+  const lightboxModal = document.getElementById("lightboxModal");
+  if (lightboxModal) {
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    lightboxModal.addEventListener("touchstart", (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    lightboxModal.addEventListener("touchend", (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+      const diff = touchEndX - touchStartX;
+      if (Math.abs(diff) > 45) {
+        if (diff > 0 && typeof prevLightboxItem === "function") {
+          prevLightboxItem(); // Swipe right -> prev
+        } else if (diff < 0 && typeof nextLightboxItem === "function") {
+          nextLightboxItem(); // Swipe left -> next
+        }
+      }
+    }
   }
 }
 
