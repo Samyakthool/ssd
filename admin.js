@@ -2189,6 +2189,9 @@ function renderLeadershipTable(filteredList = null) {
         <td style="text-align: right;">
           <div class="action-btn-group" style="justify-content: flex-end;">
             ${getApprovalActionButtons(m, 'leadership')}
+            <button type="button" class="action-icon-btn" onclick="openOfficerPortfolioModal('${escapeHtml(m.id || m.name)}')" title="View Portfolio Dossier" style="color: var(--primary-orange);">
+              <i class="fa-solid fa-id-card"></i>
+            </button>
             <button type="button" class="action-icon-btn" onclick="openEditLeadershipModal('${m.id}')" title="Edit Member">
               <i class="fa-solid fa-pen-to-square"></i>
             </button>
@@ -4315,9 +4318,234 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
+// OFFICER & SENIOR ADVISORY PORTFOLIO MODAL CONTROLLER (ADMIN)
+// ==========================================================================
+function ensureOfficerPortfolioModalInDom() {
+  let modal = document.getElementById("officerPortfolioModal");
+  if (modal) return modal;
+
+  modal = document.createElement("div");
+  modal.className = "officer-portfolio-modal";
+  modal.id = "officerPortfolioModal";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-labelledby", "portfolioOfficerName");
+  modal.onclick = function(e) {
+    if (e.target.id === "officerPortfolioModal") closeOfficerPortfolioModal();
+  };
+  modal.innerHTML = `
+    <div class="officer-portfolio-content" onclick="event.stopPropagation()">
+      <div class="officer-portfolio-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img src="logo.png" alt="SSD" onerror="if(typeof handleLogoError === 'function') handleLogoError(this)" style="height: 28px; width: 28px;">
+          <span style="font-weight: 700; font-size: 14px; letter-spacing: 0.5px; text-transform: uppercase;">Samata Sainik Dal &bull; Leadership Dossier</span>
+        </div>
+        <button type="button" class="portfolio-modal-close" onclick="closeOfficerPortfolioModal()" aria-label="Close Portfolio Modal">&times;</button>
+      </div>
+
+      <div class="officer-portfolio-body">
+        <!-- Hero Section -->
+        <div class="portfolio-hero-grid">
+          <div class="portfolio-photo-wrap">
+            <img src="" alt="Officer Profile" id="portfolioOfficerPhoto" class="portfolio-avatar">
+            <div class="portfolio-verified-badge"><i class="fa-solid fa-circle-check"></i> Verified SSD</div>
+          </div>
+          <div class="portfolio-hero-info">
+            <span id="portfolioOfficerTierBadge" class="portfolio-tier-badge advisory">
+              <i class="fa-solid fa-scale-balanced"></i> Senior Advisory & Elders Council (मार्गदर्शक मंडल)
+            </span>
+            <h2 id="portfolioOfficerName" class="portfolio-name">-</h2>
+            <div id="portfolioOfficerDesignation" class="portfolio-designation">-</div>
+            <div class="portfolio-meta-pills">
+              <span class="portfolio-pill"><i class="fa-solid fa-shield-halved" style="color: var(--primary-orange);"></i> <span id="portfolioOfficerRankBadge">Council Member</span></span>
+              <span class="portfolio-pill"><i class="fa-solid fa-location-dot" style="color: #0284C7;"></i> <span id="portfolioOfficerHQ">National Central HQ</span></span>
+              <span class="portfolio-pill"><i class="fa-solid fa-sitemap" style="color: #10B981;"></i> <span id="portfolioOfficerWing">Advisory Board</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="portfolio-divider"></div>
+
+        <!-- 2 Column Details -->
+        <div class="portfolio-details-grid">
+          <div>
+            <h4 class="portfolio-section-title"><i class="fa-solid fa-award" style="color: var(--primary-orange);"></i> Credentials & Background</h4>
+            <div class="portfolio-credentials-box" id="portfolioOfficerCredentials">-</div>
+          </div>
+          <div>
+            <h4 class="portfolio-section-title"><i class="fa-solid fa-compass" style="color: var(--primary-orange);"></i> Key Focus & Movement Portfolios</h4>
+            <div class="portfolio-tags-grid" id="portfolioOfficerFocusAreas"></div>
+          </div>
+        </div>
+
+        <div class="portfolio-divider"></div>
+
+        <!-- Biography / Movement Service Record -->
+        <div>
+          <h4 class="portfolio-section-title"><i class="fa-solid fa-scroll" style="color: var(--primary-orange);"></i> Movement Service Record & Biographical Dossier</h4>
+          <p class="portfolio-bio-text" id="portfolioOfficerBio">-</p>
+        </div>
+
+        <!-- Quote / Charter Pledge Box -->
+        <div class="portfolio-quote-box">
+          <i class="fa-solid fa-quote-left portfolio-quote-icon"></i>
+          <p class="portfolio-quote-text">"Samata Sainik Dal was established on 24 September 1927 by Bodhisattva Dr. B.R. Ambedkar to organize a disciplined, self-respecting non-violent vanguard for the defense of constitutional morality and social democracy."</p>
+        </div>
+      </div>
+
+      <div class="officer-portfolio-footer">
+        <a href="contact.html" class="btn btn-outline-navy btn-sm"><i class="fa-solid fa-envelope"></i> Contact Secretariat</a>
+        <button type="button" class="btn btn-navy btn-sm" onclick="closeOfficerPortfolioModal()"><i class="fa-solid fa-check"></i> Close Dossier</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
+  let leader = null;
+  const leadObj = (typeof adminData !== 'undefined' && adminData && adminData.leadership) ? adminData.leadership : (ssdInitialSeed.leadership || {});
+  const masterList = Object.entries(leadObj).map(([key, val]) => ({ id: key, ...val }));
+
+  if (typeof leaderOrId === 'object' && leaderOrId !== null) {
+    leader = leaderOrId;
+  } else if (leaderOrId !== undefined && leaderOrId !== null) {
+    const raw = String(leaderOrId).toLowerCase().trim();
+
+    // 1. By ID
+    leader = masterList.find(m => m && m.id && String(m.id).toLowerCase() === raw);
+
+    // 2. By Name
+    if (!leader) {
+      leader = masterList.find(m => m && m.name && (m.name.toLowerCase().trim() === raw || m.name.toLowerCase().includes(raw) || raw.includes(m.name.toLowerCase())));
+    }
+
+    // 3. Fallback name tokens
+    if (!leader) {
+      if (raw.includes("yashwant") || raw.includes("more")) leader = masterList.find(m => m.name && m.name.includes("Yashwantrao"));
+      else if (raw.includes("rekha") || raw.includes("gaikwad")) leader = masterList.find(m => m.name && m.name.includes("Rekha"));
+      else if (raw.includes("suresh") || raw.includes("jadhav")) leader = masterList.find(m => m.name && m.name.includes("Suresh"));
+    }
+  }
+
+  if (!leader) {
+    console.warn("Leader not found for portfolio dossier:", leaderOrId);
+    return;
+  }
+
+  const modal = ensureOfficerPortfolioModalInDom();
+  if (!modal) return;
+
+  const photoEl = modal.querySelector("#portfolioOfficerPhoto");
+  const nameEl = modal.querySelector("#portfolioOfficerName");
+  const desigEl = modal.querySelector("#portfolioOfficerDesignation");
+  const tierBadgeEl = modal.querySelector("#portfolioOfficerTierBadge");
+  const rankBadgeEl = modal.querySelector("#portfolioOfficerRankBadge");
+  const credEl = modal.querySelector("#portfolioOfficerCredentials");
+  const hqEl = modal.querySelector("#portfolioOfficerHQ");
+  const bioEl = modal.querySelector("#portfolioOfficerBio");
+  const focusAreasEl = modal.querySelector("#portfolioOfficerFocusAreas");
+  const wingEl = modal.querySelector("#portfolioOfficerWing");
+
+  const isAdv = leader.category === "Advisory Board" || (leader.designation && leader.designation.includes("Advisory")) || (leader.rankBadge && leader.rankBadge.includes("Advisory")) || isAdvisory;
+  const isDistrict = (leader.level === 'district');
+  const isState = (leader.level === 'state') || (!isDistrict && leader.state && leader.state !== 'National HQ' && leader.state !== 'All-India');
+  const stateName = leader.state || (isDistrict || isState ? 'Maharashtra' : 'National HQ');
+
+  if (photoEl) {
+    photoEl.src = leader.photoUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80";
+    photoEl.alt = leader.name || "Officer Portfolio";
+  }
+  if (nameEl) nameEl.textContent = leader.name || "Command Leader";
+  if (desigEl) desigEl.textContent = leader.designation || leader.role || (isAdv ? "Senior Advisory & Elders Council Member (मार्गदर्शक मंडल सदस्य)" : "Executive Officer");
+  
+  if (tierBadgeEl) {
+    if (isAdv) {
+      tierBadgeEl.innerHTML = `<i class="fa-solid fa-scale-balanced"></i> Senior Advisory & Elders Council (मार्गदर्शक मंडल)`;
+      tierBadgeEl.className = "portfolio-tier-badge advisory";
+    } else if (isDistrict) {
+      tierBadgeEl.innerHTML = `<i class="fa-solid fa-location-dot"></i> District Directorate (${escapeHtml(leader.district || stateName)})`;
+      tierBadgeEl.className = "portfolio-tier-badge district";
+    } else if (isState) {
+      tierBadgeEl.innerHTML = `<i class="fa-solid fa-map-pin"></i> ${escapeHtml(stateName)} State Chapter Command`;
+      tierBadgeEl.className = "portfolio-tier-badge state";
+    } else {
+      tierBadgeEl.innerHTML = `<i class="fa-solid fa-landmark"></i> National Supreme Command Council`;
+      tierBadgeEl.className = "portfolio-tier-badge national";
+    }
+  }
+
+  if (rankBadgeEl) {
+    rankBadgeEl.textContent = leader.rankBadge || (isAdv ? "Senior Advisory Council" : (isDistrict ? `${leader.district || stateName} District Command` : (isState ? `${stateName} State Command` : "National Central HQ")));
+  }
+
+  if (credEl) {
+    credEl.textContent = leader.credentials || (leader.district ? `${leader.district} | ${stateName}` : (isAdv ? "Senior Advisory Fellow & Movement Scholar" : stateName));
+  }
+
+  if (hqEl) {
+    hqEl.textContent = isDistrict ? `${leader.district || 'Nagpur'}, ${stateName}` : (isState ? `${stateName} State HQ` : 'National HQ (New Delhi / Nagpur)');
+  }
+
+  if (wingEl) {
+    wingEl.textContent = leader.category || (isAdv ? "Senior Advisory (मार्गदर्शक मंडल)" : "Supreme Council");
+  }
+
+  if (bioEl) {
+    let bioText = leader.bio || "";
+    if (!bioText || bioText.length < 50) {
+      if (isAdv) {
+        bioText = `${leader.name} serves on the Senior Advisory & Elders Council (मार्गदर्शक मंडल) of Samata Sainik Dal, providing veteran ideological direction, historical research guidance, and policy oversight for nationwide movement expansion in accordance with Bodhisattva Dr. B.R. Ambedkar's foundational 1927 charter.`;
+      } else {
+        bioText = `${leader.name} serves as ${leader.designation || 'Command Officer'} in Samata Sainik Dal, actively leading volunteer mobilizations, legal protection protocols, and constitutional awareness programs across the nation.`;
+      }
+    }
+    bioEl.textContent = bioText;
+  }
+
+  if (focusAreasEl) {
+    let tags = [];
+    if (isAdv) {
+      tags = ["Movement Ideology & Ethics", "Historical Archives & Treatises", "Constitutional Guidance", "Elders Mentorship", "Youth Direction", "Centenary 2027 Counsel"];
+    } else if (leader.designation && leader.designation.toLowerCase().includes("legal")) {
+      tags = ["Constitutional Law Defense", "SC/ST Atrocities Tribunal Support", "High Court & Supreme Court Petitions", "Cadet Civil Rights", "Pro-Bono Network"];
+    } else if (leader.designation && leader.designation.toLowerCase().includes("cadet")) {
+      tags = ["Military Drill Training", "Parade Protocols", "Physical Endurance Standards", "Cadet Discipline", "Guard of Honor Command"];
+    } else if (leader.designation && leader.designation.toLowerCase().includes("mahila")) {
+      tags = ["Mahila Dal Expansion", "Women Self-Defense", "Grassroots Legal Literacy", "Equal Rights Advocacy", "Community Organizing"];
+    } else if (leader.designation && leader.designation.toLowerCase().includes("treasur")) {
+      tags = ["Centenary Fund Audit", "80G Tax Exempt Compliances", "Financial Governance", "Transparent Public Accounting", "Resource Mobilization"];
+    } else {
+      tags = ["National Command Coordination", "State Chapter Administration", "Democratic Governance", "Sainik Enlistment", "Centenary 2027 Vision"];
+    }
+    focusAreasEl.innerHTML = tags.map(t => `<span class="portfolio-tag"><i class="fa-solid fa-check"></i> ${escapeHtml(t)}</span>`).join('');
+  }
+
+  modal.style.display = "flex";
+  modal.classList.add("active");
+  document.body.style.overflow = "hidden";
+}
+
+function closeOfficerPortfolioModal() {
+  const modal = document.getElementById("officerPortfolioModal");
+  if (modal) {
+    modal.style.display = "none";
+    modal.classList.remove("active");
+    document.body.style.overflow = "auto";
+  }
+}
+
+function closeOfficerPortfolioModalOnBackdrop(e) {
+  if (e.target.id === "officerPortfolioModal") closeOfficerPortfolioModal();
+}
+
 // Global Window Exports for Dynamic Inline Handlers
 window.approvePost = approvePost;
 window.rejectPost = rejectPost;
 window.bulkApproveAllPending = bulkApproveAllPending;
 window.renderApprovalsView = renderApprovalsView;
+window.openOfficerPortfolioModal = openOfficerPortfolioModal;
+window.closeOfficerPortfolioModal = closeOfficerPortfolioModal;
+window.closeOfficerPortfolioModalOnBackdrop = closeOfficerPortfolioModalOnBackdrop;
 

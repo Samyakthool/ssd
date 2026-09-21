@@ -3454,7 +3454,7 @@ body.nav-open {
   position: fixed;
   inset: 0;
   background: rgba(7, 21, 46, 0.88);
-  z-index: 99995;
+  z-index: 999999;
   display: none;
   align-items: center;
   justify-content: center;
@@ -3464,7 +3464,7 @@ body.nav-open {
 }
 
 .officer-portfolio-modal.active {
-  display: flex;
+  display: flex !important;
 }
 
 .officer-portfolio-content {

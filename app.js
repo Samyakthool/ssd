@@ -1839,59 +1839,161 @@ function loadGoverningBody() {
 // ==========================================================================
 // OFFICER & SENIOR ADVISORY PORTFOLIO MODAL
 // ==========================================================================
+function ensureOfficerPortfolioModalInDom() {
+  let modal = document.getElementById("officerPortfolioModal");
+  if (modal) return modal;
+
+  modal = document.createElement("div");
+  modal.className = "officer-portfolio-modal";
+  modal.id = "officerPortfolioModal";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-labelledby", "portfolioOfficerName");
+  modal.onclick = function(e) {
+    if (e.target.id === "officerPortfolioModal") closeOfficerPortfolioModal();
+  };
+  modal.innerHTML = `
+    <div class="officer-portfolio-content" onclick="event.stopPropagation()">
+      <div class="officer-portfolio-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img src="logo.png" alt="SSD" onerror="if(typeof handleLogoError === 'function') handleLogoError(this)" style="height: 28px; width: 28px;">
+          <span style="font-weight: 700; font-size: 14px; letter-spacing: 0.5px; text-transform: uppercase;">Samata Sainik Dal &bull; Leadership Dossier</span>
+        </div>
+        <button type="button" class="portfolio-modal-close" onclick="closeOfficerPortfolioModal()" aria-label="Close Portfolio Modal">&times;</button>
+      </div>
+
+      <div class="officer-portfolio-body">
+        <!-- Hero Section -->
+        <div class="portfolio-hero-grid">
+          <div class="portfolio-photo-wrap">
+            <img src="" alt="Officer Profile" id="portfolioOfficerPhoto" class="portfolio-avatar">
+            <div class="portfolio-verified-badge"><i class="fa-solid fa-circle-check"></i> Verified SSD</div>
+          </div>
+          <div class="portfolio-hero-info">
+            <span id="portfolioOfficerTierBadge" class="portfolio-tier-badge advisory">
+              <i class="fa-solid fa-scale-balanced"></i> Senior Advisory & Elders Council (मार्गदर्शक मंडल)
+            </span>
+            <h2 id="portfolioOfficerName" class="portfolio-name">-</h2>
+            <div id="portfolioOfficerDesignation" class="portfolio-designation">-</div>
+            <div class="portfolio-meta-pills">
+              <span class="portfolio-pill"><i class="fa-solid fa-shield-halved" style="color: var(--primary-orange);"></i> <span id="portfolioOfficerRankBadge">Council Member</span></span>
+              <span class="portfolio-pill"><i class="fa-solid fa-location-dot" style="color: #0284C7;"></i> <span id="portfolioOfficerHQ">National Central HQ</span></span>
+              <span class="portfolio-pill"><i class="fa-solid fa-sitemap" style="color: #10B981;"></i> <span id="portfolioOfficerWing">Advisory Board</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="portfolio-divider"></div>
+
+        <!-- 2 Column Details -->
+        <div class="portfolio-details-grid">
+          <div>
+            <h4 class="portfolio-section-title"><i class="fa-solid fa-award" style="color: var(--primary-orange);"></i> Credentials & Background</h4>
+            <div class="portfolio-credentials-box" id="portfolioOfficerCredentials">-</div>
+          </div>
+          <div>
+            <h4 class="portfolio-section-title"><i class="fa-solid fa-compass" style="color: var(--primary-orange);"></i> Key Focus & Movement Portfolios</h4>
+            <div class="portfolio-tags-grid" id="portfolioOfficerFocusAreas"></div>
+          </div>
+        </div>
+
+        <div class="portfolio-divider"></div>
+
+        <!-- Biography / Movement Service Record -->
+        <div>
+          <h4 class="portfolio-section-title"><i class="fa-solid fa-scroll" style="color: var(--primary-orange);"></i> Movement Service Record & Biographical Dossier</h4>
+          <p class="portfolio-bio-text" id="portfolioOfficerBio">-</p>
+        </div>
+
+        <!-- Quote / Charter Pledge Box -->
+        <div class="portfolio-quote-box">
+          <i class="fa-solid fa-quote-left portfolio-quote-icon"></i>
+          <p class="portfolio-quote-text">"Samata Sainik Dal was established on 24 September 1927 by Bodhisattva Dr. B.R. Ambedkar to organize a disciplined, self-respecting non-violent vanguard for the defense of constitutional morality and social democracy."</p>
+        </div>
+      </div>
+
+      <div class="officer-portfolio-footer">
+        <a href="contact.html" class="btn btn-outline-navy btn-sm"><i class="fa-solid fa-envelope"></i> Contact Secretariat</a>
+        <button type="button" class="btn btn-navy btn-sm" onclick="closeOfficerPortfolioModal()"><i class="fa-solid fa-check"></i> Close Dossier</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  return modal;
+}
+
 function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
   let leader = null;
-  const allLeaders = window._allGoverningLeaders || Object.values(ssdSampleData.governingBody || {});
-  const advList = (window._allGoverningLeaders || []).filter(l => l.category === "Advisory Board").length > 0 
-    ? (window._allGoverningLeaders || []).filter(l => l.category === "Advisory Board") 
-    : (ssdSampleData.advisoryBoard || []);
+  const allGoverning = Object.values(ssdSampleData.governingBody || {});
+  const allAdvisory = ssdSampleData.advisoryBoard || [];
+  const dynamicLeaders = window._allGoverningLeaders || [];
+  
+  // Combine all sources
+  const masterList = [...allAdvisory, ...dynamicLeaders, ...allGoverning];
 
-  if (typeof leaderOrId === 'string' || typeof leaderOrId === 'number') {
-    const idOrName = String(leaderOrId).toLowerCase().trim();
-    
-    // 1. Check Advisory List first if isAdvisory is true
-    if (isAdvisory) {
-      if (typeof leaderOrId === 'number' || (!isNaN(leaderOrId) && leaderOrId !== '')) {
-        leader = advList[Number(leaderOrId)];
-      }
-      if (!leader) {
-        leader = advList.find(a => (a.id && String(a.id).toLowerCase() === idOrName) || (a.name && a.name.toLowerCase().includes(idOrName)));
-      }
-    }
-
-    // 2. Search in all leaders
-    if (!leader) {
-      leader = allLeaders.find(l => (l.id && String(l.id).toLowerCase() === idOrName) || (l.name && l.name.toLowerCase().includes(idOrName)));
-    }
-
-    // 3. Fallback search in advisory list if not found yet
-    if (!leader) {
-      leader = advList.find(a => (a.id && String(a.id).toLowerCase() === idOrName) || (a.name && a.name.toLowerCase().includes(idOrName)));
-    }
-  } else if (typeof leaderOrId === 'object' && leaderOrId !== null) {
+  if (typeof leaderOrId === 'object' && leaderOrId !== null) {
     leader = leaderOrId;
+  } else if (leaderOrId !== undefined && leaderOrId !== null) {
+    const raw = String(leaderOrId).toLowerCase().trim();
+
+    // 1. If numeric index provided and isAdvisory is true
+    if (!isNaN(leaderOrId) && leaderOrId !== '') {
+      const idx = Number(leaderOrId);
+      if (isAdvisory && allAdvisory[idx]) {
+        leader = allAdvisory[idx];
+      } else if (masterList[idx]) {
+        leader = masterList[idx];
+      }
+    }
+
+    // 2. Search Advisory Board specifically if isAdvisory is true
+    if (!leader && isAdvisory) {
+      leader = allAdvisory.find(a => (a.id && String(a.id).toLowerCase() === raw) || (a.name && (a.name.toLowerCase().includes(raw) || raw.includes(a.name.toLowerCase()))));
+    }
+
+    // 3. Search by ID across master list
+    if (!leader) {
+      leader = masterList.find(m => m && m.id && String(m.id).toLowerCase() === raw);
+    }
+
+    // 4. Search by exact or partial Name
+    if (!leader) {
+      leader = masterList.find(m => m && m.name && (m.name.toLowerCase().trim() === raw || m.name.toLowerCase().includes(raw) || raw.includes(m.name.toLowerCase())));
+    }
+
+    // 5. Check hardcoded advisory fallback by name tokens
+    if (!leader) {
+      if (raw.includes("yashwant") || raw.includes("more")) leader = allAdvisory[0];
+      else if (raw.includes("rekha") || raw.includes("gaikwad")) leader = allAdvisory[1];
+      else if (raw.includes("suresh") || raw.includes("jadhav")) leader = allAdvisory[2];
+    }
   }
 
   if (!leader) {
-    console.warn("Officer portfolio not found for:", leaderOrId);
-    return;
+    console.warn("Officer portfolio not found for identifier:", leaderOrId);
+    // Fallback to first advisory member if isAdvisory was requested
+    if (isAdvisory && allAdvisory.length > 0) {
+      leader = allAdvisory[0];
+    } else {
+      return;
+    }
   }
 
-  const modal = document.getElementById("officerPortfolioModal");
+  const modal = ensureOfficerPortfolioModalInDom();
   if (!modal) return;
 
-  const photoEl = document.getElementById("portfolioOfficerPhoto");
-  const nameEl = document.getElementById("portfolioOfficerName");
-  const desigEl = document.getElementById("portfolioOfficerDesignation");
-  const tierBadgeEl = document.getElementById("portfolioOfficerTierBadge");
-  const rankBadgeEl = document.getElementById("portfolioOfficerRankBadge");
-  const credEl = document.getElementById("portfolioOfficerCredentials");
-  const hqEl = document.getElementById("portfolioOfficerHQ");
-  const bioEl = document.getElementById("portfolioOfficerBio");
-  const focusAreasEl = document.getElementById("portfolioOfficerFocusAreas");
-  const wingEl = document.getElementById("portfolioOfficerWing");
+  const photoEl = modal.querySelector("#portfolioOfficerPhoto");
+  const nameEl = modal.querySelector("#portfolioOfficerName");
+  const desigEl = modal.querySelector("#portfolioOfficerDesignation");
+  const tierBadgeEl = modal.querySelector("#portfolioOfficerTierBadge");
+  const rankBadgeEl = modal.querySelector("#portfolioOfficerRankBadge");
+  const credEl = modal.querySelector("#portfolioOfficerCredentials");
+  const hqEl = modal.querySelector("#portfolioOfficerHQ");
+  const bioEl = modal.querySelector("#portfolioOfficerBio");
+  const focusAreasEl = modal.querySelector("#portfolioOfficerFocusAreas");
+  const wingEl = modal.querySelector("#portfolioOfficerWing");
 
-  const isAdv = leader.category === "Advisory Board" || (leader.designation && leader.designation.includes("Advisory")) || (leader.rankBadge && leader.rankBadge.includes("Advisory")) || isAdvisory;
+  const isAdv = leader.category === "Advisory Board" || (leader.designation && leader.designation.includes("Advisory")) || (leader.rankBadge && leader.rankBadge.includes("Advisory")) || (leader.id && String(leader.id).startsWith("adv_")) || isAdvisory;
   const isDistrict = (leader.level === 'district');
   const isState = (leader.level === 'state') || (!isDistrict && leader.state && leader.state !== 'National HQ' && leader.state !== 'All-India');
   const stateName = leader.state || (isDistrict || isState ? 'Maharashtra' : 'National HQ');
@@ -1965,6 +2067,7 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
     focusAreasEl.innerHTML = tags.map(t => `<span class="portfolio-tag"><i class="fa-solid fa-check"></i> ${escapeHtml(t)}</span>`).join('');
   }
 
+  modal.style.display = "flex";
   modal.classList.add("active");
   document.body.style.overflow = "hidden";
 }
@@ -1972,6 +2075,7 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
 function closeOfficerPortfolioModal() {
   const modal = document.getElementById("officerPortfolioModal");
   if (modal) {
+    modal.style.display = "none";
     modal.classList.remove("active");
     document.body.style.overflow = "auto";
   }
@@ -1981,6 +2085,7 @@ function closeOfficerPortfolioModalOnBackdrop(e) {
   if (e.target.id === "officerPortfolioModal") closeOfficerPortfolioModal();
 }
 
+window.ensureOfficerPortfolioModalInDom = ensureOfficerPortfolioModalInDom;
 window.openOfficerPortfolioModal = openOfficerPortfolioModal;
 window.closeOfficerPortfolioModal = closeOfficerPortfolioModal;
 window.closeOfficerPortfolioModalOnBackdrop = closeOfficerPortfolioModalOnBackdrop;
