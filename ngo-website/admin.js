@@ -4,13 +4,14 @@
    ========================================================================== */
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDwo2xrFri50j5SQ1c5xrFAV75AEFCWhKo",
+  authDomain: "ssdind-9b4f8.firebaseapp.com",
+  databaseURL: "https://ssdind-9b4f8-default-rtdb.firebaseio.com",
+  projectId: "ssdind-9b4f8",
+  storageBucket: "ssdind-9b4f8.firebasestorage.app",
+  messagingSenderId: "524844669740",
+  appId: "1:524844669740:web:3f6ef6a2571df74b09ea89",
+  measurementId: "G-W8HWC1Z415"
 };
 
 let firebaseApp = null;
