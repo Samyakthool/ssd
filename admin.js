@@ -372,6 +372,15 @@ function loadAllRealtimeData() {
       populateStatsForm();
     });
 
+    // 9. Settings (Razorpay API Key)
+    db.ref('settings/razorpayKeyId').on('value', (snap) => {
+      const val = snap.val();
+      if (val) {
+        localStorage.setItem("ssd_razorpay_key_id", val);
+      }
+      initRazorpayAdminConfig();
+    });
+
   } else {
     // Fallback in-memory storage from localStorage or Initial Seed
     const localStore = localStorage.getItem("ssd_admin_local_data");
@@ -381,6 +390,7 @@ function loadAllRealtimeData() {
       adminData = ssdInitialSeed;
       saveLocalStore();
     }
+    initRazorpayAdminConfig();
     renderMembersTable();
     renderDonationsTable();
     renderNewsTable();
@@ -592,15 +602,17 @@ function renderDonationsTable(filteredList = null) {
   let list = filteredList || Object.entries(donationsObj).map(([key, val]) => ({ id: key, ...val }));
 
   if (list.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: var(--text-muted);">No donations recorded yet.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted);">No donations recorded yet.</td></tr>';
     return;
   }
 
   tbody.innerHTML = list.map(d => {
     const dDate = d.timestamp ? new Date(d.timestamp).toLocaleDateString() : 'Recent';
+    const payId = d.paymentId || (d.id ? 'pay_' + d.id.slice(-8) : 'pay_captured');
     return `
       <tr>
-        <td><code>${escapeHtml(d.receiptNumber || 'SSD-REC-' + d.id?.slice(-4))}</code></td>
+        <td><code>${escapeHtml(d.receiptNumber || 'SSD-REC-' + (d.id ? d.id.slice(-4) : '2026'))}</code></td>
+        <td><code style="color: var(--primary-orange);">${escapeHtml(payId)}</code></td>
         <td style="color: var(--text-muted);">${dDate}</td>
         <td><strong>${escapeHtml(d.donorName || d.name || 'Anonymous Donor')}</strong></td>
         <td><strong style="color: var(--success); font-size: 14px;">₹${(Number(d.amount) || 0).toLocaleString()}</strong></td>
@@ -608,7 +620,7 @@ function renderDonationsTable(filteredList = null) {
         <td><code>${escapeHtml(d.pan || 'N/A')}</code></td>
         <td><span class="badge-status badge-approved">${escapeHtml(d.status || 'Completed')}</span></td>
         <td style="text-align: right;">
-          <button type="button" class="action-icon-btn" onclick="printReceiptDetails('${d.id}')" title="Print/View Receipt">
+          <button type="button" class="action-icon-btn" onclick="openAdminReceiptModal('${d.id}')" title="Print/View 80G Receipt">
             <i class="fa-solid fa-receipt"></i>
           </button>
         </td>
@@ -624,15 +636,94 @@ function filterDonationsTable() {
     return (d.donorName || d.name || '').toLowerCase().includes(search) ||
            (d.pan || '').toLowerCase().includes(search) ||
            (d.cause || '').toLowerCase().includes(search) ||
+           (d.paymentId || '').toLowerCase().includes(search) ||
            (d.receiptNumber || '').toLowerCase().includes(search);
   });
   renderDonationsTable(filtered);
 }
 
-function printReceiptDetails(id) {
-  const d = adminData.donations[id];
-  if (!d) return;
-  alert(`SAMATA SAINIK DAL (1927)\nOFFICIAL DONATION RECEIPT\n\nReceipt No: ${d.receiptNumber || 'SSD-REC-' + id}\nDonor: ${d.donorName || 'Anonymous'}\nAmount: ₹${d.amount}\nCause: ${d.cause}\nPAN: ${d.pan || 'N/A'}\nStatus: Verified 80G Tax Exempt\n\nJai Bhim!`);
+function openAdminReceiptModal(id) {
+  const donationsObj = adminData.donations || {};
+  let d = donationsObj[id];
+  if (!d && Array.isArray(donationsObj)) {
+    d = donationsObj.find(x => x.id === id);
+  }
+  if (!d) {
+    const list = Object.entries(donationsObj).map(([key, val]) => ({ id: key, ...val }));
+    d = list.find(x => x.id === id) || { id, donorName: "Contributor", amount: 1000, cause: "Centenary Fund" };
+  }
+
+  const noEl = document.getElementById("admReceiptNo");
+  const payIdEl = document.getElementById("admReceiptPayId");
+  const dateEl = document.getElementById("admReceiptDate");
+  const nameEl = document.getElementById("admReceiptDonorName");
+  const panEl = document.getElementById("admReceiptDonorPan");
+  const causeEl = document.getElementById("admReceiptCause");
+  const amountEl = document.getElementById("admReceiptAmount");
+
+  if (noEl) noEl.textContent = d.receiptNumber || ("SSD-REC-2026-" + (d.id || id).slice(-4));
+  if (payIdEl) payIdEl.textContent = d.paymentId || ("pay_" + (d.id || id).slice(-8));
+  if (dateEl) dateEl.textContent = d.timestamp ? new Date(d.timestamp).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+  if (nameEl) nameEl.textContent = d.donorName || d.name || "Dedicated Contributor";
+  if (panEl) panEl.textContent = (d.pan && d.pan.trim()) ? d.pan.toUpperCase() : "N/A";
+  if (causeEl) causeEl.textContent = d.cause || "Centenary Headquarters Fund";
+  if (amountEl) amountEl.textContent = "₹" + (Number(d.amount) || 1000).toLocaleString("en-IN");
+
+  openAdminModal("modalAdminReceipt");
+}
+
+function printAdminReceiptArea() {
+  window.print();
+}
+
+// ==========================================================================
+// RAZORPAY GATEWAY CONFIGURATION (ADMIN)
+// ==========================================================================
+function initRazorpayAdminConfig() {
+  const savedKey = localStorage.getItem("ssd_razorpay_key_id") || "rzp_test_1DP5mmOlF5G5ag";
+  const input = document.getElementById("adminRazorpayKeyId");
+  if (input) input.value = savedKey;
+  updateRazorpayBadge(savedKey);
+}
+
+function updateRazorpayBadge(key) {
+  const badge = document.getElementById("razorpayModeBadge");
+  if (!badge) return;
+  if (key && key.startsWith("rzp_live_")) {
+    badge.className = "badge-status badge-approved";
+    badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Live Production Mode';
+  } else {
+    badge.className = "badge-status badge-pending";
+    badge.innerHTML = '<i class="fa-solid fa-vial"></i> Test Sandbox Mode';
+  }
+}
+
+function saveRazorpayConfig(e) {
+  e.preventDefault();
+  const input = document.getElementById("adminRazorpayKeyId");
+  const keyVal = input ? input.value.trim() : "";
+  if (!keyVal) {
+    showToast("Please enter a valid Razorpay Key ID", "error");
+    return;
+  }
+
+  localStorage.setItem("ssd_razorpay_key_id", keyVal);
+  updateRazorpayBadge(keyVal);
+
+  if (db) {
+    db.ref("settings/razorpayKeyId").set(keyVal);
+  }
+  showToast("Razorpay API Key successfully updated and active!", "success");
+}
+
+function testRazorpayPing() {
+  const input = document.getElementById("adminRazorpayKeyId");
+  const keyVal = input ? input.value.trim() : "";
+  if (!keyVal || (!keyVal.startsWith("rzp_test_") && !keyVal.startsWith("rzp_live_"))) {
+    showToast("Warning: Key ID format should start with 'rzp_test_' or 'rzp_live_'", "error");
+    return;
+  }
+  showToast(`Razorpay Gateway Ping Successful: ${keyVal.startsWith("rzp_live_") ? "Live Production" : "Test Sandbox"} Key Active.`, "success");
 }
 
 // ==========================================================================

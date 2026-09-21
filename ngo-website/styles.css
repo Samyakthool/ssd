@@ -2822,3 +2822,45 @@ body.nav-open {
   }
 }
 
+/* ==========================================================================
+   OFFICIAL RECEIPT PRINT STYLES
+   ========================================================================== */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #receiptModal,
+  #receiptModal * {
+    visibility: visible !important;
+  }
+  #receiptModal {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+  }
+  .donation-modal-content {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .donation-modal-header,
+  .donation-modal-content > div:last-child {
+    display: none !important;
+  }
+  #receiptPrintArea {
+    padding: 10px !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
+
+
