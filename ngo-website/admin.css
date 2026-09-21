@@ -949,3 +949,66 @@ body {
     width: 100%;
   }
 }
+
+/* State & District Chapter Cards */
+.state-chapter-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  transition: all 0.2s ease;
+}
+
+.state-chapter-card:hover {
+  border-color: var(--primary-orange);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+}
+
+.state-chapter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.district-chips-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+
+.district-tag-chip {
+  background: rgba(0, 31, 63, 0.05);
+  border: 1px solid rgba(0, 31, 63, 0.12);
+  color: var(--dark-navy);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.district-tag-chip .chip-remove-btn {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.district-tag-chip .chip-remove-btn:hover {
+  color: var(--danger);
+}
+

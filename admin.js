@@ -437,6 +437,57 @@ const ssdInitialSeed = {
       order: 22
     }
   },
+  state_chapters: {
+    "state_mh": {
+      id: "state_mh",
+      name: "Maharashtra",
+      hindiName: "महाराष्ट्र",
+      code: "MH",
+      headquarters: "Nagpur & Mumbai State Directorate",
+      presidentName: "Commander Pramod R. Moon",
+      secretaryName: "Adv. Nitin V. Dongre",
+      districts: [
+        "Nagpur",
+        "Mumbai City",
+        "Mumbai Suburban",
+        "Pune",
+        "Thane",
+        "Amravati",
+        "Nashik",
+        "Chhatrapati Sambhaji Nagar",
+        "Kolhapur",
+        "Nanded",
+        "Solapur",
+        "Akola",
+        "Wardha",
+        "Chandrapur",
+        "Yavatmal",
+        "Bhandara",
+        "Gondia",
+        "Gadchiroli",
+        "Jalgaon",
+        "Dhule",
+        "Nandurbar",
+        "Ahmednagar",
+        "Satara",
+        "Sangli",
+        "Ratnagiri",
+        "Sindhudurg",
+        "Raigad",
+        "Palghar",
+        "Beed",
+        "Latur",
+        "Dharashiv",
+        "Parbhani",
+        "Hingoli",
+        "Jalna",
+        "Buldhana",
+        "Washim"
+      ],
+      status: "Active",
+      order: 1
+    }
+  },
   admin_users: {
     "usr_1": {
       name: "Commander-in-Chief (Super Admin)",
@@ -663,6 +714,7 @@ const viewMetadata = {
   members: { title: "Enlisted Sainiks Registry", sub: "Verify cadet applications & download state rosters" },
   donations: { title: "Centenary Movement Fund Ledger", sub: "Real-time contribution audit & donor PAN tracking" },
   leadership: { title: "Governing Body & Council", sub: "Appoint and manage National Leadership & Advisory Board" },
+  chapters: { title: "State Chapters & District Directory", sub: "Configure regional state governing chapters and manage district divisions" },
   news: { title: "Gazette Bulletins & Circulars", sub: "Publish official announcements to the public portal" },
   events: { title: "Drills, Seminars & Rallies", sub: "Schedule nationwide cadet training and conclaves" },
   campaigns: { title: "Ongoing Missions & Causes", sub: "Manage active fundraising goals & volunteer targets" },
@@ -767,6 +819,14 @@ function loadAllRealtimeData() {
       renderOverview();
     });
 
+    // 10.5 State Chapters & District Directory
+    db.ref('state_chapters').on('value', (snap) => {
+      adminData.state_chapters = snap.val() || ssdInitialSeed.state_chapters;
+      renderChaptersView();
+      populateLeadershipStateAndDistrictOptions();
+      renderOverview();
+    });
+
     // 11. Authorized Admin Users
     db.ref('admin_users').on('value', (snap) => {
       adminData.admin_users = snap.val() || ssdInitialSeed.admin_users;
@@ -807,6 +867,8 @@ function loadAllRealtimeData() {
     renderMembersTable();
     renderDonationsTable();
     renderLeadershipTable();
+    renderChaptersView();
+    populateLeadershipStateAndDistrictOptions();
     renderNewsTable();
     renderEventsTable();
     renderCampaignsTable();
@@ -841,6 +903,7 @@ function renderOverview() {
   setText("badgeMembersCount", membersArr.length);
   setText("badgeDonationsCount", donationsArr.length);
   setText("badgeLeadershipCount", leadArr.length);
+  setText("badgeChaptersCount", Object.keys(adminData.state_chapters || ssdInitialSeed.state_chapters || {}).length);
   setText("badgeNewsCount", newsArr.length);
   setText("badgeEventsCount", eventsArr.length);
   setText("badgeCampaignsCount", Object.keys(adminData.campaigns || {}).length);
@@ -1356,23 +1419,37 @@ function filterLeadershipTable() {
 }
 
 function openAddLeadershipModal() {
+  populateLeadershipStateAndDistrictOptions();
   setInputValue("leadItemKey", "");
   setInputValue("leadName", "");
   setInputValue("leadDesignation", "");
-  setInputValue("leadLevel", document.getElementById("leadershipTierFilter")?.value === 'state' ? 'state' : 'national');
-  setInputValue("leadState", document.getElementById("leadershipStateFilter")?.value !== 'all' ? document.getElementById("leadershipStateFilter").value : 'National HQ');
+  
+  const currentTierFilter = document.getElementById("leadershipTierFilter")?.value;
+  const isStateTier = currentTierFilter === 'state';
+  setInputValue("leadLevel", isStateTier ? 'state' : 'national');
+  
+  const stateFilter = document.getElementById("leadershipStateFilter")?.value;
+  if (stateFilter && stateFilter !== 'all' && stateFilter !== 'National HQ') {
+    setInputValue("leadState", stateFilter);
+  } else {
+    setInputValue("leadState", isStateTier ? 'Maharashtra' : 'National HQ');
+  }
+  
+  setInputValue("leadDistrict", "");
   setInputValue("leadCategory", "Supreme Council");
-  setInputValue("leadRankBadge", "National Command");
+  setInputValue("leadRankBadge", isStateTier ? 'Maharashtra State Command' : 'National Command');
   setInputValue("leadPhotoUrl", "");
   setInputValue("leadCredentials", "");
   setInputValue("leadBio", "");
   setInputValue("leadOrder", "1");
   updateImagePreview("leadPhotoPreview", "");
+  updateLeadDistrictDatalist();
   setText("modalLeadershipHeading", "Appoint Council Officer / State Commander");
   openAdminModal("modalLeadership");
 }
 
 function openEditLeadershipModal(id) {
+  populateLeadershipStateAndDistrictOptions();
   const leadObj = adminData.leadership || ssdInitialSeed.leadership;
   const m = leadObj[id];
   if (!m) return;
@@ -1384,6 +1461,7 @@ function openEditLeadershipModal(id) {
   setInputValue("leadDesignation", m.designation || "");
   setInputValue("leadLevel", m.level || (isState ? 'state' : 'national'));
   setInputValue("leadState", m.state || (isState ? 'Maharashtra' : 'National HQ'));
+  setInputValue("leadDistrict", m.district || "");
   setInputValue("leadCategory", m.category || "Supreme Council");
   setInputValue("leadRankBadge", m.rankBadge || "");
   setInputValue("leadPhotoUrl", m.photoUrl || "");
@@ -1391,6 +1469,7 @@ function openEditLeadershipModal(id) {
   setInputValue("leadBio", m.bio || "");
   setInputValue("leadOrder", m.order || "1");
   updateImagePreview("leadPhotoPreview", m.photoUrl || "");
+  updateLeadDistrictDatalist();
   setText("modalLeadershipHeading", `Edit Officer: ${m.name}`);
   openAdminModal("modalLeadership");
 }
@@ -1400,12 +1479,14 @@ function handleSaveLeadership(e) {
   const key = document.getElementById("leadItemKey").value;
   const level = document.getElementById("leadLevel")?.value || "national";
   const state = document.getElementById("leadState")?.value || (level === 'state' ? 'Maharashtra' : 'National HQ');
+  const district = document.getElementById("leadDistrict")?.value.trim() || "";
 
   const memberData = {
     name: document.getElementById("leadName").value.trim(),
     designation: document.getElementById("leadDesignation").value.trim(),
     level: level,
     state: state,
+    district: district,
     category: document.getElementById("leadCategory").value,
     rankBadge: document.getElementById("leadRankBadge").value.trim(),
     photoUrl: document.getElementById("leadPhotoUrl").value.trim(),
@@ -1457,6 +1538,429 @@ function deleteLeadershipMember(id) {
     }
   }
 }
+
+// ==========================================================================
+// RENDERERS: STATE CHAPTERS & DISTRICT DIRECTORY (/state_chapters)
+// ==========================================================================
+function renderChaptersView() {
+  const container = document.getElementById("stateChaptersContainer");
+  if (!container) return;
+
+  const chaptersObj = adminData.state_chapters || ssdInitialSeed.state_chapters || {};
+  const entries = Object.entries(chaptersObj);
+
+  if (entries.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px; background: var(--bg-surface-alt); border-radius: 12px; border: 1px dashed var(--border-color);">
+        <i class="fa-solid fa-map-location-dot" style="font-size: 32px; color: var(--primary-orange); margin-bottom: 12px;"></i>
+        <h4 style="margin: 0 0 8px;">No State Chapters Configured</h4>
+        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">Click "+ Add New State Chapter" above to create Maharashtra or other state governing units.</p>
+        <button type="button" class="btn-admin btn-admin-primary" onclick="openAddStateModal()">
+          <i class="fa-solid fa-plus"></i> Add First State Chapter
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = entries.map(([key, s]) => {
+    const districts = Array.isArray(s.districts) ? s.districts : [];
+    return `
+      <div class="state-chapter-card" style="background: var(--bg-surface-alt); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+        <div class="state-chapter-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+              <h4 style="margin: 0; font-size: 17px; font-weight: 800; color: var(--text-heading);">
+                ${escapeHtml(s.name || 'Untitled State')}
+                ${s.hindiName ? `<span style="font-weight: 500; font-size: 14px; color: var(--text-muted); margin-left: 6px;">(${escapeHtml(s.hindiName)})</span>` : ''}
+              </h4>
+              <span class="badge-status badge-approved" style="font-weight: 700; text-transform: uppercase;">${escapeHtml(s.code || 'IN')}</span>
+            </div>
+            <div style="font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-building-flag" style="color: var(--primary-orange);"></i>
+              <strong>HQ:</strong> ${escapeHtml(s.headquarters || 'State Headquarters')}
+            </div>
+          </div>
+          <div class="action-btn-group">
+            <button type="button" class="btn-admin btn-admin-outline" style="font-size: 12px; padding: 6px 12px;" onclick="openAddDistrictModal('${escapeHtml(s.name)}')">
+              <i class="fa-solid fa-plus"></i> Add District
+            </button>
+            <button type="button" class="action-icon-btn" onclick="openEditStateModal('${key}')" title="Edit State Chapter">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button type="button" class="action-icon-btn delete" onclick="deleteStateChapter('${key}')" title="Delete State Chapter">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+              <i class="fa-solid fa-layer-group" style="color: var(--primary-orange); margin-right: 4px;"></i>
+              Constituent District Divisions (${districts.length})
+            </div>
+            <button type="button" onclick="openAddDistrictModal('${escapeHtml(s.name)}')" style="background: none; border: none; color: var(--primary-orange); font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+              <i class="fa-solid fa-circle-plus"></i> Add District
+            </button>
+          </div>
+
+          <div class="district-chips-wrapper" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+            ${districts.length === 0 ? `
+              <span style="font-size: 12px; color: var(--text-muted); font-style: italic;">No districts added yet. Click '+ Add District' to add regional divisions.</span>
+            ` : districts.map(d => `
+              <span class="district-tag-chip" style="display: inline-flex; align-items: center; gap: 6px; background: var(--bg-card); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--text-heading);">
+                <i class="fa-solid fa-location-dot" style="font-size: 10px; color: var(--primary-orange);"></i>
+                ${escapeHtml(d)}
+                <button type="button" onclick="deleteDistrictChip('${key}', '${escapeHtml(d)}')" style="border: none; background: none; color: var(--text-muted); cursor: pointer; padding: 0 2px; font-size: 11px; line-height: 1; border-radius: 50%;" title="Remove district" onmouseover="this.style.color='var(--primary-red)'" onmouseout="this.style.color='var(--text-muted)'">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </span>
+            `).join('')}
+            <button type="button" onclick="openAddDistrictModal('${escapeHtml(s.name)}')" style="display: inline-flex; align-items: center; gap: 4px; background: rgba(224, 86, 36, 0.08); border: 1px dashed var(--primary-orange); padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; color: var(--primary-orange); cursor: pointer;">
+              <i class="fa-solid fa-plus"></i> Add
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openAddStateModal() {
+  setInputValue("stateChapterKey", "");
+  setInputValue("stateName", "");
+  setInputValue("stateHindiName", "");
+  setInputValue("stateCode", "");
+  setInputValue("stateHeadquarters", "");
+  setInputValue("stateInitialDistricts", "");
+  setText("modalAddStateHeading", "Add New State Chapter");
+  openAdminModal("modalAddState");
+}
+
+function openEditStateModal(key) {
+  const chapters = adminData.state_chapters || ssdInitialSeed.state_chapters || {};
+  const s = chapters[key];
+  if (!s) return;
+
+  setInputValue("stateChapterKey", key);
+  setInputValue("stateName", s.name || "");
+  setInputValue("stateHindiName", s.hindiName || "");
+  setInputValue("stateCode", s.code || "");
+  setInputValue("stateHeadquarters", s.headquarters || "");
+  setInputValue("stateInitialDistricts", Array.isArray(s.districts) ? s.districts.join(", ") : "");
+  setText("modalAddStateHeading", `Edit State Chapter: ${s.name}`);
+  openAdminModal("modalAddState");
+}
+
+function handleSaveState(e) {
+  e.preventDefault();
+  const key = document.getElementById("stateChapterKey").value;
+  const name = document.getElementById("stateName").value.trim();
+  const hindiName = document.getElementById("stateHindiName").value.trim();
+  const code = document.getElementById("stateCode").value.trim().toUpperCase();
+  const headquarters = document.getElementById("stateHeadquarters").value.trim();
+  const initialDistrictsRaw = document.getElementById("stateInitialDistricts").value;
+
+  let districts = [];
+  if (initialDistrictsRaw) {
+    districts = initialDistrictsRaw
+      .split(/[,\n]/)
+      .map(d => d.trim())
+      .filter(d => d.length > 0);
+    // Deduplicate
+    districts = Array.from(new Set(districts));
+  }
+
+  // If editing and districts is empty in textarea, preserve existing if any
+  if (key && districts.length === 0) {
+    const existing = (adminData.state_chapters || {})[key];
+    if (existing && Array.isArray(existing.districts)) {
+      districts = existing.districts;
+    }
+  }
+
+  const stateData = {
+    name: name,
+    hindiName: hindiName,
+    code: code,
+    headquarters: headquarters,
+    districts: districts,
+    updatedAt: Date.now()
+  };
+
+  const stateKey = key || ("state_" + (code.toLowerCase() || name.toLowerCase().replace(/[^a-z0-9]/g, '_')));
+  stateData.id = stateKey;
+
+  const onSuccess = () => {
+    showToast(`State Chapter "${name}" saved successfully!`, "success");
+    closeAdminModal("modalAddState");
+    populateLeadershipStateAndDistrictOptions();
+  };
+
+  if (db) {
+    db.ref(`state_chapters/${stateKey}`).update(stateData)
+      .then(onSuccess)
+      .catch(err => showToast("Error saving state chapter: " + err.message, "error"));
+  } else {
+    if (!adminData.state_chapters) adminData.state_chapters = { ...ssdInitialSeed.state_chapters };
+    adminData.state_chapters[stateKey] = stateData;
+    saveLocalStore();
+    renderChaptersView();
+    populateLeadershipStateAndDistrictOptions();
+    onSuccess();
+  }
+}
+
+function deleteStateChapter(key) {
+  const chapters = adminData.state_chapters || ssdInitialSeed.state_chapters || {};
+  const s = chapters[key];
+  const name = s ? s.name : "this state chapter";
+
+  if (!confirm(`Are you sure you want to delete "${name}" and all its registered districts?`)) return;
+
+  const onSuccess = () => {
+    showToast(`State chapter "${name}" deleted.`, "info");
+    populateLeadershipStateAndDistrictOptions();
+  };
+
+  if (db) {
+    db.ref(`state_chapters/${key}`).remove()
+      .then(onSuccess)
+      .catch(err => showToast("Error deleting state: " + err.message, "error"));
+  } else {
+    if (adminData.state_chapters) {
+      delete adminData.state_chapters[key];
+      saveLocalStore();
+      renderChaptersView();
+      populateLeadershipStateAndDistrictOptions();
+      onSuccess();
+    }
+  }
+}
+
+function openAddDistrictModal(preferredStateName = null) {
+  populateLeadershipStateAndDistrictOptions();
+  const select = document.getElementById("districtTargetState");
+  if (select && preferredStateName) {
+    for (let i = 0; i < select.options.length; i++) {
+      if (select.options[i].value.toLowerCase() === preferredStateName.toLowerCase()) {
+        select.selectedIndex = i;
+        break;
+      }
+    }
+  }
+  setInputValue("newDistrictName", "");
+  openAdminModal("modalAddDistrict");
+}
+
+function handleSaveDistrict(e) {
+  e.preventDefault();
+  const targetStateName = document.getElementById("districtTargetState").value;
+  const newDistrict = document.getElementById("newDistrictName").value.trim();
+
+  if (!targetStateName || !newDistrict) {
+    showToast("Please specify both State and District name.", "error");
+    return;
+  }
+
+  const chapters = adminData.state_chapters || ssdInitialSeed.state_chapters || {};
+  let targetKey = null;
+  for (const [k, v] of Object.entries(chapters)) {
+    if ((v.name || '').toLowerCase() === targetStateName.toLowerCase()) {
+      targetKey = k;
+      break;
+    }
+  }
+
+  if (!targetKey) {
+    targetKey = "state_" + targetStateName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+  }
+
+  const currentState = chapters[targetKey] || {
+    id: targetKey,
+    name: targetStateName,
+    code: targetStateName.slice(0, 2).toUpperCase(),
+    districts: []
+  };
+
+  let districts = Array.isArray(currentState.districts) ? [...currentState.districts] : [];
+  if (districts.includes(newDistrict)) {
+    showToast(`District "${newDistrict}" is already registered in ${targetStateName}.`, "info");
+    closeAdminModal("modalAddDistrict");
+    return;
+  }
+
+  districts.push(newDistrict);
+  currentState.districts = districts;
+  currentState.updatedAt = Date.now();
+
+  const onSuccess = () => {
+    showToast(`District "${newDistrict}" added to ${targetStateName}!`, "success");
+    closeAdminModal("modalAddDistrict");
+    populateLeadershipStateAndDistrictOptions();
+  };
+
+  if (db) {
+    db.ref(`state_chapters/${targetKey}`).update(currentState)
+      .then(onSuccess)
+      .catch(err => showToast("Error saving district: " + err.message, "error"));
+  } else {
+    if (!adminData.state_chapters) adminData.state_chapters = { ...ssdInitialSeed.state_chapters };
+    adminData.state_chapters[targetKey] = currentState;
+    saveLocalStore();
+    renderChaptersView();
+    populateLeadershipStateAndDistrictOptions();
+    onSuccess();
+  }
+}
+
+function deleteDistrictChip(stateKey, districtName) {
+  const chapters = adminData.state_chapters || ssdInitialSeed.state_chapters || {};
+  const s = chapters[stateKey];
+  if (!s || !Array.isArray(s.districts)) return;
+
+  if (!confirm(`Remove "${districtName}" district from ${s.name}?`)) return;
+
+  const newDistricts = s.districts.filter(d => d !== districtName);
+  s.districts = newDistricts;
+  s.updatedAt = Date.now();
+
+  const onSuccess = () => {
+    showToast(`District "${districtName}" removed from ${s.name}.`, "info");
+    populateLeadershipStateAndDistrictOptions();
+  };
+
+  if (db) {
+    db.ref(`state_chapters/${stateKey}`).update({ districts: newDistricts, updatedAt: Date.now() })
+      .then(onSuccess)
+      .catch(err => showToast("Error updating districts: " + err.message, "error"));
+  } else {
+    adminData.state_chapters[stateKey].districts = newDistricts;
+    saveLocalStore();
+    renderChaptersView();
+    populateLeadershipStateAndDistrictOptions();
+    onSuccess();
+  }
+}
+
+function populateLeadershipStateAndDistrictOptions() {
+  const chapters = adminData.state_chapters || ssdInitialSeed.state_chapters || {};
+  const statesList = Object.values(chapters);
+
+  // 1. Leadership State Filter in Leadership View
+  const leadStateFilter = document.getElementById("leadershipStateFilter");
+  if (leadStateFilter) {
+    const currentVal = leadStateFilter.value;
+    leadStateFilter.innerHTML = `
+      <option value="all">All States & HQ</option>
+      <option value="National HQ">National HQ (All-India)</option>
+      ${statesList.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}${s.hindiName ? ' (' + escapeHtml(s.hindiName) + ')' : ''}</option>`).join('')}
+    `;
+    if (currentVal) leadStateFilter.value = currentVal;
+  }
+
+  // 2. State select in modalLeadership
+  const leadStateSelect = document.getElementById("leadState");
+  if (leadStateSelect) {
+    const currentVal = leadStateSelect.value;
+    leadStateSelect.innerHTML = `
+      <option value="National HQ">National HQ (All-India)</option>
+      ${statesList.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}${s.hindiName ? ' (' + escapeHtml(s.hindiName) + ')' : ''}</option>`).join('')}
+    `;
+    if (currentVal) leadStateSelect.value = currentVal;
+  }
+
+  // 3. State select in modalAddDistrict
+  const districtTargetState = document.getElementById("districtTargetState");
+  if (districtTargetState) {
+    const currentVal = districtTargetState.value;
+    districtTargetState.innerHTML = statesList.map(s => `
+      <option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}${s.hindiName ? ' (' + escapeHtml(s.hindiName) + ')' : ''}</option>
+    `).join('');
+    if (currentVal) districtTargetState.value = currentVal;
+  }
+
+  // 4. Update datalist for leadDistrict based on current selected state in modalLeadership
+  updateLeadDistrictDatalist();
+}
+
+function updateLeadDistrictDatalist() {
+  const stateSelect = document.getElementById("leadState");
+  const datalist = document.getElementById("districtDataList");
+  if (!datalist) return;
+
+  const selectedState = stateSelect ? stateSelect.value : 'Maharashtra';
+  const chapters = adminData.state_chapters || ssdInitialSeed.state_chapters || {};
+  let targetStateObj = null;
+
+  for (const s of Object.values(chapters)) {
+    if ((s.name || '').toLowerCase() === selectedState.toLowerCase()) {
+      targetStateObj = s;
+      break;
+    }
+  }
+
+  const districts = (targetStateObj && Array.isArray(targetStateObj.districts)) ? targetStateObj.districts : [];
+  datalist.innerHTML = districts.map(d => `<option value="${escapeHtml(d)}">`).join('');
+}
+
+function onLeadTierChange() {
+  const tier = document.getElementById("leadLevel")?.value || "national";
+  const stateSelect = document.getElementById("leadState");
+  const rankBadge = document.getElementById("leadRankBadge");
+  const districtInput = document.getElementById("leadDistrict");
+
+  if (tier === 'national') {
+    if (stateSelect) stateSelect.value = "National HQ";
+    if (rankBadge && (!rankBadge.value || rankBadge.value.includes("State Command"))) {
+      rankBadge.value = "National Command";
+    }
+    if (districtInput) districtInput.placeholder = "National HQ / All-India Central Office";
+  } else {
+    // State tier
+    if (stateSelect && stateSelect.value === "National HQ") {
+      stateSelect.value = "Maharashtra";
+    }
+    const stateName = stateSelect ? stateSelect.value : "Maharashtra";
+    if (rankBadge && (!rankBadge.value || rankBadge.value.includes("National Command"))) {
+      rankBadge.value = `${stateName} State Command`;
+    }
+    if (districtInput) districtInput.placeholder = `e.g. Nagpur / ${stateName} State Directorate`;
+  }
+  updateLeadDistrictDatalist();
+}
+
+function onLeadStateChange() {
+  const stateSelect = document.getElementById("leadState");
+  const rankBadge = document.getElementById("leadRankBadge");
+  const tierSelect = document.getElementById("leadLevel");
+  const selectedState = stateSelect ? stateSelect.value : 'National HQ';
+
+  if (selectedState !== 'National HQ') {
+    if (tierSelect) tierSelect.value = 'state';
+    if (rankBadge && (rankBadge.value === "National Command" || rankBadge.value.endsWith("State Command"))) {
+      rankBadge.value = `${selectedState} State Command`;
+    }
+  } else {
+    if (tierSelect) tierSelect.value = 'national';
+    if (rankBadge && rankBadge.value.endsWith("State Command")) {
+      rankBadge.value = "National Command";
+    }
+  }
+  updateLeadDistrictDatalist();
+}
+
+// Global window exposure
+window.openAddStateModal = openAddStateModal;
+window.openEditStateModal = openEditStateModal;
+window.handleSaveState = handleSaveState;
+window.deleteStateChapter = deleteStateChapter;
+window.openAddDistrictModal = openAddDistrictModal;
+window.handleSaveDistrict = handleSaveDistrict;
+window.deleteDistrictChip = deleteDistrictChip;
+window.onLeadTierChange = onLeadTierChange;
+window.onLeadStateChange = onLeadStateChange;
 
 // ==========================================================================
 // RENDERERS: AUTHORIZED ADMIN USERS & ROLES (/admin_users)

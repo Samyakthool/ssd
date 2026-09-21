@@ -283,10 +283,10 @@ const ssdSampleData = {
       designation: "State President (महाराष्ट्र प्रदेशाध्यक्ष)",
       level: "state",
       state: "Maharashtra",
-      district: "Nagpur & Mumbai State Office",
+      district: "Nagpur & Mumbai State Directorate",
       rankBadge: "Maharashtra State Command",
       photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80",
-      bio: "Spearheads statewide cadre building across 36 districts of Maharashtra; organizes annual Deekshabhoomi rally defense drills and Dr. Ambedkar youth camps.",
+      bio: "Spearheads statewide cadre building across 36 districts of Maharashtra; organizes annual Deekshabhoomi rally defense drills, cadre discipline, and Dr. Ambedkar youth training camps.",
       credentials: "M.A. Social Work | Mumbai & Nagpur State HQ",
       order: 10
     },
@@ -302,101 +302,92 @@ const ssdSampleData = {
       credentials: "B.A., LL.B. | Pune State Secretariat",
       order: 11
     },
-    "lead_state_up_1": {
-      name: "Shri Ramcharan Gautam",
-      designation: "State President (उत्तर प्रदेश प्रदेशाध्यक्ष)",
+    "lead_state_mh_3": {
+      name: "Sainik Nilesh P. Bagde",
+      designation: "State Chief Cadet Commander (महाराष्ट्र मुख्य दलनायक)",
       level: "state",
-      state: "Uttar Pradesh",
-      district: "Lucknow Central Command",
-      rankBadge: "UP State Command",
-      photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
-      bio: "Leading SSD organizational growth across 75 districts of Uttar Pradesh; championing community self-defense wings and student literacy centers.",
-      credentials: "M.Sc., B.Ed. | Lucknow State Office",
+      state: "Maharashtra",
+      district: "Amravati & Vidarbha Division",
+      rankBadge: "Maharashtra Cadet Directorate",
+      photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80",
+      bio: "Directs statewide cadet physical drills, ceremonial guard of honour, and emergency disaster rescue corps across all Maharashtra districts.",
+      credentials: "Cadet Training Instructor | Nagpur HQ",
       order: 12
     },
-    "lead_state_up_2": {
-      name: "Commander Sunil Kumar Rawat",
-      designation: "State Chief Dalpati (उत्तर प्रदेश मुख्य दलनायक)",
+    "lead_state_mh_4": {
+      name: "Smt. Vandana Tai Meshram",
+      designation: "State Convener, Mahila Dal (महाराष्ट्र प्रदेश संयोजिका)",
       level: "state",
-      state: "Uttar Pradesh",
-      district: "Agra & Kanpur Division",
-      rankBadge: "UP Cadet Directorate",
-      photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80",
-      bio: "Oversees physical drills, parade formations, and district volunteer regiments across Eastern and Western Uttar Pradesh.",
-      credentials: "Ex-Police Instructor | Agra Command",
+      state: "Maharashtra",
+      district: "Chhatrapati Sambhaji Nagar & Marathwada",
+      rankBadge: "State Mahila Wing",
+      photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+      bio: "Leads women's self-defense squads, Savitribai Phule girls' education cells, and district legal support desks across Maharashtra.",
+      credentials: "M.S.W. | Aurangabad / Chh. Sambhaji Nagar",
       order: 13
     },
-    "lead_state_mp_1": {
-      name: "Dr. Kailash Chandra Ahirwar",
-      designation: "State President (मध्य प्रदेश प्रदेशाध्यक्ष)",
+    "lead_state_mh_5": {
+      name: "Adv. Rahul V. Kamble",
+      designation: "Head, Maharashtra Legal Cell (विधिक प्रकोष्ठ प्रमुख)",
       level: "state",
-      state: "Madhya Pradesh",
-      district: "Bhopal & Indore Command",
-      rankBadge: "MP State Command",
+      state: "Maharashtra",
+      district: "Mumbai High Court Bench",
+      rankBadge: "High Court Panel",
       photoUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80",
-      bio: "Educationist and activist leading the revival of Samata Sainik Dal units in Madhya Pradesh; coordinating Dr. Ambedkar birth centenary drives.",
-      credentials: "Ph.D. Sociology | Bhopal State HQ",
+      bio: "High Court Advocate leading pro-bono defense, SC/ST Act implementation monitoring, and legal assistance for grassroots volunteers across Maharashtra.",
+      credentials: "LL.M. | Bombay High Court",
       order: 14
-    },
-    "lead_state_delhi_1": {
-      name: "Adv. R. K. Mourya",
-      designation: "State President, Delhi NCR (दिल्ली प्रदेशाध्यक्ष)",
-      level: "state",
-      state: "Delhi NCR",
-      district: "National Capital Region",
-      rankBadge: "Delhi NCR Command",
-      photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
-      bio: "Directs Delhi NCR legal support desks, civil rights rallies, and national centenary parade delegations in the capital.",
-      credentials: "Advocate, Delhi High Court | New Delhi Office",
-      order: 15
-    },
-    "lead_state_ka_1": {
-      name: "Prof. Anand Kumar Swamy",
-      designation: "State President (कर्नाटक प्रदेशाध्यक्ष)",
-      level: "state",
-      state: "Karnataka",
-      district: "Bengaluru & Mysuru Command",
-      rankBadge: "Karnataka State Command",
-      photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
-      bio: "Coordinates SSD Southern Zone expansion, multilingual Ambedkarite literature publication, and campus cadet corps in Karnataka.",
-      credentials: "M.A., Ph.D. | Bengaluru State Secretariat",
-      order: 16
-    },
-    "lead_state_rj_1": {
-      name: "Shri Bharat Lal Bairwa",
-      designation: "State President (राजस्थान प्रदेशाध्यक्ष)",
-      level: "state",
-      state: "Rajasthan",
-      district: "Jaipur Command",
-      rankBadge: "Rajasthan State Command",
-      photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80",
-      bio: "Grassroots organizer championing SC/ST atrocities monitoring, rural education cells, and district youth drill regiments across Rajasthan.",
-      credentials: "M.A. Political Science | Jaipur State Office",
-      order: 17
-    },
-    "lead_state_pb_1": {
-      name: "Col. (Retd.) Harjit Singh Rahi",
-      designation: "State President (पंजाब प्रदेशाध्यक्ष)",
-      level: "state",
-      state: "Punjab",
-      district: "Jalandhar & Chandigarh Command",
-      rankBadge: "Punjab State Command",
-      photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
-      bio: "Army Veteran managing Punjab state sainik units, honoring Dr. Ambedkar's historical 1936 Punjab visits and training youth cadres.",
-      credentials: "Ex-Indian Army | Jalandhar Command",
-      order: 18
-    },
-    "lead_state_br_1": {
-      name: "Shri Dharmendra Kumar Paswan",
-      designation: "State President (बिहार प्रदेशाध्यक्ष)",
-      level: "state",
-      state: "Bihar",
-      district: "Patna Command",
-      rankBadge: "Bihar State Command",
-      photoUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=400&q=80",
-      bio: "Directs democratic rights defense, disaster flood relief teams, and village level equality brigades throughout Bihar.",
-      credentials: "M.A. History | Patna State HQ",
-      order: 19
+    }
+  },
+  stateChapters: {
+    "state_mh": {
+      id: "state_mh",
+      name: "Maharashtra",
+      hindiName: "महाराष्ट्र",
+      code: "MH",
+      headquarters: "Nagpur & Mumbai State Directorate",
+      presidentName: "Commander Pramod R. Moon",
+      secretaryName: "Adv. Nitin V. Dongre",
+      districts: [
+        "Nagpur",
+        "Mumbai City",
+        "Mumbai Suburban",
+        "Pune",
+        "Thane",
+        "Amravati",
+        "Nashik",
+        "Chhatrapati Sambhaji Nagar",
+        "Kolhapur",
+        "Nanded",
+        "Solapur",
+        "Akola",
+        "Wardha",
+        "Chandrapur",
+        "Yavatmal",
+        "Bhandara",
+        "Gondia",
+        "Gadchiroli",
+        "Jalgaon",
+        "Dhule",
+        "Nandurbar",
+        "Ahmednagar",
+        "Satara",
+        "Sangli",
+        "Ratnagiri",
+        "Sindhudurg",
+        "Raigad",
+        "Palghar",
+        "Beed",
+        "Latur",
+        "Dharashiv",
+        "Parbhani",
+        "Hingoli",
+        "Jalna",
+        "Buldhana",
+        "Washim"
+      ],
+      status: "Active",
+      order: 1
     }
   },
   advisoryBoard: [
@@ -1553,6 +1544,24 @@ function renderGoverningCards(leadersList) {
   }
 }
 
+function renderStatePills(stateChaptersObj) {
+  const container = document.getElementById("governingStatePills");
+  if (!container) return;
+
+  const states = Object.values(stateChaptersObj || ssdSampleData.stateChapters || {});
+  
+  container.innerHTML = `
+    <button type="button" class="state-pill ${currentGoverningState === 'all' ? 'active' : ''}" data-state="all" onclick="setGoverningState('all')">
+      <i class="fa-solid fa-globe"></i> All States
+    </button>
+    ${states.map(s => `
+      <button type="button" class="state-pill ${currentGoverningState.toLowerCase() === (s.name || '').toLowerCase() ? 'active' : ''}" data-state="${escapeHtml(s.name)}" onclick="setGoverningState('${escapeHtml(s.name)}')">
+        ${escapeHtml(s.name)}${s.hindiName ? ' (' + escapeHtml(s.hindiName) + ')' : ''}
+      </button>
+    `).join('')}
+  `;
+}
+
 function setGoverningTier(tier) {
   currentGoverningTier = tier;
   document.querySelectorAll('.governing-tier-btn').forEach(btn => {
@@ -1583,6 +1592,11 @@ function loadGoverningBody() {
   if (!councilContainer) return;
 
   if (db) {
+    db.ref('state_chapters').on('value', snapshot => {
+      const val = snapshot.val();
+      renderStatePills(val || ssdSampleData.stateChapters);
+    });
+
     db.ref('leadership').on('value', snapshot => {
       const val = snapshot.val();
       if (val) {
@@ -1598,14 +1612,18 @@ function loadGoverningBody() {
     if (localStore) {
       try {
         const parsed = JSON.parse(localStore);
-        if (parsed && parsed.leadership) {
-          let list = Object.entries(parsed.leadership).map(([k, v]) => ({ id: k, ...v }));
-          list.sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
-          renderGoverningCards(list);
-          return;
+        if (parsed) {
+          renderStatePills(parsed.state_chapters || ssdSampleData.stateChapters);
+          if (parsed.leadership) {
+            let list = Object.entries(parsed.leadership).map(([k, v]) => ({ id: k, ...v }));
+            list.sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
+            renderGoverningCards(list);
+            return;
+          }
         }
       } catch (e) {}
     }
+    renderStatePills(ssdSampleData.stateChapters);
     renderGoverningCards(Object.values(ssdSampleData.governingBody));
   }
 }

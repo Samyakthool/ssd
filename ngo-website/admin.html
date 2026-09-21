@@ -115,6 +115,14 @@
           <span class="sidebar-badge" id="badgeLeadershipCount">0</span>
         </a>
 
+        <a class="sidebar-item" onclick="switchView('chapters')" id="nav-chapters">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <span>State & District Chapters</span>
+          </div>
+          <span class="sidebar-badge" id="badgeChaptersCount">1</span>
+        </a>
+
         <div class="menu-category-label">Public Communications</div>
         <a class="sidebar-item" onclick="switchView('news')" id="nav-news">
           <div class="sidebar-item-left">
@@ -475,6 +483,31 @@
                   <tr><td colspan="7" style="text-align: center; padding: 30px;">Loading governing body members from Firebase...</td></tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 3.5: STATE & DISTRICT CHAPTERS
+             ========================================== -->
+        <section id="viewChapters" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-map-location-dot" style="color: var(--primary-orange);"></i>
+                <h3>State Chapters & District Organization Directory (/state_chapters)</h3>
+              </div>
+              <div class="card-panel-actions">
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openAddStateModal()">
+                  <i class="fa-solid fa-plus"></i> Add New State Chapter
+                </button>
+              </div>
+            </div>
+            <p style="color: var(--text-muted); font-size: 13px; margin: 0 0 16px;">
+              Manage regional State Governing Chapters and assign district volunteer divisions. Newly added states and districts automatically appear in the public portal state filter and appointment forms.
+            </p>
+            <div id="stateChaptersContainer" style="display: grid; gap: 20px;">
+              <!-- Dynamic state chapter cards rendered by renderChaptersView() -->
             </div>
           </div>
         </section>
@@ -1229,34 +1262,47 @@
           <div class="form-grid-modal">
             <div class="form-group-modal">
               <label for="leadLevel">Command Tier / Level</label>
-              <select id="leadLevel">
+              <select id="leadLevel" onchange="onLeadTierChange()">
                 <option value="national">National Supreme Command</option>
                 <option value="state">State Governing Body (राज्य कार्यकारिणी)</option>
               </select>
             </div>
             <div class="form-group-modal">
-              <label for="leadState">State / Province</label>
-              <select id="leadState">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label for="leadState">State / Chapter</label>
+                <button type="button" onclick="openAddStateModal()" style="border: none; background: none; color: var(--primary-orange); font-size: 11px; font-weight: 700; cursor: pointer;">
+                  <i class="fa-solid fa-plus"></i> Add State
+                </button>
+              </div>
+              <select id="leadState" onchange="onLeadStateChange()">
                 <option value="National HQ">National HQ (All-India)</option>
                 <option value="Maharashtra">Maharashtra (महाराष्ट्र)</option>
-                <option value="Uttar Pradesh">Uttar Pradesh (उत्तर प्रदेश)</option>
-                <option value="Madhya Pradesh">Madhya Pradesh (मध्य प्रदेश)</option>
-                <option value="Delhi NCR">Delhi NCR (दिल्ली एनसीआर)</option>
-                <option value="Karnataka">Karnataka (कर्नाटक)</option>
-                <option value="Rajasthan">Rajasthan (राजस्थान)</option>
-                <option value="Punjab">Punjab (पंजाब)</option>
-                <option value="Bihar">Bihar (बिहार)</option>
-                <option value="Gujarat">Gujarat (गुजरात)</option>
-                <option value="Telangana">Telangana (तेलंगाना)</option>
-                <option value="Tamil Nadu">Tamil Nadu (तमिलनाडु)</option>
-                <option value="West Bengal">West Bengal (पश्चिम बंगाल)</option>
-                <option value="Haryana">Haryana (हरियाणा)</option>
-                <option value="Chhattisgarh">Chhattisgarh (छत्तीसगढ़)</option>
-                <option value="Jharkhand">Jharkhand (झारखंड)</option>
-                <option value="Odisha">Odisha (ओडिशा)</option>
-                <option value="Kerala">Kerala (केरल)</option>
-                <option value="Andhra Pradesh">Andhra Pradesh (आंध्र प्रदेश)</option>
               </select>
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label for="leadDistrict">District Division / Command Area</label>
+                <button type="button" onclick="openAddDistrictModal(document.getElementById('leadState').value)" style="border: none; background: none; color: var(--primary-orange); font-size: 11px; font-weight: 700; cursor: pointer;">
+                  <i class="fa-solid fa-plus"></i> Add District
+                </button>
+              </div>
+              <input type="text" id="leadDistrict" list="districtDataList" placeholder="e.g. Nagpur / Mumbai State Directorate">
+              <datalist id="districtDataList">
+                <option value="Nagpur">
+                <option value="Mumbai City">
+                <option value="Mumbai Suburban">
+                <option value="Pune">
+                <option value="Amravati">
+                <option value="Nashik">
+                <option value="Chhatrapati Sambhaji Nagar">
+                <option value="Kolhapur">
+              </datalist>
+            </div>
+            <div class="form-group-modal">
+              <label for="leadRankBadge">Rank Badge Label</label>
+              <input type="text" id="leadRankBadge" required placeholder="e.g. Maharashtra State Command">
             </div>
           </div>
           <div class="form-grid-modal">
@@ -1273,8 +1319,8 @@
               </select>
             </div>
             <div class="form-group-modal">
-              <label for="leadRankBadge">Rank Badge Label</label>
-              <input type="text" id="leadRankBadge" required placeholder="e.g. National Command">
+              <label for="leadOrder">Display Order Priority (1 = Top)</label>
+              <input type="number" id="leadOrder" value="1" min="1" max="100">
             </div>
           </div>
           <div class="form-group-modal">
@@ -1284,20 +1330,88 @@
           </div>
           <div class="form-group-modal">
             <label for="leadCredentials">Official Credentials & Location</label>
-            <input type="text" id="leadCredentials" required placeholder="e.g. Ph.D. Constitutional Law | Nagpur HQ">
+            <input type="text" id="leadCredentials" required placeholder="e.g. M.A. Social Work | Mumbai & Nagpur State HQ">
           </div>
           <div class="form-group-modal">
             <label for="leadBio">Biographical Summary & Key Contributions</label>
             <textarea id="leadBio" rows="3" required placeholder="Outline tenure, leadership achievements, and movement contributions..."></textarea>
           </div>
-          <div class="form-group-modal">
-            <label for="leadOrder">Display Order Priority (1 = Top)</label>
-            <input type="number" id="leadOrder" value="1" min="1" max="100">
-          </div>
         </div>
         <div class="admin-modal-footer">
           <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalLeadership')">Cancel</button>
           <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-floppy-disk"></i> Save Council Member</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD NEW STATE CHAPTER MODAL -->
+  <div id="modalAddState" class="admin-modal">
+    <div class="admin-modal-card">
+      <div class="admin-modal-header">
+        <h3 id="modalAddStateHeading"><i class="fa-solid fa-map-location-dot" style="color: var(--primary-orange);"></i> Add New State Chapter</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalAddState')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formAddState" onsubmit="handleSaveState(event)">
+        <div class="admin-modal-body">
+          <input type="hidden" id="stateChapterKey">
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="stateName">State Name (English)</label>
+              <input type="text" id="stateName" required placeholder="e.g. Gujarat, Uttar Pradesh, Karnataka">
+            </div>
+            <div class="form-group-modal">
+              <label for="stateHindiName">State Name (Hindi / Regional)</label>
+              <input type="text" id="stateHindiName" placeholder="e.g. गुजरात, उत्तर प्रदेश">
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="stateCode">State Short Code</label>
+              <input type="text" id="stateCode" required placeholder="e.g. GJ, UP, KA, MP" style="text-transform: uppercase;">
+            </div>
+            <div class="form-group-modal">
+              <label for="stateHeadquarters">State Headquarters / Command Office</label>
+              <input type="text" id="stateHeadquarters" required placeholder="e.g. Ahmedabad State Directorate">
+            </div>
+          </div>
+          <div class="form-group-modal">
+            <label for="stateInitialDistricts">Initial Districts (Comma-separated)</label>
+            <textarea id="stateInitialDistricts" rows="3" placeholder="e.g. Ahmedabad, Surat, Vadodara, Rajkot, Bhavnagar..."></textarea>
+            <small style="color: var(--text-muted); font-size: 11px;">You can also add or remove districts one-by-one anytime after creating the state.</small>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalAddState')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-floppy-disk"></i> Save State Chapter</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD DISTRICT TO STATE MODAL -->
+  <div id="modalAddDistrict" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 480px;">
+      <div class="admin-modal-header">
+        <h3><i class="fa-solid fa-location-dot" style="color: var(--primary-orange);"></i> Add District Division</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalAddDistrict')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formAddDistrict" onsubmit="handleSaveDistrict(event)">
+        <div class="admin-modal-body">
+          <div class="form-group-modal">
+            <label for="districtTargetState">Select State Chapter</label>
+            <select id="districtTargetState" required>
+              <!-- Filled dynamically with available states -->
+            </select>
+          </div>
+          <div class="form-group-modal">
+            <label for="newDistrictName">District / City Division Name</label>
+            <input type="text" id="newDistrictName" required placeholder="e.g. Nagpur Central Command, Pune, Amravati">
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalAddDistrict')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-plus"></i> Add District</button>
         </div>
       </form>
     </div>
