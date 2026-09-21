@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Central Command Management Portal | Samata Sainik Dal (SSD)</title>
+  <meta name="description" content="Central Command Executive Admin & Realtime Database Governance Portal for Samata Sainik Dal (SSD).">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Firebase Compat CDN -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <!-- Admin Stylesheet -->
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <!-- ==========================================================================
+       AUTHENTICATION GATE (LOGIN MODAL)
+       ========================================================================== -->
+  <div id="authGate" class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <img src="logo.png" alt="SSD Emblem" class="auth-logo">
+        <h1 class="auth-title">SAMATA SAINIK DAL</h1>
+        <p class="auth-subtitle">Central Command Admin Access</p>
+      </div>
+      <div class="auth-body">
+        <div class="auth-hint">
+          <i class="fa-solid fa-key"></i>
+          <div>Default Command Passcode: <code>SSD1927</code></div>
+        </div>
+        <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+          <div class="form-group-modal">
+            <label for="adminPasscode">Enter Command Passcode / PIN</label>
+            <input type="password" id="adminPasscode" placeholder="••••••••" required autocomplete="current-password" autofocus>
+          </div>
+          <button type="submit" id="loginBtn" class="btn-admin btn-admin-primary" style="width: 100%; justify-content: center; padding: 12px;">
+            <i class="fa-solid fa-shield-halved"></i> Authenticate & Enter Portal
+          </button>
+        </form>
+        <div style="text-align: center; margin-top: 18px;">
+          <a href="index.html" style="font-size: 12.5px; color: var(--text-muted); text-decoration: none;">
+            <i class="fa-solid fa-arrow-left"></i> Return to Public Portal
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MAIN ADMIN DASHBOARD LAYOUT
+       ========================================================================== -->
+  <div id="adminApp" class="admin-layout" style="display: none;">
+    
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-brand">
+        <img src="logo.png" alt="SSD Logo" class="sidebar-logo">
+        <div class="sidebar-brand-text">
+          <h2>SAMATA SAINIK DAL</h2>
+          <span>Central Command HQ</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-menu">
+        <div class="menu-category-label">Core Dashboard</div>
+        <a class="sidebar-item active" onclick="switchView('overview')" id="nav-overview">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-gauge-high"></i>
+            <span>Overview & KPIs</span>
+          </div>
+        </a>
+
+        <div class="menu-category-label">Movement Management</div>
+        <a class="sidebar-item" onclick="switchView('members')" id="nav-members">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-user-shield"></i>
+            <span>Enlisted Sainiks</span>
+          </div>
+          <span class="sidebar-badge" id="badgeMembersCount">0</span>
+        </a>
+
+        <a class="sidebar-item" onclick="switchView('donations')" id="nav-donations">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-hand-holding-dollar"></i>
+            <span>Centenary Fund</span>
+          </div>
+          <span class="sidebar-badge" id="badgeDonationsCount">0</span>
+        </a>
+
+        <div class="menu-category-label">Public Communications</div>
+        <a class="sidebar-item" onclick="switchView('news')" id="nav-news">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-newspaper"></i>
+            <span>Gazette Dispatches</span>
+          </div>
+          <span class="sidebar-badge" id="badgeNewsCount">0</span>
+        </a>
+
+        <a class="sidebar-item" onclick="switchView('events')" id="nav-events">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-calendar-days"></i>
+            <span>Drills & Conclaves</span>
+          </div>
+          <span class="sidebar-badge" id="badgeEventsCount">0</span>
+        </a>
+
+        <a class="sidebar-item" onclick="switchView('campaigns')" id="nav-campaigns">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-bullhorn"></i>
+            <span>Ongoing Missions</span>
+          </div>
+          <span class="sidebar-badge" id="badgeCampaignsCount">0</span>
+        </a>
+
+        <a class="sidebar-item" onclick="switchView('gallery')" id="nav-gallery">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-images"></i>
+            <span>Photo Archives</span>
+          </div>
+          <span class="sidebar-badge" id="badgeGalleryCount">0</span>
+        </a>
+
+        <div class="menu-category-label">Support & System</div>
+        <a class="sidebar-item" onclick="switchView('contacts')" id="nav-contacts">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-inbox"></i>
+            <span>Grievance Desk</span>
+          </div>
+          <span class="sidebar-badge" id="badgeContactsCount">0</span>
+        </a>
+
+        <a class="sidebar-item" onclick="switchView('stats')" id="nav-stats">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Live Portal Counters</span>
+          </div>
+        </a>
+
+        <a class="sidebar-item" onclick="switchView('settings')" id="nav-settings">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-database"></i>
+            <span>Database & Backups</span>
+          </div>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="admin-profile-pill">
+          <div class="admin-avatar-icon"><i class="fa-solid fa-shield"></i></div>
+          <div class="admin-user-info">
+            <div class="name">Command Desk</div>
+            <div class="role">Supreme Council Level</div>
+          </div>
+        </div>
+        <button type="button" class="btn-logout" onclick="handleAdminLogout()" title="Lock & Logout">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT VIEWPORT -->
+    <main class="admin-main">
+      
+      <!-- Top Navigation Bar -->
+      <header class="admin-topbar">
+        <div class="topbar-left">
+          <button type="button" class="btn-sidebar-toggle" onclick="toggleSidebarDrawer()" aria-label="Toggle Sidebar Menu">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div class="topbar-title">
+            <h1 id="pageHeadingTitle">Central Command Dashboard</h1>
+            <p id="pageHeadingSubtitle">Real-time governance and member synchronization</p>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="db-status-pill" id="dbStatusPill">
+            <div class="db-status-indicator"></div>
+            <span id="dbStatusText">Checking Firebase...</span>
+          </div>
+
+          <a href="index.html" target="_blank" class="topbar-view-site">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> Live Portal
+          </a>
+        </div>
+      </header>
+
+      <!-- VIEW PANELS -->
+      <div class="admin-content">
+
+        <!-- ==========================================
+             VIEW 1: OVERVIEW & KPIS
+             ========================================== -->
+        <section id="viewOverview" class="view-panel active">
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span class="label">Enlisted Sainiks</span>
+                <h3 id="kpiMembersTotal">0</h3>
+                <p class="sub"><i class="fa-solid fa-users"></i> Nationwide Cadets</p>
+              </div>
+              <div class="kpi-icon-wrap"><i class="fa-solid fa-user-shield"></i></div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span class="label">Centenary Fund</span>
+                <h3 id="kpiDonationsTotal">₹0</h3>
+                <p class="sub" style="color: var(--primary-orange);"><i class="fa-solid fa-arrow-trend-up"></i> Movement Support</p>
+              </div>
+              <div class="kpi-icon-wrap green"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span class="label">Dispatches</span>
+                <h3 id="kpiNewsTotal">0</h3>
+                <p class="sub"><i class="fa-solid fa-bullhorn"></i> Official Gazette</p>
+              </div>
+              <div class="kpi-icon-wrap navy"><i class="fa-solid fa-newspaper"></i></div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span class="label">Drills & Events</span>
+                <h3 id="kpiEventsTotal">0</h3>
+                <p class="sub"><i class="fa-solid fa-calendar-check"></i> Scheduled Rallies</p>
+              </div>
+              <div class="kpi-icon-wrap blue"><i class="fa-solid fa-calendar-days"></i></div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px; margin-bottom: 28px;">
+            <!-- Recent Enlistments Quick Table -->
+            <div class="card-panel" style="margin-bottom: 0;">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-user-clock" style="color: var(--primary-orange);"></i>
+                  <h3>Recent Sainik Enlistments</h3>
+                </div>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="switchView('members')">View All</button>
+              </div>
+              <div class="table-responsive">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>State / City</th>
+                      <th>Wing</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="overviewMembersTableBody">
+                    <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Loading recent enlistments...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Quick Actions Panel -->
+            <div class="card-panel" style="margin-bottom: 0;">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-bolt" style="color: var(--primary-orange);"></i>
+                  <h3>Quick Action Tools</h3>
+                </div>
+              </div>
+              <div style="padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openCreateNewsModal()">
+                  <i class="fa-solid fa-plus"></i> Publish Gazette Dispatch
+                </button>
+                <button type="button" class="btn-admin btn-admin-navy" onclick="openCreateEventModal()">
+                  <i class="fa-solid fa-calendar-plus"></i> Schedule Drill / Parade
+                </button>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="openAddMemberModal()">
+                  <i class="fa-solid fa-user-plus"></i> Enlist Member Manually
+                </button>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="exportMembersToCSV()">
+                  <i class="fa-solid fa-file-csv"></i> Download Enlistment Ledger
+                </button>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="exportFullDatabaseJSON()">
+                  <i class="fa-solid fa-download"></i> Backup Entire Database (JSON)
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 2: MEMBERS MANAGEMENT
+             ========================================== -->
+        <section id="viewMembers" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-user-shield" style="color: var(--primary-orange);"></i>
+                <h3>Enlisted Sainiks Registry (/members)</h3>
+              </div>
+              <div class="card-panel-actions">
+                <div class="search-input-group">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="memberSearchInput" placeholder="Search by name, phone, state..." oninput="filterMembersTable()">
+                </div>
+                <select id="memberStatusFilter" class="filter-select" onchange="filterMembersTable()">
+                  <option value="all">All Statuses</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Verified">Verified</option>
+                  <option value="Pending">Pending Review</option>
+                </select>
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openAddMemberModal()">
+                  <i class="fa-solid fa-user-plus"></i> Add Sainik
+                </button>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="exportMembersToCSV()">
+                  <i class="fa-solid fa-file-csv"></i> Export CSV
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Registration Date</th>
+                    <th>Full Name</th>
+                    <th>Contact Info</th>
+                    <th>State / City</th>
+                    <th>Wing Assigned</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="membersTableBody">
+                  <tr><td colspan="7" style="text-align: center; padding: 30px;">Loading members from Firebase...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 3: DONATIONS LEDGER
+             ========================================== -->
+        <section id="viewDonations" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-hand-holding-dollar" style="color: var(--primary-orange);"></i>
+                <h3>Centenary Movement Fund Ledger (/donations)</h3>
+              </div>
+              <div class="card-panel-actions">
+                <div class="search-input-group">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="donationSearchInput" placeholder="Search donor, PAN, receipt..." oninput="filterDonationsTable()">
+                </div>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="exportDonationsToCSV()">
+                  <i class="fa-solid fa-file-csv"></i> Export Donations CSV
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Receipt No.</th>
+                    <th>Date</th>
+                    <th>Donor Name</th>
+                    <th>Amount (₹)</th>
+                    <th>Cause / Allocation</th>
+                    <th>PAN / Tax ID</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="donationsTableBody">
+                  <tr><td colspan="8" style="text-align: center; padding: 30px;">Loading donations from Firebase...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 4: GAZETTE & DISPATCHES
+             ========================================== -->
+        <section id="viewNews" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-newspaper" style="color: var(--primary-orange);"></i>
+                <h3>Central Command Gazette Bulletins (/news)</h3>
+              </div>
+              <button type="button" class="btn-admin btn-admin-primary" onclick="openCreateNewsModal()">
+                <i class="fa-solid fa-plus"></i> New Gazette Notice
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Preview</th>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="newsTableBody">
+                  <tr><td colspan="5" style="text-align: center; padding: 30px;">Loading news from Firebase...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 5: EVENTS & DRILLS
+             ========================================== -->
+        <section id="viewEvents" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-calendar-days" style="color: var(--primary-orange);"></i>
+                <h3>Drills, Conventions & Conclaves (/events)</h3>
+              </div>
+              <button type="button" class="btn-admin btn-admin-primary" onclick="openCreateEventModal()">
+                <i class="fa-solid fa-calendar-plus"></i> Schedule New Event
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Event Date</th>
+                    <th>Title & Description</th>
+                    <th>Location / Ground</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="eventsTableBody">
+                  <tr><td colspan="5" style="text-align: center; padding: 30px;">Loading events from Firebase...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 6: CAMPAIGNS & MISSIONS
+             ========================================== -->
+        <section id="viewCampaigns" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-bullhorn" style="color: var(--primary-orange);"></i>
+                <h3>Ongoing Campaigns & Missions (/campaigns)</h3>
+              </div>
+              <button type="button" class="btn-admin btn-admin-primary" onclick="openCreateCampaignModal()">
+                <i class="fa-solid fa-plus"></i> Add Campaign
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Campaign Title</th>
+                    <th>Category</th>
+                    <th>Target Goal</th>
+                    <th>Funds Raised</th>
+                    <th>Volunteers / Districts</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="campaignsTableBody">
+                  <tr><td colspan="6" style="text-align: center; padding: 30px;">Loading campaigns from Firebase...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 7: GALLERY ARCHIVES
+             ========================================== -->
+        <section id="viewGallery" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-images" style="color: var(--primary-orange);"></i>
+                <h3>Historical & Event Photo Archives (/gallery)</h3>
+              </div>
+              <button type="button" class="btn-admin btn-admin-primary" onclick="openCreateGalleryModal()">
+                <i class="fa-solid fa-upload"></i> Add Photo
+              </button>
+            </div>
+            <div style="padding: 20px;">
+              <div id="galleryAdminGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px;">
+                <!-- Dynamically loaded -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 8: GRIEVANCE DESK / CONTACT MESSAGES
+             ========================================== -->
+        <section id="viewContacts" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-inbox" style="color: var(--primary-orange);"></i>
+                <h3>Grievance Desk & Public Messages (/contact_messages)</h3>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Sender Name</th>
+                    <th>Subject & Message</th>
+                    <th>State</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="contactsTableBody">
+                  <tr><td colspan="6" style="text-align: center; padding: 30px;">Loading messages from Firebase...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 9: LIVE METRICS & STATS
+             ========================================== -->
+        <section id="viewStats" class="view-panel">
+          <div class="card-panel" style="max-width: 700px;">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-chart-pie" style="color: var(--primary-orange);"></i>
+                <h3>Live Public Homepage Counters (/stats)</h3>
+              </div>
+            </div>
+            <div style="padding: 24px;">
+              <form id="statsEditorForm" onsubmit="saveStatsForm(event)">
+                <div class="form-grid-modal">
+                  <div class="form-group-modal">
+                    <label for="statMembersInput">Active Enlisted Sainiks Counter</label>
+                    <input type="number" id="statMembersInput" required min="1">
+                  </div>
+                  <div class="form-group-modal">
+                    <label for="statStatesInput">Active States Covered</label>
+                    <input type="number" id="statStatesInput" required min="1" max="36">
+                  </div>
+                </div>
+                <div class="form-grid-modal">
+                  <div class="form-group-modal">
+                    <label for="statEventsInput">Conclaves & Drills Completed</label>
+                    <input type="number" id="statEventsInput" required min="1">
+                  </div>
+                  <div class="form-group-modal">
+                    <label for="statYearsInput">Years of Heritage (1927–2026)</label>
+                    <input type="number" id="statYearsInput" required min="99">
+                  </div>
+                </div>
+                <button type="submit" class="btn-admin btn-admin-primary">
+                  <i class="fa-solid fa-floppy-disk"></i> Update Public Live Counters
+                </button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 10: DATABASE TOOLS & BACKUPS
+             ========================================== -->
+        <section id="viewSettings" class="view-panel">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+            <!-- JSON Backup -->
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-download" style="color: var(--primary-orange);"></i>
+                  <h3>Full Database Backup</h3>
+                </div>
+              </div>
+              <div style="padding: 24px;">
+                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 18px;">
+                  Export a snapshot of all members, donations, news, campaigns, events, and grievance records as a single JSON file.
+                </p>
+                <button type="button" class="btn-admin btn-admin-navy" onclick="exportFullDatabaseJSON()">
+                  <i class="fa-solid fa-file-code"></i> Download JSON Snapshot
+                </button>
+              </div>
+            </div>
+
+            <!-- Seed / Reset Sample Data -->
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-arrows-rotate" style="color: var(--primary-orange);"></i>
+                  <h3>Seed Official Dataset</h3>
+                </div>
+              </div>
+              <div style="padding: 24px;">
+                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 18px;">
+                  Seed or refresh the official 1927–2026 verified sample dataset (Dispatches, Campaigns, Historical Gallery, and Leadership Council) to Firebase.
+                </p>
+                <button type="button" class="btn-admin btn-admin-primary" onclick="seedDatabaseFromAdmin()">
+                  <i class="fa-solid fa-cloud-arrow-up"></i> Seed Official SSD Data
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ==========================================================================
+       CREATE / EDIT MODALS
+       ========================================================================== -->
+
+  <!-- News Dispatch Modal -->
+  <div id="modalNews" class="admin-modal">
+    <div class="admin-modal-card">
+      <div class="admin-modal-header">
+        <h3 id="modalNewsHeading">Publish New Gazette Notice</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalNews')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formNews" onsubmit="handleSaveNews(event)">
+        <div class="admin-modal-body">
+          <input type="hidden" id="newsItemKey">
+          <div class="form-group-modal">
+            <label for="newsTitle">Notice Headline / Title</label>
+            <input type="text" id="newsTitle" required placeholder="e.g. Centenary Parade Drill Announced">
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="newsCategory">Gazette Category</label>
+              <select id="newsCategory" required>
+                <option value="Central Command">Central Command</option>
+                <option value="Cadet Training">Cadet Training</option>
+                <option value="Centenary">Centenary 2027</option>
+                <option value="Mahila Dal">Mahila Dal</option>
+                <option value="Legal Cell">Legal Cell</option>
+                <option value="History & Memorial">History & Memorial</option>
+              </select>
+            </div>
+            <div class="form-group-modal">
+              <label for="newsDate">Notice Date</label>
+              <input type="text" id="newsDate" required placeholder="e.g. October 14, 2026">
+            </div>
+          </div>
+          <div class="form-group-modal">
+            <label for="newsImageUrl">Image Banner URL</label>
+            <input type="url" id="newsImageUrl" required placeholder="https://images.unsplash.com/..." oninput="updateImagePreview('newsImagePreview', this.value)">
+            <img id="newsImagePreview" src="" alt="Preview" style="max-height: 120px; object-fit: cover; border-radius: 6px; margin-top: 8px; display: none;">
+          </div>
+          <div class="form-group-modal">
+            <label for="newsExcerpt">Executive Summary / Excerpt</label>
+            <textarea id="newsExcerpt" rows="3" required placeholder="Brief summary of the official announcement..."></textarea>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalNews')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-floppy-disk"></i> Save Dispatch</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Event Modal -->
+  <div id="modalEvent" class="admin-modal">
+    <div class="admin-modal-card">
+      <div class="admin-modal-header">
+        <h3 id="modalEventHeading">Schedule New Event</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalEvent')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formEvent" onsubmit="handleSaveEvent(event)">
+        <div class="admin-modal-body">
+          <input type="hidden" id="eventItemKey">
+          <div class="form-group-modal">
+            <label for="eventTitle">Event Title</label>
+            <input type="text" id="eventTitle" required placeholder="e.g. 99th SSD Foundation Day National Parade">
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="eventDate">Date & Time</label>
+              <input type="text" id="eventDate" required placeholder="e.g. Sept 24, 2026">
+            </div>
+            <div class="form-group-modal">
+              <label for="eventStatus">Status</label>
+              <select id="eventStatus">
+                <option value="upcoming">Upcoming</option>
+                <option value="completed">Completed</option>
+                <option value="postponed">Postponed</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group-modal">
+            <label for="eventLocation">Venue / Ground / City</label>
+            <input type="text" id="eventLocation" required placeholder="e.g. Deekshabhoomi Ground, Nagpur">
+          </div>
+          <div class="form-group-modal">
+            <label for="eventDescription">Event Details & Schedule</label>
+            <textarea id="eventDescription" rows="3" required placeholder="Ceremonial parade itinerary, flag protocol..."></textarea>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalEvent')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-floppy-disk"></i> Save Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Campaign Modal -->
+  <div id="modalCampaign" class="admin-modal">
+    <div class="admin-modal-card">
+      <div class="admin-modal-header">
+        <h3 id="modalCampaignHeading">Create Ongoing Campaign</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalCampaign')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formCampaign" onsubmit="handleSaveCampaign(event)">
+        <div class="admin-modal-body">
+          <input type="hidden" id="campaignItemKey">
+          <div class="form-group-modal">
+            <label for="campaignTitle">Mission / Campaign Title</label>
+            <input type="text" id="campaignTitle" required placeholder="e.g. Nationwide Constitutional Literacy Yatra">
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="campaignCategory">Division Category</label>
+              <input type="text" id="campaignCategory" required placeholder="e.g. Education & Legal">
+            </div>
+            <div class="form-group-modal">
+              <label for="campaignCauseKey">Cause Key (for donations)</label>
+              <input type="text" id="campaignCauseKey" required placeholder="e.g. Centenary 2027 Fund">
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="campaignTarget">Target Goal (₹)</label>
+              <input type="number" id="campaignTarget" required min="1000" placeholder="5000000">
+            </div>
+            <div class="form-group-modal">
+              <label for="campaignRaised">Funds Raised So Far (₹)</label>
+              <input type="number" id="campaignRaised" required min="0" placeholder="3850000">
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="campaignVolunteers">Volunteers Count</label>
+              <input type="text" id="campaignVolunteers" required placeholder="10,000+">
+            </div>
+            <div class="form-group-modal">
+              <label for="campaignDistricts">Districts Reach</label>
+              <input type="text" id="campaignDistricts" required placeholder="150+">
+            </div>
+          </div>
+          <div class="form-group-modal">
+            <label for="campaignImageUrl">Image URL</label>
+            <input type="url" id="campaignImageUrl" required placeholder="https://images.unsplash.com/...">
+          </div>
+          <div class="form-group-modal">
+            <label for="campaignDescription">Campaign Purpose</label>
+            <textarea id="campaignDescription" rows="2" required placeholder="Brief description of the initiative..."></textarea>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalCampaign')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-floppy-disk"></i> Save Campaign</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Gallery Photo Modal -->
+  <div id="modalGallery" class="admin-modal">
+    <div class="admin-modal-card">
+      <div class="admin-modal-header">
+        <h3>Add Photo to Archives</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalGallery')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formGallery" onsubmit="handleSaveGallery(event)">
+        <div class="admin-modal-body">
+          <div class="form-group-modal">
+            <label for="galleryImageUrl">Image URL</label>
+            <input type="url" id="galleryImageUrl" required placeholder="https://images.unsplash.com/..." oninput="updateImagePreview('galleryImagePreview', this.value)">
+            <img id="galleryImagePreview" src="" alt="Preview" style="max-height: 120px; object-fit: cover; border-radius: 6px; margin-top: 8px; display: none;">
+          </div>
+          <div class="form-group-modal">
+            <label for="galleryCaption">Photo Caption</label>
+            <input type="text" id="galleryCaption" required placeholder="e.g. SSD Uniform Cadet Corps Ceremonial March Past">
+          </div>
+          <div class="form-group-modal">
+            <label for="galleryCategory">Category</label>
+            <select id="galleryCategory" required>
+              <option value="Cadet Drills">Cadet Drills</option>
+              <option value="Mahila Dal">Mahila Dal</option>
+              <option value="Historical">Historical</option>
+              <option value="Constitution">Constitution</option>
+              <option value="Youth Front">Youth Front</option>
+              <option value="Community Sewa">Community Sewa</option>
+              <option value="Leadership">Leadership</option>
+            </select>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalGallery')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-upload"></i> Add to Archives</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Member Details & Verification Modal -->
+  <div id="modalMemberDetail" class="admin-modal">
+    <div class="admin-modal-card">
+      <div class="admin-modal-header">
+        <h3>Sainik Enlistment Record</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalMemberDetail')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="admin-modal-body" id="memberDetailContent">
+        <!-- Injected dynamically -->
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalMemberDetail')">Close</button>
+        <button type="button" id="btnApproveMemberModal" class="btn-admin btn-admin-primary"><i class="fa-solid fa-check"></i> Approve Enlistment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual Add Member Modal -->
+  <div id="modalAddMember" class="admin-modal">
+    <div class="admin-modal-card">
+      <div class="admin-modal-header">
+        <h3>Enlist New Sainik Manually</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalAddMember')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formAddMember" onsubmit="handleManualAddMember(event)">
+        <div class="admin-modal-body">
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="manualMemberName">Full Name</label>
+              <input type="text" id="manualMemberName" required placeholder="e.g. Siddharth Meshram">
+            </div>
+            <div class="form-group-modal">
+              <label for="manualMemberPhone">Phone Number</label>
+              <input type="tel" id="manualMemberPhone" required placeholder="9876543210">
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="manualMemberEmail">Email Address</label>
+              <input type="email" id="manualMemberEmail" required placeholder="siddharth@example.com">
+            </div>
+            <div class="form-group-modal">
+              <label for="manualMemberState">State</label>
+              <input type="text" id="manualMemberState" required placeholder="Maharashtra">
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="manualMemberCity">City / District</label>
+              <input type="text" id="manualMemberCity" required placeholder="Nagpur">
+            </div>
+            <div class="form-group-modal">
+              <label for="manualMemberWing">Primary Wing</label>
+              <select id="manualMemberWing">
+                <option value="Central Cadet Corps (Sainik Wing)">Central Cadet Corps (Sainik Wing)</option>
+                <option value="Mahila Samata Sainik Dal">Mahila Samata Sainik Dal</option>
+                <option value="Constitutional & Legal Cell">Constitutional & Legal Cell</option>
+                <option value="Youth & Student Front">Youth & Student Front</option>
+                <option value="Community Sewa & Relief Force">Community Sewa & Relief Force</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalAddMember')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-user-check"></i> Register Sainik</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="adminToast" class="admin-toast">
+    <i class="fa-solid fa-circle-check" id="toastIcon"></i>
+    <span id="toastMsg">Operation successful</span>
+  </div>
+
+  <!-- Admin Application Script -->
+  <script src="admin.js"></script>
+</body>
+</html>
