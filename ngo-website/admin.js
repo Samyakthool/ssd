@@ -847,10 +847,10 @@ function getRoleDisplayName(role) {
 
 function applyRolePermissions(role) {
   const permissions = {
-    super_admin: ["overview", "members", "donations", "leadership", "chapters", "news", "events", "campaigns", "gallery", "admins", "contacts", "stats", "settings"],
-    executive: ["overview", "members", "leadership", "chapters", "news", "events", "campaigns", "gallery", "contacts"],
+    super_admin: ["overview", "approvals", "members", "donations", "leadership", "chapters", "news", "events", "campaigns", "gallery", "admins", "contacts", "stats", "settings"],
+    executive: ["overview", "approvals", "members", "leadership", "chapters", "news", "events", "campaigns", "gallery", "contacts"],
     treasurer: ["overview", "donations", "campaigns"],
-    media: ["overview", "news", "events", "gallery"]
+    media: ["overview", "approvals", "news", "events", "gallery"]
   };
 
   const allowed = permissions[role] || permissions.super_admin;
@@ -862,6 +862,382 @@ function applyRolePermissions(role) {
       item.style.display = "none";
     }
   });
+}
+
+function isSuperAdmin() {
+  const userJson = sessionStorage.getItem("ssd_admin_user");
+  if (!userJson) return true;
+  try {
+    const user = JSON.parse(userJson);
+    return user.role === "super_admin" || (user.email && user.email.toLowerCase() === "admin@ssd.org") || (user.name && user.name.includes("Master"));
+  } catch (e) {
+    return true;
+  }
+}
+
+function getActiveOfficer() {
+  const userJson = sessionStorage.getItem("ssd_admin_user");
+  if (userJson) {
+    try {
+      return JSON.parse(userJson);
+    } catch(e){}
+  }
+  return { name: "Commander-in-Chief", email: "admin@ssd.org", role: "super_admin" };
+}
+
+// ==========================================================================
+// SUPERADMIN APPROVALS SYSTEM & AUTHORIZATION WORKFLOW
+// ==========================================================================
+function getApprovalBadgeHtml(item, type) {
+  const status = (item && item.approvalStatus) ? item.approvalStatus.toLowerCase() : 'approved';
+  if (status === 'pending') {
+    return `<span class="badge-status badge-pending" title="Awaiting SuperAdmin Authorization"><i class="fa-solid fa-clock"></i> Pending Approval</span>`;
+  }
+  if (status === 'rejected') {
+    return `<span class="badge-status badge-rejected" title="Rejected / Unpublished"><i class="fa-solid fa-ban"></i> Rejected</span>`;
+  }
+  return `<span class="badge-status badge-approved" title="Authorized & Live on Portal"><i class="fa-solid fa-circle-check"></i> Approved</span>`;
+}
+
+function getApprovalActionButtons(item, type) {
+  const isSuper = isSuperAdmin();
+  const status = (item && item.approvalStatus) ? item.approvalStatus.toLowerCase() : 'approved';
+  
+  if (isSuper) {
+    if (status === 'pending') {
+      return `
+        <button type="button" class="action-icon-btn approve" onclick="approvePost('${type}', '${item.id}')" title="Approve & Publish Live">
+          <i class="fa-solid fa-check"></i>
+        </button>
+        <button type="button" class="action-icon-btn reject" onclick="rejectPost('${type}', '${item.id}')" title="Reject Submission">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      `;
+    } else if (status === 'rejected') {
+      return `
+        <button type="button" class="action-icon-btn approve" onclick="approvePost('${type}', '${item.id}')" title="Re-authorize & Publish Live">
+          <i class="fa-solid fa-check"></i>
+        </button>
+      `;
+    } else {
+      return `
+        <button type="button" class="action-icon-btn reject" onclick="rejectPost('${type}', '${item.id}')" title="Revoke Authorization / Reject">
+          <i class="fa-solid fa-ban"></i>
+        </button>
+      `;
+    }
+  } else {
+    if (status === 'pending') {
+      return `<span style="font-size: 11px; color: var(--primary-orange); font-weight: 600; padding: 2px 6px; background: rgba(255,107,0,0.1); border-radius: 4px;"><i class="fa-solid fa-hourglass-half"></i> In Review</span>`;
+    }
+    return '';
+  }
+}
+
+function collectAllPendingItems() {
+  const pending = [];
+  
+  // 1. News
+  Object.entries(adminData.news || {}).forEach(([id, item]) => {
+    if (item.approvalStatus === 'pending') {
+      pending.push({
+        id,
+        type: 'news',
+        typeLabel: 'Gazette Dispatch',
+        title: item.title || 'Untitled Dispatch',
+        submittedBy: item.submittedBy || 'Admin Officer',
+        submittedAt: item.submittedAt || item.updatedAt || Date.now(),
+        summary: item.excerpt || (item.category ? `Category: ${item.category}` : 'Gazette Notice'),
+        approvalStatus: 'pending'
+      });
+    }
+  });
+
+  // 2. Events
+  Object.entries(adminData.events || {}).forEach(([id, item]) => {
+    if (item.approvalStatus === 'pending') {
+      pending.push({
+        id,
+        type: 'events',
+        typeLabel: 'Drill / Event',
+        title: item.title || 'Untitled Event',
+        submittedBy: item.submittedBy || 'Admin Officer',
+        submittedAt: item.submittedAt || item.updatedAt || Date.now(),
+        summary: `${item.date || ''} | ${item.location || ''} - ${item.description || ''}`,
+        approvalStatus: 'pending'
+      });
+    }
+  });
+
+  // 3. Campaigns
+  Object.entries(adminData.campaigns || {}).forEach(([id, item]) => {
+    if (item.approvalStatus === 'pending') {
+      pending.push({
+        id,
+        type: 'campaigns',
+        typeLabel: 'Mission / Campaign',
+        title: item.title || 'Untitled Campaign',
+        submittedBy: item.submittedBy || 'Admin Officer',
+        submittedAt: item.submittedAt || item.updatedAt || Date.now(),
+        summary: `Goal: ₹${(Number(item.targetAmount) || 0).toLocaleString()} | ${item.category || ''}`,
+        approvalStatus: 'pending'
+      });
+    }
+  });
+
+  // 4. Gallery
+  Object.entries(adminData.gallery || {}).forEach(([id, item]) => {
+    if (item.approvalStatus === 'pending') {
+      pending.push({
+        id,
+        type: 'gallery',
+        typeLabel: 'Photo Archive',
+        title: item.caption || 'Archive Photo',
+        submittedBy: item.submittedBy || 'Admin Officer',
+        submittedAt: item.submittedAt || item.updatedAt || Date.now(),
+        summary: item.category ? `Category: ${item.category}` : 'Photo',
+        approvalStatus: 'pending'
+      });
+    }
+  });
+
+  // 5. Leadership
+  Object.entries(adminData.leadership || {}).forEach(([id, item]) => {
+    if (item.approvalStatus === 'pending') {
+      pending.push({
+        id,
+        type: 'leadership',
+        typeLabel: 'Council Appointee',
+        title: `${item.name || 'Unnamed'} - ${item.designation || 'Officer'}`,
+        submittedBy: item.submittedBy || 'Admin Officer',
+        submittedAt: item.submittedAt || item.updatedAt || Date.now(),
+        summary: `${item.level ? item.level.toUpperCase() : 'HQ'} | ${item.state || ''} ${item.district ? '(' + item.district + ')' : ''}`,
+        approvalStatus: 'pending'
+      });
+    }
+  });
+
+  pending.sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
+  return pending;
+}
+
+function renderApprovalsView() {
+  const tbody = document.getElementById("approvalsTableBody");
+  if (!tbody) return;
+
+  const typeFilter = document.getElementById("approvalTypeFilter")?.value || "all";
+  const allPending = collectAllPendingItems();
+  
+  // Update live counters
+  updateApprovalsCounters(allPending.length);
+
+  const filtered = typeFilter === "all" ? allPending : allPending.filter(p => p.type === typeFilter);
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);"><i class="fa-solid fa-circle-check" style="color: var(--primary-orange); font-size: 24px; margin-bottom: 8px; display: block;"></i>All admin submissions have been reviewed and approved. Queue is clear!</td></tr>';
+    return;
+  }
+
+  const isSuper = isSuperAdmin();
+
+  tbody.innerHTML = filtered.map(item => {
+    const dateStr = item.submittedAt ? new Date(item.submittedAt).toLocaleString() : 'Recent';
+    let typeBadgeClass = 'badge-info';
+    if (item.type === 'news') typeBadgeClass = 'badge-news';
+    if (item.type === 'events') typeBadgeClass = 'badge-district';
+    if (item.type === 'leadership') typeBadgeClass = 'badge-approved';
+
+    return `
+      <tr>
+        <td><span class="badge-status ${typeBadgeClass}">${escapeHtml(item.typeLabel)}</span></td>
+        <td><strong>${escapeHtml(item.title)}</strong></td>
+        <td>
+          <div style="font-weight: 600; color: var(--dark-navy);"><i class="fa-solid fa-user-shield" style="font-size: 11px; color: var(--primary-orange);"></i> ${escapeHtml(item.submittedBy)}</div>
+        </td>
+        <td style="white-space: nowrap; color: var(--text-muted); font-size: 12px;">${dateStr}</td>
+        <td><div style="max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--text-muted);">${escapeHtml(item.summary)}</div></td>
+        <td><span class="badge-status badge-pending"><i class="fa-solid fa-clock"></i> Pending Authorization</span></td>
+        <td style="text-align: right;">
+          <div class="action-btn-group" style="justify-content: flex-end;">
+            ${isSuper ? `
+              <button type="button" class="btn-admin btn-admin-primary" style="padding: 4px 10px; font-size: 11.5px;" onclick="approvePost('${item.type}', '${item.id}')" title="Approve & Publish Live">
+                <i class="fa-solid fa-check"></i> Approve
+              </button>
+              <button type="button" class="btn-admin btn-admin-danger" style="padding: 4px 10px; font-size: 11.5px;" onclick="rejectPost('${item.type}', '${item.id}')" title="Reject Submission">
+                <i class="fa-solid fa-xmark"></i> Reject
+              </button>
+            ` : `
+              <span style="font-size: 11.5px; color: var(--text-muted); font-style: italic;">SuperAdmin Only</span>
+            `}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderOverviewApprovals() {
+  const panel = document.getElementById("overviewApprovalsPanel");
+  const tbody = document.getElementById("overviewApprovalsTableBody");
+  const pending = collectAllPendingItems();
+
+  updateApprovalsCounters(pending.length);
+
+  if (pending.length > 0) {
+    if (panel) panel.style.display = "block";
+    if (tbody) {
+      const top5 = pending.slice(0, 5);
+      const isSuper = isSuperAdmin();
+      tbody.innerHTML = top5.map(item => {
+        const dateStr = item.submittedAt ? new Date(item.submittedAt).toLocaleDateString() : 'Recent';
+        return `
+          <tr>
+            <td><span class="badge-status badge-info">${escapeHtml(item.typeLabel)}</span></td>
+            <td><strong>${escapeHtml(item.title)}</strong></td>
+            <td><small style="color: var(--text-dark); font-weight: 600;"><i class="fa-solid fa-user-shield" style="font-size: 10px; color: var(--primary-orange);"></i> ${escapeHtml(item.submittedBy)}</small></td>
+            <td style="color: var(--text-muted); font-size: 12px;">${dateStr}</td>
+            <td style="text-align: right;">
+              <div class="action-btn-group" style="justify-content: flex-end;">
+                ${isSuper ? `
+                  <button type="button" class="action-icon-btn approve" onclick="approvePost('${item.type}', '${item.id}')" title="Approve & Publish Live">
+                    <i class="fa-solid fa-check"></i>
+                  </button>
+                  <button type="button" class="action-icon-btn reject" onclick="rejectPost('${item.type}', '${item.id}')" title="Reject Submission">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                ` : `
+                  <span style="font-size: 11px; color: var(--primary-orange);"><i class="fa-solid fa-clock"></i> In Queue</span>
+                `}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  } else {
+    if (panel) panel.style.display = "none";
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No pending submissions. All items authorized.</td></tr>';
+    }
+  }
+}
+
+function updateApprovalsCounters(count) {
+  setText("badgeApprovalsCount", count);
+  setText("topbarApprovalsCount", count);
+}
+
+function approvePost(type, id) {
+  if (!isSuperAdmin()) {
+    showToast("Authorization Restricted: Only SuperAdmin can approve content for live publication.", "error");
+    return;
+  }
+
+  const officer = getActiveOfficer();
+  const updatePayload = {
+    approvalStatus: 'approved',
+    approvedBy: `${officer.name} (${officer.role || 'SuperAdmin'})`,
+    approvedAt: Date.now()
+  };
+
+  const onSuccess = () => {
+    showToast("Submission authorized and published live on public portal!", "success");
+    refreshAllViewsAfterApproval();
+  };
+
+  if (db) {
+    db.ref(`${type}/${id}`).update(updatePayload).then(onSuccess).catch(err => showToast(err.message, "error"));
+  } else {
+    if (adminData[type] && adminData[type][id]) {
+      adminData[type][id] = { ...adminData[type][id], ...updatePayload };
+      saveLocalStore();
+      onSuccess();
+    }
+  }
+}
+
+function rejectPost(type, id) {
+  if (!isSuperAdmin()) {
+    showToast("Authorization Restricted: Only SuperAdmin can reject or withdraw posts.", "error");
+    return;
+  }
+
+  const officer = getActiveOfficer();
+  const updatePayload = {
+    approvalStatus: 'rejected',
+    rejectedBy: `${officer.name} (${officer.role || 'SuperAdmin'})`,
+    rejectedAt: Date.now()
+  };
+
+  const onSuccess = () => {
+    showToast("Submission rejected / unpublished from public portal.", "info");
+    refreshAllViewsAfterApproval();
+  };
+
+  if (db) {
+    db.ref(`${type}/${id}`).update(updatePayload).then(onSuccess).catch(err => showToast(err.message, "error"));
+  } else {
+    if (adminData[type] && adminData[type][id]) {
+      adminData[type][id] = { ...adminData[type][id], ...updatePayload };
+      saveLocalStore();
+      onSuccess();
+    }
+  }
+}
+
+function bulkApproveAllPending() {
+  if (!isSuperAdmin()) {
+    showToast("Authorization Restricted: Only SuperAdmin can bulk authorize submissions.", "error");
+    return;
+  }
+
+  const pending = collectAllPendingItems();
+  if (pending.length === 0) {
+    showToast("Approvals queue is already empty!", "info");
+    return;
+  }
+
+  if (!confirm(`Are you sure you want to 1-click authorize all ${pending.length} pending submissions and publish them live?`)) return;
+
+  const officer = getActiveOfficer();
+  const updatePayload = {
+    approvalStatus: 'approved',
+    approvedBy: `${officer.name} (Supreme Commander Bulk Authorization)`,
+    approvedAt: Date.now()
+  };
+
+  if (db) {
+    const updates = {};
+    pending.forEach(item => {
+      updates[`${item.type}/${item.id}/approvalStatus`] = 'approved';
+      updates[`${item.type}/${item.id}/approvedBy`] = updatePayload.approvedBy;
+      updates[`${item.type}/${item.id}/approvedAt`] = updatePayload.approvedAt;
+    });
+    db.ref('/').update(updates).then(() => {
+      showToast(`All ${pending.length} submissions authorized and published live!`, "success");
+      refreshAllViewsAfterApproval();
+    }).catch(err => showToast(err.message, "error"));
+  } else {
+    pending.forEach(item => {
+      if (adminData[item.type] && adminData[item.type][item.id]) {
+        adminData[item.type][item.id] = { ...adminData[item.type][item.id], ...updatePayload };
+      }
+    });
+    saveLocalStore();
+    showToast(`All ${pending.length} submissions authorized and published live!`, "success");
+    refreshAllViewsAfterApproval();
+  }
+}
+
+function refreshAllViewsAfterApproval() {
+  renderApprovalsView();
+  renderOverviewApprovals();
+  renderOverview();
+  renderNewsTable();
+  renderEventsTable();
+  renderCampaignsTable();
+  renderGalleryGrid();
+  renderLeadershipTable();
 }
 
 function handleAdminLogin(e) {
@@ -1109,6 +1485,7 @@ function toggleSidebarDrawer() {
 // ==========================================================================
 const viewMetadata = {
   overview: { title: "Central Command Overview", sub: "Nationwide real-time metrics & recent activity" },
+  approvals: { title: "SuperAdmin Approvals Desk", sub: "Supreme Command authorization queue for subordinate admin submissions" },
   members: { title: "Enlisted Sainiks Registry", sub: "Verify cadet applications & download state rosters" },
   donations: { title: "Centenary Movement Fund Ledger", sub: "Real-time contribution audit & donor PAN tracking" },
   leadership: { title: "Governing Body & Council", sub: "Appoint and manage National Leadership & Advisory Board" },
@@ -1137,6 +1514,10 @@ function switchView(viewKey) {
   const hSub = document.getElementById("pageHeadingSubtitle");
   if (hTitle) hTitle.textContent = meta.title;
   if (hSub) hSub.textContent = meta.sub;
+
+  if (viewKey === 'approvals') {
+    renderApprovalsView();
+  }
 
   if (window.innerWidth <= 1024) {
     const sidebar = document.getElementById("adminSidebar");
@@ -1168,6 +1549,7 @@ function loadAllRealtimeData() {
       adminData.news = snap.val() || ssdInitialSeed.news;
       renderNewsTable();
       renderOverview();
+      renderApprovalsView();
     });
 
     // 4. Events
@@ -1175,18 +1557,21 @@ function loadAllRealtimeData() {
       adminData.events = snap.val() || ssdInitialSeed.events;
       renderEventsTable();
       renderOverview();
+      renderApprovalsView();
     });
 
     // 5. Campaigns
     db.ref('campaigns').on('value', (snap) => {
       adminData.campaigns = snap.val() || ssdInitialSeed.campaigns;
       renderCampaignsTable();
+      renderApprovalsView();
     });
 
     // 6. Gallery
     db.ref('gallery').on('value', (snap) => {
       adminData.gallery = snap.val() || ssdInitialSeed.gallery;
       renderGalleryGrid();
+      renderApprovalsView();
     });
 
     // 7. Contacts
@@ -1215,6 +1600,7 @@ function loadAllRealtimeData() {
       adminData.leadership = snap.val() || ssdInitialSeed.leadership;
       renderLeadershipTable();
       renderOverview();
+      renderApprovalsView();
     });
 
     // 10.5 State Chapters & District Directory
@@ -1281,6 +1667,7 @@ function loadAllRealtimeData() {
     renderContactsTable();
     renderEmailDispatchesTable();
     populateStatsForm();
+    renderApprovalsView();
     renderOverview();
   }
 }
@@ -1323,6 +1710,9 @@ function renderOverview() {
   setText("kpiDonationsTotal", "₹" + totalDonationsAmount.toLocaleString());
   setText("kpiNewsTotal", newsArr.length);
   setText("kpiEventsTotal", eventsArr.length);
+
+  // SuperAdmin Approvals Overview Section
+  renderOverviewApprovals();
 
   // Overview Recent Members Table
   const tbody = document.getElementById("overviewMembersTableBody");
@@ -1785,6 +2175,7 @@ function renderLeadershipTable(filteredList = null) {
         <td>
           <strong>${escapeHtml(m.name)}</strong>
           ${m.district ? `<br><small style="color: var(--text-muted);"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(m.district)}</small>` : ''}
+          ${m.submittedBy ? `<br><small style="color: var(--text-muted); font-size: 10.5px;"><i class="fa-solid fa-user-pen"></i> ${escapeHtml(m.submittedBy)}</small>` : ''}
         </td>
         <td>
           ${tierBadge}
@@ -1794,9 +2185,10 @@ function renderLeadershipTable(filteredList = null) {
           <small class="badge-status ${rankBadgeClass}" style="font-size: 10px; margin-top: 3px; display: inline-block;">${escapeHtml(m.rankBadge || (isDistrict ? (m.district || stateName) + ' Command' : (isState ? stateName + ' Command' : 'National Command')))}</small>
         </td>
         <td><span class="badge-status badge-info">${escapeHtml(m.category || 'Supreme Council')}</span></td>
-        <td><small style="color: var(--text-muted);">${escapeHtml(m.credentials || (m.district ? m.district + ' | ' + stateName : stateName))}</small></td>
+        <td>${getApprovalBadgeHtml(m, 'leadership')}</td>
         <td style="text-align: right;">
           <div class="action-btn-group" style="justify-content: flex-end;">
+            ${getApprovalActionButtons(m, 'leadership')}
             <button type="button" class="action-icon-btn" onclick="openEditLeadershipModal('${m.id}')" title="Edit Member">
               <i class="fa-solid fa-pen-to-square"></i>
             </button>
@@ -1956,6 +2348,11 @@ function handleSaveLeadership(e) {
   const state = document.getElementById("leadState")?.value || (level === 'national' ? 'National HQ' : 'Maharashtra');
   const district = document.getElementById("leadDistrict")?.value.trim() || "";
 
+  const isSuper = isSuperAdmin();
+  const officer = getActiveOfficer();
+  const existingItem = key ? ((adminData.leadership || ssdInitialSeed.leadership)[key]) : null;
+  const approvalStatus = isSuper ? 'approved' : (existingItem ? (existingItem.approvalStatus || 'pending') : 'pending');
+
   const memberData = {
     name: document.getElementById("leadName").value.trim(),
     designation: document.getElementById("leadDesignation").value.trim(),
@@ -1968,12 +2365,20 @@ function handleSaveLeadership(e) {
     credentials: document.getElementById("leadCredentials").value.trim(),
     bio: document.getElementById("leadBio").value.trim(),
     order: Number(document.getElementById("leadOrder").value) || 1,
+    approvalStatus: approvalStatus,
+    submittedBy: existingItem ? (existingItem.submittedBy || `${officer.name} (${getRoleDisplayName(officer.role)})`) : `${officer.name} (${getRoleDisplayName(officer.role)})`,
+    submittedAt: existingItem ? (existingItem.submittedAt || Date.now()) : Date.now(),
     updatedAt: Date.now()
   };
 
   const onSuccess = () => {
-    showToast(`Council member ${memberData.name} saved successfully!`, "success");
+    if (isSuper) {
+      showToast(`Council member ${memberData.name} saved and published live!`, "success");
+    } else {
+      showToast(`Council member ${memberData.name} submitted for SuperAdmin approval.`, "info");
+    }
     closeAdminModal("modalLeadership");
+    refreshAllViewsAfterApproval();
   };
 
   if (db) {
@@ -1987,7 +2392,6 @@ function handleSaveLeadership(e) {
     const newKey = key || ("lead_" + Date.now());
     adminData.leadership[newKey] = memberData;
     saveLocalStore();
-    renderLeadershipTable();
     onSuccess();
   }
 }
@@ -3153,7 +3557,7 @@ function renderNewsTable() {
   const list = Object.entries(newsObj).map(([key, val]) => ({ id: key, ...val }));
 
   if (list.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">No gazette notices published yet.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: var(--text-muted);">No gazette notices published yet.</td></tr>';
     return;
   }
 
@@ -3165,11 +3569,14 @@ function renderNewsTable() {
       <td>
         <strong>${escapeHtml(n.title)}</strong>
         <p style="font-size: 12px; color: var(--text-muted); line-height: 1.3; margin-top: 3px;">${escapeHtml(n.excerpt || '')}</p>
+        ${n.submittedBy ? `<small style="color: var(--text-muted); font-size: 11px;"><i class="fa-solid fa-user-pen"></i> ${escapeHtml(n.submittedBy)}</small>` : ''}
       </td>
       <td><span class="badge-status badge-info">${escapeHtml(n.category || 'Gazette')}</span></td>
-      <td style="white-space: nowrap; color: var(--text-muted);">${escapeHtml(n.date || 'Recent')}</td>
+      <td style="white-space: nowrap; color: var(--text-muted); font-size: 12px;">${escapeHtml(n.date || 'Recent')}</td>
+      <td>${getApprovalBadgeHtml(n, 'news')}</td>
       <td style="text-align: right;">
         <div class="action-btn-group" style="justify-content: flex-end;">
+          ${getApprovalActionButtons(n, 'news')}
           <button type="button" class="action-icon-btn" onclick="openEditNewsModal('${n.id}')" title="Edit Dispatch">
             <i class="fa-solid fa-pen-to-square"></i>
           </button>
@@ -3209,29 +3616,44 @@ function openEditNewsModal(id) {
 function handleSaveNews(e) {
   e.preventDefault();
   const id = document.getElementById("newsItemKey").value;
+  const isSuper = isSuperAdmin();
+  const officer = getActiveOfficer();
+  const existingItem = id ? (adminData.news && adminData.news[id]) : null;
+  const approvalStatus = isSuper ? 'approved' : (existingItem ? (existingItem.approvalStatus || 'pending') : 'pending');
+
   const payload = {
     title: document.getElementById("newsTitle").value.trim(),
     category: document.getElementById("newsCategory").value,
     date: document.getElementById("newsDate").value.trim(),
     imageUrl: document.getElementById("newsImageUrl").value.trim(),
-    excerpt: document.getElementById("newsExcerpt").value.trim()
+    excerpt: document.getElementById("newsExcerpt").value.trim(),
+    approvalStatus: approvalStatus,
+    submittedBy: existingItem ? (existingItem.submittedBy || `${officer.name} (${getRoleDisplayName(officer.role)})`) : `${officer.name} (${getRoleDisplayName(officer.role)})`,
+    submittedAt: existingItem ? (existingItem.submittedAt || Date.now()) : Date.now(),
+    updatedAt: Date.now()
+  };
+
+  const onSuccess = () => {
+    if (isSuper) {
+      showToast("Gazette notice authorized and published live!", "success");
+    } else {
+      showToast("Gazette notice submitted. Awaiting SuperAdmin approval before going live.", "info");
+    }
+    closeAdminModal("modalNews");
+    refreshAllViewsAfterApproval();
   };
 
   if (db) {
     const targetRef = id ? db.ref('news/' + id) : db.ref('news').push();
     targetRef.set(payload)
-      .then(() => {
-        showToast("Gazette notice saved successfully to Firebase!", "success");
-        closeAdminModal("modalNews");
-      })
+      .then(onSuccess)
       .catch(err => showToast("Save error: " + err.message, "error"));
   } else {
     const key = id || ("news_" + Date.now());
+    if (!adminData.news) adminData.news = {};
     adminData.news[key] = payload;
     saveLocalStore();
-    renderNewsTable();
-    showToast("Gazette notice saved!", "success");
-    closeAdminModal("modalNews");
+    onSuccess();
   }
 }
 
@@ -3239,13 +3661,16 @@ function deleteNews(id) {
   if (!confirm("Are you sure you want to delete this gazette dispatch?")) return;
   if (db) {
     db.ref('news/' + id).remove()
-      .then(() => showToast("Dispatch deleted.", "info"))
+      .then(() => {
+        showToast("Dispatch deleted.", "info");
+        refreshAllViewsAfterApproval();
+      })
       .catch(err => showToast("Error: " + err.message, "error"));
   } else {
     delete adminData.news[id];
     saveLocalStore();
-    renderNewsTable();
     showToast("Dispatch deleted.", "info");
+    refreshAllViewsAfterApproval();
   }
 }
 
@@ -3260,7 +3685,7 @@ function renderEventsTable() {
   const list = Object.entries(eventsObj).map(([key, val]) => ({ id: key, ...val }));
 
   if (list.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">No events scheduled.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: var(--text-muted);">No events scheduled.</td></tr>';
     return;
   }
 
@@ -3270,11 +3695,14 @@ function renderEventsTable() {
       <td>
         <strong>${escapeHtml(ev.title)}</strong>
         <p style="font-size: 12px; color: var(--text-muted);">${escapeHtml(ev.description || '')}</p>
+        ${ev.submittedBy ? `<small style="color: var(--text-muted); font-size: 11px;"><i class="fa-solid fa-user-pen"></i> ${escapeHtml(ev.submittedBy)}</small>` : ''}
       </td>
       <td><i class="fa-solid fa-location-dot" style="color: var(--text-muted); font-size: 11px;"></i> ${escapeHtml(ev.location || 'Nagpur')}</td>
       <td><span class="badge-status ${ev.status === 'completed' ? 'badge-verified' : 'badge-pending'}">${escapeHtml(ev.status || 'upcoming')}</span></td>
+      <td>${getApprovalBadgeHtml(ev, 'events')}</td>
       <td style="text-align: right;">
         <div class="action-btn-group" style="justify-content: flex-end;">
+          ${getApprovalActionButtons(ev, 'events')}
           <button type="button" class="action-icon-btn" onclick="openEditEventModal('${ev.id}')" title="Edit Event">
             <i class="fa-solid fa-pen-to-square"></i>
           </button>
@@ -3310,29 +3738,44 @@ function openEditEventModal(id) {
 function handleSaveEvent(e) {
   e.preventDefault();
   const id = document.getElementById("eventItemKey").value;
+  const isSuper = isSuperAdmin();
+  const officer = getActiveOfficer();
+  const existingItem = id ? (adminData.events && adminData.events[id]) : null;
+  const approvalStatus = isSuper ? 'approved' : (existingItem ? (existingItem.approvalStatus || 'pending') : 'pending');
+
   const payload = {
     title: document.getElementById("eventTitle").value.trim(),
     date: document.getElementById("eventDate").value.trim(),
     location: document.getElementById("eventLocation").value.trim(),
     status: document.getElementById("eventStatus").value,
-    description: document.getElementById("eventDescription").value.trim()
+    description: document.getElementById("eventDescription").value.trim(),
+    approvalStatus: approvalStatus,
+    submittedBy: existingItem ? (existingItem.submittedBy || `${officer.name} (${getRoleDisplayName(officer.role)})`) : `${officer.name} (${getRoleDisplayName(officer.role)})`,
+    submittedAt: existingItem ? (existingItem.submittedAt || Date.now()) : Date.now(),
+    updatedAt: Date.now()
+  };
+
+  const onSuccess = () => {
+    if (isSuper) {
+      showToast("Event authorized and published live!", "success");
+    } else {
+      showToast("Event scheduled and submitted for SuperAdmin approval.", "info");
+    }
+    closeAdminModal("modalEvent");
+    refreshAllViewsAfterApproval();
   };
 
   if (db) {
     const targetRef = id ? db.ref('events/' + id) : db.ref('events').push();
     targetRef.set(payload)
-      .then(() => {
-        showToast("Event saved successfully!", "success");
-        closeAdminModal("modalEvent");
-      })
+      .then(onSuccess)
       .catch(err => showToast("Error: " + err.message, "error"));
   } else {
     const key = id || ("event_" + Date.now());
+    if (!adminData.events) adminData.events = {};
     adminData.events[key] = payload;
     saveLocalStore();
-    renderEventsTable();
-    showToast("Event saved!", "success");
-    closeAdminModal("modalEvent");
+    onSuccess();
   }
 }
 
@@ -3340,13 +3783,16 @@ function deleteEvent(id) {
   if (!confirm("Delete this scheduled event?")) return;
   if (db) {
     db.ref('events/' + id).remove()
-      .then(() => showToast("Event deleted.", "info"))
+      .then(() => {
+        showToast("Event deleted.", "info");
+        refreshAllViewsAfterApproval();
+      })
       .catch(err => showToast("Error: " + err.message, "error"));
   } else {
     delete adminData.events[id];
     saveLocalStore();
-    renderEventsTable();
     showToast("Event deleted.", "info");
+    refreshAllViewsAfterApproval();
   }
 }
 
@@ -3375,19 +3821,22 @@ function renderCampaignsTable() {
         <td>
           <strong>${escapeHtml(c.title)}</strong>
           <p style="font-size: 11.5px; color: var(--text-muted);">${escapeHtml(c.description || '')}</p>
+          ${c.submittedBy ? `<small style="color: var(--text-muted); font-size: 11px;"><i class="fa-solid fa-user-pen"></i> ${escapeHtml(c.submittedBy)}</small>` : ''}
         </td>
         <td><span class="badge-status badge-info">${escapeHtml(c.category || 'General')}</span></td>
-        <td>₹${(target).toLocaleString()}</td>
         <td>
-          <strong>₹${(raised).toLocaleString()}</strong>
-          <div style="font-size: 11px; color: var(--primary-orange); font-weight: 700;">${pct}% Funded</div>
+          <div>₹${(target).toLocaleString()} Goal</div>
+          <strong style="color: var(--primary-orange);">₹${(raised).toLocaleString()}</strong>
+          <small>(${pct}%)</small>
         </td>
         <td>
           <div><i class="fa-solid fa-users" style="font-size: 11px;"></i> ${escapeHtml(c.volunteersCount || '1,000+')}</div>
           <div style="font-size: 11px; color: var(--text-muted);"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(c.districtsCount || '50+')} districts</div>
         </td>
+        <td>${getApprovalBadgeHtml(c, 'campaigns')}</td>
         <td style="text-align: right;">
           <div class="action-btn-group" style="justify-content: flex-end;">
+            ${getApprovalActionButtons(c, 'campaigns')}
             <button type="button" class="action-icon-btn" onclick="openEditCampaignModal('${c.id}')" title="Edit Campaign">
               <i class="fa-solid fa-pen-to-square"></i>
             </button>
@@ -3428,6 +3877,11 @@ function openEditCampaignModal(id) {
 function handleSaveCampaign(e) {
   e.preventDefault();
   const id = document.getElementById("campaignItemKey").value;
+  const isSuper = isSuperAdmin();
+  const officer = getActiveOfficer();
+  const existingItem = id ? (adminData.campaigns && adminData.campaigns[id]) : null;
+  const approvalStatus = isSuper ? 'approved' : (existingItem ? (existingItem.approvalStatus || 'pending') : 'pending');
+
   const payload = {
     title: document.getElementById("campaignTitle").value.trim(),
     category: document.getElementById("campaignCategory").value.trim(),
@@ -3437,24 +3891,34 @@ function handleSaveCampaign(e) {
     volunteersCount: document.getElementById("campaignVolunteers").value.trim(),
     districtsCount: document.getElementById("campaignDistricts").value.trim(),
     imageUrl: document.getElementById("campaignImageUrl").value.trim(),
-    description: document.getElementById("campaignDescription").value.trim()
+    description: document.getElementById("campaignDescription").value.trim(),
+    approvalStatus: approvalStatus,
+    submittedBy: existingItem ? (existingItem.submittedBy || `${officer.name} (${getRoleDisplayName(officer.role)})`) : `${officer.name} (${getRoleDisplayName(officer.role)})`,
+    submittedAt: existingItem ? (existingItem.submittedAt || Date.now()) : Date.now(),
+    updatedAt: Date.now()
+  };
+
+  const onSuccess = () => {
+    if (isSuper) {
+      showToast("Campaign authorized and published live!", "success");
+    } else {
+      showToast("Campaign submitted. Awaiting SuperAdmin approval before going live.", "info");
+    }
+    closeAdminModal("modalCampaign");
+    refreshAllViewsAfterApproval();
   };
 
   if (db) {
     const targetRef = id ? db.ref('campaigns/' + id) : db.ref('campaigns').push();
     targetRef.set(payload)
-      .then(() => {
-        showToast("Campaign updated in Firebase!", "success");
-        closeAdminModal("modalCampaign");
-      })
+      .then(onSuccess)
       .catch(err => showToast("Error: " + err.message, "error"));
   } else {
     const key = id || ("camp_" + Date.now());
+    if (!adminData.campaigns) adminData.campaigns = {};
     adminData.campaigns[key] = payload;
     saveLocalStore();
-    renderCampaignsTable();
-    showToast("Campaign updated!", "success");
-    closeAdminModal("modalCampaign");
+    onSuccess();
   }
 }
 
@@ -3462,13 +3926,16 @@ function deleteCampaign(id) {
   if (!confirm("Are you sure you want to delete this campaign?")) return;
   if (db) {
     db.ref('campaigns/' + id).remove()
-      .then(() => showToast("Campaign deleted.", "info"))
+      .then(() => {
+        showToast("Campaign deleted.", "info");
+        refreshAllViewsAfterApproval();
+      })
       .catch(err => showToast("Error: " + err.message, "error"));
   } else {
     delete adminData.campaigns[id];
     saveLocalStore();
-    renderCampaignsTable();
     showToast("Campaign deleted.", "info");
+    refreshAllViewsAfterApproval();
   }
 }
 
@@ -3487,17 +3954,31 @@ function renderGalleryGrid() {
     return;
   }
 
+  const isSuper = isSuperAdmin();
+
   container.innerHTML = list.map(item => `
     <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; box-shadow: var(--shadow-sm); display: flex; flex-direction: column;">
-      <div style="width: 100%; aspect-ratio: 16/9; overflow: hidden; background: var(--dark-navy);">
+      <div style="width: 100%; aspect-ratio: 16/9; overflow: hidden; background: var(--dark-navy); position: relative;">
         <img src="${item.imageUrl}" alt="Photo" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='logo.png'">
+        <div style="position: absolute; top: 8px; right: 8px;">
+          ${getApprovalBadgeHtml(item, 'gallery')}
+        </div>
       </div>
       <div style="padding: 14px; flex: 1; display: flex; flex-direction: column;">
         <span class="badge-status badge-info" style="align-self: flex-start; margin-bottom: 8px;">${escapeHtml(item.category || 'Historical')}</span>
-        <p style="font-size: 12.5px; font-weight: 600; color: var(--text-dark); margin-bottom: 12px; flex: 1;">${escapeHtml(item.caption || '')}</p>
-        <button type="button" class="btn-admin btn-admin-danger" style="width: 100%; justify-content: center; font-size: 12px; padding: 6px;" onclick="deleteGalleryItem('${item.id}')">
-          <i class="fa-solid fa-trash"></i> Delete Photo
-        </button>
+        <p style="font-size: 12.5px; font-weight: 600; color: var(--text-dark); margin-bottom: 6px; flex: 1;">${escapeHtml(item.caption || '')}</p>
+        ${item.submittedBy ? `<small style="color: var(--text-muted); font-size: 11px; margin-bottom: 10px;"><i class="fa-solid fa-user-pen"></i> ${escapeHtml(item.submittedBy)}</small>` : ''}
+        
+        <div style="display: flex; gap: 8px; margin-top: auto;">
+          ${isSuper && item.approvalStatus === 'pending' ? `
+            <button type="button" class="btn-admin btn-admin-primary" style="flex: 1; justify-content: center; font-size: 11.5px; padding: 6px;" onclick="approvePost('gallery', '${item.id}')">
+              <i class="fa-solid fa-check"></i> Approve
+            </button>
+          ` : ''}
+          <button type="button" class="btn-admin btn-admin-danger" style="flex: 1; justify-content: center; font-size: 11.5px; padding: 6px;" onclick="deleteGalleryItem('${item.id}')">
+            <i class="fa-solid fa-trash"></i> Delete
+          </button>
+        </div>
       </div>
     </div>
   `).join('');
@@ -3511,26 +3992,40 @@ function openCreateGalleryModal() {
 
 function handleSaveGallery(e) {
   e.preventDefault();
+  const isSuper = isSuperAdmin();
+  const officer = getActiveOfficer();
+  const approvalStatus = isSuper ? 'approved' : 'pending';
+
   const payload = {
     imageUrl: document.getElementById("galleryImageUrl").value.trim(),
     caption: document.getElementById("galleryCaption").value.trim(),
-    category: document.getElementById("galleryCategory").value
+    category: document.getElementById("galleryCategory").value,
+    approvalStatus: approvalStatus,
+    submittedBy: `${officer.name} (${getRoleDisplayName(officer.role)})`,
+    submittedAt: Date.now(),
+    updatedAt: Date.now()
+  };
+
+  const onSuccess = () => {
+    if (isSuper) {
+      showToast("Photo authorized and added to public archives!", "success");
+    } else {
+      showToast("Photo submitted. Awaiting SuperAdmin approval before going live.", "info");
+    }
+    closeAdminModal("modalGallery");
+    refreshAllViewsAfterApproval();
   };
 
   if (db) {
     db.ref('gallery').push(payload)
-      .then(() => {
-        showToast("Photo added to archives!", "success");
-        closeAdminModal("modalGallery");
-      })
+      .then(onSuccess)
       .catch(err => showToast("Error: " + err.message, "error"));
   } else {
     const key = "gal_" + Date.now();
+    if (!adminData.gallery) adminData.gallery = {};
     adminData.gallery[key] = payload;
     saveLocalStore();
-    renderGalleryGrid();
-    showToast("Photo added to archives!", "success");
-    closeAdminModal("modalGallery");
+    onSuccess();
   }
 }
 
@@ -3819,3 +4314,10 @@ function escapeHtml(str) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+
+// Global Window Exports for Dynamic Inline Handlers
+window.approvePost = approvePost;
+window.rejectPost = rejectPost;
+window.bulkApproveAllPending = bulkApproveAllPending;
+window.renderApprovalsView = renderApprovalsView;
+

@@ -605,6 +605,12 @@ function animateStatsCounters() {
   });
 }
 
+function isContentApproved(item) {
+  if (!item) return false;
+  const s = item.approvalStatus ? String(item.approvalStatus).toLowerCase() : 'approved';
+  return s === 'approved';
+}
+
 // Load News
 let activeNewsList = [];
 function loadNews(limit = 6) {
@@ -612,14 +618,17 @@ function loadNews(limit = 6) {
   if (!container) return;
 
   if (db) {
-    db.ref('news').limitToLast(limit).on('value', (snapshot) => {
+    db.ref('news').limitToLast(limit * 2).on('value', (snapshot) => {
       const data = snapshot.val();
-      renderNews(data ? Object.values(data) : Object.values(ssdSampleData.news));
+      const rawList = data ? Object.values(data) : Object.values(ssdSampleData.news);
+      const approvedList = rawList.filter(isContentApproved).slice(-limit);
+      renderNews(approvedList);
     }, (err) => {
-      renderNews(Object.values(ssdSampleData.news));
+      renderNews(Object.values(ssdSampleData.news).filter(isContentApproved));
     });
   } else {
-    renderNews(Object.values(ssdSampleData.news));
+    const rawList = Object.values(ssdSampleData.news);
+    renderNews(rawList.filter(isContentApproved));
   }
 }
 
@@ -660,14 +669,16 @@ function loadEvents() {
   if (!container) return;
 
   if (db) {
-    db.ref('events').orderByChild('status').equalTo('upcoming').limitToLast(4).on('value', (snapshot) => {
+    db.ref('events').orderByChild('status').equalTo('upcoming').limitToLast(8).on('value', (snapshot) => {
       const data = snapshot.val();
-      renderEvents(data ? Object.values(data) : Object.values(ssdSampleData.events).filter(e => e.status === 'upcoming'));
+      const rawList = data ? Object.values(data) : Object.values(ssdSampleData.events);
+      const approvedList = rawList.filter(e => e.status === 'upcoming' && isContentApproved(e)).slice(-4);
+      renderEvents(approvedList);
     }, (err) => {
-      renderEvents(Object.values(ssdSampleData.events).filter(e => e.status === 'upcoming'));
+      renderEvents(Object.values(ssdSampleData.events).filter(e => e.status === 'upcoming' && isContentApproved(e)));
     });
   } else {
-    renderEvents(Object.values(ssdSampleData.events).filter(e => e.status === 'upcoming'));
+    renderEvents(Object.values(ssdSampleData.events).filter(e => e.status === 'upcoming' && isContentApproved(e)));
   }
 }
 
@@ -718,12 +729,13 @@ function loadGallery() {
   if (db) {
     db.ref('gallery').on('value', (snapshot) => {
       const data = snapshot.val();
-      renderGallery(data ? Object.values(data) : Object.values(ssdSampleData.gallery));
+      const rawList = data ? Object.values(data) : Object.values(ssdSampleData.gallery);
+      renderGallery(rawList.filter(isContentApproved));
     }, (err) => {
-      renderGallery(Object.values(ssdSampleData.gallery));
+      renderGallery(Object.values(ssdSampleData.gallery).filter(isContentApproved));
     });
   } else {
-    renderGallery(Object.values(ssdSampleData.gallery));
+    renderGallery(Object.values(ssdSampleData.gallery).filter(isContentApproved));
   }
 }
 
@@ -1385,12 +1397,13 @@ function loadCampaigns() {
   if (db) {
     db.ref('campaigns').on('value', (snapshot) => {
       const data = snapshot.val();
-      renderCampaigns(data ? Object.values(data) : Object.values(ssdSampleData.campaigns));
+      const rawList = data ? Object.values(data) : Object.values(ssdSampleData.campaigns);
+      renderCampaigns(rawList.filter(isContentApproved));
     }, (err) => {
-      renderCampaigns(Object.values(ssdSampleData.campaigns));
+      renderCampaigns(Object.values(ssdSampleData.campaigns).filter(isContentApproved));
     });
   } else {
-    renderCampaigns(Object.values(ssdSampleData.campaigns));
+    renderCampaigns(Object.values(ssdSampleData.campaigns).filter(isContentApproved));
   }
 }
 
@@ -1447,14 +1460,15 @@ function loadHomeGallery() {
   if (db) {
     db.ref('gallery').on('value', (snapshot) => {
       const data = snapshot.val();
-      allHomeGalleryItems = data ? Object.values(data) : Object.values(ssdSampleData.gallery);
+      const rawList = data ? Object.values(data) : Object.values(ssdSampleData.gallery);
+      allHomeGalleryItems = rawList.filter(isContentApproved);
       renderHomeGallery();
     }, (err) => {
-      allHomeGalleryItems = Object.values(ssdSampleData.gallery);
+      allHomeGalleryItems = Object.values(ssdSampleData.gallery).filter(isContentApproved);
       renderHomeGallery();
     });
   } else {
-    allHomeGalleryItems = Object.values(ssdSampleData.gallery);
+    allHomeGalleryItems = Object.values(ssdSampleData.gallery).filter(isContentApproved);
     renderHomeGallery();
   }
 }
@@ -1767,11 +1781,11 @@ function loadGoverningBody() {
     db.ref('leadership').on('value', snapshot => {
       const val = snapshot.val();
       if (val) {
-        let list = Object.entries(val).map(([k, v]) => ({ id: k, ...v }));
+        let list = Object.entries(val).map(([k, v]) => ({ id: k, ...v })).filter(isContentApproved);
         list.sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
         renderGoverningCards(list);
       } else {
-        renderGoverningCards(Object.values(ssdSampleData.governingBody));
+        renderGoverningCards(Object.values(ssdSampleData.governingBody).filter(isContentApproved));
       }
     });
   } else {
@@ -1782,7 +1796,7 @@ function loadGoverningBody() {
         if (parsed) {
           renderStatePills(parsed.state_chapters || ssdSampleData.stateChapters);
           if (parsed.leadership) {
-            let list = Object.entries(parsed.leadership).map(([k, v]) => ({ id: k, ...v }));
+            let list = Object.entries(parsed.leadership).map(([k, v]) => ({ id: k, ...v })).filter(isContentApproved);
             list.sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
             renderGoverningCards(list);
             return;
@@ -1791,7 +1805,7 @@ function loadGoverningBody() {
       } catch (e) {}
     }
     renderStatePills(ssdSampleData.stateChapters);
-    renderGoverningCards(Object.values(ssdSampleData.governingBody));
+    renderGoverningCards(Object.values(ssdSampleData.governingBody).filter(isContentApproved));
   }
 }
 

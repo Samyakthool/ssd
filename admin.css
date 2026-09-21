@@ -745,6 +745,26 @@ body {
   color: #FFFFFF;
 }
 
+.action-icon-btn.approve {
+  color: var(--success);
+  border-color: rgba(30, 126, 52, 0.3);
+}
+.action-icon-btn.approve:hover {
+  background: var(--success);
+  border-color: var(--success);
+  color: #FFFFFF;
+}
+
+.action-icon-btn.reject {
+  color: var(--danger);
+  border-color: rgba(220, 53, 69, 0.3);
+}
+.action-icon-btn.reject:hover {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #FFFFFF;
+}
+
 /* ==========================================================================
    FORM MODALS & DIALOGUES
    ========================================================================== */

@@ -96,6 +96,14 @@
           </div>
         </a>
 
+        <a class="sidebar-item" onclick="switchView('approvals')" id="nav-approvals">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-stamp" style="color: var(--primary-orange);"></i>
+            <span>Approvals Queue</span>
+          </div>
+          <span class="sidebar-badge badge-pending" id="badgeApprovalsCount" style="display: none;">0</span>
+        </a>
+
         <div class="menu-category-label">Movement & Governance</div>
         <a class="sidebar-item" onclick="switchView('members')" id="nav-members">
           <div class="sidebar-item-left">
@@ -229,6 +237,10 @@
         </div>
 
         <div class="topbar-right">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="switchView('approvals')" id="topbarApprovalsBtn" title="Pending SuperAdmin Approvals" style="display: none; align-items: center; gap: 6px; padding: 6px 14px; font-size: 12px; font-weight: 700; color: #D95D00; background: rgba(255, 107, 0, 0.08); border-color: rgba(255, 107, 0, 0.3);">
+            <i class="fa-solid fa-stamp"></i> <span id="topbarApprovalsCount">0</span> Pending Approvals
+          </button>
+
           <div class="db-status-pill" id="dbStatusPill">
             <div class="db-status-indicator"></div>
             <span id="dbStatusText">Checking Firebase...</span>
@@ -285,6 +297,43 @@
             </div>
           </div>
 
+          <!-- SuperAdmin Approvals Alert Banner & Quick Queue -->
+          <div class="card-panel" id="overviewApprovalsPanel" style="border-left: 4px solid var(--primary-orange); margin-bottom: 24px; display: none;">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-stamp" style="color: var(--primary-orange);"></i>
+                <div>
+                  <h3 style="font-size: 16px;">SuperAdmin Publication Approvals Queue</h3>
+                  <p style="font-size: 12.5px; color: var(--text-muted); margin: 2px 0 0;">Subordinate admin posts, news, drills, campaigns, and leadership entries awaiting Supreme Command authorization.</p>
+                </div>
+              </div>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn-admin btn-admin-primary" onclick="bulkApproveAllPending()">
+                  <i class="fa-solid fa-check-double"></i> 1-Click Approve All
+                </button>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="switchView('approvals')">
+                  View Approvals Desk
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Type & Category</th>
+                    <th>Item Title / Officer</th>
+                    <th>Submitted By</th>
+                    <th>Date</th>
+                    <th style="text-align: right;">Decision</th>
+                  </tr>
+                </thead>
+                <tbody id="overviewApprovalsTableBody">
+                  <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No pending submissions. All items authorized.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px; margin-bottom: 28px;">
             <!-- Recent Enlistments Quick Table -->
             <div class="card-panel" style="margin-bottom: 0;">
@@ -337,6 +386,54 @@
                   <i class="fa-solid fa-download"></i> Backup Entire Database (JSON)
                 </button>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 1.5: SUPERADMIN APPROVALS DESK
+             ========================================== -->
+        <section id="viewApprovals" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-stamp" style="color: var(--primary-orange);"></i>
+                <div>
+                  <h3>Supreme Command Authorization & Approvals Desk (/approvals)</h3>
+                  <p style="font-size: 12.5px; color: var(--text-muted); margin: 2px 0 0;">All admin posts, news dispatches, events, campaigns, gallery photos, and leadership appointees require SuperAdmin authorization before going live on the public portal.</p>
+                </div>
+              </div>
+              <div class="card-panel-actions">
+                <select id="approvalTypeFilter" class="filter-select" onchange="renderApprovalsView()">
+                  <option value="all">All Submission Types</option>
+                  <option value="news">Gazette Dispatches (/news)</option>
+                  <option value="events">Events & Drills (/events)</option>
+                  <option value="campaigns">Ongoing Campaigns (/campaigns)</option>
+                  <option value="gallery">Photo Archives (/gallery)</option>
+                  <option value="leadership">Governing Body (/leadership)</option>
+                </select>
+                <button type="button" class="btn-admin btn-admin-primary" onclick="bulkApproveAllPending()">
+                  <i class="fa-solid fa-check-double"></i> 1-Click Approve All Pending
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Content Type</th>
+                    <th>Title / Officer Name</th>
+                    <th>Submitted By Admin</th>
+                    <th>Date Submitted</th>
+                    <th>Summary / Details</th>
+                    <th>Approval Status</th>
+                    <th style="text-align: right;">SuperAdmin Action</th>
+                  </tr>
+                </thead>
+                <tbody id="approvalsTableBody">
+                  <tr><td colspan="7" style="text-align: center; padding: 30px;">Loading submissions for authorization...</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </section>
@@ -490,7 +587,7 @@
                     <th>Tier & State</th>
                     <th>Designation & Rank</th>
                     <th>Council Wing</th>
-                    <th>Credentials</th>
+                    <th>Approval Status</th>
                     <th style="text-align: right;">Actions</th>
                   </tr>
                 </thead>
@@ -549,11 +646,12 @@
                     <th>Title</th>
                     <th>Category</th>
                     <th>Date</th>
+                    <th>Approval Status</th>
                     <th style="text-align: right;">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="newsTableBody">
-                  <tr><td colspan="5" style="text-align: center; padding: 30px;">Loading news from Firebase...</td></tr>
+                  <tr><td colspan="6" style="text-align: center; padding: 30px;">Loading news from Firebase...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -581,12 +679,13 @@
                     <th>Event Date</th>
                     <th>Title & Description</th>
                     <th>Location / Ground</th>
-                    <th>Status</th>
+                    <th>Event Status</th>
+                    <th>Approval Status</th>
                     <th style="text-align: right;">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="eventsTableBody">
-                  <tr><td colspan="5" style="text-align: center; padding: 30px;">Loading events from Firebase...</td></tr>
+                  <tr><td colspan="6" style="text-align: center; padding: 30px;">Loading events from Firebase...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -613,9 +712,9 @@
                   <tr>
                     <th>Campaign Title</th>
                     <th>Category</th>
-                    <th>Target Goal</th>
-                    <th>Funds Raised</th>
-                    <th>Volunteers / Districts</th>
+                    <th>Target & Raised</th>
+                    <th>Volunteers</th>
+                    <th>Approval Status</th>
                     <th style="text-align: right;">Actions</th>
                   </tr>
                 </thead>
