@@ -1141,37 +1141,73 @@ function loadGoverningBody() {
   const councilContainer = document.getElementById("governingContainer");
   const advisoryContainer = document.getElementById("advisoryContainer");
 
-  if (councilContainer) {
-    const leaders = Object.values(ssdSampleData.governingBody);
-    councilContainer.innerHTML = leaders.map(lead => `
-      <div class="governing-card">
-        <div class="governing-header">
-          <img src="${lead.photoUrl}" alt="${lead.name}" class="governing-photo" onerror="this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80'">
-          <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> ${lead.rankBadge}</span>
-        </div>
-        <div class="governing-body-content">
-          <h3 class="governing-name">${lead.name}</h3>
-          <div class="governing-designation">${lead.designation}</div>
-          <p class="governing-bio">${lead.bio}</p>
-          <div class="governing-credentials">
-            <i class="fa-solid fa-certificate" style="color: var(--primary-orange);"></i>
-            <span>${lead.credentials}</span>
+  const renderData = (leadersList) => {
+    if (!leadersList || leadersList.length === 0) {
+      leadersList = Object.values(ssdSampleData.governingBody);
+    }
+
+    if (councilContainer) {
+      const councilMembers = leadersList.filter(l => l.category !== "Advisory Board");
+      const listToUse = councilMembers.length > 0 ? councilMembers : leadersList;
+      councilContainer.innerHTML = listToUse.map(lead => `
+        <div class="governing-card">
+          <div class="governing-header">
+            <img src="${lead.photoUrl}" alt="${lead.name}" class="governing-photo" onerror="this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80'">
+            <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> ${lead.rankBadge || 'National Command'}</span>
+          </div>
+          <div class="governing-body-content">
+            <h3 class="governing-name">${lead.name}</h3>
+            <div class="governing-designation">${lead.designation}</div>
+            <p class="governing-bio">${lead.bio}</p>
+            <div class="governing-credentials">
+              <i class="fa-solid fa-certificate" style="color: var(--primary-orange);"></i>
+              <span>${lead.credentials}</span>
+            </div>
           </div>
         </div>
-      </div>
-    `).join('');
-  }
+      `).join('');
+    }
 
-  if (advisoryContainer && ssdSampleData.advisoryBoard) {
-    advisoryContainer.innerHTML = ssdSampleData.advisoryBoard.map(adv => `
-      <div class="advisory-member">
-        <img src="${adv.photoUrl}" alt="${adv.name}" class="advisory-avatar" onerror="this.src='https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80'">
-        <div>
-          <div class="advisory-name">${adv.name}</div>
-          <div class="advisory-role">${adv.role}</div>
+    if (advisoryContainer) {
+      const advisoryMembers = leadersList.filter(l => l.category === "Advisory Board");
+      const advToUse = advisoryMembers.length > 0 ? advisoryMembers : (ssdSampleData.advisoryBoard || []);
+      advisoryContainer.innerHTML = advToUse.map(adv => `
+        <div class="advisory-member">
+          <img src="${adv.photoUrl}" alt="${adv.name}" class="advisory-avatar" onerror="this.src='https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80'">
+          <div>
+            <div class="advisory-name">${adv.name}</div>
+            <div class="advisory-role">${adv.credentials || adv.role || 'Senior Advisory Member'}</div>
+          </div>
         </div>
-      </div>
-    `).join('');
+      `).join('');
+    }
+  };
+
+  if (db) {
+    db.ref('leadership').on('value', snapshot => {
+      const val = snapshot.val();
+      if (val) {
+        let list = Object.entries(val).map(([k, v]) => ({ id: k, ...v }));
+        list.sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
+        renderData(list);
+      } else {
+        renderData(Object.values(ssdSampleData.governingBody));
+      }
+    });
+  } else {
+    const localStore = localStorage.getItem("ssd_admin_local_data");
+    if (localStore) {
+      try {
+        const parsed = JSON.parse(localStore);
+        if (parsed && parsed.leadership) {
+          let list = Object.entries(parsed.leadership).map(([k, v]) => ({ id: k, ...v }));
+          list.sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
+          renderData(list);
+          return;
+        }
+      } catch (e) {}
+    }
+    renderData(Object.values(ssdSampleData.governingBody));
   }
 }
 

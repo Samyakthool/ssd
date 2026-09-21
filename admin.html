@@ -36,19 +36,26 @@
       </div>
       <div class="auth-body">
         <div class="auth-hint">
-          <i class="fa-solid fa-key"></i>
-          <div>Default Command Passcode: <code>SSD1927</code></div>
+          <i class="fa-solid fa-shield-halved"></i>
+          <div>Multi-User Officer Login & Master Passcode: <code>SSD1927</code></div>
         </div>
         <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
-          <div class="form-group-modal">
-            <label for="adminPasscode">Enter Command Passcode / PIN</label>
-            <input type="password" id="adminPasscode" placeholder="••••••••" required autocomplete="current-password" autofocus>
+          <div class="form-group-modal" style="margin-bottom: 14px;">
+            <label for="adminUsername">Officer Username / Email / Passcode</label>
+            <input type="text" id="adminUsername" placeholder="e.g. admin@ssd.org or SSD1927" required autocomplete="username" autofocus>
+          </div>
+          <div class="form-group-modal" style="margin-bottom: 18px;" id="passcodeGroup">
+            <label for="adminPasscode">Officer Passcode / PIN</label>
+            <input type="password" id="adminPasscode" placeholder="••••••••" autocomplete="current-password">
           </div>
           <button type="submit" id="loginBtn" class="btn-admin btn-admin-primary" style="width: 100%; justify-content: center; padding: 12px;">
-            <i class="fa-solid fa-shield-halved"></i> Authenticate & Enter Portal
+            <i class="fa-solid fa-key"></i> Authenticate & Enter Portal
           </button>
         </form>
-        <div style="text-align: center; margin-top: 18px;">
+        <div style="margin-top: 14px; text-align: center; font-size: 11.5px; color: var(--text-muted);">
+          <span>Default Super Admin: <code>admin@ssd.org</code> / <code>SSD1927</code></span>
+        </div>
+        <div style="text-align: center; margin-top: 16px;">
           <a href="index.html" style="font-size: 12.5px; color: var(--text-muted); text-decoration: none;">
             <i class="fa-solid fa-arrow-left"></i> Return to Public Portal
           </a>
@@ -81,7 +88,7 @@
           </div>
         </a>
 
-        <div class="menu-category-label">Movement Management</div>
+        <div class="menu-category-label">Movement & Governance</div>
         <a class="sidebar-item" onclick="switchView('members')" id="nav-members">
           <div class="sidebar-item-left">
             <i class="fa-solid fa-user-shield"></i>
@@ -96,6 +103,14 @@
             <span>Centenary Fund</span>
           </div>
           <span class="sidebar-badge" id="badgeDonationsCount">0</span>
+        </a>
+
+        <a class="sidebar-item" onclick="switchView('leadership')" id="nav-leadership">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-users-gear"></i>
+            <span>Governing Body & Council</span>
+          </div>
+          <span class="sidebar-badge" id="badgeLeadershipCount">0</span>
         </a>
 
         <div class="menu-category-label">Public Communications</div>
@@ -131,7 +146,15 @@
           <span class="sidebar-badge" id="badgeGalleryCount">0</span>
         </a>
 
-        <div class="menu-category-label">Support & System</div>
+        <div class="menu-category-label">System & Access Control</div>
+        <a class="sidebar-item" onclick="switchView('admins')" id="nav-admins">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-user-lock"></i>
+            <span>Authorized Admin Users</span>
+          </div>
+          <span class="sidebar-badge" id="badgeAdminsCount">0</span>
+        </a>
+
         <a class="sidebar-item" onclick="switchView('contacts')" id="nav-contacts">
           <div class="sidebar-item-left">
             <i class="fa-solid fa-inbox"></i>
@@ -159,8 +182,8 @@
         <div class="admin-profile-pill">
           <div class="admin-avatar-icon"><i class="fa-solid fa-shield"></i></div>
           <div class="admin-user-info">
-            <div class="name">Command Desk</div>
-            <div class="role">Supreme Council Level</div>
+            <div class="name" id="sidebarUserName">Command Desk</div>
+            <div class="role" id="sidebarUserRole">Supreme Council Level</div>
           </div>
         </div>
         <button type="button" class="btn-logout" onclick="handleAdminLogout()" title="Lock & Logout">
@@ -391,6 +414,53 @@
         </section>
 
         <!-- ==========================================
+             VIEW: GOVERNING BODY & LEADERSHIP COUNCIL
+             ========================================== -->
+        <section id="viewLeadership" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-users-gear" style="color: var(--primary-orange);"></i>
+                <h3>Governing Body & National Leadership Council (/leadership)</h3>
+              </div>
+              <div class="card-panel-actions">
+                <select id="leadershipFilter" class="filter-select" onchange="filterLeadershipTable()">
+                  <option value="all">All Wings & Boards</option>
+                  <option value="Supreme Council">Supreme Council</option>
+                  <option value="Executive Council">Executive Council</option>
+                  <option value="Cadet Directorate">Cadet Directorate</option>
+                  <option value="Mahila Dal">Mahila Dal</option>
+                  <option value="Legal Cell">Legal Cell</option>
+                  <option value="Finance & Audit">Finance & Audit</option>
+                  <option value="Advisory Board">Advisory Board</option>
+                </select>
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openAddLeadershipModal()">
+                  <i class="fa-solid fa-user-plus"></i> Appoint Council Officer
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">Photo</th>
+                    <th>Officer Name</th>
+                    <th>Designation & Rank</th>
+                    <th>Council Wing</th>
+                    <th>Credentials</th>
+                    <th>Bio Summary</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="leadershipTableBody">
+                  <tr><td colspan="7" style="text-align: center; padding: 30px;">Loading governing body members from Firebase...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
              VIEW 4: GAZETTE & DISPATCHES
              ========================================== -->
         <section id="viewNews" class="view-panel">
@@ -537,6 +607,41 @@
                 </thead>
                 <tbody id="contactsTableBody">
                   <tr><td colspan="6" style="text-align: center; padding: 30px;">Loading messages from Firebase...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW: AUTHORIZED ADMIN USERS & ROLES
+             ========================================== -->
+        <section id="viewAdmins" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-user-lock" style="color: var(--primary-orange);"></i>
+                <h3>Authorized Command Officers & Role Access (/admin_users)</h3>
+              </div>
+              <button type="button" class="btn-admin btn-admin-primary" onclick="openAddAdminUserModal()">
+                <i class="fa-solid fa-user-shield"></i> Authorize New Officer
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Officer Name</th>
+                    <th>Username / Email</th>
+                    <th>Assigned Role & Level</th>
+                    <th>Department / Unit</th>
+                    <th>Passcode</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="adminsTableBody">
+                  <tr><td colspan="7" style="text-align: center; padding: 30px;">Loading admin officers from Firebase...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -980,6 +1085,127 @@
         <div class="admin-modal-footer">
           <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalAddMember')">Cancel</button>
           <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-user-check"></i> Register Sainik</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- GOVERNING BODY APPOINTMENT / EDIT MODAL -->
+  <div id="modalLeadership" class="admin-modal">
+    <div class="admin-modal-card">
+      <div class="admin-modal-header">
+        <h3 id="modalLeadershipHeading">Appoint Council Member</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalLeadership')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formLeadership" onsubmit="handleSaveLeadership(event)">
+        <div class="admin-modal-body">
+          <input type="hidden" id="leadItemKey">
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="leadName">Full Name</label>
+              <input type="text" id="leadName" required placeholder="e.g. Dr. Siddharth M. Meshram">
+            </div>
+            <div class="form-group-modal">
+              <label for="leadDesignation">Designation / Title (English & Hindi)</label>
+              <input type="text" id="leadDesignation" required placeholder="e.g. National President (राष्ट्रीय अध्यक्ष)">
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="leadCategory">Council Wing / Category</label>
+              <select id="leadCategory" required>
+                <option value="Supreme Council">Supreme Council</option>
+                <option value="Executive Council">Executive Council</option>
+                <option value="Cadet Directorate">Cadet Directorate</option>
+                <option value="Mahila Dal">Mahila Dal</option>
+                <option value="Legal Cell">Legal Cell</option>
+                <option value="Finance & Audit">Finance & Audit</option>
+                <option value="Advisory Board">Advisory Board</option>
+              </select>
+            </div>
+            <div class="form-group-modal">
+              <label for="leadRankBadge">Rank Badge Label</label>
+              <input type="text" id="leadRankBadge" required placeholder="e.g. National Command">
+            </div>
+          </div>
+          <div class="form-group-modal">
+            <label for="leadPhotoUrl">Officer Photograph URL</label>
+            <input type="url" id="leadPhotoUrl" required placeholder="https://..." oninput="updateImagePreview('leadPhotoPreview', this.value)">
+            <img id="leadPhotoPreview" src="" alt="Officer Photo Preview" style="display: none; width: 60px; height: 60px; object-fit: cover; border-radius: 50%; margin-top: 8px; border: 2px solid var(--primary-orange);">
+          </div>
+          <div class="form-group-modal">
+            <label for="leadCredentials">Official Credentials & Location</label>
+            <input type="text" id="leadCredentials" required placeholder="e.g. Ph.D. Constitutional Law | Nagpur HQ">
+          </div>
+          <div class="form-group-modal">
+            <label for="leadBio">Biographical Summary & Key Contributions</label>
+            <textarea id="leadBio" rows="3" required placeholder="Outline tenure, leadership achievements, and movement contributions..."></textarea>
+          </div>
+          <div class="form-group-modal">
+            <label for="leadOrder">Display Order Priority (1 = Top)</label>
+            <input type="number" id="leadOrder" value="1" min="1" max="100">
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalLeadership')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-floppy-disk"></i> Save Council Member</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADMIN USER AUTHORIZATION MODAL -->
+  <div id="modalAdminUser" class="admin-modal">
+    <div class="admin-modal-card">
+      <div class="admin-modal-header">
+        <h3 id="modalAdminUserHeading">Authorize New Command Officer</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalAdminUser')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formAdminUser" onsubmit="handleSaveAdminUser(event)">
+        <div class="admin-modal-body">
+          <input type="hidden" id="adminUserKey">
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="newAdminName">Officer Full Name</label>
+              <input type="text" id="newAdminName" required placeholder="e.g. Commander Ravindra Gautam">
+            </div>
+            <div class="form-group-modal">
+              <label for="newAdminEmail">Username / Official Email</label>
+              <input type="text" id="newAdminEmail" required placeholder="e.g. secretary@ssd.org">
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="newAdminPasscode">Access Passcode / Password</label>
+              <input type="text" id="newAdminPasscode" required placeholder="e.g. EXEC1927" style="font-family: monospace;">
+            </div>
+            <div class="form-group-modal">
+              <label for="newAdminRole">Assigned Access Role</label>
+              <select id="newAdminRole" required>
+                <option value="super_admin">Supreme Commander (Full Super Admin Access)</option>
+                <option value="executive">National Executive (Members, Drills, Gazette, Missions)</option>
+                <option value="treasurer">Treasury Officer (Centenary Fund, Ledger, 80G Receipts)</option>
+                <option value="media">Media & PR Officer (Gazette, Drills, Archives)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="newAdminDept">Department / Council Unit</label>
+              <input type="text" id="newAdminDept" placeholder="e.g. Central Cadet Directorate" required>
+            </div>
+            <div class="form-group-modal">
+              <label for="newAdminStatus">Account Status</label>
+              <select id="newAdminStatus" required>
+                <option value="Active">Active (Permit Access)</option>
+                <option value="Suspended">Suspended (Block Access)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalAdminUser')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-user-check"></i> Save Officer Authorization</button>
         </div>
       </form>
     </div>

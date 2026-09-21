@@ -194,6 +194,136 @@ const ssdInitialSeed = {
       status: "Unread",
       timestamp: Date.now() - 86400000
     }
+  },
+  leadership: {
+    "lead_1": {
+      name: "Dr. Siddharth M. Meshram",
+      designation: "National President (राष्ट्रीय अध्यक्ष)",
+      category: "Supreme Council",
+      rankBadge: "National Command",
+      photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+      bio: "Eminent Constitutional scholar and veteran Ambedkarite leader with 40+ years in social transformation; overseeing national policy and the Centenary 2027 vision.",
+      credentials: "Ph.D. Constitutional Law | Nagpur HQ",
+      order: 1
+    },
+    "lead_2": {
+      name: "Commander Ravindra K. Gautam",
+      designation: "National General Secretary (राष्ट्रीय महासचिव)",
+      category: "Executive Council",
+      rankBadge: "Executive Council",
+      photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+      bio: "Former NCC Gold Medalist and grassroots organizer; coordinates operations across 28 State Chapters and directs the national cadet syllabus.",
+      credentials: "M.A. Public Admin | New Delhi Secretariat",
+      order: 2
+    },
+    "lead_3": {
+      name: "Col. (Retd.) Vijay Anand Thorat",
+      designation: "Chief Cadet Commander (मुख्य सैनिक दलनायक)",
+      category: "Cadet Directorate",
+      rankBadge: "Drill & Defense",
+      photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80",
+      bio: "Indian Armed Forces Veteran; leads cadet drill curriculum, ceremonial parade standards, emergency disaster rescue wings, and physical fitness camps.",
+      credentials: "Ex-Indian Army | Central Cadet Directorate",
+      order: 3
+    },
+    "lead_4": {
+      name: "Smt. Anuradha Tai Kamble",
+      designation: "National Convener, Mahila Dal (राष्ट्रीय संयोजिका)",
+      category: "Mahila Dal",
+      rankBadge: "Mahila Front",
+      photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+      bio: "Social activist and educator; leading women's frontline self-defense wings, legal crisis support networks, and Savitribai Phule girls' educational scholarships.",
+      credentials: "M.S.W., LL.B. | Mumbai State HQ",
+      order: 4
+    },
+    "lead_5": {
+      name: "Senior Adv. B. P. Sonwane",
+      designation: "Chairman, National Legal Cell (अध्यक्ष, विधिक प्रकोष्ठ)",
+      category: "Legal Cell",
+      rankBadge: "Supreme Court Panel",
+      photoUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80",
+      bio: "Senior Advocate with extensive experience in the Supreme Court of India; spearheading pro-bono defense, SC/ST Act enforcement, and constitutional litigation.",
+      credentials: "LL.M. Constitutional Law | Supreme Court of India",
+      order: 5
+    },
+    "lead_6": {
+      name: "Prof. Mahendra V. Khobragade",
+      designation: "National Treasurer & Comptroller (राष्ट्रीय कोषाध्यक्ष)",
+      category: "Finance & Audit",
+      rankBadge: "Finance & Audit",
+      photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+      bio: "Chartered Accountant and academician; ensures 100% organizational transparency, public audit compliance, 80G tax exemptions, and Centenary 2027 trust governance.",
+      credentials: "FCA, M.Com | Central Audit Bureau",
+      order: 6
+    },
+    "lead_7": {
+      name: "Prof. Yashwantrao More",
+      designation: "Senior Advisory Member",
+      category: "Advisory Board",
+      rankBadge: "Advisory Council",
+      photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80",
+      bio: "Senior Ambedkarite Historian, author of multiple research treatises on Dr. Ambedkar's social movements and Satyagrahas.",
+      credentials: "Author & Senior Historian | Pune",
+      order: 7
+    },
+    "lead_8": {
+      name: "Adv. Rekha Gaikwad",
+      designation: "Senior Advisory Member",
+      category: "Advisory Board",
+      rankBadge: "Advisory Council",
+      photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=150&q=80",
+      bio: "Human Rights Defender and Constitutional scholar actively engaged in social justice and women empowerment initiatives.",
+      credentials: "Advocate & Scholar | Mumbai",
+      order: 8
+    },
+    "lead_9": {
+      name: "Commander Suresh Jadhav",
+      designation: "Senior Advisory Member",
+      category: "Advisory Board",
+      rankBadge: "Advisory Council",
+      photoUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=150&q=80",
+      bio: "Veteran organizer of the historic 1956 Deekshabhoomi parade, bringing 70+ years of institutional wisdom to Central Command.",
+      credentials: "Veteran Sainik Leader | Nagpur",
+      order: 9
+    }
+  },
+  admin_users: {
+    "usr_1": {
+      name: "Commander-in-Chief (Super Admin)",
+      email: "admin@ssd.org",
+      passcode: "SSD1927",
+      role: "super_admin",
+      dept: "Supreme Command Council",
+      status: "Active",
+      timestamp: Date.now()
+    },
+    "usr_2": {
+      name: "Commander Ravindra Gautam",
+      email: "secretary@ssd.org",
+      passcode: "EXEC1927",
+      role: "executive",
+      dept: "National Executive Secretariat",
+      status: "Active",
+      timestamp: Date.now()
+    },
+    "usr_3": {
+      name: "Prof. Mahendra Khobragade",
+      email: "finance@ssd.org",
+      passcode: "TREASURY1927",
+      role: "treasurer",
+      dept: "National Treasury & Audit Bureau",
+      status: "Active",
+      timestamp: Date.now()
+    },
+    "usr_4": {
+      name: "Capt. Anand Meshram",
+      email: "media@ssd.org",
+      passcode: "MEDIA1927",
+      role: "media",
+      dept: "Gazette & Public Relations Cell",
+      status: "Active",
+      timestamp: Date.now()
+    }
   }
 };
 
@@ -249,12 +379,29 @@ function setDbStatus(isLive, text) {
 
 function checkAuthSession() {
   const isAuth = sessionStorage.getItem("ssd_admin_auth");
+  const userJson = sessionStorage.getItem("ssd_admin_user");
   const authGate = document.getElementById("authGate");
   const adminApp = document.getElementById("adminApp");
 
   if (isAuth === "true") {
     if (authGate) authGate.style.display = "none";
     if (adminApp) adminApp.style.display = "flex";
+
+    let officer = null;
+    try {
+      if (userJson) officer = JSON.parse(userJson);
+    } catch (e) {}
+
+    if (!officer) {
+      officer = { name: "Commander-in-Chief", role: "super_admin", dept: "Supreme Command" };
+    }
+
+    const nameEl = document.getElementById("sidebarUserName");
+    const roleEl = document.getElementById("sidebarUserRole");
+    if (nameEl) nameEl.textContent = officer.name || "Command Officer";
+    if (roleEl) roleEl.textContent = getRoleDisplayName(officer.role);
+
+    applyRolePermissions(officer.role);
     loadAllRealtimeData();
   } else {
     if (authGate) authGate.style.display = "flex";
@@ -262,26 +409,90 @@ function checkAuthSession() {
   }
 }
 
+function getRoleDisplayName(role) {
+  switch (role) {
+    case "super_admin": return "Supreme Council Level (Full Access)";
+    case "executive": return "National Executive Level";
+    case "treasurer": return "Treasury & Finance Level";
+    case "media": return "Gazette & Media Cell";
+    default: return "Command Officer";
+  }
+}
+
+function applyRolePermissions(role) {
+  const permissions = {
+    super_admin: ["overview", "members", "donations", "leadership", "news", "events", "campaigns", "gallery", "admins", "contacts", "stats", "settings"],
+    executive: ["overview", "members", "leadership", "news", "events", "campaigns", "gallery", "contacts"],
+    treasurer: ["overview", "donations", "campaigns"],
+    media: ["overview", "news", "events", "gallery"]
+  };
+
+  const allowed = permissions[role] || permissions.super_admin;
+  document.querySelectorAll(".sidebar-item").forEach(item => {
+    const navId = item.id.replace("nav-", "");
+    if (allowed.includes(navId)) {
+      item.style.display = "flex";
+    } else {
+      item.style.display = "none";
+    }
+  });
+}
+
 function handleAdminLogin(e) {
   e.preventDefault();
-  const input = document.getElementById("adminPasscode");
-  const passcode = input ? input.value.trim() : "";
+  const usernameInput = document.getElementById("adminUsername");
+  const passcodeInput = document.getElementById("adminPasscode");
+  const identifier = usernameInput ? usernameInput.value.trim() : "";
+  const passcode = passcodeInput ? passcodeInput.value.trim() : "";
 
-  if (passcode === MASTER_PASSCODE || passcode === "SSD1927" || passcode === "ssd1927") {
+  // 1. Emergency Master Passcode Override
+  if (identifier === MASTER_PASSCODE || identifier === "SSD1927" || identifier === "ssd1927" || passcode === MASTER_PASSCODE || passcode === "SSD1927" || passcode === "ssd1927") {
+    const superAdmin = {
+      name: "Commander-in-Chief (Master Access)",
+      email: "admin@ssd.org",
+      role: "super_admin",
+      dept: "Supreme Command Council",
+      status: "Active"
+    };
     sessionStorage.setItem("ssd_admin_auth", "true");
-    showToast("Command Access Granted. Welcome, Commander.", "success");
+    sessionStorage.setItem("ssd_admin_user", JSON.stringify(superAdmin));
+    showToast("Master Command Access Granted. Welcome, Commander.", "success");
+    checkAuthSession();
+    return;
+  }
+
+  // 2. Check multi-user accounts
+  const adminsObj = adminData.admin_users || ssdInitialSeed.admin_users;
+  const adminList = Object.entries(adminsObj).map(([k, v]) => ({ id: k, ...v }));
+
+  const matchedOfficer = adminList.find(u => {
+    const emailMatch = u.email && u.email.toLowerCase() === identifier.toLowerCase();
+    const nameMatch = u.name && u.name.toLowerCase() === identifier.toLowerCase();
+    const passMatch = u.passcode === passcode || (!passcode && u.passcode === identifier);
+    return (emailMatch || nameMatch) && passMatch;
+  });
+
+  if (matchedOfficer) {
+    if (matchedOfficer.status === "Suspended") {
+      showToast("Access Blocked: Your command authorization is suspended.", "error");
+      return;
+    }
+    sessionStorage.setItem("ssd_admin_auth", "true");
+    sessionStorage.setItem("ssd_admin_user", JSON.stringify(matchedOfficer));
+    showToast(`Access Granted. Welcome, ${matchedOfficer.name}.`, "success");
     checkAuthSession();
   } else {
-    showToast("Invalid Command Passcode. Access Denied.", "error");
-    if (input) {
-      input.value = "";
-      input.focus();
+    showToast("Invalid credentials. Please verify your officer username/passcode.", "error");
+    if (passcodeInput) {
+      passcodeInput.value = "";
+      passcodeInput.focus();
     }
   }
 }
 
 function handleAdminLogout() {
   sessionStorage.removeItem("ssd_admin_auth");
+  sessionStorage.removeItem("ssd_admin_user");
   showToast("Command session locked.", "info");
   checkAuthSession();
 }
@@ -298,34 +509,32 @@ const viewMetadata = {
   overview: { title: "Central Command Overview", sub: "Nationwide real-time metrics & recent activity" },
   members: { title: "Enlisted Sainiks Registry", sub: "Verify cadet applications & download state rosters" },
   donations: { title: "Centenary Movement Fund Ledger", sub: "Real-time contribution audit & donor PAN tracking" },
+  leadership: { title: "Governing Body & Council", sub: "Appoint and manage National Leadership & Advisory Board" },
   news: { title: "Gazette Bulletins & Circulars", sub: "Publish official announcements to the public portal" },
   events: { title: "Drills, Seminars & Rallies", sub: "Schedule nationwide cadet training and conclaves" },
   campaigns: { title: "Ongoing Missions & Causes", sub: "Manage active fundraising goals & volunteer targets" },
   gallery: { title: "Historical & Event Photo Archives", sub: "Curate high-resolution public photo albums" },
+  admins: { title: "Authorized Command Officers", sub: "Multi-user authentication, roles & access permissions" },
   contacts: { title: "Grievance Desk & Public Inquiries", sub: "Respond to incoming state command queries" },
   stats: { title: "Public Portal Live Counters", sub: "Update homepage live counters directly in Firebase" },
   settings: { title: "Database Tools & Backups", sub: "Export JSON backups and seed verified datasets" }
 };
 
 function switchView(viewKey) {
-  // Update sidebar active link
   document.querySelectorAll(".sidebar-item").forEach(item => item.classList.remove("active"));
   const activeNav = document.getElementById("nav-" + viewKey);
   if (activeNav) activeNav.classList.add("active");
 
-  // Switch panels
   document.querySelectorAll(".view-panel").forEach(panel => panel.classList.remove("active"));
   const targetPanel = document.getElementById("view" + viewKey.charAt(0).toUpperCase() + viewKey.slice(1));
   if (targetPanel) targetPanel.classList.add("active");
 
-  // Update topbar heading
   const meta = viewMetadata[viewKey] || { title: "Admin Portal", sub: "" };
   const hTitle = document.getElementById("pageHeadingTitle");
   const hSub = document.getElementById("pageHeadingSubtitle");
   if (hTitle) hTitle.textContent = meta.title;
   if (hSub) hSub.textContent = meta.sub;
 
-  // Close mobile sidebar if open
   if (window.innerWidth <= 1024) {
     const sidebar = document.getElementById("adminSidebar");
     if (sidebar) sidebar.classList.remove("open");
@@ -398,6 +607,20 @@ function loadAllRealtimeData() {
       initRazorpayAdminConfig();
     });
 
+    // 10. Governing Body & Leadership Council
+    db.ref('leadership').on('value', (snap) => {
+      adminData.leadership = snap.val() || ssdInitialSeed.leadership;
+      renderLeadershipTable();
+      renderOverview();
+    });
+
+    // 11. Authorized Admin Users
+    db.ref('admin_users').on('value', (snap) => {
+      adminData.admin_users = snap.val() || ssdInitialSeed.admin_users;
+      renderAdminsTable();
+      renderOverview();
+    });
+
     initFirebaseConfigForm();
 
   } else {
@@ -413,10 +636,12 @@ function loadAllRealtimeData() {
     initRazorpayAdminConfig();
     renderMembersTable();
     renderDonationsTable();
+    renderLeadershipTable();
     renderNewsTable();
     renderEventsTable();
     renderCampaignsTable();
     renderGalleryGrid();
+    renderAdminsTable();
     renderContactsTable();
     populateStatsForm();
     renderOverview();
@@ -438,14 +663,18 @@ function renderOverview() {
   const newsArr = Object.values(adminData.news || {});
   const eventsArr = Object.values(adminData.events || {});
   const contactsArr = Object.values(adminData.contacts || {});
+  const leadArr = Object.values(adminData.leadership || {});
+  const adminsArr = Object.values(adminData.admin_users || {});
 
   // Update Badges
   setText("badgeMembersCount", membersArr.length);
   setText("badgeDonationsCount", donationsArr.length);
+  setText("badgeLeadershipCount", leadArr.length);
   setText("badgeNewsCount", newsArr.length);
   setText("badgeEventsCount", eventsArr.length);
   setText("badgeCampaignsCount", Object.keys(adminData.campaigns || {}).length);
   setText("badgeGalleryCount", Object.keys(adminData.gallery || {}).length);
+  setText("badgeAdminsCount", adminsArr.length);
   setText("badgeContactsCount", contactsArr.length);
 
   // Update KPI Cards
@@ -694,6 +923,295 @@ function openAdminReceiptModal(id) {
 
 function printAdminReceiptArea() {
   window.print();
+}
+
+// ==========================================================================
+// RENDERERS: GOVERNING BODY & LEADERSHIP COUNCIL (/leadership)
+// ==========================================================================
+function renderLeadershipTable(filteredList = null) {
+  const tbody = document.getElementById("leadershipTableBody");
+  if (!tbody) return;
+
+  const leadObj = adminData.leadership || ssdInitialSeed.leadership;
+  let list = filteredList || Object.entries(leadObj).map(([key, val]) => ({ id: key, ...val }));
+
+  list.sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
+
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">No governing body members found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = list.map(m => `
+    <tr>
+      <td>
+        <img src="${escapeHtml(m.photoUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80')}" alt="${escapeHtml(m.name)}" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-orange);">
+      </td>
+      <td><strong>${escapeHtml(m.name)}</strong></td>
+      <td>
+        <div><strong>${escapeHtml(m.designation)}</strong></div>
+        <small class="badge-status badge-approved" style="font-size: 10px; margin-top: 3px; display: inline-block;">${escapeHtml(m.rankBadge || 'National Command')}</small>
+      </td>
+      <td><span class="badge-status badge-info">${escapeHtml(m.category || 'Supreme Council')}</span></td>
+      <td><small style="color: var(--text-muted);">${escapeHtml(m.credentials || 'HQ')}</small></td>
+      <td><div style="max-width: 250px; font-size: 12px; color: var(--text-muted); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(m.bio || '')}</div></td>
+      <td style="text-align: right;">
+        <div class="action-btn-group" style="justify-content: flex-end;">
+          <button type="button" class="action-icon-btn" onclick="openEditLeadershipModal('${m.id}')" title="Edit Member">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </button>
+          <button type="button" class="action-icon-btn delete" onclick="deleteLeadershipMember('${m.id}')" title="Remove Member">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterLeadershipTable() {
+  const cat = document.getElementById("leadershipFilter")?.value || "all";
+  const all = Object.entries(adminData.leadership || ssdInitialSeed.leadership).map(([key, val]) => ({ id: key, ...val }));
+  if (cat === "all") {
+    renderLeadershipTable(all);
+  } else {
+    const filtered = all.filter(m => m.category === cat);
+    renderLeadershipTable(filtered);
+  }
+}
+
+function openAddLeadershipModal() {
+  setInputValue("leadItemKey", "");
+  setInputValue("leadName", "");
+  setInputValue("leadDesignation", "");
+  setInputValue("leadCategory", "Supreme Council");
+  setInputValue("leadRankBadge", "National Command");
+  setInputValue("leadPhotoUrl", "");
+  setInputValue("leadCredentials", "");
+  setInputValue("leadBio", "");
+  setInputValue("leadOrder", "1");
+  updateImagePreview("leadPhotoPreview", "");
+  setText("modalLeadershipHeading", "Appoint New Council Member");
+  openAdminModal("modalLeadership");
+}
+
+function openEditLeadershipModal(id) {
+  const leadObj = adminData.leadership || ssdInitialSeed.leadership;
+  const m = leadObj[id];
+  if (!m) return;
+
+  setInputValue("leadItemKey", id);
+  setInputValue("leadName", m.name || "");
+  setInputValue("leadDesignation", m.designation || "");
+  setInputValue("leadCategory", m.category || "Supreme Council");
+  setInputValue("leadRankBadge", m.rankBadge || "");
+  setInputValue("leadPhotoUrl", m.photoUrl || "");
+  setInputValue("leadCredentials", m.credentials || "");
+  setInputValue("leadBio", m.bio || "");
+  setInputValue("leadOrder", m.order || "1");
+  updateImagePreview("leadPhotoPreview", m.photoUrl || "");
+  setText("modalLeadershipHeading", `Edit Council Member: ${m.name}`);
+  openAdminModal("modalLeadership");
+}
+
+function handleSaveLeadership(e) {
+  e.preventDefault();
+  const key = document.getElementById("leadItemKey").value;
+  const memberData = {
+    name: document.getElementById("leadName").value.trim(),
+    designation: document.getElementById("leadDesignation").value.trim(),
+    category: document.getElementById("leadCategory").value,
+    rankBadge: document.getElementById("leadRankBadge").value.trim(),
+    photoUrl: document.getElementById("leadPhotoUrl").value.trim(),
+    credentials: document.getElementById("leadCredentials").value.trim(),
+    bio: document.getElementById("leadBio").value.trim(),
+    order: Number(document.getElementById("leadOrder").value) || 1,
+    updatedAt: Date.now()
+  };
+
+  const onSuccess = () => {
+    showToast(`Council member ${memberData.name} saved successfully!`, "success");
+    closeAdminModal("modalLeadership");
+  };
+
+  if (db) {
+    if (key) {
+      db.ref(`leadership/${key}`).update(memberData).then(onSuccess).catch(err => showToast(err.message, "error"));
+    } else {
+      db.ref("leadership").push(memberData).then(onSuccess).catch(err => showToast(err.message, "error"));
+    }
+  } else {
+    if (!adminData.leadership) adminData.leadership = { ...ssdInitialSeed.leadership };
+    const newKey = key || ("lead_" + Date.now());
+    adminData.leadership[newKey] = memberData;
+    saveLocalStore();
+    renderLeadershipTable();
+    onSuccess();
+  }
+}
+
+function deleteLeadershipMember(id) {
+  const leadObj = adminData.leadership || ssdInitialSeed.leadership;
+  const m = leadObj[id];
+  const name = m ? m.name : "this member";
+  if (!confirm(`Are you sure you want to remove ${name} from the Governing Body?`)) return;
+
+  const onSuccess = () => {
+    showToast("Council member removed.", "info");
+  };
+
+  if (db) {
+    db.ref(`leadership/${id}`).remove().then(onSuccess).catch(err => showToast(err.message, "error"));
+  } else {
+    if (adminData.leadership) {
+      delete adminData.leadership[id];
+      saveLocalStore();
+      renderLeadershipTable();
+      onSuccess();
+    }
+  }
+}
+
+// ==========================================================================
+// RENDERERS: AUTHORIZED ADMIN USERS & ROLES (/admin_users)
+// ==========================================================================
+function renderAdminsTable() {
+  const tbody = document.getElementById("adminsTableBody");
+  if (!tbody) return;
+
+  const adminsObj = adminData.admin_users || ssdInitialSeed.admin_users;
+  const list = Object.entries(adminsObj).map(([key, val]) => ({ id: key, ...val }));
+
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">No authorized officers found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = list.map(u => `
+    <tr>
+      <td><strong>${escapeHtml(u.name)}</strong></td>
+      <td><code>${escapeHtml(u.email)}</code></td>
+      <td><span class="badge-status ${u.role === 'super_admin' ? 'badge-approved' : 'badge-info'}">${escapeHtml(getRoleDisplayName(u.role))}</span></td>
+      <td>${escapeHtml(u.dept || 'Central Command')}</td>
+      <td><code>••••••••</code></td>
+      <td><span class="badge-status ${u.status === 'Active' ? 'badge-approved' : 'badge-rejected'}">${escapeHtml(u.status || 'Active')}</span></td>
+      <td style="text-align: right;">
+        <div class="action-btn-group" style="justify-content: flex-end;">
+          <button type="button" class="action-icon-btn" onclick="openEditAdminUserModal('${u.id}')" title="Edit Officer Permissions">
+            <i class="fa-solid fa-user-pen"></i>
+          </button>
+          <button type="button" class="action-icon-btn ${u.status === 'Active' ? 'warning' : 'verify'}" onclick="toggleAdminStatus('${u.id}')" title="${u.status === 'Active' ? 'Suspend Officer' : 'Activate Officer'}">
+            <i class="fa-solid ${u.status === 'Active' ? 'fa-ban' : 'fa-check'}"></i>
+          </button>
+          <button type="button" class="action-icon-btn delete" onclick="deleteAdminUser('${u.id}')" title="Revoke Authorization">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openAddAdminUserModal() {
+  setInputValue("adminUserKey", "");
+  setInputValue("newAdminName", "");
+  setInputValue("newAdminEmail", "");
+  setInputValue("newAdminPasscode", "");
+  setInputValue("newAdminRole", "executive");
+  setInputValue("newAdminDept", "");
+  setInputValue("newAdminStatus", "Active");
+  setText("modalAdminUserHeading", "Authorize New Command Officer");
+  openAdminModal("modalAdminUser");
+}
+
+function openEditAdminUserModal(id) {
+  const adminsObj = adminData.admin_users || ssdInitialSeed.admin_users;
+  const u = adminsObj[id];
+  if (!u) return;
+
+  setInputValue("adminUserKey", id);
+  setInputValue("newAdminName", u.name || "");
+  setInputValue("newAdminEmail", u.email || "");
+  setInputValue("newAdminPasscode", u.passcode || "");
+  setInputValue("newAdminRole", u.role || "executive");
+  setInputValue("newAdminDept", u.dept || "");
+  setInputValue("newAdminStatus", u.status || "Active");
+  setText("modalAdminUserHeading", `Edit Officer Authorization: ${u.name}`);
+  openAdminModal("modalAdminUser");
+}
+
+function handleSaveAdminUser(e) {
+  e.preventDefault();
+  const key = document.getElementById("adminUserKey").value;
+  const userData = {
+    name: document.getElementById("newAdminName").value.trim(),
+    email: document.getElementById("newAdminEmail").value.trim(),
+    passcode: document.getElementById("newAdminPasscode").value.trim(),
+    role: document.getElementById("newAdminRole").value,
+    dept: document.getElementById("newAdminDept").value.trim(),
+    status: document.getElementById("newAdminStatus").value,
+    updatedAt: Date.now()
+  };
+
+  const onSuccess = () => {
+    showToast(`Officer ${userData.name} authorized successfully!`, "success");
+    closeAdminModal("modalAdminUser");
+  };
+
+  if (db) {
+    if (key) {
+      db.ref(`admin_users/${key}`).update(userData).then(onSuccess).catch(err => showToast(err.message, "error"));
+    } else {
+      db.ref("admin_users").push(userData).then(onSuccess).catch(err => showToast(err.message, "error"));
+    }
+  } else {
+    if (!adminData.admin_users) adminData.admin_users = { ...ssdInitialSeed.admin_users };
+    const newKey = key || ("usr_" + Date.now());
+    adminData.admin_users[newKey] = userData;
+    saveLocalStore();
+    renderAdminsTable();
+    onSuccess();
+  }
+}
+
+function toggleAdminStatus(id) {
+  const adminsObj = adminData.admin_users || ssdInitialSeed.admin_users;
+  const u = adminsObj[id];
+  if (!u) return;
+  const newStatus = u.status === "Active" ? "Suspended" : "Active";
+
+  if (db) {
+    db.ref(`admin_users/${id}/status`).set(newStatus).then(() => {
+      showToast(`Officer status set to ${newStatus}.`, "info");
+    });
+  } else {
+    if (adminData.admin_users && adminData.admin_users[id]) {
+      adminData.admin_users[id].status = newStatus;
+      saveLocalStore();
+      renderAdminsTable();
+      showToast(`Officer status set to ${newStatus}.`, "info");
+    }
+  }
+}
+
+function deleteAdminUser(id) {
+  const adminsObj = adminData.admin_users || ssdInitialSeed.admin_users;
+  const u = adminsObj[id];
+  const name = u ? u.name : "this officer";
+  if (!confirm(`Are you sure you want to revoke admin access for ${name}?`)) return;
+
+  if (db) {
+    db.ref(`admin_users/${id}`).remove().then(() => {
+      showToast("Officer access revoked.", "info");
+    });
+  } else {
+    if (adminData.admin_users) {
+      delete adminData.admin_users[id];
+      saveLocalStore();
+      renderAdminsTable();
+      showToast("Officer access revoked.", "info");
+    }
+  }
 }
 
 // ==========================================================================
