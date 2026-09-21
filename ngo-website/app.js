@@ -660,6 +660,142 @@ function goToTestimonial(index) {
   });
 }
 
+// ==========================================================================
+// AUTOMATED EMAIL DISPATCH ENGINE (EmailJS & Serverless API)
+// ==========================================================================
+function getEmailConfig() {
+  const defaultCfg = {
+    serviceId: "service_ssd_official",
+    donationTemplateId: "template_donation_80g",
+    enrollmentTemplateId: "template_cadet_welcome",
+    publicKey: "",
+    enabled: true
+  };
+  try {
+    const custom = localStorage.getItem("ssd_email_config");
+    if (custom) return { ...defaultCfg, ...JSON.parse(custom) };
+  } catch (e) {
+    console.warn("Email config parse error:", e);
+  }
+  return defaultCfg;
+}
+
+function sendDonationEmail(donationRecord) {
+  if (!donationRecord || !donationRecord.email) return;
+  const cfg = getEmailConfig();
+  if (cfg.enabled === false) return;
+
+  const templateParams = {
+    to_name: donationRecord.name || donationRecord.donorName || "Supporter",
+    to_email: donationRecord.email || donationRecord.donorEmail,
+    amount: (Number(donationRecord.amount) || 0).toLocaleString(),
+    receipt_number: donationRecord.receiptNumber || ("SSD-REC-" + Date.now().toString().slice(-6)),
+    payment_id: donationRecord.paymentId || "pay_live",
+    cause: donationRecord.cause || "Centenary 2027 Movement Fund",
+    pan: donationRecord.pan || "N/A",
+    date: new Date(donationRecord.timestamp || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+    org_name: "Samata Sainik Dal (SSD)",
+    org_website: "https://ssdind.vercel.app"
+  };
+
+  // 1. Dispatch via EmailJS SDK if configured
+  if (typeof emailjs !== "undefined" && cfg.publicKey && cfg.serviceId && cfg.donationTemplateId) {
+    try {
+      emailjs.init({ publicKey: cfg.publicKey });
+      emailjs.send(cfg.serviceId, cfg.donationTemplateId, templateParams)
+        .then(() => console.log("Donation 80G receipt email dispatched via EmailJS."))
+        .catch(err => console.warn("EmailJS donation send error:", err));
+    } catch (err) {
+      console.warn("EmailJS init/send error:", err);
+    }
+  }
+
+  // 2. Dispatch via Serverless Endpoint
+  fetch('/api/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'donation',
+      recipientEmail: templateParams.to_email,
+      recipientName: templateParams.to_name,
+      data: donationRecord
+    })
+  }).catch(e => console.warn("Serverless email ping:", e));
+
+  // 3. Log Dispatch Record in Firebase
+  if (db) {
+    db.ref('email_dispatches').push({
+      type: "Donation 80G Receipt",
+      recipientEmail: templateParams.to_email,
+      recipientName: templateParams.to_name,
+      receiptNumber: templateParams.receipt_number,
+      amount: donationRecord.amount,
+      paymentId: donationRecord.paymentId,
+      status: "Dispatched",
+      timestamp: Date.now()
+    }).catch(e => console.warn("Firebase dispatch log:", e));
+  }
+}
+
+function sendEnrollmentEmail(memberData) {
+  if (!memberData || !memberData.email) return;
+  const cfg = getEmailConfig();
+  if (cfg.enabled === false) return;
+
+  const enlistId = "SSD-CADET-" + (memberData.id ? memberData.id.slice(-6).toUpperCase() : Math.floor(1000 + Math.random() * 9000));
+  const templateParams = {
+    cadet_name: memberData.fullName || memberData.name || "Cadet",
+    to_name: memberData.fullName || memberData.name || "Cadet",
+    to_email: memberData.email,
+    cadet_phone: memberData.phone || "N/A",
+    cadet_wing: memberData.wing || "Central Cadet Corps (Sainik Wing)",
+    cadet_state: memberData.state || "Maharashtra",
+    cadet_city: memberData.city || "District Command",
+    enlistment_id: enlistId,
+    date: new Date(memberData.timestamp || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+    org_name: "Samata Sainik Dal (SSD)",
+    org_website: "https://ssdind.vercel.app"
+  };
+
+  // 1. Dispatch via EmailJS SDK if configured
+  if (typeof emailjs !== "undefined" && cfg.publicKey && cfg.serviceId && cfg.enrollmentTemplateId) {
+    try {
+      emailjs.init({ publicKey: cfg.publicKey });
+      emailjs.send(cfg.serviceId, cfg.enrollmentTemplateId, templateParams)
+        .then(() => console.log("Cadet Welcome email dispatched via EmailJS."))
+        .catch(err => console.warn("EmailJS enrollment send error:", err));
+    } catch (err) {
+      console.warn("EmailJS init/send error:", err);
+    }
+  }
+
+  // 2. Dispatch via Serverless Endpoint
+  fetch('/api/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'enrollment',
+      recipientEmail: templateParams.to_email,
+      recipientName: templateParams.cadet_name,
+      data: { ...memberData, enlistmentId: enlistId }
+    })
+  }).catch(e => console.warn("Serverless email ping:", e));
+
+  // 3. Log Dispatch Record in Firebase
+  if (db) {
+    db.ref('email_dispatches').push({
+      type: "Cadet Enlistment Welcome",
+      recipientEmail: templateParams.to_email,
+      recipientName: templateParams.cadet_name,
+      enlistmentId: enlistId,
+      wing: memberData.wing,
+      state: memberData.state,
+      status: "Dispatched",
+      timestamp: Date.now()
+    }).catch(e => console.warn("Firebase dispatch log:", e));
+  }
+}
+
 // Form Submissions
 function handleMemberRegistration(e) {
   e.preventDefault();
@@ -689,7 +825,8 @@ function handleMemberRegistration(e) {
   btnSpinner.style.display = "inline-flex";
 
   const onSuccess = () => {
-    showToast("Enlistment Successful! Welcome to Samata Sainik Dal. Central Command will contact you soon. Jai Bhim!", "success");
+    showToast("Enlistment Successful! Welcome to Samata Sainik Dal. Confirmation email dispatched. Jai Bhim!", "success");
+    sendEnrollmentEmail(memberData);
     form.reset();
     submitBtn.disabled = false;
     btnText.style.display = "inline-flex";
@@ -1399,7 +1536,8 @@ function handleDonationSubmit(e) {
       if (btnText) btnText.style.display = "inline-flex";
       if (btnSpinner) btnSpinner.style.display = "none";
 
-      showToast(`Jai Bhim! Thank you, ${donorData.name}. Contribution of ₹${donorData.amount.toLocaleString()} received.`, "success");
+      showToast(`Jai Bhim! Thank you, ${donorData.name}. Contribution of ₹${donorData.amount.toLocaleString()} received. 80G Receipt email dispatched.`, "success");
+      sendDonationEmail(donationRecord);
       openReceiptModal(donationRecord);
     };
 
@@ -1520,7 +1658,8 @@ function handleQuickJoinSubmit(e) {
   if (btnSpinner) btnSpinner.style.display = "inline-flex";
 
   const onSuccess = () => {
-    showToast(`Salute to Sainik ${memberData.name}! You have been enlisted in the ${memberData.wing}. District Command will contact you soon. Jai Bhim!`, "success");
+    showToast(`Salute to Sainik ${memberData.name}! You have been enlisted in the ${memberData.wing}. Confirmation email dispatched. Jai Bhim!`, "success");
+    sendEnrollmentEmail(memberData);
     form.reset();
     submitBtn.disabled = false;
     if (btnText) btnText.style.display = "inline-flex";

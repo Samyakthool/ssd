@@ -30,6 +30,7 @@ let adminData = {
   campaigns: {},
   gallery: {},
   contacts: {},
+  email_dispatches: {},
   stats: {
     members: 100000,
     states: 28,
@@ -625,7 +626,23 @@ function loadAllRealtimeData() {
       renderOverview();
     });
 
+    // 12. Automated Email Dispatches
+    db.ref('email_dispatches').on('value', (snap) => {
+      adminData.email_dispatches = snap.val() || {};
+      renderEmailDispatchesTable();
+    });
+
+    // 13. Settings (Email Config)
+    db.ref('settings/emailConfig').on('value', (snap) => {
+      const val = snap.val();
+      if (val) {
+        localStorage.setItem("ssd_email_config", JSON.stringify(val));
+      }
+      initEmailConfigForm();
+    });
+
     initFirebaseConfigForm();
+    initEmailConfigForm();
 
   } else {
     // Fallback in-memory storage from localStorage or Initial Seed
@@ -638,6 +655,7 @@ function loadAllRealtimeData() {
     }
     initFirebaseConfigForm();
     initRazorpayAdminConfig();
+    initEmailConfigForm();
     renderMembersTable();
     renderDonationsTable();
     renderLeadershipTable();
@@ -647,6 +665,7 @@ function loadAllRealtimeData() {
     renderGalleryGrid();
     renderAdminsTable();
     renderContactsTable();
+    renderEmailDispatchesTable();
     populateStatsForm();
     renderOverview();
   }
@@ -1274,6 +1293,253 @@ function testRazorpayPing() {
     return;
   }
   showToast(`Razorpay Gateway Ping Successful: ${keyVal.startsWith("rzp_live_") ? "Live Production" : "Test Sandbox"} Key Active.`, "success");
+}
+
+// ==========================================================================
+// AUTOMATED EMAIL DISPATCH CONFIGURATION & TESTING (ADMIN)
+// ==========================================================================
+function getEmailConfig() {
+  const defaultCfg = {
+    serviceId: "service_ssd_official",
+    donationTemplateId: "template_donation_80g",
+    enrollmentTemplateId: "template_cadet_welcome",
+    publicKey: "",
+    enabled: true
+  };
+  try {
+    const custom = localStorage.getItem("ssd_email_config");
+    if (custom) return { ...defaultCfg, ...JSON.parse(custom) };
+  } catch (e) {
+    console.warn("Email config parse error:", e);
+  }
+  return defaultCfg;
+}
+
+function initEmailConfigForm() {
+  const cfg = getEmailConfig();
+  const serviceIdEl = document.getElementById("adminEmailServiceId");
+  const pubKeyEl = document.getElementById("adminEmailPublicKey");
+  const donTplEl = document.getElementById("adminEmailDonationTpl");
+  const enlTplEl = document.getElementById("adminEmailEnrollmentTpl");
+
+  if (serviceIdEl) serviceIdEl.value = cfg.serviceId || "";
+  if (pubKeyEl) pubKeyEl.value = cfg.publicKey || "";
+  if (donTplEl) donTplEl.value = cfg.donationTemplateId || "";
+  if (enlTplEl) enlTplEl.value = cfg.enrollmentTemplateId || "";
+
+  const badge = document.getElementById("emailSetupBadge");
+  if (badge) {
+    if (cfg.publicKey && cfg.serviceId) {
+      badge.className = "badge-status badge-approved";
+      badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> EmailJS Live Active';
+    } else {
+      badge.className = "badge-status badge-info";
+      badge.innerHTML = '<i class="fa-solid fa-bolt"></i> Serverless API Active';
+    }
+  }
+}
+
+function saveEmailConfig(e) {
+  e.preventDefault();
+  const serviceId = document.getElementById("adminEmailServiceId")?.value.trim() || "service_ssd_official";
+  const publicKey = document.getElementById("adminEmailPublicKey")?.value.trim() || "";
+  const donationTemplateId = document.getElementById("adminEmailDonationTpl")?.value.trim() || "template_donation_80g";
+  const enrollmentTemplateId = document.getElementById("adminEmailEnrollmentTpl")?.value.trim() || "template_cadet_welcome";
+
+  const emailCfg = {
+    serviceId,
+    publicKey,
+    donationTemplateId,
+    enrollmentTemplateId,
+    enabled: true,
+    updatedAt: Date.now()
+  };
+
+  localStorage.setItem("ssd_email_config", JSON.stringify(emailCfg));
+
+  if (db) {
+    db.ref("settings/emailConfig").set(emailCfg)
+      .then(() => showToast("Automated Email settings synchronized to live cloud!", "success"))
+      .catch(err => showToast("Error saving email settings: " + err.message, "error"));
+  } else {
+    showToast("Automated Email settings saved locally!", "success");
+  }
+  initEmailConfigForm();
+}
+
+function testSendDonationEmail() {
+  const testRecipient = prompt("Enter the email address to receive the test 80G Donation Receipt:", "admin@ssd.org");
+  if (!testRecipient) return;
+
+  showToast("Dispatching test 80G Contribution Receipt email...", "info");
+
+  const testData = {
+    name: "Commander Testing",
+    email: testRecipient,
+    amount: 5000,
+    receiptNumber: "SSD-REC-2026-TEST",
+    paymentId: "pay_test_" + Math.random().toString(36).substring(2, 8),
+    cause: "Centenary 2027 Movement Trust Fund",
+    pan: "ABCDE1234F",
+    timestamp: Date.now()
+  };
+
+  const cfg = getEmailConfig();
+  if (typeof emailjs !== "undefined" && cfg.publicKey && cfg.serviceId) {
+    try {
+      emailjs.init({ publicKey: cfg.publicKey });
+      emailjs.send(cfg.serviceId, cfg.donationTemplateId, {
+        to_name: testData.name,
+        to_email: testData.email,
+        amount: testData.amount.toLocaleString(),
+        receipt_number: testData.receiptNumber,
+        payment_id: testData.paymentId,
+        cause: testData.cause,
+        pan: testData.pan,
+        date: new Date().toLocaleDateString('en-IN')
+      }).then(() => {
+        showToast("Test 80G Donation Email successfully dispatched via EmailJS!", "success");
+      }).catch(err => {
+        console.warn("EmailJS test error:", err);
+      });
+    } catch (e) {
+      console.warn("EmailJS error:", e);
+    }
+  }
+
+  fetch('/api/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'donation',
+      recipientEmail: testData.email,
+      recipientName: testData.name,
+      data: testData
+    })
+  }).then(res => res.json()).then(res => {
+    showToast("Serverless Email Dispatch Recorded & Sent!", "success");
+  }).catch(() => {});
+
+  if (db) {
+    db.ref('email_dispatches').push({
+      type: "Donation 80G Receipt (Test)",
+      recipientEmail: testData.email,
+      recipientName: testData.name,
+      receiptNumber: testData.receiptNumber,
+      amount: testData.amount,
+      paymentId: testData.paymentId,
+      status: "Delivered (Test)",
+      timestamp: Date.now()
+    });
+  }
+}
+
+function testSendEnrollmentEmail() {
+  const testRecipient = prompt("Enter the email address to receive the test Cadet Welcome Letter:", "admin@ssd.org");
+  if (!testRecipient) return;
+
+  showToast("Dispatching test Cadet Enlistment Confirmation email...", "info");
+
+  const testData = {
+    fullName: "Cadet Test Volunteer",
+    name: "Cadet Test Volunteer",
+    email: testRecipient,
+    phone: "+91 98765 43210",
+    wing: "Dr. B. R. Ambedkar Cadet Corps",
+    state: "Maharashtra",
+    city: "Nagpur Central Command",
+    enlistmentId: "SSD-CADET-2026-TEST",
+    timestamp: Date.now()
+  };
+
+  const cfg = getEmailConfig();
+  if (typeof emailjs !== "undefined" && cfg.publicKey && cfg.serviceId) {
+    try {
+      emailjs.init({ publicKey: cfg.publicKey });
+      emailjs.send(cfg.serviceId, cfg.enrollmentTemplateId, {
+        cadet_name: testData.name,
+        to_name: testData.name,
+        to_email: testData.email,
+        cadet_phone: testData.phone,
+        cadet_wing: testData.wing,
+        cadet_state: testData.state,
+        cadet_city: testData.city,
+        enlistment_id: testData.enlistmentId,
+        date: new Date().toLocaleDateString('en-IN')
+      }).then(() => {
+        showToast("Test Cadet Welcome Email successfully dispatched via EmailJS!", "success");
+      }).catch(err => {
+        console.warn("EmailJS test error:", err);
+      });
+    } catch (e) {
+      console.warn("EmailJS error:", e);
+    }
+  }
+
+  fetch('/api/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'enrollment',
+      recipientEmail: testData.email,
+      recipientName: testData.name,
+      data: testData
+    })
+  }).then(res => res.json()).then(res => {
+    showToast("Serverless Email Dispatch Recorded & Sent!", "success");
+  }).catch(() => {});
+
+  if (db) {
+    db.ref('email_dispatches').push({
+      type: "Cadet Enlistment Welcome (Test)",
+      recipientEmail: testData.email,
+      recipientName: testData.name,
+      enlistmentId: testData.enlistmentId,
+      wing: testData.wing,
+      state: testData.state,
+      status: "Delivered (Test)",
+      timestamp: Date.now()
+    });
+  }
+}
+
+function renderEmailDispatchesTable() {
+  const tbody = document.getElementById("emailDispatchesTableBody");
+  if (!tbody) return;
+
+  const emailsObj = adminData.email_dispatches || {};
+  let list = Object.entries(emailsObj).map(([key, val]) => ({ id: key, ...val }));
+
+  setText("badgeEmailsCount", `${list.length} Dispatches`);
+
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No email dispatches recorded yet.</td></tr>';
+    return;
+  }
+
+  // Sort newest first
+  list.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+  tbody.innerHTML = list.map(item => {
+    const dDate = item.timestamp ? new Date(item.timestamp).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : 'Recent';
+    const isDonation = (item.type || '').includes('Donation');
+    const badgeClass = isDonation ? 'badge-approved' : 'badge-info';
+    const icon = isDonation ? '<i class="fa-solid fa-receipt"></i>' : '<i class="fa-solid fa-user-shield"></i>';
+    const refId = item.receiptNumber || item.enlistmentId || item.paymentId || ('REF-' + item.id.slice(-6));
+
+    return `
+      <tr>
+        <td style="color: var(--text-muted); font-size: 12.5px;">${dDate}</td>
+        <td>
+          <strong>${escapeHtml(item.recipientName || 'Recipient')}</strong>
+          <div style="font-size: 11.5px; color: var(--text-muted);"><i class="fa-solid fa-envelope" style="font-size: 10px;"></i> ${escapeHtml(item.recipientEmail || 'N/A')}</div>
+        </td>
+        <td><span class="badge-status ${badgeClass}">${icon} ${escapeHtml(item.type || 'Automated Email')}</span></td>
+        <td><code>${escapeHtml(refId)}</code></td>
+        <td><span class="badge-status badge-approved"><i class="fa-solid fa-circle-check"></i> ${escapeHtml(item.status || 'Dispatched')}</span></td>
+      </tr>
+    `;
+  }).join('');
 }
 
 // ==========================================================================

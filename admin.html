@@ -17,6 +17,8 @@
   <!-- Firebase Compat CDN -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <!-- EmailJS Automated Email SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
   <!-- Admin Stylesheet -->
@@ -794,6 +796,84 @@
                     <i class="fa-solid fa-floppy-disk"></i> Save Gateway Key
                   </button>
                 </form>
+              </div>
+            </div>
+
+            <!-- Automated Email Dispatch System (EmailJS & API) -->
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-envelope-circle-check" style="color: var(--primary-orange);"></i>
+                  <h3>Automated Email Dispatch System (EmailJS & API)</h3>
+                </div>
+                <div id="emailSetupBadge" class="badge-status badge-approved">
+                  <i class="fa-solid fa-circle-check"></i> Automated Triggers Active
+                </div>
+              </div>
+              <div style="padding: 24px;">
+                <p style="color: var(--text-muted); font-size: 13.5px; margin-bottom: 18px; line-height: 1.5;">
+                  Configure automated dispatch of <strong>80G Tax Donation Receipts</strong> and <strong>Cadet Enlistment Welcome Letters</strong> directly to donors and applicants via EmailJS or Serverless dispatch API.
+                </p>
+                <form id="emailConfigForm" onsubmit="saveEmailConfig(event)">
+                  <div class="form-grid-modal">
+                    <div class="form-group-modal">
+                      <label for="adminEmailServiceId">EmailJS Service ID</label>
+                      <input type="text" id="adminEmailServiceId" placeholder="e.g. service_ssd_official" style="font-family: monospace; font-size: 12.5px;">
+                    </div>
+                    <div class="form-group-modal">
+                      <label for="adminEmailPublicKey">EmailJS Public Key</label>
+                      <input type="text" id="adminEmailPublicKey" placeholder="e.g. pk_..." style="font-family: monospace; font-size: 12.5px;">
+                    </div>
+                  </div>
+                  <div class="form-grid-modal">
+                    <div class="form-group-modal">
+                      <label for="adminEmailDonationTpl">80G Donation Receipt Template ID</label>
+                      <input type="text" id="adminEmailDonationTpl" placeholder="e.g. template_donation_80g" style="font-family: monospace; font-size: 12.5px;">
+                    </div>
+                    <div class="form-group-modal">
+                      <label for="adminEmailEnrollmentTpl">Cadet Enlistment Welcome Template ID</label>
+                      <input type="text" id="adminEmailEnrollmentTpl" placeholder="e.g. template_cadet_welcome" style="font-family: monospace; font-size: 12.5px;">
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 14px;">
+                    <button type="submit" class="btn-admin btn-admin-primary">
+                      <i class="fa-solid fa-floppy-disk"></i> Save Email Settings
+                    </button>
+                    <button type="button" class="btn-admin btn-admin-outline" onclick="testSendDonationEmail()">
+                      <i class="fa-solid fa-receipt"></i> Send Test 80G Email
+                    </button>
+                    <button type="button" class="btn-admin btn-admin-outline" onclick="testSendEnrollmentEmail()">
+                      <i class="fa-solid fa-user-check"></i> Send Test Enlistment Email
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Email Dispatches Ledger -->
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-paper-plane" style="color: var(--primary-orange);"></i>
+                  <h3>Live Automated Email Dispatch Log (/email_dispatches)</h3>
+                </div>
+                <span id="badgeEmailsCount" class="badge-status badge-info">0 Dispatches</span>
+              </div>
+              <div class="table-responsive">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Date & Time</th>
+                      <th>Recipient</th>
+                      <th>Email Type</th>
+                      <th>Reference ID</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="emailDispatchesTableBody">
+                    <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No email dispatches recorded yet.</td></tr>
+                  </tbody>
+                </table>
               </div>
             </div>
 
