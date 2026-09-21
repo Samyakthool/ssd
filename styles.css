@@ -593,6 +593,14 @@ button, input, select, textarea {
   padding-left: 22px;
 }
 
+.drawer-header {
+  display: none;
+}
+
+.mobile-close-btn {
+  display: none;
+}
+
 .mobile-menu-btn {
   display: none;
   background: none;
