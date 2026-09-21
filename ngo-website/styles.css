@@ -2635,6 +2635,108 @@ body.nav-open {
 /* ==========================================================================
    RESPONSIVE MEDIA QUERIES (SMARTPHONE & TABLET)
    ========================================================================== */
+/* Dedicated 5:3 Aspect Ratio Tablet Optimization (1280x768, 1200x720, 1024x614, 800x480, 768x1280) */
+@media (aspect-ratio: 5/3), (min-aspect-ratio: 1.58/1) and (max-aspect-ratio: 1.75/1) and (max-width: 1400px) {
+  .top-bar {
+    padding: 4px 0;
+  }
+  .header-main {
+    padding: 6px 0;
+  }
+  .org-logo {
+    height: 48px !important;
+    width: 48px !important;
+  }
+  .org-name {
+    font-size: 16px !important;
+  }
+  .org-tagline {
+    font-size: 10px !important;
+  }
+  .notice-ticker {
+    padding: 5px 0;
+  }
+  .governing-section {
+    padding: 32px 0 28px !important;
+  }
+  .section-header {
+    margin-bottom: 18px !important;
+  }
+  .section-title {
+    font-size: 26px !important;
+    margin-bottom: 8px;
+  }
+  .section-subtitle {
+    font-size: 13px !important;
+    margin-bottom: 10px;
+    max-width: 780px;
+  }
+  .governing-tier-nav {
+    margin: 14px 0 10px;
+    gap: 8px;
+  }
+  .governing-tier-btn {
+    padding: 7px 16px;
+    font-size: 12.5px;
+  }
+  .governing-state-pills {
+    margin: 8px 0 16px;
+    gap: 6px;
+  }
+  .state-pill {
+    padding: 5px 12px;
+    font-size: 11.5px;
+  }
+  .governing-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 16px;
+  }
+  .governing-card .governing-header {
+    height: 190px;
+  }
+  .governing-card .governing-body-content {
+    padding: 14px 16px;
+  }
+  .governing-name {
+    font-size: 16px;
+  }
+  .governing-designation {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+  .governing-bio {
+    font-size: 12px;
+    line-height: 1.45;
+    margin-bottom: 10px;
+  }
+  .dept-grid, .campaigns-grid, .news-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px;
+  }
+  .donation-grid, .join-grid-layout {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 20px;
+  }
+  .amount-presets-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+@media (aspect-ratio: 3/5), (min-aspect-ratio: 0.55/1) and (max-aspect-ratio: 0.65/1) and (max-width: 900px) {
+  /* 5:3 Portrait Tablets (768x1280, 720x1200, 600x1000) */
+  .governing-grid, .dept-grid, .campaigns-grid, .news-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px;
+  }
+  .governing-card .governing-header {
+    height: 220px;
+  }
+  .donation-grid, .join-grid-layout {
+    grid-template-columns: 1fr !important;
+    gap: 20px;
+  }
+}
+
 @media (max-width: 1380px) and (min-width: 1025px) {
   .org-logo {
     height: 54px;

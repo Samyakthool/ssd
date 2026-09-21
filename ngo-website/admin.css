@@ -896,9 +896,29 @@ body {
 .admin-toast.success { border-left-color: var(--success); }
 .admin-toast.error { border-left-color: var(--danger); }
 
-/* ==========================================================================
-   RESPONSIVE DESIGN (ADMIN MOBILE VIEW)
-   ========================================================================== */
+/* Dedicated 5:3 Tablet Aspect Ratio Optimization */
+@media (aspect-ratio: 5/3), (min-aspect-ratio: 1.58/1) and (max-aspect-ratio: 1.75/1) and (max-width: 1400px) {
+  .admin-topbar {
+    height: 52px;
+    padding: 0 16px;
+  }
+  .admin-content {
+    padding: 14px 18px;
+  }
+  .kpi-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .admin-modal-card {
+    max-height: 86vh;
+    max-width: min(720px, 94vw);
+  }
+  .admin-modal-body {
+    max-height: calc(86vh - 110px);
+    padding: 16px 20px;
+  }
+}
+
 @media (max-width: 1024px) {
   .admin-sidebar {
     transform: translateX(-100%);
