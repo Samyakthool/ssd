@@ -459,60 +459,62 @@ button, input, select, textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 0;
+  padding: 10px 0;
   transition: padding 0.3s ease;
+  gap: 12px;
 }
 
 .header-wrapper.scrolled .header-main {
-  padding: 10px 0;
+  padding: 6px 0;
 }
 
 .brand-block {
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 14px;
   cursor: pointer;
   text-decoration: none;
+  flex-shrink: 0;
 }
 
 .logo-container {
   position: relative;
   display: flex;
   align-items: center;
-  padding-right: 24px;
-  border-right: 3px solid var(--primary-orange);
-  min-width: 120px;
+  padding-right: 14px;
+  border-right: 2px solid var(--primary-orange);
+  min-width: unset;
   flex-shrink: 0;
 }
 
 .org-logo {
-  height: 110px;
-  width: 110px;
+  height: 64px;
+  width: 64px;
   object-fit: contain;
   transition: all 0.3s ease;
   display: block !important;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.22));
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.18));
 }
 
 .header-wrapper.scrolled .org-logo {
-  height: 68px;
-  width: 68px;
+  height: 48px;
+  width: 48px;
 }
 
 .logo-fallback {
   display: none;
-  width: 90px;
-  height: 90px;
+  width: 64px;
+  height: 64px;
   background: var(--dark-navy);
-  border: 3px solid var(--primary-orange);
+  border: 2px solid var(--primary-orange);
   border-radius: 50%;
   align-items: center;
   justify-content: center;
   color: var(--white);
   font-weight: 800;
-  font-size: 24px;
+  font-size: 18px;
   letter-spacing: 1px;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
 .brand-text {
@@ -523,18 +525,20 @@ button, input, select, textarea {
 
 .org-name {
   font-family: var(--font-heading);
-  font-size: 26px;
+  font-size: 19px;
   font-weight: 900;
   color: var(--dark-navy);
-  line-height: 1.2;
-  letter-spacing: 0.6px;
+  line-height: 1.15;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .org-tagline {
-  font-size: 13.5px;
+  font-size: 11px;
   font-style: italic;
   color: var(--muted-gray);
-  margin-top: 3px;
+  margin-top: 2px;
+  white-space: nowrap;
 }
 
 /* Nav Menu */
@@ -542,28 +546,38 @@ button, input, select, textarea {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .nav-list {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex-wrap: nowrap;
 }
 
 .nav-item {
   position: relative;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .nav-link {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 10px 12px;
-  font-size: 13.5px;
+  gap: 4px;
+  padding: 7px 9px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--dark-navy);
   border-radius: 4px;
   transition: var(--transition-base);
+  white-space: nowrap;
+  line-height: 1.2;
+  text-decoration: none;
 }
 
 .nav-link:hover, .nav-link.active {
@@ -572,12 +586,23 @@ button, input, select, textarea {
 }
 
 .nav-link i.fa-chevron-down {
-  font-size: 10px;
+  font-size: 9px;
+  margin-left: 2px;
   transition: transform 0.2s ease;
 }
 
 .nav-item:hover .nav-link i.fa-chevron-down {
   transform: rotate(180deg);
+}
+
+.nav-cta {
+  flex-shrink: 0;
+}
+
+.nav-cta .btn {
+  padding: 8px 14px;
+  font-size: 12.5px;
+  white-space: nowrap;
 }
 
 .dropdown-menu {
@@ -2610,6 +2635,37 @@ body.nav-open {
 /* ==========================================================================
    RESPONSIVE MEDIA QUERIES (SMARTPHONE & TABLET)
    ========================================================================== */
+@media (max-width: 1380px) and (min-width: 1025px) {
+  .org-logo {
+    height: 54px;
+    width: 54px;
+  }
+  .org-name {
+    font-size: 16.5px;
+  }
+  .org-tagline {
+    display: none;
+  }
+  .nav-list {
+    gap: 1px;
+  }
+  .nav-link {
+    padding: 6px 7px;
+    font-size: 12px;
+    gap: 3px;
+  }
+  .nav-cta .btn {
+    padding: 6px 10px;
+    font-size: 11.5px;
+  }
+  .brand-block {
+    gap: 10px;
+  }
+  .logo-container {
+    padding-right: 10px;
+  }
+}
+
 @media (max-width: 1024px) {
   .dept-grid { grid-template-columns: repeat(2, 1fr); }
   .governing-grid { grid-template-columns: repeat(2, 1fr); }
