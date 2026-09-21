@@ -667,15 +667,19 @@ function handleMemberRegistration(e) {
   const btnText = submitBtn.querySelector(".btn-text");
   const btnSpinner = submitBtn.querySelector(".btn-spinner");
 
+  const memberName = document.getElementById("memberName") ? document.getElementById("memberName").value.trim() : "";
   const memberData = {
-    name: document.getElementById("memberName").value.trim(),
-    email: document.getElementById("memberEmail").value.trim(),
-    phone: document.getElementById("memberPhone").value.trim(),
-    wing: document.getElementById("memberWing") ? document.getElementById("memberWing").value : "Central Cadet Corps",
-    occupation: document.getElementById("memberOccupation").value,
-    state: document.getElementById("memberState").value,
-    city: document.getElementById("memberCity").value.trim(),
+    name: memberName,
+    fullName: memberName,
+    email: document.getElementById("memberEmail") ? document.getElementById("memberEmail").value.trim() : "",
+    phone: document.getElementById("memberPhone") ? document.getElementById("memberPhone").value.trim() : "",
+    wing: document.getElementById("memberWing") ? document.getElementById("memberWing").value : "Central Cadet Corps (Sainik Wing)",
+    occupation: document.getElementById("memberOccupation") ? document.getElementById("memberOccupation").value : "Social Worker",
+    state: document.getElementById("memberState") ? document.getElementById("memberState").value : "Maharashtra",
+    city: document.getElementById("memberCity") ? document.getElementById("memberCity").value.trim() : "",
     message: document.getElementById("memberMessage") ? document.getElementById("memberMessage").value.trim() : "",
+    status: "Pending",
+    source: "Membership Page Enlistment",
     timestamp: Date.now()
   };
 
@@ -1495,14 +1499,17 @@ function handleQuickJoinSubmit(e) {
   const btnText = submitBtn.querySelector(".btn-text");
   const btnSpinner = submitBtn.querySelector(".btn-spinner");
 
+  const quickName = document.getElementById("quickName") ? document.getElementById("quickName").value.trim() : "";
   const memberData = {
-    name: document.getElementById("quickName").value.trim(),
-    email: document.getElementById("quickEmail").value.trim(),
-    phone: document.getElementById("quickPhone").value.trim(),
-    wing: document.getElementById("quickWing").value,
-    state: document.getElementById("quickState").value,
-    city: document.getElementById("quickCity").value.trim(),
-    pledgeAccepted: document.getElementById("quickPledge").checked,
+    name: quickName,
+    fullName: quickName,
+    email: document.getElementById("quickEmail") ? document.getElementById("quickEmail").value.trim() : "",
+    phone: document.getElementById("quickPhone") ? document.getElementById("quickPhone").value.trim() : "",
+    wing: document.getElementById("quickWing") ? document.getElementById("quickWing").value : "Central Cadet Corps (Sainik Wing)",
+    state: document.getElementById("quickState") ? document.getElementById("quickState").value : "Maharashtra",
+    city: document.getElementById("quickCity") ? document.getElementById("quickCity").value.trim() : "",
+    pledgeAccepted: document.getElementById("quickPledge") ? document.getElementById("quickPledge").checked : true,
+    status: "Pending",
     source: "Homepage Quick Join",
     timestamp: Date.now()
   };

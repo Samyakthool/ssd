@@ -682,7 +682,8 @@ function renderOverview() {
   setText("badgeContactsCount", contactsArr.length);
 
   // Update KPI Cards
-  setText("kpiMembersTotal", (membersArr.length + (adminData.stats.members || 100000)).toLocaleString());
+  const statsMembers = (adminData.stats && adminData.stats.members) ? adminData.stats.members : 100000;
+  setText("kpiMembersTotal", (membersArr.length + statsMembers).toLocaleString());
   
   let totalDonationsAmount = donationsArr.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
   setText("kpiDonationsTotal", "₹" + totalDonationsAmount.toLocaleString());
@@ -698,13 +699,14 @@ function renderOverview() {
     return;
   }
 
-  const recent = membersArr.slice(-5).reverse();
+  const sortedMembers = [...membersArr].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+  const recent = sortedMembers.slice(0, 5);
   tbody.innerHTML = recent.map(m => `
     <tr>
       <td><strong>${escapeHtml(m.fullName || m.name || 'Anonymous')}</strong></td>
       <td>${escapeHtml(m.city ? m.city + ', ' + m.state : (m.state || 'India'))}</td>
       <td><span class="badge-status badge-info">${escapeHtml(m.wing || 'Cadet Corps')}</span></td>
-      <td><span class="badge-status ${getStatusBadgeClass(m.status || 'Verified')}">${escapeHtml(m.status || 'Verified')}</span></td>
+      <td><span class="badge-status ${getStatusBadgeClass(m.status || 'Pending')}">${escapeHtml(m.status || 'Pending')}</span></td>
     </tr>
   `).join('');
 }
@@ -724,6 +726,9 @@ function renderMembersTable(filteredList = null) {
     return;
   }
 
+  // Sort newest first
+  list.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
   tbody.innerHTML = list.map(m => {
     const regDate = m.timestamp ? new Date(m.timestamp).toLocaleDateString() : 'Recent';
     return `
@@ -737,8 +742,8 @@ function renderMembersTable(filteredList = null) {
         <td>${escapeHtml(m.city ? m.city + ', ' + m.state : (m.state || 'N/A'))}</td>
         <td><span class="badge-status badge-info">${escapeHtml(m.wing || 'Cadet Corps')}</span></td>
         <td>
-          <span class="badge-status ${getStatusBadgeClass(m.status || 'Approved')}">
-            ${escapeHtml(m.status || 'Approved')}
+          <span class="badge-status ${getStatusBadgeClass(m.status || 'Pending')}">
+            ${escapeHtml(m.status || 'Pending')}
           </span>
         </td>
         <td style="text-align: right;">
@@ -765,8 +770,11 @@ function filterMembersTable() {
     const matchSearch = (m.fullName || m.name || '').toLowerCase().includes(search) ||
                         (m.phone || '').toLowerCase().includes(search) ||
                         (m.state || '').toLowerCase().includes(search) ||
-                        (m.city || '').toLowerCase().includes(search);
-    const matchStatus = (status === "all") || (m.status === status);
+                        (m.city || '').toLowerCase().includes(search) ||
+                        (m.wing || '').toLowerCase().includes(search);
+    const mStatus = (m.status || 'Pending').toLowerCase();
+    const fStatus = status.toLowerCase();
+    const matchStatus = (status === "all") || mStatus.includes(fStatus) || fStatus.includes(mStatus);
     return matchSearch && matchStatus;
   });
 
