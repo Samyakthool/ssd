@@ -1,0 +1,9 @@
+{
+  "name": "samata-sainik-dal",
+  "version": "1.0.0",
+  "description": "Official Web Portal and Central Command for Samata Sainik Dal",
+  "type": "module",
+  "dependencies": {
+    "nodemailer": "^6.9.15"
+  }
+}

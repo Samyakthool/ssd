@@ -1302,6 +1302,7 @@ function getEmailConfig() {
   const defaultCfg = {
     senderEmail: "samyak.ssd@gmail.com",
     senderName: "Samata Sainik Dal (SSD)",
+    appPassword: "",
     serviceId: "service_ssd_official",
     donationTemplateId: "template_donation_80g",
     enrollmentTemplateId: "template_cadet_welcome",
@@ -1321,6 +1322,7 @@ function initEmailConfigForm() {
   const cfg = getEmailConfig();
   const senderEmailEl = document.getElementById("adminSenderEmail");
   const senderNameEl = document.getElementById("adminSenderName");
+  const appPassEl = document.getElementById("adminGmailAppPassword");
   const serviceIdEl = document.getElementById("adminEmailServiceId");
   const pubKeyEl = document.getElementById("adminEmailPublicKey");
   const donTplEl = document.getElementById("adminEmailDonationTpl");
@@ -1328,6 +1330,7 @@ function initEmailConfigForm() {
 
   if (senderEmailEl) senderEmailEl.value = cfg.senderEmail || "samyak.ssd@gmail.com";
   if (senderNameEl) senderNameEl.value = cfg.senderName || "Samata Sainik Dal (SSD)";
+  if (appPassEl) appPassEl.value = cfg.appPassword || "";
   if (serviceIdEl) serviceIdEl.value = cfg.serviceId || "";
   if (pubKeyEl) pubKeyEl.value = cfg.publicKey || "";
   if (donTplEl) donTplEl.value = cfg.donationTemplateId || "";
@@ -1335,7 +1338,10 @@ function initEmailConfigForm() {
 
   const badge = document.getElementById("emailSetupBadge");
   if (badge) {
-    if (cfg.publicKey && cfg.serviceId) {
+    if (cfg.appPassword) {
+      badge.className = "badge-status badge-approved";
+      badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Gmail Direct SMTP Active (' + (cfg.senderEmail || 'samyak.ssd@gmail.com') + ')';
+    } else if (cfg.publicKey && cfg.serviceId) {
       badge.className = "badge-status badge-approved";
       badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> EmailJS Active (' + (cfg.senderEmail || 'samyak.ssd@gmail.com') + ')';
     } else {
@@ -1349,6 +1355,7 @@ function saveEmailConfig(e) {
   e.preventDefault();
   const senderEmail = document.getElementById("adminSenderEmail")?.value.trim() || "samyak.ssd@gmail.com";
   const senderName = document.getElementById("adminSenderName")?.value.trim() || "Samata Sainik Dal (SSD)";
+  const appPassword = document.getElementById("adminGmailAppPassword")?.value.trim().replace(/\s+/g, '') || "";
   const serviceId = document.getElementById("adminEmailServiceId")?.value.trim() || "service_ssd_official";
   const publicKey = document.getElementById("adminEmailPublicKey")?.value.trim() || "";
   const donationTemplateId = document.getElementById("adminEmailDonationTpl")?.value.trim() || "template_donation_80g";
@@ -1357,6 +1364,7 @@ function saveEmailConfig(e) {
   const emailCfg = {
     senderEmail,
     senderName,
+    appPassword,
     serviceId,
     publicKey,
     donationTemplateId,
@@ -1369,16 +1377,16 @@ function saveEmailConfig(e) {
 
   if (db) {
     db.ref("settings/emailConfig").set(emailCfg)
-      .then(() => showToast(`Automated Email settings saved! Sender set to ${senderEmail}`, "success"))
+      .then(() => showToast(`Automated Email settings saved! Sender: ${senderEmail}`, "success"))
       .catch(err => showToast("Error saving email settings: " + err.message, "error"));
   } else {
-    showToast(`Automated Email settings saved! Sender set to ${senderEmail}`, "success");
+    showToast(`Automated Email settings saved! Sender: ${senderEmail}`, "success");
   }
   initEmailConfigForm();
 }
 
 function testSendDonationEmail() {
-  const testRecipient = prompt("Enter the email address to receive the test 80G Donation Receipt:", "admin@ssd.org");
+  const testRecipient = prompt("Enter the email address to receive the test 80G Donation Receipt:", "samyak.ssd@gmail.com");
   if (!testRecipient) return;
 
   showToast("Dispatching test 80G Contribution Receipt email...", "info");
@@ -1395,10 +1403,39 @@ function testSendDonationEmail() {
   };
 
   const cfg = getEmailConfig();
+
+  // 1. Try Direct Serverless SMTP / API Dispatch
+  fetch('/api/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'donation',
+      recipientEmail: testData.email,
+      recipientName: testData.name,
+      appPassword: cfg.appPassword,
+      data: testData
+    })
+  })
+  .then(res => res.json())
+  .then(res => {
+    if (res.success) {
+      showToast(`Success! 80G Receipt Email sent via ${res.provider} to ${testRecipient}!`, "success");
+    } else {
+      showToast(`Email Notice: ${res.error || res.message}`, "warning");
+    }
+  })
+  .catch(err => {
+    console.warn("Serverless email send error:", err);
+  });
+
+  // 2. Try EmailJS SDK if configured
   if (typeof emailjs !== "undefined" && cfg.publicKey && cfg.serviceId) {
     try {
       emailjs.init({ publicKey: cfg.publicKey });
       emailjs.send(cfg.serviceId, cfg.donationTemplateId, {
+        from_name: cfg.senderName || "Samata Sainik Dal (SSD)",
+        from_email: cfg.senderEmail || "samyak.ssd@gmail.com",
+        reply_to: cfg.senderEmail || "samyak.ssd@gmail.com",
         to_name: testData.name,
         to_email: testData.email,
         amount: testData.amount.toLocaleString(),
@@ -1408,7 +1445,7 @@ function testSendDonationEmail() {
         pan: testData.pan,
         date: new Date().toLocaleDateString('en-IN')
       }).then(() => {
-        showToast("Test 80G Donation Email successfully dispatched via EmailJS!", "success");
+        showToast("80G Donation Email also dispatched via EmailJS!", "success");
       }).catch(err => {
         console.warn("EmailJS test error:", err);
       });
@@ -1417,35 +1454,23 @@ function testSendDonationEmail() {
     }
   }
 
-  fetch('/api/send-email', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      type: 'donation',
-      recipientEmail: testData.email,
-      recipientName: testData.name,
-      data: testData
-    })
-  }).then(res => res.json()).then(res => {
-    showToast("Serverless Email Dispatch Recorded & Sent!", "success");
-  }).catch(() => {});
-
   if (db) {
     db.ref('email_dispatches').push({
       type: "Donation 80G Receipt (Test)",
+      senderEmail: cfg.senderEmail || "samyak.ssd@gmail.com",
       recipientEmail: testData.email,
       recipientName: testData.name,
       receiptNumber: testData.receiptNumber,
       amount: testData.amount,
       paymentId: testData.paymentId,
-      status: "Delivered (Test)",
+      status: "Dispatched",
       timestamp: Date.now()
     });
   }
 }
 
 function testSendEnrollmentEmail() {
-  const testRecipient = prompt("Enter the email address to receive the test Cadet Welcome Letter:", "admin@ssd.org");
+  const testRecipient = prompt("Enter the email address to receive the test Cadet Welcome Letter:", "samyak.ssd@gmail.com");
   if (!testRecipient) return;
 
   showToast("Dispatching test Cadet Enlistment Confirmation email...", "info");
@@ -1463,10 +1488,39 @@ function testSendEnrollmentEmail() {
   };
 
   const cfg = getEmailConfig();
+
+  // 1. Try Direct Serverless SMTP / API Dispatch
+  fetch('/api/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'enrollment',
+      recipientEmail: testData.email,
+      recipientName: testData.name,
+      appPassword: cfg.appPassword,
+      data: testData
+    })
+  })
+  .then(res => res.json())
+  .then(res => {
+    if (res.success) {
+      showToast(`Success! Cadet Welcome Email sent via ${res.provider} to ${testRecipient}!`, "success");
+    } else {
+      showToast(`Email Notice: ${res.error || res.message}`, "warning");
+    }
+  })
+  .catch(err => {
+    console.warn("Serverless email send error:", err);
+  });
+
+  // 2. Try EmailJS SDK if configured
   if (typeof emailjs !== "undefined" && cfg.publicKey && cfg.serviceId) {
     try {
       emailjs.init({ publicKey: cfg.publicKey });
       emailjs.send(cfg.serviceId, cfg.enrollmentTemplateId, {
+        from_name: cfg.senderName || "Samata Sainik Dal (SSD)",
+        from_email: cfg.senderEmail || "samyak.ssd@gmail.com",
+        reply_to: cfg.senderEmail || "samyak.ssd@gmail.com",
         cadet_name: testData.name,
         to_name: testData.name,
         to_email: testData.email,
@@ -1477,7 +1531,7 @@ function testSendEnrollmentEmail() {
         enlistment_id: testData.enlistmentId,
         date: new Date().toLocaleDateString('en-IN')
       }).then(() => {
-        showToast("Test Cadet Welcome Email successfully dispatched via EmailJS!", "success");
+        showToast("Cadet Welcome Email also dispatched via EmailJS!", "success");
       }).catch(err => {
         console.warn("EmailJS test error:", err);
       });
@@ -1486,28 +1540,16 @@ function testSendEnrollmentEmail() {
     }
   }
 
-  fetch('/api/send-email', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      type: 'enrollment',
-      recipientEmail: testData.email,
-      recipientName: testData.name,
-      data: testData
-    })
-  }).then(res => res.json()).then(res => {
-    showToast("Serverless Email Dispatch Recorded & Sent!", "success");
-  }).catch(() => {});
-
   if (db) {
     db.ref('email_dispatches').push({
       type: "Cadet Enlistment Welcome (Test)",
+      senderEmail: cfg.senderEmail || "samyak.ssd@gmail.com",
       recipientEmail: testData.email,
       recipientName: testData.name,
       enlistmentId: testData.enlistmentId,
       wing: testData.wing,
       state: testData.state,
-      status: "Delivered (Test)",
+      status: "Dispatched",
       timestamp: Date.now()
     });
   }

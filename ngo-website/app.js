@@ -728,6 +728,7 @@ function sendDonationEmail(donationRecord) {
       senderEmail: senderEmail,
       recipientEmail: templateParams.to_email,
       recipientName: templateParams.to_name,
+      appPassword: cfg.appPassword,
       data: donationRecord
     })
   }).catch(e => console.warn("Serverless email ping:", e));
@@ -796,6 +797,7 @@ function sendEnrollmentEmail(memberData) {
       senderEmail: senderEmail,
       recipientEmail: templateParams.to_email,
       recipientName: templateParams.cadet_name,
+      appPassword: cfg.appPassword,
       data: { ...memberData, enlistmentId: enlistId }
     })
   }).catch(e => console.warn("Serverless email ping:", e));

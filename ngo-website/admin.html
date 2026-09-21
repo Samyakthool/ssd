@@ -837,13 +837,22 @@
                   </div>
                   <div class="form-grid-modal">
                     <div class="form-group-modal">
-                      <label for="adminEmailDonationTpl">80G Donation Receipt Template ID</label>
+                      <label for="adminEmailDonationTpl">80G Donation Receipt Template ID (Optional)</label>
                       <input type="text" id="adminEmailDonationTpl" placeholder="e.g. template_donation_80g" style="font-family: monospace; font-size: 12.5px;">
                     </div>
                     <div class="form-group-modal">
-                      <label for="adminEmailEnrollmentTpl">Cadet Enlistment Welcome Template ID</label>
+                      <label for="adminEmailEnrollmentTpl">Cadet Enlistment Welcome Template ID (Optional)</label>
                       <input type="text" id="adminEmailEnrollmentTpl" placeholder="e.g. template_cadet_welcome" style="font-family: monospace; font-size: 12.5px;">
                     </div>
+                  </div>
+                  <div class="form-group-modal" style="margin-top: 10px; background: rgba(255, 107, 0, 0.05); padding: 14px; border-radius: 6px; border: 1px dashed var(--primary-orange);">
+                    <label for="adminGmailAppPassword" style="color: var(--primary-orange); font-weight: 700;">
+                      <i class="fa-brands fa-google"></i> Gmail 16-Digit App Password (for Direct samyak.ssd@gmail.com Sending)
+                    </label>
+                    <input type="password" id="adminGmailAppPassword" placeholder="e.g. abcd efgh ijkl mnop" style="font-family: monospace; font-size: 13px;">
+                    <p style="font-size: 11.5px; color: var(--text-muted); margin: 6px 0 0; line-height: 1.4;">
+                      To send emails directly from <strong>samyak.ssd@gmail.com</strong>: Enable 2-Step Verification in Google ➔ Open <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color: var(--primary-orange); text-decoration: underline;">Google App Passwords</a> ➔ Generate a password for 'Mail' ➔ Paste the 16 characters here.
+                    </p>
                   </div>
                   <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 14px;">
                     <button type="submit" class="btn-admin btn-admin-primary">

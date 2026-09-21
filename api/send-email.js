@@ -1,5 +1,6 @@
 // Vercel Serverless Function: /api/send-email
-// Handles automated email dispatch for transactions (80G receipts) and cadet enrollments
+// Handles direct automated email dispatch from samyak.ssd@gmail.com via Nodemailer Gmail SMTP
+import nodemailer from 'nodemailer';
 
 export default async function handler(req, res) {
   // CORS Headers
@@ -21,7 +22,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { type, recipientEmail, recipientName, data, emailConfig } = req.body || {};
+    const { type, recipientEmail, recipientName, data, appPassword } = req.body || {};
 
     if (!recipientEmail) {
       return res.status(400).json({ success: false, message: 'Recipient email is required.' });
@@ -29,54 +30,67 @@ export default async function handler(req, res) {
 
     const timestamp = new Date().toISOString();
     const dispatchId = 'disp_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+    const gmailAppPassword = (process.env.GMAIL_APP_PASSWORD || appPassword || '').trim().replace(/\s+/g, '');
+    const senderEmail = process.env.SENDER_EMAIL || 'samyak.ssd@gmail.com';
+    const senderName = 'Samata Sainik Dal (SSD)';
 
-    // If Resend API Key is available in environment variables, dispatch via Resend
-    if (process.env.RESEND_API_KEY) {
+    const isDonation = type === 'donation';
+    const subject = isDonation
+      ? `Official 80G Contribution Receipt - Samata Sainik Dal [${data?.receiptNumber || 'SSD-REC-2026'}]`
+      : `Official Cadet Enlistment Confirmed - Samata Sainik Dal [${data?.enlistmentId || 'SSD-CADET-2026'}]`;
+
+    const html = isDonation ? generateDonationReceiptHtml(data) : generateEnrollmentWelcomeHtml(data);
+
+    // 1. If Gmail App Password is provided, send real email directly via Nodemailer Gmail SMTP
+    if (gmailAppPassword) {
       try {
-        const subject = type === 'donation' 
-          ? `Official 80G Contribution Receipt - Samata Sainik Dal [${data?.receiptNumber || 'SSD-REC'}]`
-          : `Official Cadet Enlistment Confirmed - Samata Sainik Dal [${data?.enlistmentId || 'CADET-ENLIST'}]`;
-
-        const html = type === 'donation' ? generateDonationReceiptHtml(data) : generateEnrollmentWelcomeHtml(data);
-
-        const resendRes = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            from: process.env.EMAIL_FROM || 'Samata Sainik Dal <samyak.ssd@gmail.com>',
-            reply_to: 'samyak.ssd@gmail.com',
-            to: [recipientEmail],
-            subject: subject,
-            html: html
-          })
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: senderEmail,
+            pass: gmailAppPassword
+          }
         });
 
-        const resendData = await resendRes.json();
+        const mailOptions = {
+          from: `"${senderName}" <${senderEmail}>`,
+          replyTo: senderEmail,
+          to: recipientEmail,
+          subject: subject,
+          html: html
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+
         return res.status(200).json({
           success: true,
-          provider: 'Resend API',
+          provider: 'Gmail SMTP (Nodemailer)',
+          messageId: info.messageId,
           dispatchId: dispatchId,
-          result: resendData,
-          timestamp: timestamp
+          recipient: recipientEmail,
+          status: 'Delivered to Inbox'
         });
-      } catch (err) {
-        console.warn('Resend dispatch error, falling back to recorded dispatch:', err);
+      } catch (smtpErr) {
+        console.error('Gmail SMTP error:', smtpErr);
+        return res.status(500).json({
+          success: false,
+          provider: 'Gmail SMTP',
+          error: smtpErr.message || 'SMTP Authentication failed. Please check your 16-character Gmail App Password.',
+          dispatchId: dispatchId
+        });
       }
     }
 
-    // Default response for client-side EmailJS integration logging
+    // 2. Fallback: Log recorded dispatch
     return res.status(200).json({
       success: true,
-      provider: 'Automated Dispatch Engine',
+      provider: 'Automated Dispatch Logger',
       dispatchId: dispatchId,
       type: type,
       recipient: recipientEmail,
       name: recipientName,
       timestamp: timestamp,
-      status: 'Dispatched & Recorded'
+      status: 'Recorded. Add Gmail App Password in Admin Settings to deliver live emails directly.'
     });
 
   } catch (error) {
@@ -94,7 +108,7 @@ function generateDonationReceiptHtml(data) {
       </div>
       <div style="padding: 24px; color: #1e293b;">
         <h2 style="color: #001f3f; margin-top: 0;">Official 80G Contribution Receipt</h2>
-        <p>Dear <strong>${data?.name || 'Supporter'}</strong>, Jai Bhim!</p>
+        <p>Dear <strong>${data?.name || data?.donorName || 'Supporter'}</strong>, Jai Bhim!</p>
         <p>Thank you for your generous contribution to Samata Sainik Dal. Your support empowers our nationwide constitutional literacy, youth cadet training, and community defense initiatives.</p>
         
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
@@ -120,7 +134,7 @@ function generateDonationReceiptHtml(data) {
           </tr>
           <tr style="border-bottom: 1px solid #e2e8f0;">
             <td style="padding: 10px; font-weight: bold; color: #64748b;">Date & Time</td>
-            <td style="padding: 10px; color: #1e293b;">${new Date(data?.timestamp || Date.now()).toLocaleDateString()}</td>
+            <td style="padding: 10px; color: #1e293b;">${new Date(data?.timestamp || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</td>
           </tr>
         </table>
 
@@ -170,7 +184,7 @@ function generateEnrollmentWelcomeHtml(data) {
           </tr>
           <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
             <td style="padding: 10px; font-weight: bold; color: #64748b;">Date of Enlistment</td>
-            <td style="padding: 10px; color: #1e293b;">${new Date(data?.timestamp || Date.now()).toLocaleDateString()}</td>
+            <td style="padding: 10px; color: #1e293b;">${new Date(data?.timestamp || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</td>
           </tr>
         </table>
 
