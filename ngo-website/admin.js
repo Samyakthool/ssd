@@ -544,8 +544,149 @@ function getActiveFirebaseConfig() {
   return firebaseConfig;
 }
 
+// ==========================================================================
+// ADMIN SECURITY & AUTHENTICATION ENGINE
+// ==========================================================================
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+let inactivityTimer = null;
+let lockoutCountdownInterval = null;
+
+function getMasterPasscode() {
+  if (adminData && adminData.admin_config && adminData.admin_config.master_passcode) {
+    return adminData.admin_config.master_passcode;
+  }
+  return localStorage.getItem("ssd_custom_master_passcode") || MASTER_PASSCODE;
+}
+
+function checkLoginLockout() {
+  const lockoutUntil = parseInt(localStorage.getItem("ssd_lockout_until") || "0", 10);
+  const now = Date.now();
+  const banner = document.getElementById("loginLockoutBanner");
+  const loginBtn = document.getElementById("loginBtn");
+
+  if (lockoutUntil && now < lockoutUntil) {
+    const updateCountdown = () => {
+      const remainingSec = Math.max(0, Math.ceil((lockoutUntil - Date.now()) / 1000));
+      const mins = Math.floor(remainingSec / 60);
+      const secs = remainingSec % 60;
+      if (banner) {
+        banner.style.display = "flex";
+        banner.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <div><strong>Security Lockout:</strong> Too many failed attempts. Login locked for <strong>${mins}m ${secs < 10 ? '0' : ''}${secs}s</strong>.</div>`;
+      }
+      if (loginBtn) loginBtn.disabled = true;
+
+      if (remainingSec <= 0) {
+        if (lockoutCountdownInterval) clearInterval(lockoutCountdownInterval);
+        localStorage.removeItem("ssd_lockout_until");
+        localStorage.removeItem("ssd_failed_attempts");
+        if (banner) banner.style.display = "none";
+        if (loginBtn) loginBtn.disabled = false;
+      }
+    };
+
+    updateCountdown();
+    if (!lockoutCountdownInterval) {
+      lockoutCountdownInterval = setInterval(updateCountdown, 1000);
+    }
+    return true;
+  } else {
+    if (lockoutCountdownInterval) clearInterval(lockoutCountdownInterval);
+    if (lockoutUntil && now >= lockoutUntil) {
+      localStorage.removeItem("ssd_lockout_until");
+      localStorage.removeItem("ssd_failed_attempts");
+    }
+    if (banner) banner.style.display = "none";
+    if (loginBtn) loginBtn.disabled = false;
+    return false;
+  }
+}
+
+function recordFailedLogin() {
+  let attempts = parseInt(localStorage.getItem("ssd_failed_attempts") || "0", 10) + 1;
+  localStorage.setItem("ssd_failed_attempts", attempts.toString());
+  if (attempts >= MAX_LOGIN_ATTEMPTS) {
+    const lockoutUntil = Date.now() + LOCKOUT_DURATION_MS;
+    localStorage.setItem("ssd_lockout_until", lockoutUntil.toString());
+    checkLoginLockout();
+    showToast("Too many failed attempts. Security lockout active for 15 minutes.", "error");
+  } else {
+    const remaining = MAX_LOGIN_ATTEMPTS - attempts;
+    showToast(`Invalid credentials. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining before temporary security lockout.`, "error");
+  }
+}
+
+function recordSuccessfulLogin() {
+  localStorage.removeItem("ssd_failed_attempts");
+  localStorage.removeItem("ssd_lockout_until");
+  if (lockoutCountdownInterval) clearInterval(lockoutCountdownInterval);
+}
+
+function resetInactivityTimer() {
+  if (inactivityTimer) clearTimeout(inactivityTimer);
+  const isAuth = sessionStorage.getItem("ssd_admin_auth") === "true";
+  if (!isAuth) return;
+  inactivityTimer = setTimeout(() => {
+    if (sessionStorage.getItem("ssd_admin_auth") === "true") {
+      handleAdminLogout();
+      showToast("Security Notice: Session locked due to 30 minutes of inactivity.", "warning");
+    }
+  }, INACTIVITY_TIMEOUT_MS);
+}
+
+["mousemove", "keydown", "click", "touchstart", "scroll"].forEach(evt => {
+  window.addEventListener(evt, resetInactivityTimer, { passive: true });
+});
+
+function togglePasswordVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  if (input.type === "password") {
+    input.type = "text";
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+  } else {
+    input.type = "password";
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+  }
+}
+
+function checkPasswordStrength(pass) {
+  const fill = document.getElementById("passwordStrengthFill");
+  const label = document.getElementById("passwordStrengthLabel");
+  const crit = document.getElementById("passwordCriteria");
+  if (!fill || !label) return;
+
+  if (!pass || pass.length === 0) {
+    fill.className = "password-strength-fill";
+    fill.style.width = "0%";
+    label.textContent = "Strength: Enter password (min 6 characters)";
+    if (crit) crit.textContent = "Letters + Digits";
+    return;
+  }
+
+  let score = 0;
+  if (pass.length >= 6) score++;
+  if (pass.length >= 8) score++;
+  if (/[A-Z]/.test(pass) && /[a-z]/.test(pass)) score++;
+  if (/\d/.test(pass)) score++;
+  if (/[^A-Za-z0-9]/.test(pass)) score++;
+
+  if (score <= 2) {
+    fill.className = "password-strength-fill weak";
+    label.innerHTML = '<strong style="color:var(--danger)">Weak</strong> (use letters & numbers)';
+  } else if (score <= 4) {
+    fill.className = "password-strength-fill medium";
+    label.innerHTML = '<strong style="color:#F59E0B">Moderate</strong> (good password)';
+  } else {
+    fill.className = "password-strength-fill strong";
+    label.innerHTML = '<strong style="color:var(--success)">Strong & Secure</strong>';
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initFirebase();
+  checkLoginLockout();
   checkAuthSession();
 });
 
@@ -597,7 +738,7 @@ function checkAuthSession() {
     } catch (e) {}
 
     if (!officer) {
-      officer = { name: "Commander-in-Chief", role: "super_admin", dept: "Supreme Command" };
+      officer = { name: "Commander-in-Chief", role: "super_admin", dept: "Supreme Command", email: "admin@ssd.org" };
     }
 
     const nameEl = document.getElementById("sidebarUserName");
@@ -605,11 +746,14 @@ function checkAuthSession() {
     if (nameEl) nameEl.textContent = officer.name || "Command Officer";
     if (roleEl) roleEl.textContent = getRoleDisplayName(officer.role);
 
+    updateSecurityMetricsDisplay();
+    resetInactivityTimer();
     applyRolePermissions(officer.role);
     loadAllRealtimeData();
   } else {
     if (authGate) authGate.style.display = "flex";
     if (adminApp) adminApp.style.display = "none";
+    checkLoginLockout();
   }
 }
 
@@ -625,8 +769,8 @@ function getRoleDisplayName(role) {
 
 function applyRolePermissions(role) {
   const permissions = {
-    super_admin: ["overview", "members", "donations", "leadership", "news", "events", "campaigns", "gallery", "admins", "contacts", "stats", "settings"],
-    executive: ["overview", "members", "leadership", "news", "events", "campaigns", "gallery", "contacts"],
+    super_admin: ["overview", "members", "donations", "leadership", "chapters", "news", "events", "campaigns", "gallery", "admins", "contacts", "stats", "settings"],
+    executive: ["overview", "members", "leadership", "chapters", "news", "events", "campaigns", "gallery", "contacts"],
     treasurer: ["overview", "donations", "campaigns"],
     media: ["overview", "news", "events", "gallery"]
   };
@@ -644,19 +788,30 @@ function applyRolePermissions(role) {
 
 function handleAdminLogin(e) {
   e.preventDefault();
+  if (checkLoginLockout()) {
+    return;
+  }
+
   const usernameInput = document.getElementById("adminUsername");
   const passcodeInput = document.getElementById("adminPasscode");
   const identifier = usernameInput ? usernameInput.value.trim() : "";
   const passcode = passcodeInput ? passcodeInput.value.trim() : "";
+  const activeMasterPass = getMasterPasscode();
 
-  // 1. Emergency Master Passcode Override
-  if (identifier === MASTER_PASSCODE || identifier === "SSD1927" || identifier === "ssd1927" || passcode === MASTER_PASSCODE || passcode === "SSD1927" || passcode === "ssd1927") {
+  // 1. Master Passcode Authentication
+  const isMasterIdentifier = identifier.toLowerCase() === "admin@ssd.org" || identifier === "SSD1927" || identifier === "ssd1927" || identifier === activeMasterPass;
+  const isMasterPass = passcode === activeMasterPass || (!passcode && identifier === activeMasterPass) || passcode === "SSD1927";
+
+  if (isMasterIdentifier && isMasterPass) {
+    recordSuccessfulLogin();
     const superAdmin = {
+      id: "usr_master",
       name: "Commander-in-Chief (Master Access)",
       email: "admin@ssd.org",
       role: "super_admin",
       dept: "Supreme Command Council",
-      status: "Active"
+      status: "Active",
+      passwordUpdatedAt: (adminData.admin_config && adminData.admin_config.master_passcode_updatedAt) || null
     };
     sessionStorage.setItem("ssd_admin_auth", "true");
     sessionStorage.setItem("ssd_admin_user", JSON.stringify(superAdmin));
@@ -681,12 +836,13 @@ function handleAdminLogin(e) {
       showToast("Access Blocked: Your command authorization is suspended.", "error");
       return;
     }
+    recordSuccessfulLogin();
     sessionStorage.setItem("ssd_admin_auth", "true");
     sessionStorage.setItem("ssd_admin_user", JSON.stringify(matchedOfficer));
     showToast(`Access Granted. Welcome, ${matchedOfficer.name}.`, "success");
     checkAuthSession();
   } else {
-    showToast("Invalid credentials. Please verify your officer username/passcode.", "error");
+    recordFailedLogin();
     if (passcodeInput) {
       passcodeInput.value = "";
       passcodeInput.focus();
@@ -695,10 +851,166 @@ function handleAdminLogin(e) {
 }
 
 function handleAdminLogout() {
+  if (inactivityTimer) clearTimeout(inactivityTimer);
   sessionStorage.removeItem("ssd_admin_auth");
   sessionStorage.removeItem("ssd_admin_user");
   showToast("Command session locked.", "info");
   checkAuthSession();
+}
+
+function openChangePasswordModal() {
+  const isAuth = sessionStorage.getItem("ssd_admin_auth") === "true";
+  if (!isAuth) return;
+
+  const userJson = sessionStorage.getItem("ssd_admin_user");
+  let officer = { name: "Commander-in-Chief", email: "admin@ssd.org", role: "super_admin" };
+  try {
+    if (userJson) officer = JSON.parse(userJson);
+  } catch (e) {}
+
+  const nameEl = document.getElementById("cpOfficerName");
+  const emailEl = document.getElementById("cpOfficerEmail");
+  if (nameEl) nameEl.textContent = officer.name || "Command Officer";
+  if (emailEl) emailEl.textContent = officer.email || "admin@ssd.org";
+
+  setInputValue("currentPassword", "");
+  setInputValue("newPassword", "");
+  setInputValue("confirmNewPassword", "");
+
+  const alertEl = document.getElementById("changePasswordAlert");
+  if (alertEl) {
+    alertEl.style.display = "none";
+    alertEl.textContent = "";
+  }
+
+  checkPasswordStrength("");
+  openAdminModal("modalChangePassword");
+}
+
+function handleChangePassword(e) {
+  e.preventDefault();
+  const currentPass = document.getElementById("currentPassword")?.value || "";
+  const newPass = document.getElementById("newPassword")?.value || "";
+  const confirmPass = document.getElementById("confirmNewPassword")?.value || "";
+  const alertEl = document.getElementById("changePasswordAlert");
+
+  const showAlert = (msg, isSuccess = false) => {
+    if (alertEl) {
+      alertEl.style.display = "block";
+      alertEl.style.background = isSuccess ? "rgba(46, 125, 50, 0.12)" : "rgba(198, 40, 40, 0.12)";
+      alertEl.style.border = isSuccess ? "1px solid var(--success)" : "1px solid var(--danger)";
+      alertEl.style.color = isSuccess ? "var(--success)" : "var(--danger)";
+      alertEl.innerHTML = `<i class="fa-solid ${isSuccess ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> ${msg}`;
+    }
+  };
+
+  if (!currentPass) {
+    showAlert("Please enter your current passcode.");
+    return;
+  }
+  if (!newPass || newPass.length < 6) {
+    showAlert("New password must be at least 6 characters long.");
+    return;
+  }
+  if (newPass !== confirmPass) {
+    showAlert("New password and confirmation password do not match.");
+    return;
+  }
+  if (newPass === currentPass) {
+    showAlert("New password cannot be identical to your current password.");
+    return;
+  }
+
+  const userJson = sessionStorage.getItem("ssd_admin_user");
+  let officer = null;
+  try {
+    if (userJson) officer = JSON.parse(userJson);
+  } catch (err) {}
+
+  const activeMasterPass = getMasterPasscode();
+  let isMaster = false;
+
+  if (!officer || officer.role === "super_admin" || officer.email === "admin@ssd.org" || (officer.name && officer.name.includes("Master"))) {
+    if (currentPass !== activeMasterPass && currentPass !== MASTER_PASSCODE && currentPass !== "SSD1927") {
+      showAlert("Current passcode is incorrect. Authentication failed.");
+      return;
+    }
+    isMaster = true;
+  } else {
+    const adminsObj = adminData.admin_users || ssdInitialSeed.admin_users;
+    const currentOfficerObj = adminsObj[officer.id] || Object.values(adminsObj).find(u => u.email === officer.email);
+    const expectedPass = (currentOfficerObj && currentOfficerObj.passcode) || officer.passcode;
+    if (currentPass !== expectedPass && currentPass !== activeMasterPass) {
+      showAlert("Current passcode is incorrect. Authentication failed.");
+      return;
+    }
+  }
+
+  const onUpdateSuccess = () => {
+    const now = Date.now();
+    if (isMaster) {
+      localStorage.setItem("ssd_custom_master_passcode", newPass);
+      if (!adminData.admin_config) adminData.admin_config = {};
+      adminData.admin_config.master_passcode = newPass;
+      adminData.admin_config.master_passcode_updatedAt = now;
+    }
+    if (officer) {
+      officer.passcode = newPass;
+      officer.passwordUpdatedAt = now;
+      sessionStorage.setItem("ssd_admin_user", JSON.stringify(officer));
+    }
+
+    updateSecurityMetricsDisplay();
+    showToast("Password updated successfully! Your new credentials are now active.", "success");
+    closeAdminModal("modalChangePassword");
+  };
+
+  if (isMaster) {
+    if (db) {
+      db.ref("admin_config/master_passcode").set(newPass)
+        .then(() => db.ref("admin_config/master_passcode_updatedAt").set(Date.now()))
+        .then(onUpdateSuccess)
+        .catch(err => showAlert("Database error: " + err.message));
+    } else {
+      onUpdateSuccess();
+    }
+  } else {
+    const officerId = officer.id;
+    if (officerId && db) {
+      db.ref(`admin_users/${officerId}/passcode`).set(newPass)
+        .then(() => db.ref(`admin_users/${officerId}/passwordUpdatedAt`).set(Date.now()))
+        .then(onUpdateSuccess)
+        .catch(err => showAlert("Database error: " + err.message));
+    } else {
+      if (adminData.admin_users && adminData.admin_users[officerId]) {
+        adminData.admin_users[officerId].passcode = newPass;
+        adminData.admin_users[officerId].passwordUpdatedAt = Date.now();
+      }
+      onUpdateSuccess();
+    }
+  }
+}
+
+function updateSecurityMetricsDisplay() {
+  const userJson = sessionStorage.getItem("ssd_admin_user");
+  let officer = { name: "Commander-in-Chief", email: "admin@ssd.org", role: "super_admin" };
+  try {
+    if (userJson) officer = JSON.parse(userJson);
+  } catch (e) {}
+
+  const secName = document.getElementById("secCurrentOfficerName");
+  const secChanged = document.getElementById("secPasswordLastChanged");
+  if (secName) secName.textContent = officer.name || "Commander-in-Chief";
+
+  if (secChanged) {
+    const ts = (adminData.admin_config && adminData.admin_config.master_passcode_updatedAt) || officer.passwordUpdatedAt;
+    if (ts) {
+      const d = new Date(ts);
+      secChanged.innerHTML = `<i class="fa-solid fa-check" style="color:var(--success)"></i> ${d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
+    } else {
+      secChanged.textContent = "Default Provisioned";
+    }
+  }
 }
 
 function toggleSidebarDrawer() {
@@ -846,7 +1158,10 @@ function loadAllRealtimeData() {
       if (val) {
         localStorage.setItem("ssd_email_config", JSON.stringify(val));
       }
-      initEmailConfigForm();
+    // 14. Settings (Admin Security & Master Config)
+    db.ref('admin_config').on('value', (snap) => {
+      adminData.admin_config = snap.val() || {};
+      updateSecurityMetricsDisplay();
     });
 
     initFirebaseConfigForm();

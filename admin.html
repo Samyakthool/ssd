@@ -22,7 +22,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
   <!-- Admin Stylesheet -->
-  <link rel="stylesheet" href="admin.css?v=3.6">
+  <link rel="stylesheet" href="admin.css?v=3.7">
 </head>
 <body>
 
@@ -39,16 +39,22 @@
       <div class="auth-body">
         <div class="auth-hint">
           <i class="fa-solid fa-shield-halved"></i>
-          <div>Multi-User Officer Login & Master Passcode: <code>SSD1927</code></div>
+          <div>Multi-User Officer Login & Master Passcode Access</div>
         </div>
+        <div id="loginLockoutBanner" class="login-lockout-banner" style="display: none;"></div>
         <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
           <div class="form-group-modal" style="margin-bottom: 14px;">
-            <label for="adminUsername">Officer Username / Email / Passcode</label>
-            <input type="text" id="adminUsername" placeholder="e.g. admin@ssd.org or SSD1927" required autocomplete="username" autofocus>
+            <label for="adminUsername">Officer Username / Email</label>
+            <input type="text" id="adminUsername" placeholder="e.g. admin@ssd.org" required autocomplete="username" autofocus>
           </div>
           <div class="form-group-modal" style="margin-bottom: 18px;" id="passcodeGroup">
-            <label for="adminPasscode">Officer Passcode / PIN</label>
-            <input type="password" id="adminPasscode" placeholder="••••••••" autocomplete="current-password">
+            <label for="adminPasscode">Officer Passcode / Password</label>
+            <div class="password-input-wrap">
+              <input type="password" id="adminPasscode" placeholder="••••••••" autocomplete="current-password">
+              <button type="button" class="btn-toggle-pass" onclick="togglePasswordVisibility('adminPasscode', this)" aria-label="Toggle Password Visibility">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
           </div>
           <button type="submit" id="loginBtn" class="btn-admin btn-admin-primary" style="width: 100%; justify-content: center; padding: 12px;">
             <i class="fa-solid fa-key"></i> Authenticate & Enter Portal
@@ -196,9 +202,14 @@
             <div class="role" id="sidebarUserRole">Supreme Council Level</div>
           </div>
         </div>
-        <button type="button" class="btn-logout" onclick="handleAdminLogout()" title="Lock & Logout">
-          <i class="fa-solid fa-right-from-bracket"></i>
-        </button>
+        <div style="display: flex; gap: 6px; align-items: center;">
+          <button type="button" class="btn-change-pass-quick" onclick="openChangePasswordModal()" title="Change Your Officer Password">
+            <i class="fa-solid fa-key"></i> Key
+          </button>
+          <button type="button" class="btn-logout" onclick="handleAdminLogout()" title="Lock & Logout">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
       </div>
     </aside>
 
@@ -669,6 +680,45 @@
              VIEW: AUTHORIZED ADMIN USERS & ROLES
              ========================================== -->
         <section id="viewAdmins" class="view-panel">
+          <!-- Command Security Overview Card -->
+          <div class="card-panel" style="margin-bottom: 24px; border-left: 4px solid var(--primary-orange);">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <div class="security-card-header-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <div>
+                  <h3 style="font-size: 16px;">Command Access Security & Credential Management</h3>
+                  <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Multi-layer authentication protection, brute-force defense, and self-service password changing</p>
+                </div>
+              </div>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openChangePasswordModal()">
+                  <i class="fa-solid fa-key"></i> Change My Password
+                </button>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="openAddAdminUserModal()">
+                  <i class="fa-solid fa-user-plus"></i> Authorize New Officer
+                </button>
+              </div>
+            </div>
+            <div class="security-session-info" style="padding: 0 24px 20px;">
+              <div class="security-metric-box">
+                <div class="sec-label"><i class="fa-solid fa-user-check"></i> Authenticated As</div>
+                <div class="sec-value" id="secCurrentOfficerName">Commander-in-Chief</div>
+              </div>
+              <div class="security-metric-box">
+                <div class="sec-label"><i class="fa-solid fa-shield-virus"></i> Brute-Force Protection</div>
+                <div class="sec-value" style="color: var(--success);"><i class="fa-solid fa-circle-check"></i> Active (5-Attempt Lockout)</div>
+              </div>
+              <div class="security-metric-box">
+                <div class="sec-label"><i class="fa-solid fa-clock-rotate-left"></i> Inactivity Auto-Lock</div>
+                <div class="sec-value"><i class="fa-solid fa-hourglass-half"></i> 30-Minute Timeout</div>
+              </div>
+              <div class="security-metric-box">
+                <div class="sec-label"><i class="fa-solid fa-calendar-check"></i> Password Last Changed</div>
+                <div class="sec-value" id="secPasswordLastChanged">Default Provisioned</div>
+              </div>
+            </div>
+          </div>
+
           <div class="card-panel">
             <div class="card-panel-header">
               <div class="card-panel-title">
@@ -1440,7 +1490,12 @@
           <div class="form-grid-modal">
             <div class="form-group-modal">
               <label for="newAdminPasscode">Access Passcode / Password</label>
-              <input type="text" id="newAdminPasscode" required placeholder="e.g. EXEC1927" style="font-family: monospace;">
+              <div class="password-input-wrap">
+                <input type="password" id="newAdminPasscode" required placeholder="e.g. EXEC1927" style="font-family: monospace;">
+                <button type="button" class="btn-toggle-pass" onclick="togglePasswordVisibility('newAdminPasscode', this)" aria-label="Toggle Password Visibility">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+              </div>
             </div>
             <div class="form-group-modal">
               <label for="newAdminRole">Assigned Access Role</label>
@@ -1469,6 +1524,79 @@
         <div class="admin-modal-footer">
           <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalAdminUser')">Cancel</button>
           <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-user-check"></i> Save Officer Authorization</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CHANGE PASSWORD & SECURITY MODAL -->
+  <div id="modalChangePassword" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 520px;">
+      <div class="admin-modal-header" style="background: var(--navy-dark); color: white;">
+        <h3 style="display: flex; align-items: center; gap: 8px; font-size: 16px; color: white;">
+          <i class="fa-solid fa-lock" style="color: var(--primary-orange);"></i> Change Officer Access Password
+        </h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalChangePassword')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formChangePassword" onsubmit="handleChangePassword(event)">
+        <div class="admin-modal-body">
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; font-size: 12.5px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span style="color: var(--text-muted);">Active Officer:</span>
+              <strong style="color: var(--dark-navy);" id="cpOfficerName">Commander-in-Chief</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Account Username:</span>
+              <strong style="color: var(--dark-navy);" id="cpOfficerEmail">admin@ssd.org</strong>
+            </div>
+          </div>
+
+          <div class="form-group-modal" style="margin-bottom: 14px;">
+            <label for="currentPassword">Current Passcode / Password <span style="color: var(--danger);">*</span></label>
+            <div class="password-input-wrap">
+              <input type="password" id="currentPassword" required placeholder="Enter current passcode" autocomplete="current-password">
+              <button type="button" class="btn-toggle-pass" onclick="togglePasswordVisibility('currentPassword', this)" aria-label="Toggle Password Visibility">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group-modal" style="margin-bottom: 14px;">
+            <label for="newPassword">New Password / Passcode <span style="color: var(--danger);">*</span></label>
+            <div class="password-input-wrap">
+              <input type="password" id="newPassword" required placeholder="Enter new strong password" minlength="6" autocomplete="new-password" oninput="checkPasswordStrength(this.value)">
+              <button type="button" class="btn-toggle-pass" onclick="togglePasswordVisibility('newPassword', this)" aria-label="Toggle Password Visibility">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+            <div class="password-strength-wrap">
+              <div class="password-strength-bar">
+                <div id="passwordStrengthFill" class="password-strength-fill"></div>
+              </div>
+              <div class="password-strength-text">
+                <span id="passwordStrengthLabel">Strength: Enter password (min 6 characters)</span>
+                <span id="passwordCriteria">Letters + Digits</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group-modal">
+            <label for="confirmNewPassword">Confirm New Password <span style="color: var(--danger);">*</span></label>
+            <div class="password-input-wrap">
+              <input type="password" id="confirmNewPassword" required placeholder="Re-type new password" minlength="6" autocomplete="new-password">
+              <button type="button" class="btn-toggle-pass" onclick="togglePasswordVisibility('confirmNewPassword', this)" aria-label="Toggle Password Visibility">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div id="changePasswordAlert" style="display: none; margin-top: 12px; font-size: 12.5px; padding: 8px 12px; border-radius: 6px;"></div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalChangePassword')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary">
+            <i class="fa-solid fa-shield-halved"></i> Update & Secure Password
+          </button>
         </div>
       </form>
     </div>
@@ -1560,6 +1688,6 @@
   </div>
 
   <!-- Admin Application Script -->
-  <script src="admin.js?v=3.6"></script>
+  <script src="admin.js?v=3.7"></script>
 </body>
 </html>
