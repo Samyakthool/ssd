@@ -280,14 +280,25 @@ const ssdSampleData = {
 };
 
 // Initialize Firebase
+function getActiveFirebaseConfig() {
+  try {
+    const custom = localStorage.getItem("ssd_firebase_config");
+    if (custom) return JSON.parse(custom);
+  } catch (e) {
+    console.warn("Custom Firebase config parse error:", e);
+  }
+  return firebaseConfig;
+}
+
+const activeFirebaseConfig = getActiveFirebaseConfig();
 try {
-  if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
-    firebaseApp = firebase.initializeApp(firebaseConfig);
+  if (activeFirebaseConfig.apiKey && activeFirebaseConfig.apiKey !== "YOUR_API_KEY") {
+    firebaseApp = firebase.initializeApp(activeFirebaseConfig);
     db = firebase.database();
     isFirebaseLive = true;
     updateDbStatus(true, "Connected to Live SSD Firebase Database");
   } else {
-    updateDbStatus(false, "SSD Official Demo Ready (Insert Firebase Config to sync live)");
+    updateDbStatus(false, "SSD Official Demo Ready (Connect Firebase in Admin Panel)");
   }
 } catch (e) {
   console.warn("Firebase Init Notice:", e);

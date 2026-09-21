@@ -589,6 +589,61 @@
              ========================================== -->
         <section id="viewSettings" class="view-panel">
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+            <!-- Firebase Realtime Database Live Connection Setup -->
+            <div class="card-panel" style="grid-column: 1 / -1; border-left: 4px solid var(--primary-orange);">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-cloud-bolt" style="color: var(--primary-orange);"></i>
+                  <h3>Firebase Realtime Database Live Connection</h3>
+                </div>
+                <div id="fbSetupConnectionBadge" class="badge-status badge-pending">
+                  <i class="fa-solid fa-circle-exclamation"></i> Action Required: Configure Credentials
+                </div>
+              </div>
+              <div style="padding: 24px;">
+                <p style="color: var(--text-muted); font-size: 13.5px; margin-bottom: 18px; line-height: 1.5;">
+                  Connect your live Google Firebase Realtime Database to synchronize sainik registrations, 80G centenary donations, dispatches, and public counter updates across all devices in real-time.
+                </p>
+                <form id="firebaseConfigForm" onsubmit="saveFirebaseConfig(event)">
+                  <div class="form-grid-modal">
+                    <div class="form-group-modal">
+                      <label for="fbApiKey">API Key (apiKey)</label>
+                      <input type="text" id="fbApiKey" placeholder="AIzaSy..." required style="font-family: monospace; font-size: 12.5px;">
+                    </div>
+                    <div class="form-group-modal">
+                      <label for="fbDbUrl">Database URL (databaseURL)</label>
+                      <input type="url" id="fbDbUrl" placeholder="https://your-project-default-rtdb.firebaseio.com" required style="font-family: monospace; font-size: 12.5px;">
+                    </div>
+                  </div>
+                  <div class="form-grid-modal">
+                    <div class="form-group-modal">
+                      <label for="fbProjectId">Project ID (projectId)</label>
+                      <input type="text" id="fbProjectId" placeholder="samata-sainik-dal" required style="font-family: monospace; font-size: 12.5px;">
+                    </div>
+                    <div class="form-group-modal">
+                      <label for="fbAuthDomain">Auth Domain (authDomain)</label>
+                      <input type="text" id="fbAuthDomain" placeholder="samata-sainik-dal.firebaseapp.com" style="font-family: monospace; font-size: 12.5px;">
+                    </div>
+                  </div>
+                  <div class="form-group-modal" style="margin-bottom: 16px;">
+                    <label for="fbRawJson">Or Paste Full Firebase Config JSON</label>
+                    <textarea id="fbRawJson" rows="3" placeholder='{ "apiKey": "AIzaSy...", "authDomain": "...", "databaseURL": "https://...", "projectId": "..." }' style="font-family: monospace; font-size: 12px; resize: vertical;" oninput="parseRawFirebaseJson(this.value)"></textarea>
+                  </div>
+                  <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                    <button type="submit" class="btn-admin btn-admin-primary">
+                      <i class="fa-solid fa-link"></i> Save & Connect Database Live
+                    </button>
+                    <button type="button" class="btn-admin btn-admin-outline" onclick="testFirebasePing()">
+                      <i class="fa-solid fa-signal"></i> Test Database Connection
+                    </button>
+                    <button type="button" class="btn-admin btn-admin-outline" onclick="resetFirebaseConfigDefault()" style="color: var(--danger);">
+                      <i class="fa-solid fa-rotate-left"></i> Reset to Demo
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
             <!-- JSON Backup -->
             <div class="card-panel">
               <div class="card-panel-header">

@@ -200,6 +200,16 @@ const ssdInitialSeed = {
 // ==========================================================================
 // INITIALIZATION & AUTHENTICATION
 // ==========================================================================
+function getActiveFirebaseConfig() {
+  try {
+    const custom = localStorage.getItem("ssd_firebase_config");
+    if (custom) return JSON.parse(custom);
+  } catch (e) {
+    console.warn("Custom Firebase config parse error:", e);
+  }
+  return firebaseConfig;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initFirebase();
   checkAuthSession();
@@ -207,16 +217,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function initFirebase() {
   try {
-    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
-      firebaseApp = firebase.initializeApp(firebaseConfig);
+    const activeCfg = getActiveFirebaseConfig();
+    if (activeCfg.apiKey && activeCfg.apiKey !== "YOUR_API_KEY") {
+      if (!firebase.apps.length) {
+        firebaseApp = firebase.initializeApp(activeCfg);
+      } else {
+        firebaseApp = firebase.app();
+      }
       db = firebase.database();
       isFirebaseLive = true;
       setDbStatus(true, "Firebase Live Realtime Connected");
     } else {
-      setDbStatus(false, "SSD Verified Demo Active");
+      isFirebaseLive = false;
+      setDbStatus(false, "Database Disconnected (Configure in Settings)");
     }
   } catch (e) {
     console.warn("Firebase Init Notice:", e);
+    isFirebaseLive = false;
     setDbStatus(false, "Fallback Dataset Active");
   }
 }
@@ -381,6 +398,8 @@ function loadAllRealtimeData() {
       initRazorpayAdminConfig();
     });
 
+    initFirebaseConfigForm();
+
   } else {
     // Fallback in-memory storage from localStorage or Initial Seed
     const localStore = localStorage.getItem("ssd_admin_local_data");
@@ -390,6 +409,7 @@ function loadAllRealtimeData() {
       adminData = ssdInitialSeed;
       saveLocalStore();
     }
+    initFirebaseConfigForm();
     initRazorpayAdminConfig();
     renderMembersTable();
     renderDonationsTable();
@@ -724,6 +744,139 @@ function testRazorpayPing() {
     return;
   }
   showToast(`Razorpay Gateway Ping Successful: ${keyVal.startsWith("rzp_live_") ? "Live Production" : "Test Sandbox"} Key Active.`, "success");
+}
+
+// ==========================================================================
+// FIREBASE REALTIME DATABASE CONFIGURATION (ADMIN)
+// ==========================================================================
+function initFirebaseConfigForm() {
+  const cfg = getActiveFirebaseConfig();
+  const apiKeyEl = document.getElementById("fbApiKey");
+  const dbUrlEl = document.getElementById("fbDbUrl");
+  const projIdEl = document.getElementById("fbProjectId");
+  const authDomainEl = document.getElementById("fbAuthDomain");
+  const badge = document.getElementById("fbSetupConnectionBadge");
+
+  if (apiKeyEl) apiKeyEl.value = (cfg.apiKey && cfg.apiKey !== "YOUR_API_KEY") ? cfg.apiKey : "";
+  if (dbUrlEl) dbUrlEl.value = (cfg.databaseURL && !cfg.databaseURL.includes("YOUR_PROJECT")) ? cfg.databaseURL : "";
+  if (projIdEl) projIdEl.value = (cfg.projectId && cfg.projectId !== "YOUR_PROJECT_ID") ? cfg.projectId : "";
+  if (authDomainEl) authDomainEl.value = (cfg.authDomain && !cfg.authDomain.includes("YOUR_PROJECT")) ? cfg.authDomain : "";
+
+  if (badge) {
+    if (isFirebaseLive) {
+      badge.className = "badge-status badge-approved";
+      badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Live Realtime Connected';
+    } else {
+      badge.className = "badge-status badge-pending";
+      badge.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Disconnected: Enter Credentials';
+    }
+  }
+}
+
+function parseRawFirebaseJson(raw) {
+  if (!raw || !raw.trim()) return;
+  try {
+    let clean = raw.trim();
+    if (clean.includes("=")) clean = clean.substring(clean.indexOf("=") + 1).trim();
+    if (clean.endsWith(";")) clean = clean.slice(0, -1).trim();
+    if (!clean.startsWith("{")) return;
+    
+    let parsed;
+    try {
+      parsed = JSON.parse(clean);
+    } catch (e) {
+      parsed = Function('"use strict";return (' + clean + ')')();
+    }
+
+    if (parsed && typeof parsed === "object") {
+      if (parsed.apiKey) document.getElementById("fbApiKey").value = parsed.apiKey;
+      if (parsed.databaseURL) document.getElementById("fbDbUrl").value = parsed.databaseURL;
+      if (parsed.projectId) document.getElementById("fbProjectId").value = parsed.projectId;
+      if (parsed.authDomain) document.getElementById("fbAuthDomain").value = parsed.authDomain;
+      showToast("Firebase Config JSON auto-parsed into fields!", "info");
+    }
+  } catch (err) {
+    // Ignore while user is typing
+  }
+}
+
+function saveFirebaseConfig(e) {
+  e.preventDefault();
+  const apiKey = document.getElementById("fbApiKey")?.value.trim();
+  const databaseURL = document.getElementById("fbDbUrl")?.value.trim();
+  const projectId = document.getElementById("fbProjectId")?.value.trim();
+  const authDomain = document.getElementById("fbAuthDomain")?.value.trim() || `${projectId}.firebaseapp.com`;
+
+  if (!apiKey || !databaseURL || !projectId) {
+    showToast("Please provide API Key, Database URL, and Project ID.", "error");
+    return;
+  }
+
+  const newConfig = {
+    apiKey,
+    authDomain,
+    databaseURL,
+    projectId,
+    storageBucket: `${projectId}.appspot.com`,
+    messagingSenderId: "",
+    appId: ""
+  };
+
+  localStorage.setItem("ssd_firebase_config", JSON.stringify(newConfig));
+  showToast("Firebase configuration saved! Connecting...", "info");
+
+  try {
+    if (firebase.apps.length) {
+      Promise.all(firebase.apps.map(app => app.delete())).then(() => {
+        firebaseApp = firebase.initializeApp(newConfig);
+        db = firebase.database();
+        isFirebaseLive = true;
+        setDbStatus(true, "Firebase Live Realtime Connected");
+        initFirebaseConfigForm();
+        loadAllRealtimeData();
+        showToast("Connected to Live Firebase Database successfully!", "success");
+      }).catch(() => {
+        location.reload();
+      });
+    } else {
+      firebaseApp = firebase.initializeApp(newConfig);
+      db = firebase.database();
+      isFirebaseLive = true;
+      setDbStatus(true, "Firebase Live Realtime Connected");
+      initFirebaseConfigForm();
+      loadAllRealtimeData();
+      showToast("Connected to Live Firebase Database successfully!", "success");
+    }
+  } catch (err) {
+    console.error("Firebase connection error:", err);
+    showToast("Connection failed: " + err.message, "error");
+  }
+}
+
+function testFirebasePing() {
+  if (!db) {
+    showToast("Database not initialized. Please save your credentials first.", "error");
+    return;
+  }
+  showToast("Testing Realtime Database ping...", "info");
+  db.ref('.info/connected').once('value', (snap) => {
+    if (snap.val() === true) {
+      showToast("Database Ping Successful: Live Realtime Database Connected!", "success");
+    } else {
+      db.ref('stats').once('value')
+        .then(() => showToast("Firebase Realtime Database Ping Successful & Responsive!", "success"))
+        .catch(err => showToast("Firebase Ping Warning: " + err.message, "warning"));
+    }
+  }).catch(err => {
+    showToast("Database Ping Failed: " + err.message, "error");
+  });
+}
+
+function resetFirebaseConfigDefault() {
+  if (confirm("Reset Firebase credentials to fallback demo mode?")) {
+    localStorage.removeItem("ssd_firebase_config");
+    location.reload();
+  }
 }
 
 // ==========================================================================
