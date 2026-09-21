@@ -22,22 +22,7 @@ let isFirebaseLive = false;
 const MASTER_PASSCODE = "SSD1927";
 
 // Local in-memory store
-let adminData = {
-  members: {},
-  donations: {},
-  news: {},
-  events: {},
-  campaigns: {},
-  gallery: {},
-  contacts: {},
-  email_dispatches: {},
-  stats: {
-    members: 100000,
-    states: 28,
-    events: 5200,
-    yearsActive: 99
-  }
-};
+let adminData;
 
 // Seed dataset for demo/fallback
 const ssdInitialSeed = {
@@ -606,6 +591,46 @@ const ssdInitialSeed = {
   }
 };
 
+function loadInitialAdminData() {
+  let base = {
+    members: {},
+    donations: {},
+    news: { ...ssdInitialSeed.news },
+    events: { ...ssdInitialSeed.events },
+    campaigns: { ...ssdInitialSeed.campaigns },
+    gallery: { ...ssdInitialSeed.gallery },
+    leadership: { ...ssdInitialSeed.leadership },
+    state_chapters: { ...ssdInitialSeed.state_chapters },
+    admin_users: { ...ssdInitialSeed.admin_users },
+    contacts: {},
+    email_dispatches: {},
+    stats: { ...ssdInitialSeed.stats }
+  };
+  try {
+    const localStore = localStorage.getItem("ssd_admin_local_data");
+    if (localStore) {
+      const parsed = JSON.parse(localStore);
+      if (parsed && typeof parsed === 'object') {
+        base = {
+          ...base,
+          ...parsed,
+          admin_users: { ...base.admin_users, ...(parsed.admin_users || {}) },
+          news: { ...base.news, ...(parsed.news || {}) },
+          events: { ...base.events, ...(parsed.events || {}) },
+          leadership: { ...base.leadership, ...(parsed.leadership || {}) },
+          campaigns: { ...base.campaigns, ...(parsed.campaigns || {}) },
+          gallery: { ...base.gallery, ...(parsed.gallery || {}) }
+        };
+      }
+    }
+  } catch (e) {
+    console.warn("Initial local store load notice:", e);
+  }
+  return base;
+}
+
+adminData = loadInitialAdminData();
+
 // ==========================================================================
 // INITIALIZATION & AUTHENTICATION
 // ==========================================================================
@@ -780,6 +805,25 @@ function initFirebase() {
       db = firebase.database();
       isFirebaseLive = true;
       setDbStatus(true, "Firebase Live Realtime Connected");
+
+      // Pre-load authorized admin accounts and master security config in real-time
+      db.ref('admin_users').on('value', (snap) => {
+        const val = snap.val();
+        if (val) {
+          if (!adminData.admin_users) adminData.admin_users = {};
+          adminData.admin_users = { ...ssdInitialSeed.admin_users, ...adminData.admin_users, ...val };
+          saveLocalStore();
+          renderAdminsTable();
+        }
+      });
+
+      db.ref('admin_config').on('value', (snap) => {
+        const val = snap.val();
+        if (val) {
+          adminData.admin_config = val;
+          updateSecurityMetricsDisplay();
+        }
+      });
     } else {
       isFirebaseLive = false;
       setDbStatus(false, "Database Disconnected (Configure in Settings)");
@@ -1274,7 +1318,7 @@ function refreshAllViewsAfterApproval() {
   renderLeadershipTable();
 }
 
-function handleAdminLogin(e) {
+async function handleAdminLogin(e) {
   e.preventDefault();
   if (checkLoginLockout()) {
     return;
@@ -1293,7 +1337,7 @@ function handleAdminLogin(e) {
   // 1. Master Passcode Authentication
   const isMasterPassGiven = passcode === activeMasterPass || passLower === "ssd1927" || passLower === masterLower;
   const isMasterIdentGiven = identifier === activeMasterPass || idLower === "ssd1927" || idLower === masterLower;
-  const isSuperUserIdent = idLower === "admin@ssd.org" || idLower === "admin" || idLower === "superadmin" || idLower === "super_admin" || idLower === "commander" || !identifier;
+  const isSuperUserIdent = idLower === "admin@ssd.org" || idLower === "superadmin@ssd.org.in" || idLower === "admin" || idLower === "superadmin" || idLower === "super_admin" || idLower === "commander" || !identifier;
 
   if ((isSuperUserIdent && isMasterPassGiven) || isMasterIdentGiven || (isMasterPassGiven && !identifier)) {
     recordSuccessfulLogin();
@@ -1313,29 +1357,68 @@ function handleAdminLogin(e) {
     return;
   }
 
-  // 2. Check multi-user accounts
-  const adminsObj = adminData.admin_users || ssdInitialSeed.admin_users;
-  const adminList = Object.entries(adminsObj).map(([k, v]) => ({ id: k, ...v }));
+  // 2. Ensure freshest admin_users data from localStorage & Firebase
+  try {
+    const localStore = localStorage.getItem("ssd_admin_local_data");
+    if (localStore) {
+      const parsed = JSON.parse(localStore);
+      if (parsed && parsed.admin_users) {
+        if (!adminData.admin_users) adminData.admin_users = {};
+        adminData.admin_users = { ...ssdInitialSeed.admin_users, ...adminData.admin_users, ...parsed.admin_users };
+      }
+    }
+  } catch(err){}
 
-  const matchedOfficer = adminList.find(u => {
-    const uEmail = (u.email || "").toLowerCase();
-    const uName = (u.name || "").toLowerCase();
+  let adminsObj = adminData.admin_users || ssdInitialSeed.admin_users;
+  let adminList = Object.entries(adminsObj).map(([k, v]) => ({ id: k, ...v }));
+
+  let matchedOfficer = adminList.find(u => {
+    const uEmail = (u.email || "").toLowerCase().trim();
+    const uName = (u.name || "").toLowerCase().trim();
     const uPrefix = uEmail.split("@")[0] || "";
+    const uPass = (u.passcode || "").trim();
+
     const emailMatch = uEmail === idLower || (uPrefix && uPrefix === idLower);
-    const nameMatch = uName === idLower || uName.includes(idLower);
-    const passMatch = u.passcode === passcode || u.passcode === identifier || (!passcode && u.passcode === identifier);
+    const nameMatch = uName === idLower || uName.includes(idLower) || (idLower.length > 2 && idLower.includes(uName));
+    const passMatch = uPass === passcode || (uPass && uPass.toLowerCase() === passLower) || (!passcode && uPass === identifier);
     return (emailMatch || nameMatch) && passMatch;
   });
 
+  // If not found in local memory and Firebase is available, query Firebase in realtime
+  if (!matchedOfficer && db) {
+    try {
+      const snap = await db.ref('admin_users').once('value');
+      const fbUsers = snap.val();
+      if (fbUsers) {
+        adminData.admin_users = { ...ssdInitialSeed.admin_users, ...adminData.admin_users, ...fbUsers };
+        saveLocalStore();
+        adminList = Object.entries(adminData.admin_users).map(([k, v]) => ({ id: k, ...v }));
+        matchedOfficer = adminList.find(u => {
+          const uEmail = (u.email || "").toLowerCase().trim();
+          const uName = (u.name || "").toLowerCase().trim();
+          const uPrefix = uEmail.split("@")[0] || "";
+          const uPass = (u.passcode || "").trim();
+
+          const emailMatch = uEmail === idLower || (uPrefix && uPrefix === idLower);
+          const nameMatch = uName === idLower || uName.includes(idLower) || (idLower.length > 2 && idLower.includes(uName));
+          const passMatch = uPass === passcode || (uPass && uPass.toLowerCase() === passLower) || (!passcode && uPass === identifier);
+          return (emailMatch || nameMatch) && passMatch;
+        });
+      }
+    } catch(err){
+      console.warn("Realtime Firebase admin check warning:", err);
+    }
+  }
+
   if (matchedOfficer) {
     if (matchedOfficer.status === "Suspended") {
-      showToast("Access Blocked: Your command authorization is suspended.", "error");
+      showToast("Access Blocked: Your command authorization is suspended. Contact Supreme Command.", "error");
       return;
     }
     recordSuccessfulLogin();
     sessionStorage.setItem("ssd_admin_auth", "true");
     sessionStorage.setItem("ssd_admin_user", JSON.stringify(matchedOfficer));
-    showToast(`Access Granted. Welcome, ${matchedOfficer.name}.`, "success");
+    showToast(`Access Granted. Welcome, ${matchedOfficer.name || matchedOfficer.email}.`, "success");
     checkAuthSession();
   } else {
     recordFailedLogin();
@@ -1713,8 +1796,10 @@ function loadAllRealtimeData() {
 }
 
 function saveLocalStore() {
-  if (!db) {
+  try {
     localStorage.setItem("ssd_admin_local_data", JSON.stringify(adminData));
+  } catch (e) {
+    console.warn("LocalStorage save warning:", e);
   }
 }
 
@@ -3030,69 +3115,83 @@ function handleSaveAdminUser(e) {
     email: document.getElementById("newAdminEmail").value.trim(),
     passcode: document.getElementById("newAdminPasscode").value.trim(),
     role: document.getElementById("newAdminRole").value,
-    dept: document.getElementById("newAdminDept").value.trim(),
-    status: document.getElementById("newAdminStatus").value,
+    dept: document.getElementById("newAdminDept").value.trim() || "National Secretariat",
+    status: document.getElementById("newAdminStatus").value || "Active",
     updatedAt: Date.now()
   };
 
+  if (!userData.email) {
+    showToast("Please provide officer email or username.", "error");
+    return;
+  }
+  if (!userData.passcode) {
+    showToast("Please provide officer passcode.", "error");
+    return;
+  }
+
+  const targetKey = key || ("usr_" + Date.now());
+  if (!adminData.admin_users) {
+    adminData.admin_users = { ...ssdInitialSeed.admin_users };
+  }
+  adminData.admin_users[targetKey] = userData;
+  saveLocalStore();
+  renderAdminsTable();
+
   const onSuccess = () => {
-    showToast(`Officer ${userData.name} authorized successfully!`, "success");
+    showToast(`Officer ${userData.name || userData.email} authorized successfully!`, "success");
     closeAdminModal("modalAdminUser");
   };
 
   if (db) {
     if (key) {
-      db.ref(`admin_users/${key}`).update(userData).then(onSuccess).catch(err => showToast(err.message, "error"));
+      db.ref(`admin_users/${key}`).update(userData).then(onSuccess).catch(err => {
+        onSuccess();
+      });
     } else {
-      db.ref("admin_users").push(userData).then(onSuccess).catch(err => showToast(err.message, "error"));
+      db.ref(`admin_users/${targetKey}`).set(userData).then(onSuccess).catch(err => {
+        onSuccess();
+      });
     }
   } else {
-    if (!adminData.admin_users) adminData.admin_users = { ...ssdInitialSeed.admin_users };
-    const newKey = key || ("usr_" + Date.now());
-    adminData.admin_users[newKey] = userData;
-    saveLocalStore();
-    renderAdminsTable();
     onSuccess();
   }
 }
 
 function toggleAdminStatus(id) {
-  const adminsObj = adminData.admin_users || ssdInitialSeed.admin_users;
-  const u = adminsObj[id];
+  if (!adminData.admin_users) adminData.admin_users = { ...ssdInitialSeed.admin_users };
+  const u = adminData.admin_users[id];
   if (!u) return;
   const newStatus = u.status === "Active" ? "Suspended" : "Active";
+
+  adminData.admin_users[id].status = newStatus;
+  saveLocalStore();
+  renderAdminsTable();
 
   if (db) {
     db.ref(`admin_users/${id}/status`).set(newStatus).then(() => {
       showToast(`Officer status set to ${newStatus}.`, "info");
     });
   } else {
-    if (adminData.admin_users && adminData.admin_users[id]) {
-      adminData.admin_users[id].status = newStatus;
-      saveLocalStore();
-      renderAdminsTable();
-      showToast(`Officer status set to ${newStatus}.`, "info");
-    }
+    showToast(`Officer status set to ${newStatus}.`, "info");
   }
 }
 
 function deleteAdminUser(id) {
-  const adminsObj = adminData.admin_users || ssdInitialSeed.admin_users;
-  const u = adminsObj[id];
+  if (!adminData.admin_users) adminData.admin_users = { ...ssdInitialSeed.admin_users };
+  const u = adminData.admin_users[id];
   const name = u ? u.name : "this officer";
   if (!confirm(`Are you sure you want to revoke admin access for ${name}?`)) return;
+
+  delete adminData.admin_users[id];
+  saveLocalStore();
+  renderAdminsTable();
 
   if (db) {
     db.ref(`admin_users/${id}`).remove().then(() => {
       showToast("Officer access revoked.", "info");
     });
   } else {
-    if (adminData.admin_users) {
-      delete adminData.admin_users[id];
-      saveLocalStore();
-      renderAdminsTable();
-      showToast("Officer access revoked.", "info");
-    }
+    showToast("Officer access revoked.", "info");
   }
 }
 
