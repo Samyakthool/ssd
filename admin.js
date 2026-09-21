@@ -816,7 +816,7 @@ function checkAuthSession() {
     } catch (e) {}
 
     if (!officer) {
-      officer = { name: "Commander-in-Chief", role: "super_admin", dept: "Supreme Command", email: "admin@ssd.org" };
+      officer = { name: "Command Officer", role: "executive", dept: "National Executive Secretariat", email: "officer@ssd.org" };
     }
 
     const nameEl = document.getElementById("sidebarUserName");
@@ -837,7 +837,7 @@ function checkAuthSession() {
 
 function getRoleDisplayName(role) {
   switch (role) {
-    case "super_admin": return "Supreme Council Level (Full Access)";
+    case "super_admin": return "Supreme Council Level (Master Access)";
     case "executive": return "National Executive Level";
     case "treasurer": return "Treasury & Finance Level";
     case "media": return "Gazette & Media Cell";
@@ -846,14 +846,15 @@ function getRoleDisplayName(role) {
 }
 
 function applyRolePermissions(role) {
+  const isSuper = isSuperAdmin();
   const permissions = {
     super_admin: ["overview", "approvals", "members", "donations", "leadership", "chapters", "news", "events", "campaigns", "gallery", "admins", "contacts", "stats", "settings"],
-    executive: ["overview", "approvals", "members", "leadership", "chapters", "news", "events", "campaigns", "gallery", "contacts"],
+    executive: ["overview", "members", "leadership", "chapters", "news", "events", "campaigns", "gallery", "contacts"],
     treasurer: ["overview", "donations", "campaigns"],
-    media: ["overview", "approvals", "news", "events", "gallery"]
+    media: ["overview", "news", "events", "gallery"]
   };
 
-  const allowed = permissions[role] || permissions.super_admin;
+  const allowed = isSuper ? permissions.super_admin : (permissions[role] || permissions.executive);
   document.querySelectorAll(".sidebar-item").forEach(item => {
     const navId = item.id.replace("nav-", "");
     if (allowed.includes(navId)) {
@@ -862,16 +863,35 @@ function applyRolePermissions(role) {
       item.style.display = "none";
     }
   });
+
+  // Approvals Desk, Topbar button, Overview panel, and Badge are strictly for Master Access!
+  const topbarBtn = document.getElementById("topbarApprovalsBtn");
+  const overviewApprovalsPanel = document.getElementById("overviewApprovalsPanel");
+  const badgeApprovalsCount = document.getElementById("badgeApprovalsCount");
+
+  if (topbarBtn) {
+    topbarBtn.style.display = isSuper ? "inline-flex" : "none";
+  }
+  if (overviewApprovalsPanel && !isSuper) {
+    overviewApprovalsPanel.style.display = "none";
+  }
+  if (badgeApprovalsCount && !isSuper) {
+    badgeApprovalsCount.style.display = "none";
+  }
 }
 
 function isSuperAdmin() {
   const userJson = sessionStorage.getItem("ssd_admin_user");
-  if (!userJson) return true;
+  if (!userJson) return false;
   try {
     const user = JSON.parse(userJson);
-    return user.role === "super_admin" || (user.email && user.email.toLowerCase() === "admin@ssd.org") || (user.name && user.name.includes("Master"));
+    if (!user) return false;
+    return user.role === "super_admin" || 
+           user.id === "usr_master" || 
+           (user.email && (user.email.toLowerCase() === "admin@ssd.org" || user.email.toLowerCase() === "superadmin@ssd.org.in")) ||
+           (user.name && (user.name.includes("Master Access") || user.name.includes("Super Admin") || user.name.includes("Commander-in-Chief")));
   } catch (e) {
-    return true;
+    return false;
   }
 }
 
@@ -882,7 +902,7 @@ function getActiveOfficer() {
       return JSON.parse(userJson);
     } catch(e){}
   }
-  return { name: "Commander-in-Chief", email: "admin@ssd.org", role: "super_admin" };
+  return { name: "Command Officer", email: "officer@ssd.org", role: "executive" };
 }
 
 // ==========================================================================
@@ -1080,14 +1100,19 @@ function renderOverviewApprovals() {
   const panel = document.getElementById("overviewApprovalsPanel");
   const tbody = document.getElementById("overviewApprovalsTableBody");
   const pending = collectAllPendingItems();
+  const isSuper = isSuperAdmin();
 
   updateApprovalsCounters(pending.length);
+
+  if (!isSuper) {
+    if (panel) panel.style.display = "none";
+    return;
+  }
 
   if (pending.length > 0) {
     if (panel) panel.style.display = "block";
     if (tbody) {
       const top5 = pending.slice(0, 5);
-      const isSuper = isSuperAdmin();
       tbody.innerHTML = top5.map(item => {
         const dateStr = item.submittedAt ? new Date(item.submittedAt).toLocaleDateString() : 'Recent';
         return `
@@ -1098,16 +1123,12 @@ function renderOverviewApprovals() {
             <td style="color: var(--text-muted); font-size: 12px;">${dateStr}</td>
             <td style="text-align: right;">
               <div class="action-btn-group" style="justify-content: flex-end;">
-                ${isSuper ? `
-                  <button type="button" class="action-icon-btn approve" onclick="approvePost('${item.type}', '${item.id}')" title="Approve & Publish Live">
-                    <i class="fa-solid fa-check"></i>
-                  </button>
-                  <button type="button" class="action-icon-btn reject" onclick="rejectPost('${item.type}', '${item.id}')" title="Reject Submission">
-                    <i class="fa-solid fa-xmark"></i>
-                  </button>
-                ` : `
-                  <span style="font-size: 11px; color: var(--primary-orange);"><i class="fa-solid fa-clock"></i> In Queue</span>
-                `}
+                <button type="button" class="action-icon-btn approve" onclick="approvePost('${item.type}', '${item.id}')" title="Approve & Publish Live">
+                  <i class="fa-solid fa-check"></i>
+                </button>
+                <button type="button" class="action-icon-btn reject" onclick="rejectPost('${item.type}', '${item.id}')" title="Reject Submission">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
               </div>
             </td>
           </tr>
@@ -1123,8 +1144,21 @@ function renderOverviewApprovals() {
 }
 
 function updateApprovalsCounters(count) {
-  setText("badgeApprovalsCount", count);
-  setText("topbarApprovalsCount", count);
+  const isSuper = isSuperAdmin();
+  const badge = document.getElementById("badgeApprovalsCount");
+  const topbarCount = document.getElementById("topbarApprovalsCount");
+  const topbarBtn = document.getElementById("topbarApprovalsBtn");
+
+  if (badge) {
+    badge.textContent = count;
+    badge.style.display = (isSuper && count > 0) ? "inline-flex" : "none";
+  }
+  if (topbarCount) {
+    topbarCount.textContent = count;
+  }
+  if (topbarBtn) {
+    topbarBtn.style.display = (isSuper && count > 0) ? "inline-flex" : "none";
+  }
 }
 
 function approvePost(type, id) {
@@ -1501,6 +1535,12 @@ const viewMetadata = {
 };
 
 function switchView(viewKey) {
+  const isSuper = isSuperAdmin();
+  if ((viewKey === 'approvals' || viewKey === 'admins' || viewKey === 'settings') && !isSuper) {
+    showToast("Access Restricted: Master Command Access required for this desk.", "error");
+    viewKey = 'overview';
+  }
+
   document.querySelectorAll(".sidebar-item").forEach(item => item.classList.remove("active"));
   const activeNav = document.getElementById("nav-" + viewKey);
   if (activeNav) activeNav.classList.add("active");
