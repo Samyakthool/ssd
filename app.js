@@ -683,14 +683,17 @@ function renderNews(newsArray) {
   container.innerHTML = newsArray.map((item, idx) => `
     <div class="news-card">
       <div class="news-image-wrapper">
-        <img src="${item.imageUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'}" alt="${item.title}" class="news-img" onerror="this.src='https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'">
-        <span class="news-category-badge">${item.category || 'Gazette'}</span>
+        <img src="${item.imageUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'}" alt="${escapeHtml(item.title)}" class="news-img" onerror="this.src='https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'">
+        <span class="news-category-badge">${escapeHtml(item.category || 'Gazette')}</span>
       </div>
       <div class="news-body">
-        <span class="news-date-badge"><i class="fa-regular fa-calendar-check"></i> ${item.date || 'Recent'}</span>
-        <h4 class="news-title">${item.title}</h4>
-        <p class="news-excerpt">${item.excerpt || ''}</p>
-        <span class="news-read-more" onclick="openNewsModal(${idx})">Read Full Dispatch &rarr;</span>
+        <span class="news-date-badge"><i class="fa-regular fa-calendar-check"></i> ${escapeHtml(item.date || 'Recent')}</span>
+        <h4 class="news-title">${escapeHtml(item.title)}</h4>
+        <p class="news-excerpt">${escapeHtml(item.excerpt || '')}</p>
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 12px; padding-top: 8px; border-top: 1px dashed var(--border-color, #E2E8F0);">
+          <span class="news-read-more" onclick="openNewsModal(${idx})" style="margin: 0; cursor: pointer;">Read Dispatch &rarr;</span>
+          ${item.pdfUrl ? `<a href="${item.pdfUrl}" target="_blank" download class="news-pdf-badge-btn" onclick="event.stopPropagation()" title="Download Official PDF Circular"><i class="fa-solid fa-file-pdf"></i> PDF Circular</a>` : ''}
+        </div>
       </div>
     </div>
   `).join('');
@@ -741,11 +744,12 @@ function renderEvents(eventsArray) {
           <span class="event-month">${month}</span>
         </div>
         <div class="event-details">
-          <h4 class="event-title">${event.title}</h4>
-          <div class="event-meta">
-            <span><i class="fa-solid fa-location-dot"></i> ${event.location || 'Nagpur / New Delhi'}</span>
+          <h4 class="event-title">${escapeHtml(event.title)}</h4>
+          <div class="event-meta" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+            <span><i class="fa-solid fa-location-dot"></i> ${escapeHtml(event.location || 'Nagpur / New Delhi')}</span>
+            ${event.pdfUrl ? `<a href="${event.pdfUrl}" target="_blank" download class="event-pdf-btn" style="color: #DC2626; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; text-decoration: none;"><i class="fa-solid fa-file-pdf"></i> Schedule PDF</a>` : ''}
           </div>
-          <p class="event-desc">${event.description || ''}</p>
+          <p class="event-desc">${escapeHtml(event.description || '')}</p>
         </div>
       </div>
     `;
@@ -1231,10 +1235,28 @@ function openNewsModal(index) {
   if (modalDate) modalDate.innerHTML = `<i class="fa-solid fa-calendar"></i> ${item.date || 'Recent'}`;
   if (modalCat) modalCat.innerHTML = `<i class="fa-solid fa-tag"></i> ${item.category || 'SSD Gazette'}`;
   if (modalText) {
+    let pdfBtnHtml = '';
+    if (item.pdfUrl) {
+      pdfBtnHtml = `
+        <div style="margin-top: 18px; padding: 14px 16px; background: #FEF2F2; border: 1.5px solid #FECACA; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-file-pdf" style="font-size: 26px; color: #DC2626;"></i>
+            <div>
+              <strong style="color: var(--dark-navy); font-size: 13.5px; display: block;">Official Gazette Circular (PDF)</strong>
+              <span style="font-size: 11.5px; color: #64748B;">Official signed order / directive available</span>
+            </div>
+          </div>
+          <a href="${item.pdfUrl}" target="_blank" download class="btn btn-primary btn-sm" style="background: #DC2626; border-color: #DC2626;">
+            <i class="fa-solid fa-download"></i> Download PDF Circular
+          </a>
+        </div>
+      `;
+    }
     modalText.innerHTML = `
-      <p><strong>CENTRAL COMMAND DISPATCH:</strong> ${item.excerpt}</p>
+      <p><strong>CENTRAL COMMAND DISPATCH:</strong> ${escapeHtml(item.excerpt || '')}</p>
       <p style="margin-top:12px;">Samata Sainik Dal continues to uphold the principles of self-respect, physical discipline, and constitutional morality established by Babasaheb Dr. B.R. Ambedkar. Cadets across all state and district units are actively deployed in community protection, legal literacy, and social welfare drives.</p>
       <p style="margin-top:12px;">All enlisted Sainiks are urged to maintain strict discipline, wear the official uniform with pride, and spread constitutional awareness to the last citizen. <em>Jai Bhim! Long Live Samata Sainik Dal!</em></p>
+      ${pdfBtnHtml}
     `;
   }
 
@@ -1925,6 +1947,9 @@ function ensureOfficerPortfolioModalInDom() {
       </div>
 
       <div class="officer-portfolio-footer">
+        <a id="portfolioOfficerPdfBtn" href="" target="_blank" download class="btn btn-outline-orange btn-sm" style="display: none; margin-right: auto;">
+          <i class="fa-solid fa-file-pdf" style="color: #DC2626;"></i> Download Dossier PDF
+        </a>
         <a href="contact.html" class="btn btn-outline-navy btn-sm"><i class="fa-solid fa-envelope"></i> Contact Secretariat</a>
         <button type="button" class="btn btn-navy btn-sm" onclick="closeOfficerPortfolioModal()"><i class="fa-solid fa-check"></i> Close Dossier</button>
       </div>
@@ -2004,6 +2029,7 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
   const bioEl = modal.querySelector("#portfolioOfficerBio");
   const focusAreasEl = modal.querySelector("#portfolioOfficerFocusAreas");
   const wingEl = modal.querySelector("#portfolioOfficerWing");
+  const pdfBtn = modal.querySelector("#portfolioOfficerPdfBtn");
 
   const isAdv = leader.category === "Advisory Board" || (leader.designation && leader.designation.includes("Advisory")) || (leader.rankBadge && leader.rankBadge.includes("Advisory")) || (leader.id && String(leader.id).startsWith("adv_")) || isAdvisory;
   const isDistrict = (leader.level === 'district');
@@ -2077,6 +2103,15 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
       tags = ["National Command Coordination", "State Chapter Administration", "Democratic Governance", "Sainik Enlistment", "Centenary 2027 Vision"];
     }
     focusAreasEl.innerHTML = tags.map(t => `<span class="portfolio-tag"><i class="fa-solid fa-check"></i> ${escapeHtml(t)}</span>`).join('');
+  }
+
+  if (pdfBtn) {
+    if (leader.pdfUrl) {
+      pdfBtn.href = leader.pdfUrl;
+      pdfBtn.style.display = "inline-flex";
+    } else {
+      pdfBtn.style.display = "none";
+    }
   }
 
   modal.style.display = "flex";

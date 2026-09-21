@@ -1621,4 +1621,114 @@ body {
   border-color: #EF4444 !important;
 }
 
+/* ==========================================================================
+   ADMIN PDF UPLOAD & PREVIEW CHIP
+   ========================================================================== */
+.admin-pdf-upload-box {
+  background: #F8FAFC;
+  border: 1.5px dashed #CBD5E1;
+  border-radius: 10px;
+  padding: 14px 16px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.admin-pdf-upload-box:hover {
+  border-color: #DC2626;
+  background: #FFFFFF;
+}
+
+.btn-admin-pdf-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #DC2626;
+  color: #FFFFFF !important;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.2);
+  user-select: none;
+}
+
+.btn-admin-pdf-upload:hover {
+  background: #B91C1C;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.admin-pdf-preview-chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-top: 10px;
+}
+
+.pdf-chip-icon {
+  font-size: 24px;
+  color: #DC2626;
+  flex-shrink: 0;
+}
+
+.pdf-chip-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-chip-info strong {
+  font-size: 12.5px;
+  color: var(--dark-navy, #001F3F);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pdf-chip-info span {
+  font-size: 11px;
+  color: #64748B;
+}
+
+.btn-pdf-chip-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-pdf-chip-action.view {
+  background: #DC2626;
+  color: #FFFFFF;
+  border: none;
+}
+
+.btn-pdf-chip-action.view:hover {
+  background: #B91C1C;
+}
+
+.btn-pdf-chip-action.remove {
+  background: #FFFFFF;
+  color: #64748B;
+  border: 1px solid #CBD5E1;
+}
+
+.btn-pdf-chip-action.remove:hover {
+  background: #FEE2E2;
+  color: #DC2626;
+  border-color: #FCA5A5;
+}
+
 

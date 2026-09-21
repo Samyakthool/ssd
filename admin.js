@@ -2308,10 +2308,12 @@ function openAddLeadershipModal() {
   }
 
   setInputValue("leadPhotoUrl", "");
+  setInputValue("leadPdfUrl", "");
   setInputValue("leadCredentials", "");
   setInputValue("leadBio", "");
   setInputValue("leadOrder", "1");
   updateImagePreview("leadPhotoPreview", "");
+  updatePdfPreview("leadPdfPreview", "");
   updateLeadDistrictDatalist();
   setText("modalLeadershipHeading", "Appoint Council Officer / Commander");
   openAdminModal("modalLeadership");
@@ -2335,10 +2337,12 @@ function openEditLeadershipModal(id) {
   setInputValue("leadCategory", m.category || "Supreme Council");
   setInputValue("leadRankBadge", m.rankBadge || "");
   setInputValue("leadPhotoUrl", m.photoUrl || "");
+  setInputValue("leadPdfUrl", m.pdfUrl || "");
   setInputValue("leadCredentials", m.credentials || "");
   setInputValue("leadBio", m.bio || "");
   setInputValue("leadOrder", m.order || "1");
   updateImagePreview("leadPhotoPreview", m.photoUrl || "");
+  updatePdfPreview("leadPdfPreview", m.pdfUrl || "");
   updateLeadDistrictDatalist();
   setText("modalLeadershipHeading", `Edit Officer: ${m.name}`);
   openAdminModal("modalLeadership");
@@ -2365,6 +2369,7 @@ function handleSaveLeadership(e) {
     category: document.getElementById("leadCategory").value,
     rankBadge: document.getElementById("leadRankBadge").value.trim(),
     photoUrl: document.getElementById("leadPhotoUrl").value.trim(),
+    pdfUrl: document.getElementById("leadPdfUrl") ? document.getElementById("leadPdfUrl").value.trim() : "",
     credentials: document.getElementById("leadCredentials").value.trim(),
     bio: document.getElementById("leadBio").value.trim(),
     order: Number(document.getElementById("leadOrder").value) || 1,
@@ -3595,6 +3600,8 @@ function renderNewsTable() {
 function openCreateNewsModal() {
   document.getElementById("formNews")?.reset();
   document.getElementById("newsItemKey").value = "";
+  setInputValue("newsPdfUrl", "");
+  updatePdfPreview("newsPdfPreview", "");
   document.getElementById("modalNewsHeading").textContent = "Publish New Gazette Notice";
   document.getElementById("newsImagePreview").style.display = "none";
   openAdminModal("modalNews");
@@ -3610,8 +3617,10 @@ function openEditNewsModal(id) {
   document.getElementById("newsDate").value = item.date || "";
   document.getElementById("newsImageUrl").value = item.imageUrl || "";
   document.getElementById("newsExcerpt").value = item.excerpt || "";
+  setInputValue("newsPdfUrl", item.pdfUrl || "");
 
   updateImagePreview("newsImagePreview", item.imageUrl || "");
+  updatePdfPreview("newsPdfPreview", item.pdfUrl || "");
   document.getElementById("modalNewsHeading").textContent = "Edit Gazette Notice";
   openAdminModal("modalNews");
 }
@@ -3629,6 +3638,7 @@ function handleSaveNews(e) {
     category: document.getElementById("newsCategory").value,
     date: document.getElementById("newsDate").value.trim(),
     imageUrl: document.getElementById("newsImageUrl").value.trim(),
+    pdfUrl: document.getElementById("newsPdfUrl") ? document.getElementById("newsPdfUrl").value.trim() : "",
     excerpt: document.getElementById("newsExcerpt").value.trim(),
     approvalStatus: approvalStatus,
     submittedBy: existingItem ? (existingItem.submittedBy || `${officer.name} (${getRoleDisplayName(officer.role)})`) : `${officer.name} (${getRoleDisplayName(officer.role)})`,
@@ -3721,6 +3731,8 @@ function renderEventsTable() {
 function openCreateEventModal() {
   document.getElementById("formEvent")?.reset();
   document.getElementById("eventItemKey").value = "";
+  setInputValue("eventPdfUrl", "");
+  updatePdfPreview("eventPdfPreview", "");
   document.getElementById("modalEventHeading").textContent = "Schedule New Event";
   openAdminModal("modalEvent");
 }
@@ -3734,6 +3746,8 @@ function openEditEventModal(id) {
   document.getElementById("eventLocation").value = ev.location || "";
   document.getElementById("eventStatus").value = ev.status || "upcoming";
   document.getElementById("eventDescription").value = ev.description || "";
+  setInputValue("eventPdfUrl", ev.pdfUrl || "");
+  updatePdfPreview("eventPdfPreview", ev.pdfUrl || "");
   document.getElementById("modalEventHeading").textContent = "Edit Event Details";
   openAdminModal("modalEvent");
 }
@@ -3751,6 +3765,7 @@ function handleSaveEvent(e) {
     date: document.getElementById("eventDate").value.trim(),
     location: document.getElementById("eventLocation").value.trim(),
     status: document.getElementById("eventStatus").value,
+    pdfUrl: document.getElementById("eventPdfUrl") ? document.getElementById("eventPdfUrl").value.trim() : "",
     description: document.getElementById("eventDescription").value.trim(),
     approvalStatus: approvalStatus,
     submittedBy: existingItem ? (existingItem.submittedBy || `${officer.name} (${getRoleDisplayName(officer.role)})`) : `${officer.name} (${getRoleDisplayName(officer.role)})`,
@@ -4372,6 +4387,99 @@ function clearImageUpload(targetUrlInputId, previewImgId, fileInputId) {
 
 window.handleLocalImageUpload = handleLocalImageUpload;
 window.clearImageUpload = clearImageUpload;
+
+// Local PDF File Upload & Reader
+function handleLocalPdfUpload(inputElement, targetUrlInputId, previewContainerId) {
+  if (!inputElement || !inputElement.files || !inputElement.files[0]) return;
+  const file = inputElement.files[0];
+
+  if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+    showToast("Please select a valid PDF document (.pdf).", "error");
+    return;
+  }
+
+  const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+  if (file.size > 8 * 1024 * 1024) {
+    showToast("PDF file is large (" + sizeMb + " MB). For best performance, please use PDFs under 8MB.", "warning");
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const dataUrl = e.target.result;
+    
+    // Set target URL input
+    const targetInput = document.getElementById(targetUrlInputId);
+    if (targetInput) {
+      targetInput.value = dataUrl;
+      targetInput.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    // Update preview container
+    const previewContainer = document.getElementById(previewContainerId);
+    if (previewContainer) {
+      const sizeKb = Math.round(file.size / 1024);
+      previewContainer.innerHTML = `
+        <div class="admin-pdf-preview-chip">
+          <i class="fa-solid fa-file-pdf pdf-chip-icon"></i>
+          <div class="pdf-chip-info">
+            <strong>${escapeHtml(file.name)}</strong>
+            <span>${sizeKb > 1024 ? (sizeKb / 1024).toFixed(2) + ' MB' : sizeKb + ' KB'} &bull; Ready to attach</span>
+          </div>
+          <a href="${dataUrl}" target="_blank" class="btn-pdf-chip-action view" title="Preview PDF in new tab"><i class="fa-solid fa-eye"></i> View</a>
+          <button type="button" class="btn-pdf-chip-action remove" onclick="clearPdfUpload('${targetUrlInputId}', '${previewContainerId}', '${inputElement.id}')" title="Remove PDF"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      `;
+      previewContainer.style.display = "block";
+    }
+
+    showToast(`PDF document "${file.name}" attached successfully!`, "success");
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearPdfUpload(targetUrlInputId, previewContainerId, fileInputId) {
+  const targetInput = document.getElementById(targetUrlInputId);
+  if (targetInput) {
+    targetInput.value = "";
+    targetInput.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  const previewContainer = document.getElementById(previewContainerId);
+  if (previewContainer) {
+    previewContainer.innerHTML = "";
+    previewContainer.style.display = "none";
+  }
+  if (fileInputId) {
+    const fileInput = document.getElementById(fileInputId);
+    if (fileInput) fileInput.value = "";
+  }
+}
+
+function updatePdfPreview(containerId, url) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (url && (url.startsWith("http") || url.startsWith("data:application/pdf") || url.includes(".pdf"))) {
+    const isData = url.startsWith("data:application/pdf");
+    container.innerHTML = `
+      <div class="admin-pdf-preview-chip">
+        <i class="fa-solid fa-file-pdf pdf-chip-icon"></i>
+        <div class="pdf-chip-info">
+          <strong>${isData ? 'Attached PDF Document' : (url.split('/').pop().split('?')[0] || 'Official Document.pdf')}</strong>
+          <span>${isData ? 'Local PDF File' : 'External PDF Link'}</span>
+        </div>
+        <a href="${url}" target="_blank" class="btn-pdf-chip-action view" title="Open PDF in new tab"><i class="fa-solid fa-eye"></i> View</a>
+        <button type="button" class="btn-pdf-chip-action remove" onclick="clearPdfUpload('${containerId.replace('Preview', 'Url')}', '${containerId}', '')" title="Remove PDF"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    `;
+    container.style.display = "block";
+  } else {
+    container.innerHTML = "";
+    container.style.display = "none";
+  }
+}
+
+window.handleLocalPdfUpload = handleLocalPdfUpload;
+window.clearPdfUpload = clearPdfUpload;
+window.updatePdfPreview = updatePdfPreview;
 
 function showToast(message, type = "success") {
   const toast = document.getElementById("adminToast");

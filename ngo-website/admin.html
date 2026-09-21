@@ -1183,6 +1183,24 @@
             </div>
           </div>
           <div class="form-group-modal">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+              <span><i class="fa-solid fa-file-pdf" style="color: #DC2626;"></i> Official PDF Circular / Gazette Document (Optional)</span>
+              <small style="color: var(--text-muted); font-weight: normal;">Upload PDF from Device or paste URL</small>
+            </label>
+            <div class="admin-pdf-upload-box">
+              <div class="admin-file-picker-wrapper">
+                <label class="btn-admin-pdf-upload">
+                  <i class="fa-solid fa-file-arrow-up"></i>
+                  <span>Upload PDF from Device</span>
+                  <input type="file" id="newsPdfFileInput" accept="application/pdf" style="display: none;" onchange="handleLocalPdfUpload(this, 'newsPdfUrl', 'newsPdfPreview')">
+                </label>
+                <span class="upload-or-divider">OR</span>
+              </div>
+              <input type="text" id="newsPdfUrl" placeholder="Paste direct PDF document URL (https://.../circular.pdf) or upload above" oninput="updatePdfPreview('newsPdfPreview', this.value)">
+              <div id="newsPdfPreview" style="display: none;"></div>
+            </div>
+          </div>
+          <div class="form-group-modal">
             <label for="newsExcerpt">Executive Summary / Excerpt</label>
             <textarea id="newsExcerpt" rows="3" required placeholder="Brief summary of the official announcement..."></textarea>
           </div>
@@ -1226,6 +1244,24 @@
           <div class="form-group-modal">
             <label for="eventLocation">Venue / Ground / City</label>
             <input type="text" id="eventLocation" required placeholder="e.g. Deekshabhoomi Ground, Nagpur">
+          </div>
+          <div class="form-group-modal">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+              <span><i class="fa-solid fa-file-pdf" style="color: #DC2626;"></i> Event Itinerary / Circular PDF (Optional)</span>
+              <small style="color: var(--text-muted); font-weight: normal;">Upload PDF from Device or paste URL</small>
+            </label>
+            <div class="admin-pdf-upload-box">
+              <div class="admin-file-picker-wrapper">
+                <label class="btn-admin-pdf-upload">
+                  <i class="fa-solid fa-file-arrow-up"></i>
+                  <span>Upload PDF from Device</span>
+                  <input type="file" id="eventPdfFileInput" accept="application/pdf" style="display: none;" onchange="handleLocalPdfUpload(this, 'eventPdfUrl', 'eventPdfPreview')">
+                </label>
+                <span class="upload-or-divider">OR</span>
+              </div>
+              <input type="text" id="eventPdfUrl" placeholder="Paste direct PDF document URL (https://.../schedule.pdf) or upload above" oninput="updatePdfPreview('eventPdfPreview', this.value)">
+              <div id="eventPdfPreview" style="display: none;"></div>
+            </div>
           </div>
           <div class="form-group-modal">
             <label for="eventDescription">Event Details & Schedule</label>
@@ -1562,6 +1598,24 @@
           <div class="form-group-modal">
             <label for="leadCredentials">Official Credentials & Location</label>
             <input type="text" id="leadCredentials" required placeholder="e.g. M.A. Social Work | Mumbai & Nagpur State HQ">
+          </div>
+          <div class="form-group-modal">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+              <span><i class="fa-solid fa-file-pdf" style="color: #DC2626;"></i> Officer Dossier / Appointment Order PDF (Optional)</span>
+              <small style="color: var(--text-muted); font-weight: normal;">Upload PDF from Device or paste URL</small>
+            </label>
+            <div class="admin-pdf-upload-box">
+              <div class="admin-file-picker-wrapper">
+                <label class="btn-admin-pdf-upload">
+                  <i class="fa-solid fa-file-arrow-up"></i>
+                  <span>Upload Dossier PDF</span>
+                  <input type="file" id="leadPdfFileInput" accept="application/pdf" style="display: none;" onchange="handleLocalPdfUpload(this, 'leadPdfUrl', 'leadPdfPreview')">
+                </label>
+                <span class="upload-or-divider">OR</span>
+              </div>
+              <input type="text" id="leadPdfUrl" placeholder="Paste direct PDF URL or upload .pdf above" oninput="updatePdfPreview('leadPdfPreview', this.value)">
+              <div id="leadPdfPreview" style="display: none;"></div>
+            </div>
           </div>
           <div class="form-group-modal">
             <label for="leadBio">Biographical Summary & Key Contributions</label>
