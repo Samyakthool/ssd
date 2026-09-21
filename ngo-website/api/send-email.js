@@ -46,7 +46,8 @@ export default async function handler(req, res) {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            from: process.env.EMAIL_FROM || 'Samata Sainik Dal <notifications@ssd.org>',
+            from: process.env.EMAIL_FROM || 'Samata Sainik Dal <samyak.ssd@gmail.com>',
+            reply_to: 'samyak.ssd@gmail.com',
             to: [recipientEmail],
             subject: subject,
             html: html

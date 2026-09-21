@@ -817,6 +817,16 @@
                 <form id="emailConfigForm" onsubmit="saveEmailConfig(event)">
                   <div class="form-grid-modal">
                     <div class="form-group-modal">
+                      <label for="adminSenderEmail">Official Sender Email Address</label>
+                      <input type="email" id="adminSenderEmail" value="samyak.ssd@gmail.com" required style="font-family: monospace; font-size: 12.5px; font-weight: bold; color: var(--primary-orange);">
+                    </div>
+                    <div class="form-group-modal">
+                      <label for="adminSenderName">Sender Display Name</label>
+                      <input type="text" id="adminSenderName" value="Samata Sainik Dal (SSD)" placeholder="e.g. Samata Sainik Dal (SSD)" style="font-size: 12.5px;">
+                    </div>
+                  </div>
+                  <div class="form-grid-modal">
+                    <div class="form-group-modal">
                       <label for="adminEmailServiceId">EmailJS Service ID</label>
                       <input type="text" id="adminEmailServiceId" placeholder="e.g. service_ssd_official" style="font-family: monospace; font-size: 12.5px;">
                     </div>

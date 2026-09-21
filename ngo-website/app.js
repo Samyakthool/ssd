@@ -665,6 +665,8 @@ function goToTestimonial(index) {
 // ==========================================================================
 function getEmailConfig() {
   const defaultCfg = {
+    senderEmail: "samyak.ssd@gmail.com",
+    senderName: "Samata Sainik Dal (SSD)",
     serviceId: "service_ssd_official",
     donationTemplateId: "template_donation_80g",
     enrollmentTemplateId: "template_cadet_welcome",
@@ -685,7 +687,14 @@ function sendDonationEmail(donationRecord) {
   const cfg = getEmailConfig();
   if (cfg.enabled === false) return;
 
+  const senderEmail = cfg.senderEmail || "samyak.ssd@gmail.com";
+  const senderName = cfg.senderName || "Samata Sainik Dal (SSD)";
+
   const templateParams = {
+    from_name: senderName,
+    from_email: senderEmail,
+    reply_to: senderEmail,
+    sender_email: senderEmail,
     to_name: donationRecord.name || donationRecord.donorName || "Supporter",
     to_email: donationRecord.email || donationRecord.donorEmail,
     amount: (Number(donationRecord.amount) || 0).toLocaleString(),
@@ -703,7 +712,7 @@ function sendDonationEmail(donationRecord) {
     try {
       emailjs.init({ publicKey: cfg.publicKey });
       emailjs.send(cfg.serviceId, cfg.donationTemplateId, templateParams)
-        .then(() => console.log("Donation 80G receipt email dispatched via EmailJS."))
+        .then(() => console.log("Donation 80G receipt email dispatched via EmailJS from " + senderEmail))
         .catch(err => console.warn("EmailJS donation send error:", err));
     } catch (err) {
       console.warn("EmailJS init/send error:", err);
@@ -716,6 +725,7 @@ function sendDonationEmail(donationRecord) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       type: 'donation',
+      senderEmail: senderEmail,
       recipientEmail: templateParams.to_email,
       recipientName: templateParams.to_name,
       data: donationRecord
@@ -726,6 +736,7 @@ function sendDonationEmail(donationRecord) {
   if (db) {
     db.ref('email_dispatches').push({
       type: "Donation 80G Receipt",
+      senderEmail: senderEmail,
       recipientEmail: templateParams.to_email,
       recipientName: templateParams.to_name,
       receiptNumber: templateParams.receipt_number,
@@ -742,8 +753,15 @@ function sendEnrollmentEmail(memberData) {
   const cfg = getEmailConfig();
   if (cfg.enabled === false) return;
 
+  const senderEmail = cfg.senderEmail || "samyak.ssd@gmail.com";
+  const senderName = cfg.senderName || "Samata Sainik Dal (SSD)";
+
   const enlistId = "SSD-CADET-" + (memberData.id ? memberData.id.slice(-6).toUpperCase() : Math.floor(1000 + Math.random() * 9000));
   const templateParams = {
+    from_name: senderName,
+    from_email: senderEmail,
+    reply_to: senderEmail,
+    sender_email: senderEmail,
     cadet_name: memberData.fullName || memberData.name || "Cadet",
     to_name: memberData.fullName || memberData.name || "Cadet",
     to_email: memberData.email,
@@ -762,7 +780,7 @@ function sendEnrollmentEmail(memberData) {
     try {
       emailjs.init({ publicKey: cfg.publicKey });
       emailjs.send(cfg.serviceId, cfg.enrollmentTemplateId, templateParams)
-        .then(() => console.log("Cadet Welcome email dispatched via EmailJS."))
+        .then(() => console.log("Cadet Welcome email dispatched via EmailJS from " + senderEmail))
         .catch(err => console.warn("EmailJS enrollment send error:", err));
     } catch (err) {
       console.warn("EmailJS init/send error:", err);
@@ -775,6 +793,7 @@ function sendEnrollmentEmail(memberData) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       type: 'enrollment',
+      senderEmail: senderEmail,
       recipientEmail: templateParams.to_email,
       recipientName: templateParams.cadet_name,
       data: { ...memberData, enlistmentId: enlistId }
@@ -785,6 +804,7 @@ function sendEnrollmentEmail(memberData) {
   if (db) {
     db.ref('email_dispatches').push({
       type: "Cadet Enlistment Welcome",
+      senderEmail: senderEmail,
       recipientEmail: templateParams.to_email,
       recipientName: templateParams.cadet_name,
       enlistmentId: enlistId,

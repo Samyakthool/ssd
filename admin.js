@@ -1300,6 +1300,8 @@ function testRazorpayPing() {
 // ==========================================================================
 function getEmailConfig() {
   const defaultCfg = {
+    senderEmail: "samyak.ssd@gmail.com",
+    senderName: "Samata Sainik Dal (SSD)",
     serviceId: "service_ssd_official",
     donationTemplateId: "template_donation_80g",
     enrollmentTemplateId: "template_cadet_welcome",
@@ -1317,11 +1319,15 @@ function getEmailConfig() {
 
 function initEmailConfigForm() {
   const cfg = getEmailConfig();
+  const senderEmailEl = document.getElementById("adminSenderEmail");
+  const senderNameEl = document.getElementById("adminSenderName");
   const serviceIdEl = document.getElementById("adminEmailServiceId");
   const pubKeyEl = document.getElementById("adminEmailPublicKey");
   const donTplEl = document.getElementById("adminEmailDonationTpl");
   const enlTplEl = document.getElementById("adminEmailEnrollmentTpl");
 
+  if (senderEmailEl) senderEmailEl.value = cfg.senderEmail || "samyak.ssd@gmail.com";
+  if (senderNameEl) senderNameEl.value = cfg.senderName || "Samata Sainik Dal (SSD)";
   if (serviceIdEl) serviceIdEl.value = cfg.serviceId || "";
   if (pubKeyEl) pubKeyEl.value = cfg.publicKey || "";
   if (donTplEl) donTplEl.value = cfg.donationTemplateId || "";
@@ -1331,22 +1337,26 @@ function initEmailConfigForm() {
   if (badge) {
     if (cfg.publicKey && cfg.serviceId) {
       badge.className = "badge-status badge-approved";
-      badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> EmailJS Live Active';
+      badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> EmailJS Active (' + (cfg.senderEmail || 'samyak.ssd@gmail.com') + ')';
     } else {
       badge.className = "badge-status badge-info";
-      badge.innerHTML = '<i class="fa-solid fa-bolt"></i> Serverless API Active';
+      badge.innerHTML = '<i class="fa-solid fa-bolt"></i> Sender: ' + (cfg.senderEmail || 'samyak.ssd@gmail.com');
     }
   }
 }
 
 function saveEmailConfig(e) {
   e.preventDefault();
+  const senderEmail = document.getElementById("adminSenderEmail")?.value.trim() || "samyak.ssd@gmail.com";
+  const senderName = document.getElementById("adminSenderName")?.value.trim() || "Samata Sainik Dal (SSD)";
   const serviceId = document.getElementById("adminEmailServiceId")?.value.trim() || "service_ssd_official";
   const publicKey = document.getElementById("adminEmailPublicKey")?.value.trim() || "";
   const donationTemplateId = document.getElementById("adminEmailDonationTpl")?.value.trim() || "template_donation_80g";
   const enrollmentTemplateId = document.getElementById("adminEmailEnrollmentTpl")?.value.trim() || "template_cadet_welcome";
 
   const emailCfg = {
+    senderEmail,
+    senderName,
     serviceId,
     publicKey,
     donationTemplateId,
@@ -1359,10 +1369,10 @@ function saveEmailConfig(e) {
 
   if (db) {
     db.ref("settings/emailConfig").set(emailCfg)
-      .then(() => showToast("Automated Email settings synchronized to live cloud!", "success"))
+      .then(() => showToast(`Automated Email settings saved! Sender set to ${senderEmail}`, "success"))
       .catch(err => showToast("Error saving email settings: " + err.message, "error"));
   } else {
-    showToast("Automated Email settings saved locally!", "success");
+    showToast(`Automated Email settings saved! Sender set to ${senderEmail}`, "success");
   }
   initEmailConfigForm();
 }
