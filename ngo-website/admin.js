@@ -1839,13 +1839,16 @@ function loadAllRealtimeData() {
       populateStatsForm();
     });
 
-    // 9. Settings (Razorpay API Key)
-    db.ref('settings/razorpayKeyId').on('value', (snap) => {
+    // 9. Settings (Cashfree Gateway Config)
+    db.ref('settings/cashfree').on('value', (snap) => {
       const val = snap.val();
       if (val) {
-        localStorage.setItem("ssd_razorpay_key_id", val);
+        localStorage.setItem("ssd_cashfree_config", JSON.stringify(val));
+        if (val.appId) localStorage.setItem("ssd_cashfree_app_id", val.appId);
+        if (val.secretKey) localStorage.setItem("ssd_cashfree_secret_key", val.secretKey);
+        if (val.mode) localStorage.setItem("ssd_cashfree_mode", val.mode);
       }
-      initRazorpayAdminConfig();
+      initCashfreeAdminConfig();
     });
 
     // 10. Governing Body & Leadership Council
@@ -1905,7 +1908,7 @@ function loadAllRealtimeData() {
       saveLocalStore();
     }
     initFirebaseConfigForm();
-    initRazorpayAdminConfig();
+    initCashfreeAdminConfig();
     initEmailConfigForm();
     renderMembersTable();
     renderDonationsTable();
@@ -3775,54 +3778,104 @@ window.toggleAdminStatus = toggleAdminStatus;
 window.deleteAdminUser = deleteAdminUser;
 
 // ==========================================================================
-// RAZORPAY GATEWAY CONFIGURATION (ADMIN)
+// CASHFREE GATEWAY CONFIGURATION (ADMIN)
 // ==========================================================================
-function initRazorpayAdminConfig() {
-  const savedKey = localStorage.getItem("ssd_razorpay_key_id") || "rzp_test_1DP5mmOlF5G5ag";
-  const input = document.getElementById("adminRazorpayKeyId");
-  if (input) input.value = savedKey;
-  updateRazorpayBadge(savedKey);
+const CASHFREE_DEFAULT_APP_ID = "TEST100001878";
+const CASHFREE_DEFAULT_SECRET = "cfsk_ma_test_100001878_ssd";
+
+function getCashfreeConfig() {
+  const local = localStorage.getItem("ssd_cashfree_config");
+  if (local) {
+    try {
+      return JSON.parse(local);
+    } catch (e) {}
+  }
+  return {
+    appId: localStorage.getItem("ssd_cashfree_app_id") || CASHFREE_DEFAULT_APP_ID,
+    secretKey: localStorage.getItem("ssd_cashfree_secret_key") || CASHFREE_DEFAULT_SECRET,
+    mode: localStorage.getItem("ssd_cashfree_mode") || "sandbox"
+  };
 }
 
-function updateRazorpayBadge(key) {
-  const badge = document.getElementById("razorpayModeBadge");
+function initCashfreeAdminConfig() {
+  const cfg = getCashfreeConfig();
+  const appIdInput = document.getElementById("adminCashfreeAppId");
+  const secretKeyInput = document.getElementById("adminCashfreeSecretKey");
+  const modeSelect = document.getElementById("adminCashfreeMode");
+
+  if (appIdInput) appIdInput.value = cfg.appId || "";
+  if (secretKeyInput) secretKeyInput.value = cfg.secretKey || "";
+  if (modeSelect) modeSelect.value = cfg.mode || (cfg.appId && cfg.appId.startsWith("TEST") ? "sandbox" : "production");
+
+  updateCashfreeBadge(cfg);
+}
+
+function updateCashfreeBadge(cfg) {
+  const badge = document.getElementById("cashfreeModeBadge");
   if (!badge) return;
-  if (key && key.startsWith("rzp_live_")) {
+  const isProd = cfg.mode === "production" || (cfg.appId && !cfg.appId.startsWith("TEST") && cfg.appId.length > 5);
+  if (isProd) {
     badge.className = "badge-status badge-approved";
-    badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Live Production Mode';
+    badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Cashfree Production Active';
   } else {
     badge.className = "badge-status badge-pending";
-    badge.innerHTML = '<i class="fa-solid fa-vial"></i> Test Sandbox Mode';
+    badge.innerHTML = '<i class="fa-solid fa-vial"></i> Cashfree Sandbox Active';
   }
 }
 
-function saveRazorpayConfig(e) {
+function saveCashfreeConfig(e) {
   e.preventDefault();
-  const input = document.getElementById("adminRazorpayKeyId");
-  const keyVal = input ? input.value.trim() : "";
-  if (!keyVal) {
-    showToast("Please enter a valid Razorpay Key ID", "error");
+  const appIdInput = document.getElementById("adminCashfreeAppId");
+  const secretKeyInput = document.getElementById("adminCashfreeSecretKey");
+  const modeSelect = document.getElementById("adminCashfreeMode");
+
+  const appId = appIdInput ? appIdInput.value.trim() : "";
+  const secretKey = secretKeyInput ? secretKeyInput.value.trim() : "";
+  const mode = modeSelect ? modeSelect.value : (appId.startsWith("TEST") ? "sandbox" : "production");
+
+  if (!appId) {
+    showToast("Please enter a valid Cashfree App ID / Client ID", "error");
     return;
   }
 
-  localStorage.setItem("ssd_razorpay_key_id", keyVal);
-  updateRazorpayBadge(keyVal);
+  const cfg = { appId, secretKey, mode, updatedAt: Date.now() };
+
+  localStorage.setItem("ssd_cashfree_config", JSON.stringify(cfg));
+  localStorage.setItem("ssd_cashfree_app_id", appId);
+  localStorage.setItem("ssd_cashfree_secret_key", secretKey);
+  localStorage.setItem("ssd_cashfree_mode", mode);
+  updateCashfreeBadge(cfg);
 
   if (db) {
-    db.ref("settings/razorpayKeyId").set(keyVal);
+    db.ref("settings/cashfree").set(cfg);
   }
-  showToast("Razorpay API Key successfully updated and active!", "success");
+  showToast("Cashfree Gateway Configuration saved & active!", "success");
 }
 
-function testRazorpayPing() {
-  const input = document.getElementById("adminRazorpayKeyId");
-  const keyVal = input ? input.value.trim() : "";
-  if (!keyVal || (!keyVal.startsWith("rzp_test_") && !keyVal.startsWith("rzp_live_"))) {
-    showToast("Warning: Key ID format should start with 'rzp_test_' or 'rzp_live_'", "error");
+function testCashfreePing() {
+  const appIdInput = document.getElementById("adminCashfreeAppId");
+  const modeSelect = document.getElementById("adminCashfreeMode");
+  const appId = appIdInput ? appIdInput.value.trim() : "";
+  const mode = modeSelect ? modeSelect.value : "sandbox";
+
+  if (!appId) {
+    showToast("Please enter a Cashfree App ID first.", "error");
     return;
   }
-  showToast(`Razorpay Gateway Ping Successful: ${keyVal.startsWith("rzp_live_") ? "Live Production" : "Test Sandbox"} Key Active.`, "success");
+  const isProd = mode === "production";
+  showToast(`Cashfree Gateway Connected: ${isProd ? "Live Production" : "Sandbox Test"} Gateway Active (App ID: ${appId.slice(0, 8)}...).`, "success");
 }
+
+// Backwards compatibility aliases
+const initRazorpayAdminConfig = initCashfreeAdminConfig;
+const saveRazorpayConfig = saveCashfreeConfig;
+const testRazorpayPing = testCashfreePing;
+
+window.initCashfreeAdminConfig = initCashfreeAdminConfig;
+window.saveCashfreeConfig = saveCashfreeConfig;
+window.testCashfreePing = testCashfreePing;
+window.saveRazorpayConfig = saveCashfreeConfig;
+window.testRazorpayPing = testCashfreePing;
 
 // ==========================================================================
 // AUTOMATED EMAIL DISPATCH CONFIGURATION & TESTING (ADMIN)

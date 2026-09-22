@@ -514,7 +514,7 @@
                   <thead>
                     <tr>
                       <th>Receipt No.</th>
-                      <th>Payment ID (Razorpay)</th>
+                      <th>Payment ID (Cashfree)</th>
                       <th>Date</th>
                       <th>Donor Name</th>
                       <th>Amount (₹)</th>
@@ -980,32 +980,49 @@
               </div>
             </div>
 
-            <!-- Razorpay Payment Gateway Settings -->
+            <!-- Cashfree Payment Gateway Settings -->
             <div class="card-panel">
               <div class="card-panel-header">
                 <div class="card-panel-title">
                   <i class="fa-solid fa-credit-card" style="color: var(--primary-orange);"></i>
-                  <h3>Razorpay Payment Gateway API</h3>
+                  <h3>Cashfree Payment Gateway API (/settings/cashfree)</h3>
                 </div>
+                <span id="cashfreeModeBadge" class="badge-status badge-approved"><i class="fa-solid fa-circle-check"></i> Cashfree Active</span>
               </div>
               <div style="padding: 24px;">
                 <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">
-                  Configure the active Razorpay Key ID used across all online donation checkout dialogs (UPI, Google Pay, Cards, NetBanking).
+                  Configure Cashfree App ID (Client ID), Secret Key, and Gateway Mode used across all online donation checkout dialogs (UPI, Google Pay, PhonePe, Paytm, Cards, NetBanking).
                 </p>
-                <form id="razorpayConfigForm" onsubmit="saveRazorpayConfig(event)">
-                  <div class="form-group-modal" style="margin-bottom: 14px;">
-                    <label for="adminRazorpayKeyId">Razorpay Key ID</label>
-                    <input type="text" id="adminRazorpayKeyId" placeholder="rzp_test_... or rzp_live_..." required style="font-family: monospace; font-size: 13px;">
+                <form id="cashfreeConfigForm" onsubmit="saveCashfreeConfig(event)">
+                  <div class="form-grid-modal">
+                    <div class="form-group-modal">
+                      <label for="adminCashfreeAppId">Cashfree App ID (Client ID)</label>
+                      <input type="text" id="adminCashfreeAppId" placeholder="e.g. TEST100001878 or 100001878" required style="font-family: monospace; font-size: 13px;">
+                    </div>
+                    <div class="form-group-modal">
+                      <label for="adminCashfreeSecretKey">Cashfree Secret Key</label>
+                      <input type="password" id="adminCashfreeSecretKey" placeholder="e.g. cfsk_ma_test_..." style="font-family: monospace; font-size: 13px;">
+                    </div>
                   </div>
-                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; font-size: 12.5px;">
-                    <span id="razorpayModeBadge" class="badge-status badge-approved"><i class="fa-solid fa-vial"></i> Test Mode Active</span>
-                    <button type="button" class="btn-admin btn-admin-outline" style="padding: 6px 12px; font-size: 11.5px;" onclick="testRazorpayPing()">
-                      <i class="fa-solid fa-bolt"></i> Test Gateway Ping
+                  <div class="form-grid-modal" style="margin-top: 10px;">
+                    <div class="form-group-modal">
+                      <label for="adminCashfreeMode">Gateway Mode / Environment</label>
+                      <select id="adminCashfreeMode">
+                        <option value="sandbox">Sandbox (Testing / Demo Mode)</option>
+                        <option value="production">Production (Live Real-Money Payments)</option>
+                      </select>
+                    </div>
+                    <div class="form-group-modal" style="display: flex; align-items: flex-end;">
+                      <button type="button" class="btn-admin btn-admin-outline" style="width: 100%; height: 42px; font-size: 12px;" onclick="testCashfreePing()">
+                        <i class="fa-solid fa-bolt"></i> Test Cashfree Ping
+                      </button>
+                    </div>
+                  </div>
+                  <div style="margin-top: 16px;">
+                    <button type="submit" class="btn-admin btn-admin-primary">
+                      <i class="fa-solid fa-floppy-disk"></i> Save Cashfree Settings
                     </button>
                   </div>
-                  <button type="submit" class="btn-admin btn-admin-primary">
-                    <i class="fa-solid fa-floppy-disk"></i> Save Gateway Key
-                  </button>
                 </form>
               </div>
             </div>
@@ -1991,8 +2008,8 @@
               <div style="font-weight: 700; color: var(--navy-dark);" id="admReceiptNo">SSD-REC-2026-0001</div>
             </div>
             <div>
-              <span style="color: var(--text-muted);">Payment ID (Razorpay):</span>
-              <div style="font-weight: 700; color: var(--navy-dark); font-family: monospace;" id="admReceiptPayId">pay_test123</div>
+              <span style="color: var(--text-muted);">Payment ID (Cashfree):</span>
+              <div style="font-weight: 700; color: var(--navy-dark); font-family: monospace;" id="admReceiptPayId">cf_pay_test123</div>
             </div>
             <div>
               <span style="color: var(--text-muted);">Date & Time:</span>
