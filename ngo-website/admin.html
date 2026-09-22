@@ -472,6 +472,7 @@
                 <thead>
                   <tr>
                     <th>Registration Date</th>
+                    <th>Cadet ID & Batch</th>
                     <th>Full Name</th>
                     <th>Contact Info</th>
                     <th>State / City</th>
@@ -481,7 +482,7 @@
                   </tr>
                 </thead>
                 <tbody id="membersTableBody">
-                  <tr><td colspan="7" style="text-align: center; padding: 30px;">Loading members from Firebase...</td></tr>
+                  <tr><td colspan="8" style="text-align: center; padding: 30px;">Loading members from Firebase...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -828,16 +829,22 @@
                 <i class="fa-solid fa-user-lock" style="color: var(--primary-orange);"></i>
                 <h3>Authorized Command Officers & Role Access (/admin_users)</h3>
               </div>
-              <button type="button" class="btn-admin btn-admin-primary" onclick="openAddAdminUserModal()">
-                <i class="fa-solid fa-user-shield"></i> Authorize New Officer
-              </button>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn-admin btn-admin-outline" onclick="openBulkOfficersModal()">
+                  <i class="fa-solid fa-file-excel" style="color: #107C41;"></i> Bulk Import Excel / CSV
+                </button>
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openAddAdminUserModal()">
+                  <i class="fa-solid fa-user-shield"></i> Authorize New Officer
+                </button>
+              </div>
             </div>
             <div class="table-responsive">
               <table class="admin-table">
                 <thead>
                   <tr>
+                    <th>Officer ID & Batch</th>
                     <th>Officer Name</th>
-                    <th>Username / Email</th>
+                    <th>Official SSD Email</th>
                     <th>Assigned Role & Level</th>
                     <th>Department / Unit</th>
                     <th>Passcode</th>
@@ -846,7 +853,7 @@
                   </tr>
                 </thead>
                 <tbody id="adminsTableBody">
-                  <tr><td colspan="7" style="text-align: center; padding: 30px;">Loading admin officers from Firebase...</td></tr>
+                  <tr><td colspan="8" style="text-align: center; padding: 30px;">Loading admin officers from Firebase...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1712,21 +1719,39 @@
       <form id="formAdminUser" onsubmit="handleSaveAdminUser(event)">
         <div class="admin-modal-body">
           <input type="hidden" id="adminUserKey">
+          
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="newAdminOfficerId">Officer ID / Reg No</label>
+              <input type="text" id="newAdminOfficerId" required placeholder="e.g. SSD-OFF-2026-101" style="font-family: monospace; font-weight: 700; color: var(--navy-dark);">
+            </div>
+            <div class="form-group-modal">
+              <label for="newAdminBatchNo">Batch Identifier</label>
+              <input type="text" id="newAdminBatchNo" required placeholder="e.g. BATCH-2026/EXEC" style="font-family: monospace; font-weight: 600; color: var(--primary-orange);">
+            </div>
+          </div>
+
           <div class="form-grid-modal">
             <div class="form-group-modal">
               <label for="newAdminName">Officer Full Name</label>
-              <input type="text" id="newAdminName" required placeholder="e.g. Commander Ravindra Gautam">
+              <input type="text" id="newAdminName" required placeholder="e.g. Rahul Shinde" oninput="autoGenerateOfficerEmail(this.value)">
+              <small style="color: var(--text-muted); font-size: 11px;">Typing full name automatically crafts <code>name.surname@ssd.org</code></small>
             </div>
             <div class="form-group-modal">
-              <label for="newAdminEmail">Username / Official Email</label>
-              <input type="text" id="newAdminEmail" required placeholder="e.g. secretary@ssd.org">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label for="newAdminEmail" style="margin-bottom: 0;">Official Email (name.surname@ssd.org)</label>
+                <button type="button" onclick="forceGenerateOfficerEmail()" class="btn-link-action" style="font-size: 11px; color: var(--primary-orange); background: none; border: none; cursor: pointer; text-decoration: underline; font-weight: 600;">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i> Regenerate
+                </button>
+              </div>
+              <input type="text" id="newAdminEmail" required placeholder="e.g. rahul.shinde@ssd.org" style="font-family: monospace; font-weight: 600;">
             </div>
           </div>
           <div class="form-grid-modal">
             <div class="form-group-modal">
               <label for="newAdminPasscode">Access Passcode / Password</label>
               <div class="password-input-wrap">
-                <input type="password" id="newAdminPasscode" required placeholder="e.g. EXEC1927" style="font-family: monospace;">
+                <input type="password" id="newAdminPasscode" required placeholder="e.g. SSD2026!" style="font-family: monospace;">
                 <button type="button" class="btn-toggle-pass" onclick="togglePasswordVisibility('newAdminPasscode', this)" aria-label="Toggle Password Visibility">
                   <i class="fa-solid fa-eye"></i>
                 </button>
@@ -1761,6 +1786,92 @@
           <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-user-check"></i> Save Officer Authorization</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- BULK EXCEL / CSV OFFICER ENROLLMENT MODAL -->
+  <div id="modalBulkOfficers" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 860px;">
+      <div class="admin-modal-header" style="background: linear-gradient(135deg, #0A192F 0%, #172A45 100%); color: white;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="background: #107C41; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">
+            <i class="fa-solid fa-file-excel"></i>
+          </div>
+          <div>
+            <h3 style="margin: 0; font-size: 16px; color: white;">Bulk Officer Enrollment & Spreadsheet Synchronizer</h3>
+            <p style="margin: 2px 0 0; font-size: 12px; color: #94A3B8;">Auto-generate official <code>name.surname@ssd.org</code> emails, Officer IDs & Batch Nos</p>
+          </div>
+        </div>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalBulkOfficers')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="admin-modal-body">
+        <!-- Step 1: Download Template & Instructions -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px;">
+            <h4 style="font-size: 13px; font-weight: 700; color: var(--navy-dark); margin: 0 0 6px; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-cloud-arrow-down" style="color: var(--primary-orange);"></i> 1. Download Spreadsheet Template
+            </h4>
+            <p style="font-size: 12px; color: var(--text-muted); margin: 0 0 10px; line-height: 1.4;">
+              Get the pre-formatted Excel/CSV template with columns for Full Name, Designation, Department, Role, and Phone.
+            </p>
+            <button type="button" class="btn-admin btn-admin-outline" onclick="downloadOfficersCsvTemplate()" style="width: 100%; font-size: 12px; padding: 6px 12px;">
+              <i class="fa-solid fa-download"></i> Download Officers Template (.CSV)
+            </button>
+          </div>
+
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px;">
+            <h4 style="font-size: 13px; font-weight: 700; color: var(--navy-dark); margin: 0 0 6px; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-gears" style="color: var(--primary-orange);"></i> 2. Automated Smart Processing
+            </h4>
+            <ul style="font-size: 11.5px; color: var(--text-muted); margin: 0; padding-left: 16px; line-height: 1.5;">
+              <li>Cleans titles (e.g. <em>"Adv. Rahul Shinde"</em> &rarr; <code>rahul.shinde@ssd.org</code>)</li>
+              <li>Generates sequential IDs (e.g. <code>SSD-OFF-2026-101</code>)</li>
+              <li>Assigns active batch (e.g. <code>BATCH-2026/EXEC</code>)</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Step 2: Upload Dropzone -->
+        <div style="border: 2px dashed var(--primary-orange); background: rgba(255,107,0,0.02); border-radius: 8px; padding: 24px 16px; text-align: center; margin-bottom: 20px; cursor: pointer;" onclick="document.getElementById('bulkOfficersFileInput').click()">
+          <input type="file" id="bulkOfficersFileInput" accept=".csv, .txt, .xlsx, .xls" style="display: none;" onchange="handleBulkOfficersFileUpload(this)">
+          <i class="fa-solid fa-file-csv" style="font-size: 38px; color: var(--primary-orange); margin-bottom: 10px;"></i>
+          <h4 style="margin: 0 0 4px; font-size: 14px; color: var(--navy-dark);">Click to Select or Drag & Drop Excel / CSV Spreadsheet</h4>
+          <p style="margin: 0; font-size: 12px; color: var(--text-muted);">Supports .csv and text exports with names, designations, and units</p>
+        </div>
+
+        <!-- Step 3: Live Preview Table (Initially hidden) -->
+        <div id="bulkOfficersPreviewWrap" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h4 style="margin: 0; font-size: 13px; font-weight: 700; color: var(--navy-dark);">
+              <i class="fa-solid fa-table-list" style="color: var(--primary-orange);"></i> Parsed Records & Credentials Preview (<span id="bulkOfficersParsedCount">0</span> Officers)
+            </h4>
+            <button type="button" class="btn-admin btn-admin-outline" onclick="exportParsedCredentialsRoster()" style="font-size: 11px; padding: 4px 8px;">
+              <i class="fa-solid fa-file-export"></i> Export Credentials Roster
+            </button>
+          </div>
+          <div class="table-responsive" style="max-height: 260px; overflow-y: auto; border: 1px solid #E2E8F0; border-radius: 6px;">
+            <table class="admin-table" style="font-size: 12px;">
+              <thead>
+                <tr>
+                  <th>Officer ID</th>
+                  <th>Batch</th>
+                  <th>Officer Name</th>
+                  <th>Generated SSD Email</th>
+                  <th>Dept / Role</th>
+                  <th>Default Passcode</th>
+                </tr>
+              </thead>
+              <tbody id="bulkOfficersPreviewTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalBulkOfficers')">Cancel</button>
+        <button type="button" id="btnExecuteBulkOfficers" class="btn-admin btn-admin-primary" onclick="executeBulkOfficerEnrollment()" disabled>
+          <i class="fa-solid fa-user-plus"></i> Enroll & Provision All Officers
+        </button>
+      </div>
     </div>
   </div>
 

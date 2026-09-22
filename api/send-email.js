@@ -222,14 +222,18 @@ function generateEnrollmentWelcomeHtml(data) {
             <td style="padding: 10px; color: #FF6B00; font-weight: bold; font-family: monospace;">${data?.enlistmentId || 'SSD-CADET-' + Math.floor(1000 + Math.random() * 9000)}</td>
           </tr>
           <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+            <td style="padding: 10px; font-weight: bold; color: #64748b;">Batch Allotment</td>
+            <td style="padding: 10px; color: #001f3f; font-weight: bold; font-family: monospace;">${data?.batchNo || 'BATCH-2026/Q3'}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #e2e8f0;">
             <td style="padding: 10px; font-weight: bold; color: #64748b;">Assigned Wing / Division</td>
             <td style="padding: 10px; font-weight: bold; color: #001f3f;">${data?.wing || 'Central Cadet Corps (Sainik Wing)'}</td>
           </tr>
-          <tr style="border-bottom: 1px solid #e2e8f0;">
+          <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
             <td style="padding: 10px; font-weight: bold; color: #64748b;">State / Command Unit</td>
             <td style="padding: 10px; color: #1e293b;">${data?.city ? data.city + ', ' + data.state : data?.state || 'India'}</td>
           </tr>
-          <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+          <tr style="border-bottom: 1px solid #e2e8f0;">
             <td style="padding: 10px; font-weight: bold; color: #64748b;">Date of Enlistment</td>
             <td style="padding: 10px; color: #1e293b;">${new Date(data?.timestamp || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</td>
           </tr>
@@ -261,6 +265,7 @@ function generateEnrollmentWelcomeHtml(data) {
 function generateApprovalEmailHtml(data) {
   const cadetName = data?.name || data?.fullName || 'Cadet Sainik';
   const enlistId = data?.enlistmentId || ('SSD-CADET-' + Math.floor(1000 + Math.random() * 9000));
+  const batchNo = data?.batchNo || 'BATCH-2026/Q3';
   const wing = data?.wing || 'Central Cadet Corps (Sainik Wing)';
   const location = data?.city ? (data.city + ', ' + (data.state || 'India')) : (data?.state || 'National Command');
   const dateStr = new Date(data?.approvedAt || data?.timestamp || Date.now()).toLocaleDateString('en-IN', {
@@ -298,14 +303,18 @@ function generateApprovalEmailHtml(data) {
             <td style="padding: 10px; color: #FF6B00; font-weight: bold; font-family: monospace; font-size: 15px;">${enlistId}</td>
           </tr>
           <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+            <td style="padding: 10px; font-weight: bold; color: #64748b;">Batch Allotment</td>
+            <td style="padding: 10px; color: #001f3f; font-weight: bold; font-family: monospace;">${batchNo}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #e2e8f0;">
             <td style="padding: 10px; font-weight: bold; color: #64748b;">Assigned Wing</td>
             <td style="padding: 10px; font-weight: bold; color: #001f3f;">${wing}</td>
           </tr>
-          <tr style="border-bottom: 1px solid #e2e8f0;">
+          <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
             <td style="padding: 10px; font-weight: bold; color: #64748b;">Assigned Command Area</td>
             <td style="padding: 10px; color: #1e293b;">${location}</td>
           </tr>
-          <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+          <tr style="border-bottom: 1px solid #e2e8f0;">
             <td style="padding: 10px; font-weight: bold; color: #64748b;">Approval Date</td>
             <td style="padding: 10px; color: #1e293b;">${dateStr}</td>
           </tr>

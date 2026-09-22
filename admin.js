@@ -1871,7 +1871,7 @@ function renderMembersTable(filteredList = null) {
   let list = filteredList || Object.entries(membersObj).map(([key, val]) => ({ id: key, ...val }));
 
   if (list.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">No sainik enlistment records found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: var(--text-muted);">No sainik enlistment records found.</td></tr>';
     return;
   }
 
@@ -1881,9 +1881,16 @@ function renderMembersTable(filteredList = null) {
   tbody.innerHTML = list.map(m => {
     const regDate = m.timestamp ? new Date(m.timestamp).toLocaleDateString() : 'Recent';
     const isApproved = (m.status || '').toLowerCase() === 'approved';
+    const cadetId = m.enlistmentId || ('SSD-' + new Date(m.timestamp || Date.now()).getFullYear() + '-' + (m.state ? m.state.slice(0, 2).toUpperCase() : 'MH') + '-' + (m.id ? m.id.slice(-4).toUpperCase() : '1927'));
+    const batchNo = m.batchNo || 'BATCH-2026/Q3';
+
     return `
       <tr>
-        <td style="color: var(--text-muted);">${regDate}</td>
+        <td style="color: var(--text-muted); font-size: 12px; white-space: nowrap;">${regDate}</td>
+        <td>
+          <code style="font-weight: 700; color: var(--dark-navy);">${escapeHtml(cadetId)}</code>
+          <div style="font-size: 11px; color: var(--primary-orange); font-weight: 600; margin-top: 2px;">${escapeHtml(batchNo)}</div>
+        </td>
         <td><strong>${escapeHtml(m.fullName || m.name || 'Unnamed')}</strong></td>
         <td>
           <div><i class="fa-solid fa-phone" style="font-size: 11px; color: var(--primary-orange);"></i> ${escapeHtml(m.phone || 'N/A')}</div>
@@ -2086,11 +2093,16 @@ function handleManualAddMember(e) {
   const name = document.getElementById("manualMemberName").value.trim();
   const phone = document.getElementById("manualMemberPhone").value.trim();
   const email = document.getElementById("manualMemberEmail").value.trim();
-  const state = document.getElementById("manualMemberState").value.trim();
+  const state = document.getElementById("manualMemberState").value.trim() || "Maharashtra";
   const city = document.getElementById("manualMemberCity").value.trim();
   const wing = document.getElementById("manualMemberWing").value;
 
+  const enlistId = generateEnrollmentId(state);
+  const batchNo = generateBatchNo();
+
   const newEntry = {
+    enlistmentId: enlistId,
+    batchNo: batchNo,
     fullName: name,
     phone: phone,
     email: email,
@@ -2105,7 +2117,7 @@ function handleManualAddMember(e) {
   if (db) {
     db.ref('members').push(newEntry)
       .then(() => {
-        showToast("Sainik enlisted successfully to Firebase!", "success");
+        showToast(`Sainik enlisted! Cadet ID: ${enlistId} | Batch: ${batchNo}`, "success");
         closeAdminModal("modalAddMember");
         if (email) {
           sendMemberApprovalEmail(newEntry);
@@ -2117,7 +2129,7 @@ function handleManualAddMember(e) {
     adminData.members[id] = newEntry;
     saveLocalStore();
     renderMembersTable();
-    showToast("Sainik enlisted successfully!", "success");
+    showToast(`Sainik enlisted! Cadet ID: ${enlistId} | Batch: ${batchNo}`, "success");
     closeAdminModal("modalAddMember");
     if (email) {
       sendMemberApprovalEmail(newEntry);
@@ -3042,6 +3054,80 @@ window.deleteLeadershipMember = deleteLeadershipMember;
 // ==========================================================================
 // RENDERERS: AUTHORIZED ADMIN USERS & ROLES (/admin_users)
 // ==========================================================================
+// ==========================================================================
+// AUTOMATED ID, BATCH NUMBER & OFFICIAL EMAIL GENERATORS
+// ==========================================================================
+function generateEnrollmentId(state = "MH") {
+  const year = new Date().getFullYear();
+  const stateCode = (state || "MH").trim().slice(0, 2).toUpperCase();
+  const randNum = Math.floor(1000 + Math.random() * 9000);
+  return `SSD-${year}-${stateCode}-${randNum}`;
+}
+
+function generateBatchNo(dateObj = new Date()) {
+  const year = dateObj.getFullYear();
+  const month = dateObj.getMonth();
+  let q = "Q1";
+  if (month >= 3 && month <= 5) q = "Q2";
+  else if (month >= 6 && month <= 8) q = "Q3";
+  else if (month >= 9) q = "Q4";
+  return `BATCH-${year}/${q}`;
+}
+
+function generateOfficerId(seq = null) {
+  const year = new Date().getFullYear();
+  if (seq) {
+    return `SSD-OFF-${year}-${String(seq).padStart(3, '0')}`;
+  }
+  const randSeq = Math.floor(100 + Math.random() * 900);
+  return `SSD-OFF-${year}-${randSeq}`;
+}
+
+function generateSsdEmail(fullName) {
+  if (!fullName || typeof fullName !== 'string') return '';
+  let clean = fullName.trim()
+    .replace(/^(commander|cmdr|captain|capt|lieutenant|lt|advocate|adv|professor|prof|doctor|dr|shri|smt|mr|mrs|ms)\.?\s+/i, '')
+    .replace(/^(commander|cmdr|captain|capt|lieutenant|lt|advocate|adv|professor|prof|doctor|dr|shri|smt|mr|mrs|ms)\.?\s+/i, '');
+  clean = clean.replace(/\(.*?\)/g, '').trim();
+  clean = clean.replace(/[^a-zA-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!clean) return '';
+  const parts = clean.toLowerCase().split(' ').filter(p => p.length > 0);
+  if (parts.length === 1) {
+    return `${parts[0]}@ssd.org`;
+  }
+  const firstName = parts[0];
+  const lastName = parts[parts.length - 1];
+  return `${firstName}.${lastName}@ssd.org`;
+}
+
+function autoGenerateOfficerEmail(nameVal) {
+  const emailInput = document.getElementById("newAdminEmail");
+  if (!emailInput) return;
+  const currentVal = emailInput.value.trim();
+  if (!currentVal || currentVal.endsWith("@ssd.org")) {
+    const generated = generateSsdEmail(nameVal);
+    if (generated) {
+      emailInput.value = generated;
+    }
+  }
+}
+
+function forceGenerateOfficerEmail() {
+  const nameInput = document.getElementById("newAdminName");
+  const emailInput = document.getElementById("newAdminEmail");
+  if (!nameInput || !emailInput) return;
+  const generated = generateSsdEmail(nameInput.value);
+  if (generated) {
+    emailInput.value = generated;
+    showToast(`Generated: ${generated}`, "info");
+  } else {
+    showToast("Please enter officer name first.", "error");
+  }
+}
+
+// ==========================================================================
+// RENDERERS: AUTHORIZED ADMIN USERS & ROLES (/admin_users)
+// ==========================================================================
 function renderAdminsTable() {
   const tbody = document.getElementById("adminsTableBody");
   if (!tbody) return;
@@ -3050,14 +3136,25 @@ function renderAdminsTable() {
   const list = Object.entries(adminsObj).map(([key, val]) => ({ id: key, ...val }));
 
   if (list.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">No authorized officers found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: var(--text-muted);">No authorized officers found.</td></tr>';
     return;
   }
 
   tbody.innerHTML = list.map(u => `
     <tr>
-      <td><strong>${escapeHtml(u.name)}</strong></td>
-      <td><code>${escapeHtml(u.email)}</code></td>
+      <td>
+        <code style="font-weight: 700; color: var(--dark-navy);">${escapeHtml(u.officerId || ('SSD-OFF-' + (u.id ? u.id.slice(-4).toUpperCase() : '2026')))}</code>
+        <div style="font-size: 11px; color: var(--primary-orange); font-weight: 600; margin-top: 2px;">${escapeHtml(u.batchNo || 'BATCH-2026/EXEC')}</div>
+      </td>
+      <td>
+        <strong>${escapeHtml(u.name)}</strong>
+        ${u.designation ? `<div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(u.designation)}</div>` : ''}
+      </td>
+      <td>
+        <code style="color: var(--primary-orange); font-weight: 700; background: rgba(255,107,0,0.08); padding: 3px 7px; border-radius: 4px; font-size: 12px;">
+          ${escapeHtml(u.email)}
+        </code>
+      </td>
       <td><span class="badge-status ${u.role === 'super_admin' ? 'badge-approved' : 'badge-info'}">${escapeHtml(getRoleDisplayName(u.role))}</span></td>
       <td>${escapeHtml(u.dept || 'Central Command')}</td>
       <td><code>••••••••</code></td>
@@ -3080,12 +3177,15 @@ function renderAdminsTable() {
 }
 
 function openAddAdminUserModal() {
+  const count = Object.keys(adminData.admin_users || {}).length + 1;
   setInputValue("adminUserKey", "");
+  setInputValue("newAdminOfficerId", generateOfficerId(count));
+  setInputValue("newAdminBatchNo", "BATCH-" + new Date().getFullYear() + "/EXEC");
   setInputValue("newAdminName", "");
   setInputValue("newAdminEmail", "");
-  setInputValue("newAdminPasscode", "");
+  setInputValue("newAdminPasscode", "SSD" + new Date().getFullYear() + "!");
   setInputValue("newAdminRole", "executive");
-  setInputValue("newAdminDept", "");
+  setInputValue("newAdminDept", "National Secretariat");
   setInputValue("newAdminStatus", "Active");
   setText("modalAdminUserHeading", "Authorize New Command Officer");
   openAdminModal("modalAdminUser");
@@ -3097,11 +3197,13 @@ function openEditAdminUserModal(id) {
   if (!u) return;
 
   setInputValue("adminUserKey", id);
+  setInputValue("newAdminOfficerId", u.officerId || generateOfficerId());
+  setInputValue("newAdminBatchNo", u.batchNo || ("BATCH-" + new Date().getFullYear() + "/EXEC"));
   setInputValue("newAdminName", u.name || "");
   setInputValue("newAdminEmail", u.email || "");
   setInputValue("newAdminPasscode", u.passcode || "");
   setInputValue("newAdminRole", u.role || "executive");
-  setInputValue("newAdminDept", u.dept || "");
+  setInputValue("newAdminDept", u.dept || "National Secretariat");
   setInputValue("newAdminStatus", u.status || "Active");
   setText("modalAdminUserHeading", `Edit Officer Authorization: ${u.name}`);
   openAdminModal("modalAdminUser");
@@ -3110,9 +3212,20 @@ function openEditAdminUserModal(id) {
 function handleSaveAdminUser(e) {
   e.preventDefault();
   const key = document.getElementById("adminUserKey").value;
+  const officerName = document.getElementById("newAdminName").value.trim();
+  let officerEmail = document.getElementById("newAdminEmail").value.trim();
+  if (!officerEmail) {
+    officerEmail = generateSsdEmail(officerName);
+  }
+
+  const officerId = document.getElementById("newAdminOfficerId") ? document.getElementById("newAdminOfficerId").value.trim() : generateOfficerId();
+  const batchNo = document.getElementById("newAdminBatchNo") ? document.getElementById("newAdminBatchNo").value.trim() : generateBatchNo();
+
   const userData = {
-    name: document.getElementById("newAdminName").value.trim(),
-    email: document.getElementById("newAdminEmail").value.trim(),
+    officerId: officerId || generateOfficerId(),
+    batchNo: batchNo || ("BATCH-" + new Date().getFullYear() + "/EXEC"),
+    name: officerName,
+    email: officerEmail,
     passcode: document.getElementById("newAdminPasscode").value.trim(),
     role: document.getElementById("newAdminRole").value,
     dept: document.getElementById("newAdminDept").value.trim() || "National Secretariat",
@@ -3120,6 +3233,10 @@ function handleSaveAdminUser(e) {
     updatedAt: Date.now()
   };
 
+  if (!userData.name) {
+    showToast("Please provide officer full name.", "error");
+    return;
+  }
   if (!userData.email) {
     showToast("Please provide officer email or username.", "error");
     return;
@@ -3138,7 +3255,7 @@ function handleSaveAdminUser(e) {
   renderAdminsTable();
 
   const onSuccess = () => {
-    showToast(`Officer ${userData.name || userData.email} authorized successfully!`, "success");
+    showToast(`Officer ${userData.name} (${userData.email}) authorized successfully!`, "success");
     closeAdminModal("modalAdminUser");
   };
 
@@ -3194,6 +3311,290 @@ function deleteAdminUser(id) {
     showToast("Officer access revoked.", "info");
   }
 }
+
+// ==========================================================================
+// BULK ENROLLMENT ENGINE: EXCEL / CSV SHEET IMPORTER
+// ==========================================================================
+function openBulkOfficersModal() {
+  const container = document.getElementById("bulkOfficersPreviewContainer");
+  const tbody = document.getElementById("bulkOfficersPreviewTableBody");
+  const fileInput = document.getElementById("bulkOfficersFileInput");
+  const btnEnroll = document.getElementById("btnEnrollAllOfficers");
+  const btnExport = document.getElementById("btnExportRoster");
+
+  if (fileInput) fileInput.value = "";
+  if (container) container.style.display = "none";
+  if (tbody) tbody.innerHTML = "";
+  if (btnEnroll) btnEnroll.style.display = "none";
+  if (btnExport) btnExport.style.display = "none";
+  window._parsedBulkOfficers = [];
+
+  openAdminModal("modalBulkOfficers");
+}
+
+function downloadOfficersCsvTemplate() {
+  const headers = ["Full Name", "Designation", "Department", "Assigned Role (super_admin/executive/treasurer/media)", "Mobile / Contact", "Custom Passcode (Optional)"];
+  const rows = [
+    ["Commander Ravindra Gautam", "National Executive Secretary", "National Executive Secretariat", "executive", "9823000001", "EXEC2026!"],
+    ["Adv. Nitin V. Dongre", "Legal Advisory Directorate", "Constitutional Defense Bureau", "executive", "9823000002", "LEGAL2026!"],
+    ["Capt. Anand Meshram", "Chief Gazette Officer", "Gazette & Public Relations Cell", "media", "9823000003", "MEDIA2026!"],
+    ["Prof. Mahendra Khobragade", "National Treasurer", "National Treasury & Audit Bureau", "treasurer", "9823000004", "TREASURY2026!"],
+    ["Dr. Pramod Moon", "State Chapter President", "Maharashtra State Directorate", "executive", "9823000005", "MH2026!"]
+  ];
+  downloadCSV("SSD_Post_Holders_Enlistment_Template.csv", headers, rows);
+}
+
+function handleBulkOfficersFileUpload(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    parseBulkOfficersCsvText(text);
+  };
+  reader.readAsText(file);
+}
+
+function parseBulkOfficersCsvText(csvText) {
+  if (!csvText || !csvText.trim()) {
+    showToast("Uploaded file is empty.", "error");
+    return;
+  }
+
+  const lines = csvText.split(/\r?\n/).filter(line => line.trim().length > 0);
+  if (lines.length <= 1) {
+    showToast("Spreadsheet contains no data rows.", "error");
+    return;
+  }
+
+  // Parse header
+  const headerCols = parseCsvLine(lines[0]).map(h => h.toLowerCase().trim());
+  const nameIdx = headerCols.findIndex(h => h.includes("name") || h.includes("officer") || h.includes("post holder"));
+  const desigIdx = headerCols.findIndex(h => h.includes("desig") || h.includes("title") || h.includes("post"));
+  const deptIdx = headerCols.findIndex(h => h.includes("dept") || h.includes("department") || h.includes("unit") || h.includes("wing"));
+  const roleIdx = headerCols.findIndex(h => h.includes("role") || h.includes("access") || h.includes("tier"));
+  const phoneIdx = headerCols.findIndex(h => h.includes("phone") || h.includes("mobile") || h.includes("contact"));
+  const passIdx = headerCols.findIndex(h => h.includes("pass") || h.includes("password") || h.includes("code"));
+
+  const parsed = [];
+  const usedEmails = new Set();
+
+  // Populate existing emails to avoid duplicates
+  Object.values(adminData.admin_users || {}).forEach(u => {
+    if (u.email) usedEmails.add(u.email.toLowerCase().trim());
+  });
+
+  const year = new Date().getFullYear();
+
+  for (let i = 1; i < lines.length; i++) {
+    const row = parseCsvLine(lines[i]);
+    if (row.length === 0 || row.every(cell => !cell.trim())) continue;
+
+    const rawName = (nameIdx !== -1 ? row[nameIdx] : row[0]) || "";
+    if (!rawName.trim()) continue;
+
+    const designation = (desigIdx !== -1 ? row[desigIdx] : row[1]) || "Command Officer";
+    const dept = (deptIdx !== -1 ? row[deptIdx] : row[2]) || "National Secretariat";
+    let roleRaw = (roleIdx !== -1 ? row[roleIdx] : row[3]) || "executive";
+    roleRaw = roleRaw.toLowerCase().trim();
+    let role = "executive";
+    if (roleRaw.includes("super") || roleRaw.includes("master") || roleRaw.includes("supreme")) role = "super_admin";
+    else if (roleRaw.includes("treasur") || roleRaw.includes("finance")) role = "treasurer";
+    else if (roleRaw.includes("media") || roleRaw.includes("gazette") || roleRaw.includes("pr")) role = "media";
+
+    const phone = (phoneIdx !== -1 ? row[phoneIdx] : row[4]) || "";
+    let passcode = (passIdx !== -1 ? row[passIdx] : row[5]) || "";
+    if (!passcode.trim()) {
+      passcode = "SSD" + year + "!";
+    }
+
+    // Auto-generate name.surname@ssd.org
+    let baseEmail = generateSsdEmail(rawName);
+    if (!baseEmail) baseEmail = `officer${i}@ssd.org`;
+    let email = baseEmail;
+    let dupCounter = 2;
+    while (usedEmails.has(email)) {
+      const emailPrefix = baseEmail.replace('@ssd.org', '');
+      email = `${emailPrefix}${dupCounter}@ssd.org`;
+      dupCounter++;
+    }
+    usedEmails.add(email);
+
+    const officerId = `SSD-OFF-${year}-${String(100 + i).padStart(3, '0')}`;
+    const batchNo = `BATCH-${year}/EXEC`;
+
+    parsed.push({
+      officerId: officerId,
+      batchNo: batchNo,
+      name: rawName.trim(),
+      email: email,
+      designation: designation.trim(),
+      dept: dept.trim(),
+      role: role,
+      phone: phone.trim(),
+      passcode: passcode.trim(),
+      status: "Active"
+    });
+  }
+
+  if (parsed.length === 0) {
+    showToast("No valid officer names found in sheet.", "error");
+    return;
+  }
+
+  window._parsedBulkOfficers = parsed;
+  renderBulkOfficersPreview(parsed);
+}
+
+function parseCsvLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
+
+function renderBulkOfficersPreview(officers) {
+  const container = document.getElementById("bulkOfficersPreviewContainer");
+  const countEl = document.getElementById("bulkParsedCount");
+  const tbody = document.getElementById("bulkOfficersPreviewTableBody");
+  const btnEnroll = document.getElementById("btnEnrollAllOfficers");
+  const btnExport = document.getElementById("btnExportRoster");
+
+  if (container) container.style.display = "block";
+  if (countEl) countEl.textContent = officers.length;
+  if (btnEnroll) btnEnroll.style.display = "inline-flex";
+  if (btnExport) btnExport.style.display = "inline-flex";
+
+  if (!tbody) return;
+  tbody.innerHTML = officers.map((u, idx) => `
+    <tr>
+      <td style="color: var(--text-muted); font-weight: 700;">${idx + 1}</td>
+      <td>
+        <strong>${escapeHtml(u.name)}</strong>
+        <div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(u.designation || '')} - ${escapeHtml(u.dept || '')}</div>
+      </td>
+      <td>
+        <code style="color: var(--primary-orange); font-weight: 700; background: rgba(255,107,0,0.08); padding: 3px 7px; border-radius: 4px;">
+          ${escapeHtml(u.email)}
+        </code>
+      </td>
+      <td><code>${escapeHtml(u.officerId)}</code></td>
+      <td><span class="badge-status badge-district" style="font-size: 11px;">${escapeHtml(u.batchNo)}</span></td>
+      <td><span class="badge-status badge-info">${escapeHtml(getRoleDisplayName(u.role))}</span></td>
+      <td><code style="background: #F1F5F9; padding: 2px 5px; border-radius: 3px;">${escapeHtml(u.passcode)}</code></td>
+      <td><span class="badge-status badge-approved"><i class="fa-solid fa-circle-check"></i> Ready</span></td>
+    </tr>
+  `).join('');
+}
+
+function executeBulkOfficerEnrollment() {
+  const officers = window._parsedBulkOfficers;
+  if (!officers || officers.length === 0) {
+    showToast("No post holders to enroll.", "error");
+    return;
+  }
+
+  if (!adminData.admin_users) {
+    adminData.admin_users = { ...ssdInitialSeed.admin_users };
+  }
+
+  const updates = {};
+  officers.forEach((u, i) => {
+    const key = "usr_bulk_" + Date.now() + "_" + i;
+    const userData = {
+      officerId: u.officerId,
+      batchNo: u.batchNo,
+      name: u.name,
+      email: u.email,
+      designation: u.designation,
+      dept: u.dept,
+      role: u.role,
+      phone: u.phone,
+      passcode: u.passcode,
+      status: "Active",
+      enrolledAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    adminData.admin_users[key] = userData;
+    if (db) {
+      updates[`admin_users/${key}`] = userData;
+    }
+  });
+
+  saveLocalStore();
+  renderAdminsTable();
+  renderOverview();
+
+  const onComplete = () => {
+    showToast(`Successfully enrolled ${officers.length} post holders with official @ssd.org emails!`, "success");
+    closeAdminModal("modalBulkOfficers");
+  };
+
+  if (db && Object.keys(updates).length > 0) {
+    db.ref('/').update(updates).then(onComplete).catch(err => {
+      console.warn("Bulk enroll remote sync:", err);
+      onComplete();
+    });
+  } else {
+    onComplete();
+  }
+}
+
+function exportParsedCredentialsRoster() {
+  const officers = window._parsedBulkOfficers;
+  if (!officers || officers.length === 0) {
+    showToast("No credentials roster to export.", "error");
+    return;
+  }
+
+  const headers = ["Officer ID", "Batch No", "Full Name", "Official Email (@ssd.org)", "Designation", "Department", "Assigned Role", "Mobile / Phone", "Access Passcode", "Status"];
+  const rows = officers.map(u => [
+    `"${u.officerId}"`,
+    `"${u.batchNo}"`,
+    `"${u.name}"`,
+    `"${u.email}"`,
+    `"${u.designation}"`,
+    `"${u.dept}"`,
+    `"${getRoleDisplayName(u.role)}"`,
+    `"${u.phone}"`,
+    `"${u.passcode}"`,
+    `"${u.status}"`
+  ]);
+
+  downloadCSV("SSD_Post_Holders_Credentials_Roster.csv", headers, rows);
+}
+
+// Window exposure
+window.openBulkOfficersModal = openBulkOfficersModal;
+window.downloadOfficersCsvTemplate = downloadOfficersCsvTemplate;
+window.handleBulkOfficersFileUpload = handleBulkOfficersFileUpload;
+window.executeBulkOfficerEnrollment = executeBulkOfficerEnrollment;
+window.exportParsedCredentialsRoster = exportParsedCredentialsRoster;
+window.autoGenerateOfficerEmail = autoGenerateOfficerEmail;
+window.forceGenerateOfficerEmail = forceGenerateOfficerEmail;
+window.openAddAdminUserModal = openAddAdminUserModal;
+window.openEditAdminUserModal = openEditAdminUserModal;
+window.handleSaveAdminUser = handleSaveAdminUser;
+window.toggleAdminStatus = toggleAdminStatus;
+window.deleteAdminUser = deleteAdminUser;
 
 // ==========================================================================
 // RAZORPAY GATEWAY CONFIGURATION (ADMIN)
@@ -4320,8 +4721,10 @@ function exportMembersToCSV() {
     return;
   }
 
-  const headers = ["Full Name", "Phone", "Email", "State", "City", "Wing", "Status", "Date"];
+  const headers = ["Cadet ID", "Batch No", "Full Name", "Phone", "Email", "State", "City", "Wing", "Status", "Registration Date"];
   const rows = members.map(m => [
+    `"${m.enlistmentId || ('SSD-' + new Date(m.timestamp || Date.now()).getFullYear() + '-' + (m.state ? m.state.slice(0, 2).toUpperCase() : 'MH') + '-' + (m.id ? m.id.slice(-4).toUpperCase() : '1927'))}"`,
+    `"${m.batchNo || 'BATCH-2026/Q3'}"`,
     `"${m.fullName || m.name || ''}"`,
     `"${m.phone || ''}"`,
     `"${m.email || ''}"`,

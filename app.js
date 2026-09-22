@@ -999,6 +999,43 @@ function sendDonationEmail(donationRecord) {
   }
 }
 
+// ==========================================================================
+// AUTOMATED ID, BATCH NUMBER & EMAIL GENERATORS
+// ==========================================================================
+function generateEnrollmentId(state = "MH") {
+  const year = new Date().getFullYear();
+  const stateCode = (state || "MH").trim().slice(0, 2).toUpperCase();
+  const randNum = Math.floor(1000 + Math.random() * 9000);
+  return `SSD-${year}-${stateCode}-${randNum}`;
+}
+
+function generateBatchNo(dateObj = new Date()) {
+  const year = dateObj.getFullYear();
+  const month = dateObj.getMonth();
+  let q = "Q1";
+  if (month >= 3 && month <= 5) q = "Q2";
+  else if (month >= 6 && month <= 8) q = "Q3";
+  else if (month >= 9) q = "Q4";
+  return `BATCH-${year}/${q}`;
+}
+
+function generateSsdEmail(fullName) {
+  if (!fullName || typeof fullName !== 'string') return '';
+  let clean = fullName.trim()
+    .replace(/^(commander|cmdr|captain|capt|lieutenant|lt|advocate|adv|professor|prof|doctor|dr|shri|smt|mr|mrs|ms)\.?\s+/i, '')
+    .replace(/^(commander|cmdr|captain|capt|lieutenant|lt|advocate|adv|professor|prof|doctor|dr|shri|smt|mr|mrs|ms)\.?\s+/i, '');
+  clean = clean.replace(/\(.*?\)/g, '').trim();
+  clean = clean.replace(/[^a-zA-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!clean) return '';
+  const parts = clean.toLowerCase().split(' ').filter(p => p.length > 0);
+  if (parts.length === 1) {
+    return `${parts[0]}@ssd.org`;
+  }
+  const firstName = parts[0];
+  const lastName = parts[parts.length - 1];
+  return `${firstName}.${lastName}@ssd.org`;
+}
+
 function sendEnrollmentEmail(memberData) {
   if (!memberData || !memberData.email) return;
   const cfg = getEmailConfig();
@@ -1007,7 +1044,9 @@ function sendEnrollmentEmail(memberData) {
   const senderEmail = cfg.senderEmail || "samyak.ssd@gmail.com";
   const senderName = cfg.senderName || "Samata Sainik Dal (SSD)";
 
-  const enlistId = "SSD-CADET-" + (memberData.id ? memberData.id.slice(-6).toUpperCase() : Math.floor(1000 + Math.random() * 9000));
+  const enlistId = memberData.enlistmentId || ("SSD-CADET-" + (memberData.id ? memberData.id.slice(-6).toUpperCase() : Math.floor(1000 + Math.random() * 9000)));
+  const batchNo = memberData.batchNo || generateBatchNo();
+
   const templateParams = {
     from_name: senderName,
     from_email: senderEmail,
@@ -1021,6 +1060,7 @@ function sendEnrollmentEmail(memberData) {
     cadet_state: memberData.state || "Maharashtra",
     cadet_city: memberData.city || "District Command",
     enlistment_id: enlistId,
+    batch_no: batchNo,
     date: new Date(memberData.timestamp || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
     org_name: "Samata Sainik Dal (SSD)",
     org_website: "https://ssdind.vercel.app"
@@ -1048,11 +1088,11 @@ function sendEnrollmentEmail(memberData) {
       recipientEmail: templateParams.to_email,
       recipientName: templateParams.cadet_name,
       appPassword: cfg.appPassword,
-      data: { ...memberData, enlistmentId: enlistId }
+      data: templateParams
     })
-  }).catch(e => console.warn("Serverless email ping:", e));
+  }).catch(e => console.warn("Serverless email send warning:", e));
 
-  // 3. Log Dispatch Record in Firebase
+  // Log dispatch record to Firebase if database is connected
   if (db) {
     db.ref('email_dispatches').push({
       type: "Cadet Enlistment Welcome",
@@ -1060,8 +1100,7 @@ function sendEnrollmentEmail(memberData) {
       recipientEmail: templateParams.to_email,
       recipientName: templateParams.cadet_name,
       enlistmentId: enlistId,
-      wing: memberData.wing,
-      state: memberData.state,
+      batchNo: batchNo,
       status: "Dispatched",
       timestamp: Date.now()
     }).catch(e => console.warn("Firebase dispatch log:", e));
@@ -1077,14 +1116,20 @@ function handleMemberRegistration(e) {
   const btnSpinner = submitBtn.querySelector(".btn-spinner");
 
   const memberName = document.getElementById("memberName") ? document.getElementById("memberName").value.trim() : "";
+  const memberState = document.getElementById("memberState") ? document.getElementById("memberState").value : "Maharashtra";
+  const enlistId = generateEnrollmentId(memberState);
+  const batchNo = generateBatchNo();
+
   const memberData = {
+    enlistmentId: enlistId,
+    batchNo: batchNo,
     name: memberName,
     fullName: memberName,
     email: document.getElementById("memberEmail") ? document.getElementById("memberEmail").value.trim() : "",
     phone: document.getElementById("memberPhone") ? document.getElementById("memberPhone").value.trim() : "",
     wing: document.getElementById("memberWing") ? document.getElementById("memberWing").value : "Central Cadet Corps (Sainik Wing)",
     occupation: document.getElementById("memberOccupation") ? document.getElementById("memberOccupation").value : "Social Worker",
-    state: document.getElementById("memberState") ? document.getElementById("memberState").value : "Maharashtra",
+    state: memberState,
     city: document.getElementById("memberCity") ? document.getElementById("memberCity").value.trim() : "",
     message: document.getElementById("memberMessage") ? document.getElementById("memberMessage").value.trim() : "",
     status: "Pending",
@@ -1097,7 +1142,7 @@ function handleMemberRegistration(e) {
   btnSpinner.style.display = "inline-flex";
 
   const onSuccess = () => {
-    showToast("Enlistment Successful! Welcome to Samata Sainik Dal. Confirmation email dispatched. Jai Bhim!", "success");
+    showToast(`Enlistment Successful! Welcome to Samata Sainik Dal. Cadet ID: ${memberData.enlistmentId} | Batch: ${memberData.batchNo}. Confirmation email dispatched. Jai Bhim!`, "success");
     sendEnrollmentEmail(memberData);
     form.reset();
     submitBtn.disabled = false;
@@ -2417,13 +2462,19 @@ function handleQuickJoinSubmit(e) {
   const btnSpinner = submitBtn.querySelector(".btn-spinner");
 
   const quickName = document.getElementById("quickName") ? document.getElementById("quickName").value.trim() : "";
+  const quickState = document.getElementById("quickState") ? document.getElementById("quickState").value : "Maharashtra";
+  const enlistId = generateEnrollmentId(quickState);
+  const batchNo = generateBatchNo();
+
   const memberData = {
+    enlistmentId: enlistId,
+    batchNo: batchNo,
     name: quickName,
     fullName: quickName,
     email: document.getElementById("quickEmail") ? document.getElementById("quickEmail").value.trim() : "",
     phone: document.getElementById("quickPhone") ? document.getElementById("quickPhone").value.trim() : "",
     wing: document.getElementById("quickWing") ? document.getElementById("quickWing").value : "Central Cadet Corps (Sainik Wing)",
-    state: document.getElementById("quickState") ? document.getElementById("quickState").value : "Maharashtra",
+    state: quickState,
     city: document.getElementById("quickCity") ? document.getElementById("quickCity").value.trim() : "",
     pledgeAccepted: document.getElementById("quickPledge") ? document.getElementById("quickPledge").checked : true,
     status: "Pending",
@@ -2436,7 +2487,7 @@ function handleQuickJoinSubmit(e) {
   if (btnSpinner) btnSpinner.style.display = "inline-flex";
 
   const onSuccess = () => {
-    showToast(`Salute to Sainik ${memberData.name}! You have been enlisted in the ${memberData.wing}. Confirmation email dispatched. Jai Bhim!`, "success");
+    showToast(`Salute to Sainik ${memberData.name}! Enlisted in ${memberData.wing}. Cadet ID: ${memberData.enlistmentId} | Batch: ${memberData.batchNo}. Jai Bhim!`, "success");
     sendEnrollmentEmail(memberData);
     form.reset();
     submitBtn.disabled = false;
