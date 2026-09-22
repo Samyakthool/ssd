@@ -876,6 +876,109 @@ button, input, select, textarea {
   line-height: 1.6;
 }
 
+/* ==========================================================================
+   MEMBERSHIP & ENLISTMENT 4-STEP PROCEDURE CARDS
+   ========================================================================== */
+.membership-section {
+  padding: 70px 0;
+  background-color: var(--white);
+}
+
+.membership-steps-wrapper {
+  margin-bottom: 60px;
+}
+
+.membership-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  position: relative;
+  margin-top: 36px;
+}
+
+.step-card {
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 32px 20px 26px;
+  position: relative;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.step-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 14px 28px rgba(255, 107, 0, 0.14);
+  border-color: rgba(255, 107, 0, 0.4);
+}
+
+.step-number {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-orange) 0%, #D95300 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 18px;
+  box-shadow: 0 6px 16px rgba(255, 107, 0, 0.35);
+  position: relative;
+  border: 3px solid #FFFFFF;
+  outline: 2px solid rgba(255, 107, 0, 0.25);
+}
+
+.step-card-icon {
+  font-size: 13px;
+  color: var(--primary-orange);
+  background: rgba(255, 107, 0, 0.08);
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.step-card h4 {
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--dark-navy);
+  margin: 0 0 10px;
+  line-height: 1.35;
+}
+
+.step-card p {
+  font-size: 13.5px;
+  color: var(--muted-gray);
+  margin: 0;
+  line-height: 1.6;
+}
+
+@media (max-width: 992px) {
+  .membership-steps {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .membership-steps {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .step-card {
+    padding: 24px 18px;
+  }
+}
+
 /* Forms */
 .form-container-box {
   background: var(--white);
