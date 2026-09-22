@@ -458,45 +458,151 @@ const ssdSampleData = {
       presidentName: "Commander Pramod R. Moon",
       secretaryName: "Adv. Nitin V. Dongre",
       districts: [
-        "Nagpur",
-        "Mumbai City",
-        "Mumbai Suburban",
-        "Pune",
-        "Thane",
-        "Amravati",
-        "Nashik",
-        "Chhatrapati Sambhaji Nagar",
-        "Kolhapur",
-        "Nanded",
-        "Solapur",
-        "Akola",
-        "Wardha",
-        "Chandrapur",
-        "Yavatmal",
-        "Bhandara",
-        "Gondia",
-        "Gadchiroli",
-        "Jalgaon",
-        "Dhule",
-        "Nandurbar",
-        "Ahmednagar",
-        "Satara",
-        "Sangli",
-        "Ratnagiri",
-        "Sindhudurg",
-        "Raigad",
-        "Palghar",
-        "Beed",
-        "Latur",
-        "Dharashiv",
-        "Parbhani",
-        "Hingoli",
-        "Jalna",
-        "Buldhana",
-        "Washim"
+        "Nagpur", "Mumbai City", "Mumbai Suburban", "Pune", "Thane", "Amravati",
+        "Nashik", "Chhatrapati Sambhaji Nagar", "Kolhapur", "Nanded", "Solapur",
+        "Akola", "Wardha", "Chandrapur", "Yavatmal", "Bhandara", "Gondia",
+        "Gadchiroli", "Jalgaon", "Dhule", "Nandurbar", "Ahmednagar", "Satara",
+        "Sangli", "Ratnagiri", "Sindhudurg", "Raigad", "Palghar", "Beed",
+        "Latur", "Dharashiv", "Parbhani", "Hingoli", "Jalna", "Buldhana", "Washim"
       ],
       status: "Active",
       order: 1
+    },
+    "state_up": {
+      id: "state_up",
+      name: "Uttar Pradesh",
+      hindiName: "उत्तर प्रदेश",
+      code: "UP",
+      headquarters: "Lucknow & Agra Command Office",
+      presidentName: "Shri Ramcharan Gautam",
+      secretaryName: "Commander Sunil Kumar Rawat",
+      districts: [
+        "Lucknow", "Kanpur", "Agra", "Varanasi", "Prayagraj", "Meerut", "Bareilly",
+        "Aligarh", "Moradabad", "Gorakhpur", "Noida / Gautam Buddha Nagar", "Ghaziabad",
+        "Ayodhya", "Jhansi", "Mathura", "Saharanpur", "Firozabad", "Muzaffarnagar"
+      ],
+      status: "Active",
+      order: 2
+    },
+    "state_mp": {
+      id: "state_mp",
+      name: "Madhya Pradesh",
+      hindiName: "मध्य प्रदेश",
+      code: "MP",
+      headquarters: "Bhopal & Indore Directorate",
+      presidentName: "Dr. Kailash Chandra Ahirwar",
+      secretaryName: "Commander Rameshwar Prasad",
+      districts: [
+        "Bhopal", "Indore", "Jabalpur", "Gwalior", "Ujjain", "Sagar", "Rewa",
+        "Satna", "Ratlam", "Dewas", "Chhindwara", "Morena", "Bhind"
+      ],
+      status: "Active",
+      order: 3
+    },
+    "state_delhi": {
+      id: "state_delhi",
+      name: "Delhi NCR",
+      hindiName: "दिल्ली एनसीआर",
+      code: "DL",
+      headquarters: "New Delhi National Secretariat",
+      presidentName: "Adv. R. K. Mourya",
+      secretaryName: "Commander Sandeep Kumar",
+      districts: [
+        "Central Delhi", "New Delhi", "North Delhi", "South Delhi", "East Delhi",
+        "West Delhi", "North East Delhi", "North West Delhi", "South East Delhi",
+        "South West Delhi", "Shahdara"
+      ],
+      status: "Active",
+      order: 4
+    },
+    "state_ka": {
+      id: "state_ka",
+      name: "Karnataka",
+      hindiName: "कर्नाटक",
+      code: "KA",
+      headquarters: "Bengaluru Central Directorate",
+      presidentName: "Prof. Anand Kumar Swamy",
+      secretaryName: "Commander B. Malleshappa",
+      districts: [
+        "Bengaluru Urban", "Bengaluru Rural", "Mysuru", "Belagavi", "Kalaburagi",
+        "Hubballi-Dharwad", "Mangaluru", "Ballari", "Vijayapura", "Shivamogga", "Tumakuru"
+      ],
+      status: "Active",
+      order: 5
+    },
+    "state_rj": {
+      id: "state_rj",
+      name: "Rajasthan",
+      hindiName: "राजस्थान",
+      code: "RJ",
+      headquarters: "Jaipur State Secretariat",
+      presidentName: "Shri Bharat Lal Bairwa",
+      secretaryName: "Commander Omprakash Meghwal",
+      districts: [
+        "Jaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer", "Udaipur", "Bharatpur",
+        "Alwar", "Sikar", "Bhilwara", "Sri Ganganagar", "Pali"
+      ],
+      status: "Active",
+      order: 6
+    },
+    "state_pb": {
+      id: "state_pb",
+      name: "Punjab",
+      hindiName: "पंजाब",
+      code: "PB",
+      headquarters: "Jalandhar & Chandigarh Command",
+      presidentName: "Col. (Retd.) Harjit Singh Rahi",
+      secretaryName: "Commander Gurmukh Singh",
+      districts: [
+        "Jalandhar", "Ludhiana", "Amritsar", "Patiala", "Bathinda", "Mohali / SAS Nagar",
+        "Hoshiarpur", "Firozpur", "Gurdaspur", "Pathankot", "Kapurthala"
+      ],
+      status: "Active",
+      order: 7
+    },
+    "state_br": {
+      id: "state_br",
+      name: "Bihar",
+      hindiName: "बिहार",
+      code: "BR",
+      headquarters: "Patna State Command Office",
+      presidentName: "Shri Dharmendra Kumar Paswan",
+      secretaryName: "Commander Binod Kumar Ram",
+      districts: [
+        "Patna", "Gaya", "Muzaffarpur", "Bhagalpur", "Darbhanga", "Purnia",
+        "Nalanda / Bihar Sharif", "Begusarai", "Munger", "Rohtas"
+      ],
+      status: "Active",
+      order: 8
+    },
+    "state_gj": {
+      id: "state_gj",
+      name: "Gujarat",
+      hindiName: "गुजरात",
+      code: "GJ",
+      headquarters: "Ahmedabad & Vadodara Command",
+      presidentName: "Commander Pravinbhai Vankar",
+      secretaryName: "Adv. Jagdish Makwana",
+      districts: [
+        "Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar",
+        "Gandhinagar", "Junagadh", "Anand", "Mehsana", "Kutch"
+      ],
+      status: "Active",
+      order: 9
+    },
+    "state_ts": {
+      id: "state_ts",
+      name: "Telangana",
+      hindiName: "तेलंगाना",
+      code: "TS",
+      headquarters: "Hyderabad Central Directorate",
+      presidentName: "Commander B. Srinivas Rao",
+      secretaryName: "Adv. K. Ramesh",
+      districts: [
+        "Hyderabad", "Secunderabad", "Warangal", "Nizamabad", "Karimnagar", "Khammam", "Nalgonda"
+      ],
+      status: "Active",
+      order: 10
     }
   },
   advisoryBoard: [

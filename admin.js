@@ -534,45 +534,151 @@ const ssdInitialSeed = {
       presidentName: "Commander Pramod R. Moon",
       secretaryName: "Adv. Nitin V. Dongre",
       districts: [
-        "Nagpur",
-        "Mumbai City",
-        "Mumbai Suburban",
-        "Pune",
-        "Thane",
-        "Amravati",
-        "Nashik",
-        "Chhatrapati Sambhaji Nagar",
-        "Kolhapur",
-        "Nanded",
-        "Solapur",
-        "Akola",
-        "Wardha",
-        "Chandrapur",
-        "Yavatmal",
-        "Bhandara",
-        "Gondia",
-        "Gadchiroli",
-        "Jalgaon",
-        "Dhule",
-        "Nandurbar",
-        "Ahmednagar",
-        "Satara",
-        "Sangli",
-        "Ratnagiri",
-        "Sindhudurg",
-        "Raigad",
-        "Palghar",
-        "Beed",
-        "Latur",
-        "Dharashiv",
-        "Parbhani",
-        "Hingoli",
-        "Jalna",
-        "Buldhana",
-        "Washim"
+        "Nagpur", "Mumbai City", "Mumbai Suburban", "Pune", "Thane", "Amravati",
+        "Nashik", "Chhatrapati Sambhaji Nagar", "Kolhapur", "Nanded", "Solapur",
+        "Akola", "Wardha", "Chandrapur", "Yavatmal", "Bhandara", "Gondia",
+        "Gadchiroli", "Jalgaon", "Dhule", "Nandurbar", "Ahmednagar", "Satara",
+        "Sangli", "Ratnagiri", "Sindhudurg", "Raigad", "Palghar", "Beed",
+        "Latur", "Dharashiv", "Parbhani", "Hingoli", "Jalna", "Buldhana", "Washim"
       ],
       status: "Active",
       order: 1
+    },
+    "state_up": {
+      id: "state_up",
+      name: "Uttar Pradesh",
+      hindiName: "उत्तर प्रदेश",
+      code: "UP",
+      headquarters: "Lucknow & Agra Command Office",
+      presidentName: "Shri Ramcharan Gautam",
+      secretaryName: "Commander Sunil Kumar Rawat",
+      districts: [
+        "Lucknow", "Kanpur", "Agra", "Varanasi", "Prayagraj", "Meerut", "Bareilly",
+        "Aligarh", "Moradabad", "Gorakhpur", "Noida / Gautam Buddha Nagar", "Ghaziabad",
+        "Ayodhya", "Jhansi", "Mathura", "Saharanpur", "Firozabad", "Muzaffarnagar"
+      ],
+      status: "Active",
+      order: 2
+    },
+    "state_mp": {
+      id: "state_mp",
+      name: "Madhya Pradesh",
+      hindiName: "मध्य प्रदेश",
+      code: "MP",
+      headquarters: "Bhopal & Indore Directorate",
+      presidentName: "Dr. Kailash Chandra Ahirwar",
+      secretaryName: "Commander Rameshwar Prasad",
+      districts: [
+        "Bhopal", "Indore", "Jabalpur", "Gwalior", "Ujjain", "Sagar", "Rewa",
+        "Satna", "Ratlam", "Dewas", "Chhindwara", "Morena", "Bhind"
+      ],
+      status: "Active",
+      order: 3
+    },
+    "state_delhi": {
+      id: "state_delhi",
+      name: "Delhi NCR",
+      hindiName: "दिल्ली एनसीआर",
+      code: "DL",
+      headquarters: "New Delhi National Secretariat",
+      presidentName: "Adv. R. K. Mourya",
+      secretaryName: "Commander Sandeep Kumar",
+      districts: [
+        "Central Delhi", "New Delhi", "North Delhi", "South Delhi", "East Delhi",
+        "West Delhi", "North East Delhi", "North West Delhi", "South East Delhi",
+        "South West Delhi", "Shahdara"
+      ],
+      status: "Active",
+      order: 4
+    },
+    "state_ka": {
+      id: "state_ka",
+      name: "Karnataka",
+      hindiName: "कर्नाटक",
+      code: "KA",
+      headquarters: "Bengaluru Central Directorate",
+      presidentName: "Prof. Anand Kumar Swamy",
+      secretaryName: "Commander B. Malleshappa",
+      districts: [
+        "Bengaluru Urban", "Bengaluru Rural", "Mysuru", "Belagavi", "Kalaburagi",
+        "Hubballi-Dharwad", "Mangaluru", "Ballari", "Vijayapura", "Shivamogga", "Tumakuru"
+      ],
+      status: "Active",
+      order: 5
+    },
+    "state_rj": {
+      id: "state_rj",
+      name: "Rajasthan",
+      hindiName: "राजस्थान",
+      code: "RJ",
+      headquarters: "Jaipur State Secretariat",
+      presidentName: "Shri Bharat Lal Bairwa",
+      secretaryName: "Commander Omprakash Meghwal",
+      districts: [
+        "Jaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer", "Udaipur", "Bharatpur",
+        "Alwar", "Sikar", "Bhilwara", "Sri Ganganagar", "Pali"
+      ],
+      status: "Active",
+      order: 6
+    },
+    "state_pb": {
+      id: "state_pb",
+      name: "Punjab",
+      hindiName: "पंजाब",
+      code: "PB",
+      headquarters: "Jalandhar & Chandigarh Command",
+      presidentName: "Col. (Retd.) Harjit Singh Rahi",
+      secretaryName: "Commander Gurmukh Singh",
+      districts: [
+        "Jalandhar", "Ludhiana", "Amritsar", "Patiala", "Bathinda", "Mohali / SAS Nagar",
+        "Hoshiarpur", "Firozpur", "Gurdaspur", "Pathankot", "Kapurthala"
+      ],
+      status: "Active",
+      order: 7
+    },
+    "state_br": {
+      id: "state_br",
+      name: "Bihar",
+      hindiName: "बिहार",
+      code: "BR",
+      headquarters: "Patna State Command Office",
+      presidentName: "Shri Dharmendra Kumar Paswan",
+      secretaryName: "Commander Binod Kumar Ram",
+      districts: [
+        "Patna", "Gaya", "Muzaffarpur", "Bhagalpur", "Darbhanga", "Purnia",
+        "Nalanda / Bihar Sharif", "Begusarai", "Munger", "Rohtas"
+      ],
+      status: "Active",
+      order: 8
+    },
+    "state_gj": {
+      id: "state_gj",
+      name: "Gujarat",
+      hindiName: "गुजरात",
+      code: "GJ",
+      headquarters: "Ahmedabad & Vadodara Command",
+      presidentName: "Commander Pravinbhai Vankar",
+      secretaryName: "Adv. Jagdish Makwana",
+      districts: [
+        "Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar",
+        "Gandhinagar", "Junagadh", "Anand", "Mehsana", "Kutch"
+      ],
+      status: "Active",
+      order: 9
+    },
+    "state_ts": {
+      id: "state_ts",
+      name: "Telangana",
+      hindiName: "तेलंगाना",
+      code: "TS",
+      headquarters: "Hyderabad Central Directorate",
+      presidentName: "Commander B. Srinivas Rao",
+      secretaryName: "Adv. K. Ramesh",
+      districts: [
+        "Hyderabad", "Secunderabad", "Warangal", "Nizamabad", "Karimnagar", "Khammam", "Nalgonda"
+      ],
+      status: "Active",
+      order: 10
     }
   },
   admin_users: {
@@ -2594,7 +2700,10 @@ function renderChaptersView() {
   const container = document.getElementById("stateChaptersContainer");
   if (!container) return;
 
-  const chaptersObj = adminData.state_chapters || ssdInitialSeed.state_chapters || {};
+  let chaptersObj = adminData.state_chapters;
+  if (!chaptersObj || typeof chaptersObj !== 'object' || Object.keys(chaptersObj).length === 0) {
+    chaptersObj = ssdInitialSeed.state_chapters || {};
+  }
   const entries = Object.entries(chaptersObj);
 
   if (entries.length === 0) {
@@ -2790,12 +2899,24 @@ function deleteStateChapter(key) {
 function openAddDistrictModal(preferredStateName = null) {
   populateLeadershipStateAndDistrictOptions();
   const select = document.getElementById("districtTargetState");
-  if (select && preferredStateName) {
-    for (let i = 0; i < select.options.length; i++) {
-      if (select.options[i].value.toLowerCase() === preferredStateName.toLowerCase()) {
-        select.selectedIndex = i;
-        break;
+  if (select && select.options.length > 0) {
+    let matchedIndex = -1;
+    if (preferredStateName && preferredStateName !== "National HQ" && preferredStateName !== "all") {
+      const cleanPref = preferredStateName.trim().toLowerCase();
+      for (let i = 0; i < select.options.length; i++) {
+        const optVal = select.options[i].value.trim().toLowerCase();
+        const optText = select.options[i].text.trim().toLowerCase();
+        if (optVal === cleanPref || optText.includes(cleanPref) || cleanPref.includes(optVal)) {
+          matchedIndex = i;
+          break;
+        }
       }
+    }
+    if (matchedIndex >= 0) {
+      select.selectedIndex = matchedIndex;
+      select.value = select.options[matchedIndex].value;
+    } else if (select.selectedIndex < 0 || !select.value) {
+      select.selectedIndex = 0;
     }
   }
   setInputValue("newDistrictName", "");
@@ -2804,15 +2925,21 @@ function openAddDistrictModal(preferredStateName = null) {
 
 function handleSaveDistrict(e) {
   e.preventDefault();
-  const targetStateName = document.getElementById("districtTargetState").value;
-  const newDistrict = document.getElementById("newDistrictName").value.trim();
+  const districtSelect = document.getElementById("districtTargetState");
+  const targetStateName = districtSelect ? districtSelect.value : "";
+  const newDistrict = (document.getElementById("newDistrictName")?.value || "").trim();
 
   if (!targetStateName || !newDistrict) {
     showToast("Please specify both State and District name.", "error");
     return;
   }
 
-  const chapters = adminData.state_chapters || ssdInitialSeed.state_chapters || {};
+  let chapters = adminData.state_chapters;
+  if (!chapters || typeof chapters !== 'object' || Object.keys(chapters).length === 0) {
+    chapters = { ...ssdInitialSeed.state_chapters };
+    adminData.state_chapters = chapters;
+  }
+
   let targetKey = null;
   for (const [k, v] of Object.entries(chapters)) {
     if ((v.name || '').toLowerCase() === targetStateName.toLowerCase()) {
@@ -2833,7 +2960,7 @@ function handleSaveDistrict(e) {
   };
 
   let districts = Array.isArray(currentState.districts) ? [...currentState.districts] : [];
-  if (districts.includes(newDistrict)) {
+  if (districts.some(d => d.toLowerCase() === newDistrict.toLowerCase())) {
     showToast(`District "${newDistrict}" is already registered in ${targetStateName}.`, "info");
     closeAdminModal("modalAddDistrict");
     return;
@@ -2846,6 +2973,7 @@ function handleSaveDistrict(e) {
   const onSuccess = () => {
     showToast(`District "${newDistrict}" added to ${targetStateName}!`, "success");
     closeAdminModal("modalAddDistrict");
+    renderChaptersView();
     populateLeadershipStateAndDistrictOptions();
   };
 
@@ -2864,7 +2992,11 @@ function handleSaveDistrict(e) {
 }
 
 function deleteDistrictChip(stateKey, districtName) {
-  const chapters = adminData.state_chapters || ssdInitialSeed.state_chapters || {};
+  let chapters = adminData.state_chapters;
+  if (!chapters || typeof chapters !== 'object' || Object.keys(chapters).length === 0) {
+    chapters = { ...ssdInitialSeed.state_chapters };
+    adminData.state_chapters = chapters;
+  }
   const s = chapters[stateKey];
   if (!s || !Array.isArray(s.districts)) return;
 
@@ -2876,6 +3008,7 @@ function deleteDistrictChip(stateKey, districtName) {
 
   const onSuccess = () => {
     showToast(`District "${districtName}" removed from ${s.name}.`, "info");
+    renderChaptersView();
     populateLeadershipStateAndDistrictOptions();
   };
 
@@ -2893,8 +3026,14 @@ function deleteDistrictChip(stateKey, districtName) {
 }
 
 function populateLeadershipStateAndDistrictOptions() {
-  const chapters = adminData.state_chapters || ssdInitialSeed.state_chapters || {};
-  const statesList = Object.values(chapters);
+  let chapters = adminData.state_chapters;
+  if (!chapters || typeof chapters !== 'object' || Object.keys(chapters).length === 0) {
+    chapters = ssdInitialSeed.state_chapters || {};
+  }
+  let statesList = Object.values(chapters).filter(s => s && s.name);
+  if (statesList.length === 0) {
+    statesList = Object.values(ssdInitialSeed.state_chapters || {});
+  }
 
   // 1. Leadership State Filter in Leadership View
   const leadStateFilter = document.getElementById("leadershipStateFilter");
@@ -2905,7 +3044,9 @@ function populateLeadershipStateAndDistrictOptions() {
       <option value="National HQ">National HQ (All-India)</option>
       ${statesList.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}${s.hindiName ? ' (' + escapeHtml(s.hindiName) + ')' : ''}</option>`).join('')}
     `;
-    if (currentVal) leadStateFilter.value = currentVal;
+    if (currentVal && Array.from(leadStateFilter.options).some(o => o.value === currentVal)) {
+      leadStateFilter.value = currentVal;
+    }
   }
 
   // 2. Leadership District Filter in Leadership View
@@ -2921,7 +3062,9 @@ function populateLeadershipStateAndDistrictOptions() {
       <option value="all">All Districts</option>
       ${districts.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('')}
     `;
-    if (currentVal) leadDistFilter.value = currentVal;
+    if (currentVal && Array.from(leadDistFilter.options).some(o => o.value === currentVal)) {
+      leadDistFilter.value = currentVal;
+    }
   }
 
   // 3. State select in modalLeadership
@@ -2932,7 +3075,11 @@ function populateLeadershipStateAndDistrictOptions() {
       <option value="National HQ">National HQ (All-India)</option>
       ${statesList.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}${s.hindiName ? ' (' + escapeHtml(s.hindiName) + ')' : ''}</option>`).join('')}
     `;
-    if (currentVal) leadStateSelect.value = currentVal;
+    if (currentVal && Array.from(leadStateSelect.options).some(o => o.value === currentVal)) {
+      leadStateSelect.value = currentVal;
+    } else if (leadStateSelect.options.length > 0) {
+      leadStateSelect.selectedIndex = 0;
+    }
   }
 
   // 4. State select in modalAddDistrict
@@ -2942,7 +3089,11 @@ function populateLeadershipStateAndDistrictOptions() {
     districtTargetState.innerHTML = statesList.map(s => `
       <option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}${s.hindiName ? ' (' + escapeHtml(s.hindiName) + ')' : ''}</option>
     `).join('');
-    if (currentVal) districtTargetState.value = currentVal;
+    if (currentVal && Array.from(districtTargetState.options).some(o => o.value === currentVal)) {
+      districtTargetState.value = currentVal;
+    } else if (districtTargetState.options.length > 0) {
+      districtTargetState.selectedIndex = 0;
+    }
   }
 
   // 5. Update datalist for leadDistrict based on current selected state in modalLeadership
@@ -2955,11 +3106,14 @@ function updateLeadDistrictDatalist() {
   if (!datalist) return;
 
   const selectedState = stateSelect ? stateSelect.value : 'Maharashtra';
-  const chapters = adminData.state_chapters || ssdInitialSeed.state_chapters || {};
+  let chapters = adminData.state_chapters;
+  if (!chapters || typeof chapters !== 'object' || Object.keys(chapters).length === 0) {
+    chapters = ssdInitialSeed.state_chapters || {};
+  }
   let targetStateObj = null;
 
   for (const s of Object.values(chapters)) {
-    if ((s.name || '').toLowerCase() === selectedState.toLowerCase()) {
+    if (s && (s.name || '').toLowerCase() === selectedState.toLowerCase()) {
       targetStateObj = s;
       break;
     }
