@@ -255,6 +255,30 @@ const ssdInitialSeed = {
       credentials: "FCA, M.Com | Central Audit Bureau",
       order: 6
     },
+    "lead_it_1": {
+      name: "Er. Aniket S. Meshram",
+      designation: "National Head, IT & Digital Media Cell (राष्ट्रीय आईटी प्रमुख)",
+      category: "IT & Digital Media Cell",
+      level: "national",
+      state: "National HQ",
+      rankBadge: "IT & Cyber Directorate",
+      photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+      bio: "Cloud & Cyber Systems Architect; oversees centralized portal databases, digital member IDs, automated enrollment systems, and nationwide digital infrastructure.",
+      credentials: "B.Tech Computer Science | Nagpur Central IT Cell",
+      order: 7
+    },
+    "lead_it_2": {
+      name: "Ms. Pooja R. Gaikwad",
+      designation: "Digital Media & PR Secretary (डिजिटल मीडिया समन्वयक)",
+      category: "IT & Digital Media Cell",
+      level: "national",
+      state: "National HQ",
+      rankBadge: "Digital Media Wing",
+      photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+      bio: "Digital communications specialist leading social broadcast networks, multimedia archives, digital gazette publications, and centenary cyber outreach.",
+      credentials: "M.A. Mass Communication | Mumbai Directorate",
+      order: 8
+    },
     "lead_state_mh_1": {
       name: "Commander Pramod R. Moon",
       designation: "State President (महाराष्ट्र प्रदेशाध्यक्ष)",

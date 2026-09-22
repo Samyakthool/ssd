@@ -283,12 +283,37 @@ const ssdSampleData = {
       name: "Prof. Mahendra V. Khobragade",
       designation: "National Treasurer & Comptroller (राष्ट्रीय कोषाध्यक्ष)",
       level: "national",
+      category: "Finance & Audit",
       state: "National HQ",
       rankBadge: "Finance & Audit",
       photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
       bio: "Chartered Accountant and academician; ensures 100% organizational transparency, public audit compliance, 80G tax exemptions, and Centenary 2027 trust governance.",
       credentials: "FCA, M.Com | Central Audit Bureau",
       order: 6
+    },
+    "lead_it_1": {
+      name: "Er. Aniket S. Meshram",
+      designation: "National Head, IT & Digital Media Cell (राष्ट्रीय आईटी प्रमुख)",
+      level: "national",
+      category: "IT & Digital Media Cell",
+      state: "National HQ",
+      rankBadge: "IT & Cyber Directorate",
+      photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+      bio: "Cloud & Cyber Systems Architect; oversees centralized portal databases, digital member IDs, automated enrollment systems, and nationwide digital infrastructure.",
+      credentials: "B.Tech Computer Science | Nagpur Central IT Cell",
+      order: 7
+    },
+    "lead_it_2": {
+      name: "Ms. Pooja R. Gaikwad",
+      designation: "Digital Media & PR Secretary (डिजिटल मीडिया समन्वयक)",
+      level: "national",
+      category: "IT & Digital Media Cell",
+      state: "National HQ",
+      rankBadge: "Digital Media Wing",
+      photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+      bio: "Digital communications specialist leading social broadcast networks, multimedia archives, digital gazette publications, and centenary cyber outreach.",
+      credentials: "M.A. Mass Communication | Mumbai Directorate",
+      order: 8
     },
     "lead_state_mh_1": {
       name: "Commander Pramod R. Moon",
@@ -1639,11 +1664,13 @@ function renderGoverningCards(leadersList) {
   let filtered = window._allGoverningLeaders.filter(lead => {
     if (lead.category === "Advisory Board") return false;
 
+    const isItCell = (lead.category === "IT & Digital Media Cell" || lead.category === "IT Cell" || (lead.rankBadge && lead.rankBadge.toLowerCase().includes('it')) || (lead.designation && lead.designation.toLowerCase().includes('it')));
     const isDistrict = (lead.level === 'district');
     const isState = (lead.level === 'state') || (!isDistrict && lead.state && lead.state !== 'National HQ' && lead.state !== 'All-India');
     const isNational = (lead.level === 'national') || (!lead.level && (!lead.state || lead.state === 'National HQ' || lead.state === 'All-India'));
 
-    if (currentGoverningTier === 'national' && !isNational) return false;
+    if (currentGoverningTier === 'it_cell' && !isItCell) return false;
+    if (currentGoverningTier === 'national' && (!isNational || isItCell)) return false;
     if (currentGoverningTier === 'state' && !isState) return false;
     if (currentGoverningTier === 'district' && !isDistrict) return false;
 
@@ -1675,23 +1702,26 @@ function renderGoverningCards(leadersList) {
   // Update counts
   const nonAdvisory = window._allGoverningLeaders.filter(l => l.category !== "Advisory Board");
   const totalCount = nonAdvisory.length;
-  const nationalCount = nonAdvisory.filter(l => l.level === 'national' || (!l.level && (!l.state || l.state === 'National HQ'))).length;
+  const itCellCount = nonAdvisory.filter(l => l.category === "IT & Digital Media Cell" || l.category === "IT Cell" || (l.rankBadge && l.rankBadge.toLowerCase().includes('it')) || (l.designation && l.designation.toLowerCase().includes('it'))).length;
+  const nationalCount = nonAdvisory.filter(l => (l.level === 'national' || (!l.level && (!l.state || l.state === 'National HQ'))) && !(l.category === "IT & Digital Media Cell" || l.category === "IT Cell")).length;
   const stateCount = nonAdvisory.filter(l => l.level === 'state' || (l.state && l.state !== 'National HQ' && l.level !== 'district')).length;
   const districtCount = nonAdvisory.filter(l => l.level === 'district').length;
 
   const countAllEl = document.getElementById("govCountAll");
   const countNatEl = document.getElementById("govCountNational");
+  const countItEl = document.getElementById("govCountItCell");
   const countStateEl = document.getElementById("govCountState");
   const countDistEl = document.getElementById("govCountDistrict");
   if (countAllEl) countAllEl.textContent = totalCount;
   if (countNatEl) countNatEl.textContent = nationalCount;
+  if (countItEl) countItEl.textContent = itCellCount;
   if (countStateEl) countStateEl.textContent = stateCount;
   if (countDistEl) countDistEl.textContent = districtCount;
 
   // Visibility of State & District pills
   const statePillsRow = document.getElementById("governingStatePills");
   if (statePillsRow) {
-    statePillsRow.style.display = (currentGoverningTier === 'national') ? 'none' : 'flex';
+    statePillsRow.style.display = (currentGoverningTier === 'national' || currentGoverningTier === 'it_cell') ? 'none' : 'flex';
   }
 
   renderDistrictPills();
@@ -1711,11 +1741,14 @@ function renderGoverningCards(leadersList) {
     councilContainer.innerHTML = filtered.map(lead => {
       const isDistrict = (lead.level === 'district');
       const isState = (lead.level === 'state') || (!isDistrict && lead.state && lead.state !== 'National HQ');
+      const isItCell = (lead.category === "IT & Digital Media Cell" || lead.category === "IT Cell" || (lead.rankBadge && lead.rankBadge.toLowerCase().includes('it')) || (lead.designation && lead.designation.toLowerCase().includes('it')));
       const stateName = lead.state || (isDistrict || isState ? 'Maharashtra' : 'National HQ');
-      const badgeText = lead.rankBadge || (isDistrict ? `${lead.district || 'District'} Command` : (isState ? `${stateName} Command` : 'National Command'));
+      const badgeText = lead.rankBadge || (isItCell ? 'IT & Digital Cell' : (isDistrict ? `${lead.district || 'District'} Command` : (isState ? `${stateName} Command` : 'National Command')));
 
       let tierBadgeHtml = '';
-      if (isDistrict) {
+      if (isItCell) {
+        tierBadgeHtml = `<span class="governing-badge-state" style="background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%);"><i class="fa-solid fa-laptop-code"></i> IT & Cyber Cell</span>`;
+      } else if (isDistrict) {
         tierBadgeHtml = `<span class="governing-badge-state" style="background: rgba(217, 93, 0, 0.92);"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(lead.district || stateName)}</span>`;
       } else if (isState) {
         tierBadgeHtml = `<span class="governing-badge-state" style="background: rgba(0, 31, 63, 0.9);"><i class="fa-solid fa-map-location-dot"></i> ${escapeHtml(stateName)} State</span>`;
@@ -1724,7 +1757,7 @@ function renderGoverningCards(leadersList) {
       }
 
       return `
-        <div class="governing-card" data-level="${isDistrict ? 'district' : (isState ? 'state' : 'national')}" data-state="${escapeHtml(stateName)}" onclick="openOfficerPortfolioModal('${escapeHtml(lead.id || lead.name)}', false)" title="Click to view ${escapeHtml(lead.name)}'s official portfolio dossier">
+        <div class="governing-card" data-level="${isItCell ? 'it_cell' : (isDistrict ? 'district' : (isState ? 'state' : 'national'))}" data-state="${escapeHtml(stateName)}" onclick="openOfficerPortfolioModal('${escapeHtml(lead.id || lead.name)}', false)" title="Click to view ${escapeHtml(lead.name)}'s official portfolio dossier">
           <div class="governing-header">
             <img src="${lead.photoUrl}" alt="${escapeHtml(lead.name)}" class="governing-photo" onerror="this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80'">
             <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> ${escapeHtml(badgeText)}</span>
@@ -1764,12 +1797,24 @@ function renderGoverningCards(leadersList) {
   }
 }
 
+function setGoverningTier(tier) {
+  currentGoverningTier = tier;
+  if (tier === 'national' || tier === 'it_cell') {
+    currentGoverningState = 'all';
+    currentGoverningDistrict = 'all';
+  }
+  document.querySelectorAll('.governing-tier-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tier === tier);
+  });
+  renderGoverningCards(window._allGoverningLeaders);
+}
+
 function renderDistrictPills() {
   const container = document.getElementById("governingDistrictPills");
   if (!container) return;
 
   // Show district pills if tier is district, or if state tier/all tier is active with a specific state selected
-  const shouldShow = (currentGoverningTier === 'district') || (currentGoverningTier !== 'national' && currentGoverningState !== 'all');
+  const shouldShow = (currentGoverningTier === 'district') || (currentGoverningTier !== 'national' && currentGoverningTier !== 'it_cell' && currentGoverningState !== 'all');
   if (!shouldShow) {
     container.style.display = 'none';
     return;
@@ -1786,15 +1831,11 @@ function renderDistrictPills() {
         break;
       }
     }
-  }
-
-  // If no districts found from state chapters, extract unique districts from governing leaders
-  if (districts.length === 0 && window._allGoverningLeaders) {
+  } else {
+    // Collect all unique districts from leaders
     const dSet = new Set();
-    window._allGoverningLeaders.forEach(l => {
-      if (l.district && l.district.trim() && l.state !== 'National HQ') {
-        dSet.add(l.district.split('&')[0].trim());
-      }
+    (window._allGoverningLeaders || []).forEach(l => {
+      if (l.district && l.level === 'district') dSet.add(l.district);
     });
     districts = Array.from(dSet);
   }
@@ -1807,10 +1848,10 @@ function renderDistrictPills() {
   container.style.display = 'flex';
   container.innerHTML = `
     <button type="button" class="district-pill ${currentGoverningDistrict === 'all' ? 'active' : ''}" data-district="all" onclick="setGoverningDistrict('all')">
-      <i class="fa-solid fa-layer-group"></i> All Districts
+      <i class="fa-solid fa-layer-group"></i> All Districts (${districts.length})
     </button>
-    ${districts.slice(0, 12).map(d => `
-      <button type="button" class="district-pill ${currentGoverningDistrict.toLowerCase() === d.toLowerCase() ? 'active' : ''}" data-district="${escapeHtml(d)}" onclick="setGoverningDistrict('${escapeHtml(d)}')">
+    ${districts.map(d => `
+      <button type="button" class="district-pill ${(currentGoverningDistrict || '').toLowerCase() === d.toLowerCase() ? 'active' : ''}" data-district="${escapeHtml(d)}" onclick="setGoverningDistrict('${escapeHtml(d)}')">
         ${escapeHtml(d)}
       </button>
     `).join('')}
@@ -1833,18 +1874,6 @@ function renderStatePills(stateChaptersObj) {
       </button>
     `).join('')}
   `;
-}
-
-function setGoverningTier(tier) {
-  currentGoverningTier = tier;
-  if (tier === 'national') {
-    currentGoverningState = 'all';
-    currentGoverningDistrict = 'all';
-  }
-  document.querySelectorAll('.governing-tier-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.tier === tier);
-  });
-  renderGoverningCards(window._allGoverningLeaders);
 }
 
 function setGoverningState(state) {
