@@ -534,151 +534,45 @@ const ssdInitialSeed = {
       presidentName: "Commander Pramod R. Moon",
       secretaryName: "Adv. Nitin V. Dongre",
       districts: [
-        "Nagpur", "Mumbai City", "Mumbai Suburban", "Pune", "Thane", "Amravati",
-        "Nashik", "Chhatrapati Sambhaji Nagar", "Kolhapur", "Nanded", "Solapur",
-        "Akola", "Wardha", "Chandrapur", "Yavatmal", "Bhandara", "Gondia",
-        "Gadchiroli", "Jalgaon", "Dhule", "Nandurbar", "Ahmednagar", "Satara",
-        "Sangli", "Ratnagiri", "Sindhudurg", "Raigad", "Palghar", "Beed",
-        "Latur", "Dharashiv", "Parbhani", "Hingoli", "Jalna", "Buldhana", "Washim"
+        "Nagpur",
+        "Mumbai City",
+        "Mumbai Suburban",
+        "Pune",
+        "Thane",
+        "Amravati",
+        "Nashik",
+        "Chhatrapati Sambhaji Nagar",
+        "Kolhapur",
+        "Nanded",
+        "Solapur",
+        "Akola",
+        "Wardha",
+        "Chandrapur",
+        "Yavatmal",
+        "Bhandara",
+        "Gondia",
+        "Gadchiroli",
+        "Jalgaon",
+        "Dhule",
+        "Nandurbar",
+        "Ahmednagar",
+        "Satara",
+        "Sangli",
+        "Ratnagiri",
+        "Sindhudurg",
+        "Raigad",
+        "Palghar",
+        "Beed",
+        "Latur",
+        "Dharashiv",
+        "Parbhani",
+        "Hingoli",
+        "Jalna",
+        "Buldhana",
+        "Washim"
       ],
       status: "Active",
       order: 1
-    },
-    "state_up": {
-      id: "state_up",
-      name: "Uttar Pradesh",
-      hindiName: "उत्तर प्रदेश",
-      code: "UP",
-      headquarters: "Lucknow & Agra Command Office",
-      presidentName: "Shri Ramcharan Gautam",
-      secretaryName: "Commander Sunil Kumar Rawat",
-      districts: [
-        "Lucknow", "Kanpur", "Agra", "Varanasi", "Prayagraj", "Meerut", "Bareilly",
-        "Aligarh", "Moradabad", "Gorakhpur", "Noida / Gautam Buddha Nagar", "Ghaziabad",
-        "Ayodhya", "Jhansi", "Mathura", "Saharanpur", "Firozabad", "Muzaffarnagar"
-      ],
-      status: "Active",
-      order: 2
-    },
-    "state_mp": {
-      id: "state_mp",
-      name: "Madhya Pradesh",
-      hindiName: "मध्य प्रदेश",
-      code: "MP",
-      headquarters: "Bhopal & Indore Directorate",
-      presidentName: "Dr. Kailash Chandra Ahirwar",
-      secretaryName: "Commander Rameshwar Prasad",
-      districts: [
-        "Bhopal", "Indore", "Jabalpur", "Gwalior", "Ujjain", "Sagar", "Rewa",
-        "Satna", "Ratlam", "Dewas", "Chhindwara", "Morena", "Bhind"
-      ],
-      status: "Active",
-      order: 3
-    },
-    "state_delhi": {
-      id: "state_delhi",
-      name: "Delhi NCR",
-      hindiName: "दिल्ली एनसीआर",
-      code: "DL",
-      headquarters: "New Delhi National Secretariat",
-      presidentName: "Adv. R. K. Mourya",
-      secretaryName: "Commander Sandeep Kumar",
-      districts: [
-        "Central Delhi", "New Delhi", "North Delhi", "South Delhi", "East Delhi",
-        "West Delhi", "North East Delhi", "North West Delhi", "South East Delhi",
-        "South West Delhi", "Shahdara"
-      ],
-      status: "Active",
-      order: 4
-    },
-    "state_ka": {
-      id: "state_ka",
-      name: "Karnataka",
-      hindiName: "कर्नाटक",
-      code: "KA",
-      headquarters: "Bengaluru Central Directorate",
-      presidentName: "Prof. Anand Kumar Swamy",
-      secretaryName: "Commander B. Malleshappa",
-      districts: [
-        "Bengaluru Urban", "Bengaluru Rural", "Mysuru", "Belagavi", "Kalaburagi",
-        "Hubballi-Dharwad", "Mangaluru", "Ballari", "Vijayapura", "Shivamogga", "Tumakuru"
-      ],
-      status: "Active",
-      order: 5
-    },
-    "state_rj": {
-      id: "state_rj",
-      name: "Rajasthan",
-      hindiName: "राजस्थान",
-      code: "RJ",
-      headquarters: "Jaipur State Secretariat",
-      presidentName: "Shri Bharat Lal Bairwa",
-      secretaryName: "Commander Omprakash Meghwal",
-      districts: [
-        "Jaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer", "Udaipur", "Bharatpur",
-        "Alwar", "Sikar", "Bhilwara", "Sri Ganganagar", "Pali"
-      ],
-      status: "Active",
-      order: 6
-    },
-    "state_pb": {
-      id: "state_pb",
-      name: "Punjab",
-      hindiName: "पंजाब",
-      code: "PB",
-      headquarters: "Jalandhar & Chandigarh Command",
-      presidentName: "Col. (Retd.) Harjit Singh Rahi",
-      secretaryName: "Commander Gurmukh Singh",
-      districts: [
-        "Jalandhar", "Ludhiana", "Amritsar", "Patiala", "Bathinda", "Mohali / SAS Nagar",
-        "Hoshiarpur", "Firozpur", "Gurdaspur", "Pathankot", "Kapurthala"
-      ],
-      status: "Active",
-      order: 7
-    },
-    "state_br": {
-      id: "state_br",
-      name: "Bihar",
-      hindiName: "बिहार",
-      code: "BR",
-      headquarters: "Patna State Command Office",
-      presidentName: "Shri Dharmendra Kumar Paswan",
-      secretaryName: "Commander Binod Kumar Ram",
-      districts: [
-        "Patna", "Gaya", "Muzaffarpur", "Bhagalpur", "Darbhanga", "Purnia",
-        "Nalanda / Bihar Sharif", "Begusarai", "Munger", "Rohtas"
-      ],
-      status: "Active",
-      order: 8
-    },
-    "state_gj": {
-      id: "state_gj",
-      name: "Gujarat",
-      hindiName: "गुजरात",
-      code: "GJ",
-      headquarters: "Ahmedabad & Vadodara Command",
-      presidentName: "Commander Pravinbhai Vankar",
-      secretaryName: "Adv. Jagdish Makwana",
-      districts: [
-        "Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar",
-        "Gandhinagar", "Junagadh", "Anand", "Mehsana", "Kutch"
-      ],
-      status: "Active",
-      order: 9
-    },
-    "state_ts": {
-      id: "state_ts",
-      name: "Telangana",
-      hindiName: "तेलंगाना",
-      code: "TS",
-      headquarters: "Hyderabad Central Directorate",
-      presidentName: "Commander B. Srinivas Rao",
-      secretaryName: "Adv. K. Ramesh",
-      districts: [
-        "Hyderabad", "Secunderabad", "Warangal", "Nizamabad", "Karimnagar", "Khammam", "Nalgonda"
-      ],
-      status: "Active",
-      order: 10
     }
   },
   admin_users: {
@@ -1839,16 +1733,13 @@ function loadAllRealtimeData() {
       populateStatsForm();
     });
 
-    // 9. Settings (Cashfree Gateway Config)
-    db.ref('settings/cashfree').on('value', (snap) => {
+    // 9. Settings (Razorpay API Key)
+    db.ref('settings/razorpayKeyId').on('value', (snap) => {
       const val = snap.val();
       if (val) {
-        localStorage.setItem("ssd_cashfree_config", JSON.stringify(val));
-        if (val.appId) localStorage.setItem("ssd_cashfree_app_id", val.appId);
-        if (val.secretKey) localStorage.setItem("ssd_cashfree_secret_key", val.secretKey);
-        if (val.mode) localStorage.setItem("ssd_cashfree_mode", val.mode);
+        localStorage.setItem("ssd_razorpay_key_id", val);
       }
-      initCashfreeAdminConfig();
+      initRazorpayAdminConfig();
     });
 
     // 10. Governing Body & Leadership Council
@@ -1908,7 +1799,7 @@ function loadAllRealtimeData() {
       saveLocalStore();
     }
     initFirebaseConfigForm();
-    initCashfreeAdminConfig();
+    initRazorpayAdminConfig();
     initEmailConfigForm();
     renderMembersTable();
     renderDonationsTable();
@@ -2703,10 +2594,7 @@ function renderChaptersView() {
   const container = document.getElementById("stateChaptersContainer");
   if (!container) return;
 
-  let chaptersObj = adminData.state_chapters;
-  if (!chaptersObj || typeof chaptersObj !== 'object' || Object.keys(chaptersObj).length === 0) {
-    chaptersObj = ssdInitialSeed.state_chapters || {};
-  }
+  const chaptersObj = adminData.state_chapters || ssdInitialSeed.state_chapters || {};
   const entries = Object.entries(chaptersObj);
 
   if (entries.length === 0) {
@@ -2902,24 +2790,12 @@ function deleteStateChapter(key) {
 function openAddDistrictModal(preferredStateName = null) {
   populateLeadershipStateAndDistrictOptions();
   const select = document.getElementById("districtTargetState");
-  if (select && select.options.length > 0) {
-    let matchedIndex = -1;
-    if (preferredStateName && preferredStateName !== "National HQ" && preferredStateName !== "all") {
-      const cleanPref = preferredStateName.trim().toLowerCase();
-      for (let i = 0; i < select.options.length; i++) {
-        const optVal = select.options[i].value.trim().toLowerCase();
-        const optText = select.options[i].text.trim().toLowerCase();
-        if (optVal === cleanPref || optText.includes(cleanPref) || cleanPref.includes(optVal)) {
-          matchedIndex = i;
-          break;
-        }
+  if (select && preferredStateName) {
+    for (let i = 0; i < select.options.length; i++) {
+      if (select.options[i].value.toLowerCase() === preferredStateName.toLowerCase()) {
+        select.selectedIndex = i;
+        break;
       }
-    }
-    if (matchedIndex >= 0) {
-      select.selectedIndex = matchedIndex;
-      select.value = select.options[matchedIndex].value;
-    } else if (select.selectedIndex < 0 || !select.value) {
-      select.selectedIndex = 0;
     }
   }
   setInputValue("newDistrictName", "");
@@ -2928,21 +2804,15 @@ function openAddDistrictModal(preferredStateName = null) {
 
 function handleSaveDistrict(e) {
   e.preventDefault();
-  const districtSelect = document.getElementById("districtTargetState");
-  const targetStateName = districtSelect ? districtSelect.value : "";
-  const newDistrict = (document.getElementById("newDistrictName")?.value || "").trim();
+  const targetStateName = document.getElementById("districtTargetState").value;
+  const newDistrict = document.getElementById("newDistrictName").value.trim();
 
   if (!targetStateName || !newDistrict) {
     showToast("Please specify both State and District name.", "error");
     return;
   }
 
-  let chapters = adminData.state_chapters;
-  if (!chapters || typeof chapters !== 'object' || Object.keys(chapters).length === 0) {
-    chapters = { ...ssdInitialSeed.state_chapters };
-    adminData.state_chapters = chapters;
-  }
-
+  const chapters = adminData.state_chapters || ssdInitialSeed.state_chapters || {};
   let targetKey = null;
   for (const [k, v] of Object.entries(chapters)) {
     if ((v.name || '').toLowerCase() === targetStateName.toLowerCase()) {
@@ -2963,7 +2833,7 @@ function handleSaveDistrict(e) {
   };
 
   let districts = Array.isArray(currentState.districts) ? [...currentState.districts] : [];
-  if (districts.some(d => d.toLowerCase() === newDistrict.toLowerCase())) {
+  if (districts.includes(newDistrict)) {
     showToast(`District "${newDistrict}" is already registered in ${targetStateName}.`, "info");
     closeAdminModal("modalAddDistrict");
     return;
@@ -2976,7 +2846,6 @@ function handleSaveDistrict(e) {
   const onSuccess = () => {
     showToast(`District "${newDistrict}" added to ${targetStateName}!`, "success");
     closeAdminModal("modalAddDistrict");
-    renderChaptersView();
     populateLeadershipStateAndDistrictOptions();
   };
 
@@ -2995,11 +2864,7 @@ function handleSaveDistrict(e) {
 }
 
 function deleteDistrictChip(stateKey, districtName) {
-  let chapters = adminData.state_chapters;
-  if (!chapters || typeof chapters !== 'object' || Object.keys(chapters).length === 0) {
-    chapters = { ...ssdInitialSeed.state_chapters };
-    adminData.state_chapters = chapters;
-  }
+  const chapters = adminData.state_chapters || ssdInitialSeed.state_chapters || {};
   const s = chapters[stateKey];
   if (!s || !Array.isArray(s.districts)) return;
 
@@ -3011,7 +2876,6 @@ function deleteDistrictChip(stateKey, districtName) {
 
   const onSuccess = () => {
     showToast(`District "${districtName}" removed from ${s.name}.`, "info");
-    renderChaptersView();
     populateLeadershipStateAndDistrictOptions();
   };
 
@@ -3029,14 +2893,8 @@ function deleteDistrictChip(stateKey, districtName) {
 }
 
 function populateLeadershipStateAndDistrictOptions() {
-  let chapters = adminData.state_chapters;
-  if (!chapters || typeof chapters !== 'object' || Object.keys(chapters).length === 0) {
-    chapters = ssdInitialSeed.state_chapters || {};
-  }
-  let statesList = Object.values(chapters).filter(s => s && s.name);
-  if (statesList.length === 0) {
-    statesList = Object.values(ssdInitialSeed.state_chapters || {});
-  }
+  const chapters = adminData.state_chapters || ssdInitialSeed.state_chapters || {};
+  const statesList = Object.values(chapters);
 
   // 1. Leadership State Filter in Leadership View
   const leadStateFilter = document.getElementById("leadershipStateFilter");
@@ -3047,9 +2905,7 @@ function populateLeadershipStateAndDistrictOptions() {
       <option value="National HQ">National HQ (All-India)</option>
       ${statesList.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}${s.hindiName ? ' (' + escapeHtml(s.hindiName) + ')' : ''}</option>`).join('')}
     `;
-    if (currentVal && Array.from(leadStateFilter.options).some(o => o.value === currentVal)) {
-      leadStateFilter.value = currentVal;
-    }
+    if (currentVal) leadStateFilter.value = currentVal;
   }
 
   // 2. Leadership District Filter in Leadership View
@@ -3065,9 +2921,7 @@ function populateLeadershipStateAndDistrictOptions() {
       <option value="all">All Districts</option>
       ${districts.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('')}
     `;
-    if (currentVal && Array.from(leadDistFilter.options).some(o => o.value === currentVal)) {
-      leadDistFilter.value = currentVal;
-    }
+    if (currentVal) leadDistFilter.value = currentVal;
   }
 
   // 3. State select in modalLeadership
@@ -3078,11 +2932,7 @@ function populateLeadershipStateAndDistrictOptions() {
       <option value="National HQ">National HQ (All-India)</option>
       ${statesList.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}${s.hindiName ? ' (' + escapeHtml(s.hindiName) + ')' : ''}</option>`).join('')}
     `;
-    if (currentVal && Array.from(leadStateSelect.options).some(o => o.value === currentVal)) {
-      leadStateSelect.value = currentVal;
-    } else if (leadStateSelect.options.length > 0) {
-      leadStateSelect.selectedIndex = 0;
-    }
+    if (currentVal) leadStateSelect.value = currentVal;
   }
 
   // 4. State select in modalAddDistrict
@@ -3092,11 +2942,7 @@ function populateLeadershipStateAndDistrictOptions() {
     districtTargetState.innerHTML = statesList.map(s => `
       <option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}${s.hindiName ? ' (' + escapeHtml(s.hindiName) + ')' : ''}</option>
     `).join('');
-    if (currentVal && Array.from(districtTargetState.options).some(o => o.value === currentVal)) {
-      districtTargetState.value = currentVal;
-    } else if (districtTargetState.options.length > 0) {
-      districtTargetState.selectedIndex = 0;
-    }
+    if (currentVal) districtTargetState.value = currentVal;
   }
 
   // 5. Update datalist for leadDistrict based on current selected state in modalLeadership
@@ -3109,14 +2955,11 @@ function updateLeadDistrictDatalist() {
   if (!datalist) return;
 
   const selectedState = stateSelect ? stateSelect.value : 'Maharashtra';
-  let chapters = adminData.state_chapters;
-  if (!chapters || typeof chapters !== 'object' || Object.keys(chapters).length === 0) {
-    chapters = ssdInitialSeed.state_chapters || {};
-  }
+  const chapters = adminData.state_chapters || ssdInitialSeed.state_chapters || {};
   let targetStateObj = null;
 
   for (const s of Object.values(chapters)) {
-    if (s && (s.name || '').toLowerCase() === selectedState.toLowerCase()) {
+    if ((s.name || '').toLowerCase() === selectedState.toLowerCase()) {
       targetStateObj = s;
       break;
     }
@@ -3778,104 +3621,54 @@ window.toggleAdminStatus = toggleAdminStatus;
 window.deleteAdminUser = deleteAdminUser;
 
 // ==========================================================================
-// CASHFREE GATEWAY CONFIGURATION (ADMIN)
+// RAZORPAY GATEWAY CONFIGURATION (ADMIN)
 // ==========================================================================
-const CASHFREE_DEFAULT_APP_ID = "TEST100001878";
-const CASHFREE_DEFAULT_SECRET = "cfsk_ma_test_100001878_ssd";
-
-function getCashfreeConfig() {
-  const local = localStorage.getItem("ssd_cashfree_config");
-  if (local) {
-    try {
-      return JSON.parse(local);
-    } catch (e) {}
-  }
-  return {
-    appId: localStorage.getItem("ssd_cashfree_app_id") || CASHFREE_DEFAULT_APP_ID,
-    secretKey: localStorage.getItem("ssd_cashfree_secret_key") || CASHFREE_DEFAULT_SECRET,
-    mode: localStorage.getItem("ssd_cashfree_mode") || "sandbox"
-  };
+function initRazorpayAdminConfig() {
+  const savedKey = localStorage.getItem("ssd_razorpay_key_id") || "rzp_test_1DP5mmOlF5G5ag";
+  const input = document.getElementById("adminRazorpayKeyId");
+  if (input) input.value = savedKey;
+  updateRazorpayBadge(savedKey);
 }
 
-function initCashfreeAdminConfig() {
-  const cfg = getCashfreeConfig();
-  const appIdInput = document.getElementById("adminCashfreeAppId");
-  const secretKeyInput = document.getElementById("adminCashfreeSecretKey");
-  const modeSelect = document.getElementById("adminCashfreeMode");
-
-  if (appIdInput) appIdInput.value = cfg.appId || "";
-  if (secretKeyInput) secretKeyInput.value = cfg.secretKey || "";
-  if (modeSelect) modeSelect.value = cfg.mode || (cfg.appId && cfg.appId.startsWith("TEST") ? "sandbox" : "production");
-
-  updateCashfreeBadge(cfg);
-}
-
-function updateCashfreeBadge(cfg) {
-  const badge = document.getElementById("cashfreeModeBadge");
+function updateRazorpayBadge(key) {
+  const badge = document.getElementById("razorpayModeBadge");
   if (!badge) return;
-  const isProd = cfg.mode === "production" || (cfg.appId && !cfg.appId.startsWith("TEST") && cfg.appId.length > 5);
-  if (isProd) {
+  if (key && key.startsWith("rzp_live_")) {
     badge.className = "badge-status badge-approved";
-    badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Cashfree Production Active';
+    badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Live Production Mode';
   } else {
     badge.className = "badge-status badge-pending";
-    badge.innerHTML = '<i class="fa-solid fa-vial"></i> Cashfree Sandbox Active';
+    badge.innerHTML = '<i class="fa-solid fa-vial"></i> Test Sandbox Mode';
   }
 }
 
-function saveCashfreeConfig(e) {
+function saveRazorpayConfig(e) {
   e.preventDefault();
-  const appIdInput = document.getElementById("adminCashfreeAppId");
-  const secretKeyInput = document.getElementById("adminCashfreeSecretKey");
-  const modeSelect = document.getElementById("adminCashfreeMode");
-
-  const appId = appIdInput ? appIdInput.value.trim() : "";
-  const secretKey = secretKeyInput ? secretKeyInput.value.trim() : "";
-  const mode = modeSelect ? modeSelect.value : (appId.startsWith("TEST") ? "sandbox" : "production");
-
-  if (!appId) {
-    showToast("Please enter a valid Cashfree App ID / Client ID", "error");
+  const input = document.getElementById("adminRazorpayKeyId");
+  const keyVal = input ? input.value.trim() : "";
+  if (!keyVal) {
+    showToast("Please enter a valid Razorpay Key ID", "error");
     return;
   }
 
-  const cfg = { appId, secretKey, mode, updatedAt: Date.now() };
-
-  localStorage.setItem("ssd_cashfree_config", JSON.stringify(cfg));
-  localStorage.setItem("ssd_cashfree_app_id", appId);
-  localStorage.setItem("ssd_cashfree_secret_key", secretKey);
-  localStorage.setItem("ssd_cashfree_mode", mode);
-  updateCashfreeBadge(cfg);
+  localStorage.setItem("ssd_razorpay_key_id", keyVal);
+  updateRazorpayBadge(keyVal);
 
   if (db) {
-    db.ref("settings/cashfree").set(cfg);
+    db.ref("settings/razorpayKeyId").set(keyVal);
   }
-  showToast("Cashfree Gateway Configuration saved & active!", "success");
+  showToast("Razorpay API Key successfully updated and active!", "success");
 }
 
-function testCashfreePing() {
-  const appIdInput = document.getElementById("adminCashfreeAppId");
-  const modeSelect = document.getElementById("adminCashfreeMode");
-  const appId = appIdInput ? appIdInput.value.trim() : "";
-  const mode = modeSelect ? modeSelect.value : "sandbox";
-
-  if (!appId) {
-    showToast("Please enter a Cashfree App ID first.", "error");
+function testRazorpayPing() {
+  const input = document.getElementById("adminRazorpayKeyId");
+  const keyVal = input ? input.value.trim() : "";
+  if (!keyVal || (!keyVal.startsWith("rzp_test_") && !keyVal.startsWith("rzp_live_"))) {
+    showToast("Warning: Key ID format should start with 'rzp_test_' or 'rzp_live_'", "error");
     return;
   }
-  const isProd = mode === "production";
-  showToast(`Cashfree Gateway Connected: ${isProd ? "Live Production" : "Sandbox Test"} Gateway Active (App ID: ${appId.slice(0, 8)}...).`, "success");
+  showToast(`Razorpay Gateway Ping Successful: ${keyVal.startsWith("rzp_live_") ? "Live Production" : "Test Sandbox"} Key Active.`, "success");
 }
-
-// Backwards compatibility aliases
-const initRazorpayAdminConfig = initCashfreeAdminConfig;
-const saveRazorpayConfig = saveCashfreeConfig;
-const testRazorpayPing = testCashfreePing;
-
-window.initCashfreeAdminConfig = initCashfreeAdminConfig;
-window.saveCashfreeConfig = saveCashfreeConfig;
-window.testCashfreePing = testCashfreePing;
-window.saveRazorpayConfig = saveCashfreeConfig;
-window.testRazorpayPing = testCashfreePing;
 
 // ==========================================================================
 // AUTOMATED EMAIL DISPATCH CONFIGURATION & TESTING (ADMIN)

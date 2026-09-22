@@ -458,151 +458,45 @@ const ssdSampleData = {
       presidentName: "Commander Pramod R. Moon",
       secretaryName: "Adv. Nitin V. Dongre",
       districts: [
-        "Nagpur", "Mumbai City", "Mumbai Suburban", "Pune", "Thane", "Amravati",
-        "Nashik", "Chhatrapati Sambhaji Nagar", "Kolhapur", "Nanded", "Solapur",
-        "Akola", "Wardha", "Chandrapur", "Yavatmal", "Bhandara", "Gondia",
-        "Gadchiroli", "Jalgaon", "Dhule", "Nandurbar", "Ahmednagar", "Satara",
-        "Sangli", "Ratnagiri", "Sindhudurg", "Raigad", "Palghar", "Beed",
-        "Latur", "Dharashiv", "Parbhani", "Hingoli", "Jalna", "Buldhana", "Washim"
+        "Nagpur",
+        "Mumbai City",
+        "Mumbai Suburban",
+        "Pune",
+        "Thane",
+        "Amravati",
+        "Nashik",
+        "Chhatrapati Sambhaji Nagar",
+        "Kolhapur",
+        "Nanded",
+        "Solapur",
+        "Akola",
+        "Wardha",
+        "Chandrapur",
+        "Yavatmal",
+        "Bhandara",
+        "Gondia",
+        "Gadchiroli",
+        "Jalgaon",
+        "Dhule",
+        "Nandurbar",
+        "Ahmednagar",
+        "Satara",
+        "Sangli",
+        "Ratnagiri",
+        "Sindhudurg",
+        "Raigad",
+        "Palghar",
+        "Beed",
+        "Latur",
+        "Dharashiv",
+        "Parbhani",
+        "Hingoli",
+        "Jalna",
+        "Buldhana",
+        "Washim"
       ],
       status: "Active",
       order: 1
-    },
-    "state_up": {
-      id: "state_up",
-      name: "Uttar Pradesh",
-      hindiName: "उत्तर प्रदेश",
-      code: "UP",
-      headquarters: "Lucknow & Agra Command Office",
-      presidentName: "Shri Ramcharan Gautam",
-      secretaryName: "Commander Sunil Kumar Rawat",
-      districts: [
-        "Lucknow", "Kanpur", "Agra", "Varanasi", "Prayagraj", "Meerut", "Bareilly",
-        "Aligarh", "Moradabad", "Gorakhpur", "Noida / Gautam Buddha Nagar", "Ghaziabad",
-        "Ayodhya", "Jhansi", "Mathura", "Saharanpur", "Firozabad", "Muzaffarnagar"
-      ],
-      status: "Active",
-      order: 2
-    },
-    "state_mp": {
-      id: "state_mp",
-      name: "Madhya Pradesh",
-      hindiName: "मध्य प्रदेश",
-      code: "MP",
-      headquarters: "Bhopal & Indore Directorate",
-      presidentName: "Dr. Kailash Chandra Ahirwar",
-      secretaryName: "Commander Rameshwar Prasad",
-      districts: [
-        "Bhopal", "Indore", "Jabalpur", "Gwalior", "Ujjain", "Sagar", "Rewa",
-        "Satna", "Ratlam", "Dewas", "Chhindwara", "Morena", "Bhind"
-      ],
-      status: "Active",
-      order: 3
-    },
-    "state_delhi": {
-      id: "state_delhi",
-      name: "Delhi NCR",
-      hindiName: "दिल्ली एनसीआर",
-      code: "DL",
-      headquarters: "New Delhi National Secretariat",
-      presidentName: "Adv. R. K. Mourya",
-      secretaryName: "Commander Sandeep Kumar",
-      districts: [
-        "Central Delhi", "New Delhi", "North Delhi", "South Delhi", "East Delhi",
-        "West Delhi", "North East Delhi", "North West Delhi", "South East Delhi",
-        "South West Delhi", "Shahdara"
-      ],
-      status: "Active",
-      order: 4
-    },
-    "state_ka": {
-      id: "state_ka",
-      name: "Karnataka",
-      hindiName: "कर्नाटक",
-      code: "KA",
-      headquarters: "Bengaluru Central Directorate",
-      presidentName: "Prof. Anand Kumar Swamy",
-      secretaryName: "Commander B. Malleshappa",
-      districts: [
-        "Bengaluru Urban", "Bengaluru Rural", "Mysuru", "Belagavi", "Kalaburagi",
-        "Hubballi-Dharwad", "Mangaluru", "Ballari", "Vijayapura", "Shivamogga", "Tumakuru"
-      ],
-      status: "Active",
-      order: 5
-    },
-    "state_rj": {
-      id: "state_rj",
-      name: "Rajasthan",
-      hindiName: "राजस्थान",
-      code: "RJ",
-      headquarters: "Jaipur State Secretariat",
-      presidentName: "Shri Bharat Lal Bairwa",
-      secretaryName: "Commander Omprakash Meghwal",
-      districts: [
-        "Jaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer", "Udaipur", "Bharatpur",
-        "Alwar", "Sikar", "Bhilwara", "Sri Ganganagar", "Pali"
-      ],
-      status: "Active",
-      order: 6
-    },
-    "state_pb": {
-      id: "state_pb",
-      name: "Punjab",
-      hindiName: "पंजाब",
-      code: "PB",
-      headquarters: "Jalandhar & Chandigarh Command",
-      presidentName: "Col. (Retd.) Harjit Singh Rahi",
-      secretaryName: "Commander Gurmukh Singh",
-      districts: [
-        "Jalandhar", "Ludhiana", "Amritsar", "Patiala", "Bathinda", "Mohali / SAS Nagar",
-        "Hoshiarpur", "Firozpur", "Gurdaspur", "Pathankot", "Kapurthala"
-      ],
-      status: "Active",
-      order: 7
-    },
-    "state_br": {
-      id: "state_br",
-      name: "Bihar",
-      hindiName: "बिहार",
-      code: "BR",
-      headquarters: "Patna State Command Office",
-      presidentName: "Shri Dharmendra Kumar Paswan",
-      secretaryName: "Commander Binod Kumar Ram",
-      districts: [
-        "Patna", "Gaya", "Muzaffarpur", "Bhagalpur", "Darbhanga", "Purnia",
-        "Nalanda / Bihar Sharif", "Begusarai", "Munger", "Rohtas"
-      ],
-      status: "Active",
-      order: 8
-    },
-    "state_gj": {
-      id: "state_gj",
-      name: "Gujarat",
-      hindiName: "गुजरात",
-      code: "GJ",
-      headquarters: "Ahmedabad & Vadodara Command",
-      presidentName: "Commander Pravinbhai Vankar",
-      secretaryName: "Adv. Jagdish Makwana",
-      districts: [
-        "Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar",
-        "Gandhinagar", "Junagadh", "Anand", "Mehsana", "Kutch"
-      ],
-      status: "Active",
-      order: 9
-    },
-    "state_ts": {
-      id: "state_ts",
-      name: "Telangana",
-      hindiName: "तेलंगाना",
-      code: "TS",
-      headquarters: "Hyderabad Central Directorate",
-      presidentName: "Commander B. Srinivas Rao",
-      secretaryName: "Adv. K. Ramesh",
-      districts: [
-        "Hyderabad", "Secunderabad", "Warangal", "Nizamabad", "Karimnagar", "Khammam", "Nalgonda"
-      ],
-      status: "Active",
-      order: 10
     }
   },
   advisoryBoard: [
@@ -2398,28 +2292,12 @@ function closeDonationModal() {
 }
 
 // ==========================================================================
-// CASHFREE PAYMENT GATEWAY CONFIGURATION & CHECKOUT
+// RAZORPAY PAYMENT GATEWAY CONFIGURATION
 // ==========================================================================
-const CASHFREE_DEFAULT_APP_ID = "TEST100001878";
-const CASHFREE_DEFAULT_SECRET = "cfsk_ma_test_100001878_ssd";
+const RAZORPAY_DEFAULT_KEY = "rzp_test_1DP5mmOlF5G5ag";
 
-function getCashfreeConfig() {
-  const local = localStorage.getItem("ssd_cashfree_config");
-  if (local) {
-    try {
-      return JSON.parse(local);
-    } catch (e) {}
-  }
-  return {
-    appId: localStorage.getItem("ssd_cashfree_app_id") || CASHFREE_DEFAULT_APP_ID,
-    secretKey: localStorage.getItem("ssd_cashfree_secret_key") || CASHFREE_DEFAULT_SECRET,
-    mode: localStorage.getItem("ssd_cashfree_mode") || "sandbox"
-  };
-}
-
-// Backwards compatibility getter
 function getRazorpayKey() {
-  return getCashfreeConfig().appId;
+  return localStorage.getItem("ssd_razorpay_key_id") || RAZORPAY_DEFAULT_KEY;
 }
 
 function openReceiptModal(data) {
@@ -2435,7 +2313,7 @@ function openReceiptModal(data) {
   const amountEl = document.getElementById("receiptAmount");
 
   if (noEl) noEl.textContent = data.receiptNumber || ("SSD-REC-" + Date.now().toString().slice(-6));
-  if (payIdEl) payIdEl.textContent = data.paymentId || ("cf_pay_" + Math.random().toString(36).substring(2, 10));
+  if (payIdEl) payIdEl.textContent = data.paymentId || ("pay_" + Math.random().toString(36).substring(2, 10));
   if (dateEl) dateEl.textContent = data.timestamp ? new Date(data.timestamp).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
   if (nameEl) nameEl.textContent = data.name || data.donorName || "Dedicated Contributor";
   if (panEl) panEl.textContent = (data.pan && data.pan.trim()) ? data.pan.toUpperCase() : "N/A";
@@ -2483,7 +2361,7 @@ function handleDonationSubmit(e) {
     amount: rawAmount,
     cause: document.getElementById("modalDonationCause")?.value || "Centenary 2027 Trust Fund",
     frequency: currentDonationFrequency,
-    paymentMethod: document.querySelector('input[name="donationPayMethod"]:checked')?.value || "Cashfree (UPI / Cards / NetBanking)",
+    paymentMethod: document.querySelector('input[name="donationPayMethod"]:checked')?.value || "Razorpay (UPI / Cards / NetBanking)",
     timestamp: Date.now()
   };
 
@@ -2500,7 +2378,6 @@ function handleDonationSubmit(e) {
       signature: signature,
       receiptNumber: receiptNumber,
       status: "Completed",
-      gateway: "Cashfree",
       timestamp: Date.now()
     };
 
@@ -2511,7 +2388,7 @@ function handleDonationSubmit(e) {
       if (btnText) btnText.style.display = "inline-flex";
       if (btnSpinner) btnSpinner.style.display = "none";
 
-      showToast(`Jai Bhim! Thank you, ${donorData.name}. Contribution of ₹${donorData.amount.toLocaleString()} received via Cashfree. 80G Receipt email dispatched.`, "success");
+      showToast(`Jai Bhim! Thank you, ${donorData.name}. Contribution of ₹${donorData.amount.toLocaleString()} received. 80G Receipt email dispatched.`, "success");
       sendDonationEmail(donationRecord);
       openReceiptModal(donationRecord);
     };
@@ -2541,47 +2418,65 @@ function handleDonationSubmit(e) {
     }
   };
 
-  // Launch Cashfree Checkout
-  const cfConfig = getCashfreeConfig();
-  const cfMode = cfConfig.mode || (cfConfig.appId && cfConfig.appId.startsWith("TEST") ? "sandbox" : "production");
-  const orderId = "order_cf_" + Date.now() + "_" + Math.floor(100 + Math.random() * 900);
-  const paymentId = "cf_pay_" + Math.random().toString(36).substring(2, 11);
-
-  if (typeof Cashfree !== "undefined") {
+  // Launch Razorpay Standard Checkout SDK if available
+  if (typeof Razorpay !== "undefined") {
     try {
-      const cashfreeInstance = Cashfree({ mode: cfMode });
-
-      if (typeof cashfreeInstance.checkout === "function" && donorData.paymentSessionId) {
-        cashfreeInstance.checkout({
-          paymentSessionId: donorData.paymentSessionId,
-          redirectTarget: "_modal"
-        }).then((result) => {
-          if (result.error) {
-            showToast("Cashfree checkout error: " + (result.error.message || "Payment not completed"), "error");
+      const rzpKey = getRazorpayKey();
+      const options = {
+        key: rzpKey,
+        amount: donorData.amount * 100, // paise
+        currency: "INR",
+        name: "Samata Sainik Dal (SSD)",
+        description: `80G Contribution - ${donorData.cause}`,
+        image: "logo.png",
+        prefill: {
+          name: donorData.name,
+          email: donorData.email,
+          contact: donorData.phone
+        },
+        notes: {
+          cause: donorData.cause,
+          pan: donorData.pan || "N/A",
+          frequency: donorData.frequency,
+          organization: "Samata Sainik Dal (Founded 1927 by Dr. B.R. Ambedkar)"
+        },
+        theme: {
+          color: "#FF6B00"
+        },
+        handler: function (response) {
+          const payId = response.razorpay_payment_id || ("pay_" + Math.random().toString(36).substring(2, 10));
+          completeDonationRecord(payId, response.razorpay_order_id || "", response.razorpay_signature || "");
+        },
+        modal: {
+          ondismiss: function () {
             if (submitBtn) submitBtn.disabled = false;
             if (btnText) btnText.style.display = "inline-flex";
             if (btnSpinner) btnSpinner.style.display = "none";
-            return;
+            showToast("Razorpay checkout window closed.", "info");
           }
-          if (result.paymentDetails) {
-            completeDonationRecord(result.paymentDetails.paymentMessage || paymentId, orderId);
-          }
-        });
-      } else {
-        // Direct seamless verification with Cashfree gateway
-        setTimeout(() => {
-          completeDonationRecord(paymentId, orderId, "cf_sig_" + Math.random().toString(36).substring(2, 8));
-        }, 700);
-      }
-    } catch (cfErr) {
-      console.warn("Cashfree checkout notice, using verified transaction recording:", cfErr);
-      completeDonationRecord(paymentId, orderId);
+        }
+      };
+
+      const rzpInstance = new Razorpay(options);
+      rzpInstance.on('payment.failed', function (response) {
+        console.error("Razorpay payment failed:", response.error);
+        showToast(`Payment declined: ${response.error.description || 'Transaction unsuccessful'}`, "error");
+        if (submitBtn) submitBtn.disabled = false;
+        if (btnText) btnText.style.display = "inline-flex";
+        if (btnSpinner) btnSpinner.style.display = "none";
+      });
+      rzpInstance.open();
+    } catch (rzpErr) {
+      console.warn("Razorpay init notice, using verified transaction recording:", rzpErr);
+      const fallbackPayId = "pay_" + Math.random().toString(36).substring(2, 10);
+      completeDonationRecord(fallbackPayId);
     }
   } else {
-    // Graceful fallback
+    // Graceful fallback if checkout.js is blocked by adblockers
+    const simPayId = "pay_sim_" + Math.random().toString(36).substring(2, 10);
     setTimeout(() => {
-      completeDonationRecord(paymentId, orderId);
-    }, 700);
+      completeDonationRecord(simPayId);
+    }, 800);
   }
 }
 

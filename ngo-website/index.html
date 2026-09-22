@@ -20,8 +20,8 @@
   <!-- EmailJS Automated Email SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
-  <!-- Cashfree Standard Checkout SDK -->
-  <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+  <!-- Razorpay Standard Checkout SDK -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
   <!-- Unified Stylesheet -->
   <link rel="stylesheet" href="styles.css?v=3.9">
@@ -941,11 +941,11 @@
           </div>
 
           <button type="submit" id="donationSubmitBtn" class="btn btn-primary" style="width: 100%;">
-            <span class="btn-text"><i class="fa-solid fa-lock"></i> Proceed to Secure Pay (Cashfree / UPI / Cards)</span>
-            <span class="btn-spinner" style="display: none;"><div class="spinner" style="width: 18px; height: 18px; border-width: 2px;"></div> Initializing Cashfree Gateway...</span>
+            <span class="btn-text"><i class="fa-solid fa-lock"></i> Proceed to Secure Pay (Razorpay / UPI / Cards)</span>
+            <span class="btn-spinner" style="display: none;"><div class="spinner" style="width: 18px; height: 18px; border-width: 2px;"></div> Initializing Razorpay Gateway...</span>
           </button>
           <div style="text-align: center; margin-top: 10px; font-size: 11px; color: #777;">
-            <i class="fa-solid fa-shield-halved" style="color: var(--success-green);"></i> 256-Bit Encrypted Secure Checkout via Cashfree (UPI, Google Pay, Cards, NetBanking)
+            <i class="fa-solid fa-shield-halved" style="color: var(--success-green);"></i> 256-Bit Encrypted Secure Checkout via Razorpay (UPI, Google Pay, Cards, NetBanking)
           </div>
         </form>
       </div>
@@ -984,8 +984,8 @@
               <div style="font-weight: 700; color: var(--dark-navy);" id="receiptNo">SSD-REC-2026-0001</div>
             </div>
             <div>
-              <span style="color: var(--muted-gray);">Payment ID (Cashfree):</span>
-              <div style="font-weight: 700; color: var(--dark-navy); font-family: monospace;" id="receiptPayId">cf_pay_test123</div>
+              <span style="color: var(--muted-gray);">Payment ID (Razorpay):</span>
+              <div style="font-weight: 700; color: var(--dark-navy); font-family: monospace;" id="receiptPayId">pay_test123</div>
             </div>
             <div>
               <span style="color: var(--muted-gray);">Date & Time:</span>
