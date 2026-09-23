@@ -413,6 +413,7 @@
               <div class="card-panel-actions">
                 <select id="approvalTypeFilter" class="filter-select" onchange="renderApprovalsView()">
                   <option value="all">All Submission Types</option>
+                  <option value="enlistment">Cadet Enlistments (/membership)</option>
                   <option value="news">Gazette Dispatches (/news)</option>
                   <option value="events">Events & Drills (/events)</option>
                   <option value="campaigns">Ongoing Campaigns (/campaigns)</option>
@@ -462,9 +463,12 @@
                 </div>
                 <select id="memberStatusFilter" class="filter-select" onchange="filterMembersTable()">
                   <option value="all">All Statuses</option>
-                  <option value="Approved">Approved</option>
-                  <option value="Verified">Verified</option>
-                  <option value="Pending">Pending Review</option>
+                  <option value="Pending">Pending Review / Submitted</option>
+                  <option value="UNDER_REVIEW">Under Review</option>
+                  <option value="RECOMMENDED">Recommended to Next Level</option>
+                  <option value="FINAL_APPROVED">Final Approved & Commissioned</option>
+                  <option value="CORRECTION_REQUIRED">Correction Required</option>
+                  <option value="REJECTED">Rejected</option>
                 </select>
                 <button type="button" class="btn-admin btn-admin-primary" onclick="openAddMemberModal()">
                   <i class="fa-solid fa-user-plus"></i> Add Sainik

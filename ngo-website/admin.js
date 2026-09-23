@@ -896,6 +896,7 @@ function checkAuthSession() {
     resetInactivityTimer();
     applyRolePermissions(officer.role);
     loadAllRealtimeData();
+    loadEnlistmentApplications();
   } else {
     if (authGate) authGate.style.display = "flex";
     if (adminApp) adminApp.style.display = "none";
@@ -1105,8 +1106,50 @@ function collectAllPendingItems() {
     }
   });
 
+  // 6. Cadet Enlistment Applications (/membership queue)
+  (adminData.membership_applications || []).forEach(app => {
+    const s = (app.status || '').toUpperCase();
+    if (s === 'SUBMITTED' || s === 'UNDER_REVIEW' || s === 'RECOMMENDED' || s === 'PENDING') {
+      let stageLabel = 'Cadet Enlistment';
+      if (s === 'UNDER_REVIEW') stageLabel = 'Cadet (Under Review)';
+      if (s === 'RECOMMENDED') stageLabel = 'Cadet (Recommended)';
+
+      pending.push({
+        id: app.id,
+        type: 'enlistment',
+        typeLabel: stageLabel,
+        title: `${app.full_name || 'Cadet Applicant'} (${app.id})`,
+        submittedBy: `${app.full_name || 'Cadet'} (Applicant)`,
+        submittedAt: app.created_at ? new Date(app.created_at).getTime() : Date.now(),
+        summary: `Wing: ${app.wing_name || 'Central Cadet Corps'} | ${app.district_name || ''}, ${app.state_name || ''} | Tel: ${app.mobile || 'N/A'}`,
+        approvalStatus: 'pending',
+        applicationData: app
+      });
+    }
+  });
+
   pending.sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
   return pending;
+}
+
+async function loadEnlistmentApplications() {
+  const token = localStorage.getItem("ssd_auth_token");
+  if (!token) return;
+
+  try {
+    const res = await fetch("/api/membership/applications", {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success && data.applications) {
+      adminData.membership_applications = data.applications;
+      renderMembersTable();
+      renderApprovalsView();
+      renderOverviewApprovals();
+    }
+  } catch (err) {
+    console.warn("Notice: Enlistment applications load:", err.message);
+  }
 }
 
 function renderApprovalsView() {
@@ -1122,7 +1165,7 @@ function renderApprovalsView() {
   const filtered = typeFilter === "all" ? allPending : allPending.filter(p => p.type === typeFilter);
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);"><i class="fa-solid fa-circle-check" style="color: var(--primary-orange); font-size: 24px; margin-bottom: 8px; display: block;"></i>All admin submissions have been reviewed and approved. Queue is clear!</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);"><i class="fa-solid fa-circle-check" style="color: var(--primary-orange); font-size: 24px; margin-bottom: 8px; display: block;"></i>All admin submissions and cadet enlistments have been reviewed. Queue is clear!</td></tr>';
     return;
   }
 
@@ -1134,6 +1177,7 @@ function renderApprovalsView() {
     if (item.type === 'news') typeBadgeClass = 'badge-news';
     if (item.type === 'events') typeBadgeClass = 'badge-district';
     if (item.type === 'leadership') typeBadgeClass = 'badge-approved';
+    if (item.type === 'enlistment') typeBadgeClass = 'badge-warning';
 
     return `
       <tr>
@@ -1147,7 +1191,17 @@ function renderApprovalsView() {
         <td><span class="badge-status badge-pending"><i class="fa-solid fa-clock"></i> Pending Authorization</span></td>
         <td style="text-align: right;">
           <div class="action-btn-group" style="justify-content: flex-end;">
-            ${isSuper ? `
+            ${item.type === 'enlistment' ? `
+              <button type="button" class="btn-admin btn-admin-primary" style="padding: 4px 10px; font-size: 11.5px;" onclick="openReviewDecisionModal('${item.id}')" title="Evaluate 6-Point Rubric & Approval Decision">
+                <i class="fa-solid fa-list-check"></i> Evaluate & Approve
+              </button>
+              <button type="button" class="btn-admin btn-admin-outline" style="padding: 4px 8px; font-size: 11.5px;" onclick="quickApproveEnlistment('${item.id}')" title="1-Click Final Commission & Approve">
+                <i class="fa-solid fa-bolt"></i> Quick Approve
+              </button>
+              <button type="button" class="btn-admin btn-admin-danger" style="padding: 4px 8px; font-size: 11.5px;" onclick="rejectPost('${item.type}', '${item.id}')" title="Reject Application">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            ` : isSuper ? `
               <button type="button" class="btn-admin btn-admin-primary" style="padding: 4px 10px; font-size: 11.5px;" onclick="approvePost('${item.type}', '${item.id}')" title="Approve & Publish Live">
                 <i class="fa-solid fa-check"></i> Approve
               </button>
@@ -1191,9 +1245,15 @@ function renderOverviewApprovals() {
             <td style="color: var(--text-muted); font-size: 12px;">${dateStr}</td>
             <td style="text-align: right;">
               <div class="action-btn-group" style="justify-content: flex-end;">
-                <button type="button" class="action-icon-btn approve" onclick="approvePost('${item.type}', '${item.id}')" title="Approve & Publish Live">
-                  <i class="fa-solid fa-check"></i>
-                </button>
+                ${item.type === 'enlistment' ? `
+                  <button type="button" class="action-icon-btn approve" onclick="openReviewDecisionModal('${item.id}')" title="Evaluate 6-Point Rubric">
+                    <i class="fa-solid fa-list-check"></i>
+                  </button>
+                ` : `
+                  <button type="button" class="action-icon-btn approve" onclick="approvePost('${item.type}', '${item.id}')" title="Approve & Publish Live">
+                    <i class="fa-solid fa-check"></i>
+                  </button>
+                `}
                 <button type="button" class="action-icon-btn reject" onclick="rejectPost('${item.type}', '${item.id}')" title="Reject Submission">
                   <i class="fa-solid fa-xmark"></i>
                 </button>
@@ -1230,6 +1290,11 @@ function updateApprovalsCounters(count) {
 }
 
 function approvePost(type, id) {
+  if (type === 'enlistment') {
+    openReviewDecisionModal(id);
+    return;
+  }
+
   if (!isSuperAdmin()) {
     showToast("Authorization Restricted: Only SuperAdmin can approve content for live publication.", "error");
     return;
@@ -1259,6 +1324,32 @@ function approvePost(type, id) {
 }
 
 function rejectPost(type, id) {
+  if (type === 'enlistment') {
+    const reason = prompt("Enter Rejection Reason for Cadet Enlistment:", "Incomplete documentation or eligibility criteria not met.");
+    if (reason === null) return;
+    const token = localStorage.getItem("ssd_auth_token");
+    fetch(`/api/membership/applications/${encodeURIComponent(id)}/reject`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ reason: reason || "Eligibility criteria not met.", remarks: reason })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showToast("Cadet enlistment marked as REJECTED.", "info");
+        loadEnlistmentApplications();
+        renderApprovalsView();
+      } else {
+        showToast(data.error || "Failed to reject application.", "error");
+      }
+    })
+    .catch(err => showToast("Error: " + err.message, "error"));
+    return;
+  }
+
   if (!isSuperAdmin()) {
     showToast("Authorization Restricted: Only SuperAdmin can reject or withdraw posts.", "error");
     return;
@@ -1302,31 +1393,63 @@ function bulkApproveAllPending() {
   if (!confirm(`Are you sure you want to 1-click authorize all ${pending.length} pending submissions and publish them live?`)) return;
 
   const officer = getActiveOfficer();
+  const token = localStorage.getItem("ssd_auth_token");
   const updatePayload = {
     approvalStatus: 'approved',
     approvedBy: `${officer.name} (Supreme Commander Bulk Authorization)`,
     approvedAt: Date.now()
   };
 
-  if (db) {
+  // 1. Approve enlistment applications via API
+  const enlistmentItems = pending.filter(i => i.type === 'enlistment');
+  const otherItems = pending.filter(i => i.type !== 'enlistment');
+
+  if (enlistmentItems.length > 0 && token) {
+    enlistmentItems.forEach(item => {
+      fetch(`/api/membership/applications/${encodeURIComponent(item.id)}/approve`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          designation: "Cadet Sainik",
+          batchNo: "BATCH-2026/Q3",
+          remarks: "SuperAdmin 1-Click Bulk Enlistment Authorization",
+          assessmentData: {
+            score: 6,
+            total: 6,
+            percentage: 100,
+            criteria: { crit_age: true, crit_jurisdiction: true, crit_photo_id: true, crit_wing_qual: true, crit_ideology: true, crit_discipline: true },
+            evaluated_at: new Date().toISOString()
+          }
+        })
+      }).catch(e => console.warn("Bulk approve enlistment notice:", e));
+    });
+  }
+
+  // 2. Approve content items in Firebase/LocalStore
+  if (db && otherItems.length > 0) {
     const updates = {};
-    pending.forEach(item => {
+    otherItems.forEach(item => {
       updates[`${item.type}/${item.id}/approvalStatus`] = 'approved';
       updates[`${item.type}/${item.id}/approvedBy`] = updatePayload.approvedBy;
       updates[`${item.type}/${item.id}/approvedAt`] = updatePayload.approvedAt;
     });
     db.ref('/').update(updates).then(() => {
       showToast(`All ${pending.length} submissions authorized and published live!`, "success");
+      loadEnlistmentApplications();
       refreshAllViewsAfterApproval();
     }).catch(err => showToast(err.message, "error"));
   } else {
-    pending.forEach(item => {
+    otherItems.forEach(item => {
       if (adminData[item.type] && adminData[item.type][item.id]) {
         adminData[item.type][item.id] = { ...adminData[item.type][item.id], ...updatePayload };
       }
     });
     saveLocalStore();
     showToast(`All ${pending.length} submissions authorized and published live!`, "success");
+    loadEnlistmentApplications();
     refreshAllViewsAfterApproval();
   }
 }
@@ -1340,6 +1463,7 @@ function refreshAllViewsAfterApproval() {
   renderCampaignsTable();
   renderGalleryGrid();
   renderLeadershipTable();
+  renderMembersTable();
 }
 
 async function handleAdminLogin(e) {
@@ -1924,17 +2048,66 @@ function renderOverview() {
 }
 
 // ==========================================================================
-// RENDERERS: MEMBERS (/members)
+// RENDERERS: MEMBERS & ENLISTMENT APPLICATIONS (/members)
 // ==========================================================================
 function renderMembersTable(filteredList = null) {
   const tbody = document.getElementById("membersTableBody");
   if (!tbody) return;
 
   const membersObj = adminData.members || {};
-  let list = filteredList || Object.entries(membersObj).map(([key, val]) => ({ id: key, ...val }));
+  const firebaseList = Object.entries(membersObj).map(([key, val]) => ({
+    id: key,
+    enlistmentId: val.enlistmentId || key,
+    sainikId: val.sainikId || val.enlistmentId || key,
+    fullName: val.fullName || val.name || 'Unnamed',
+    phone: val.phone || 'N/A',
+    email: val.email || 'N/A',
+    state: val.state || 'Maharashtra',
+    city: val.city || val.district || '',
+    wing: val.wing || 'Central Cadet Corps',
+    status: val.status || 'Pending',
+    timestamp: val.timestamp || Date.now(),
+    batchNo: val.batchNo || 'BATCH-2026/Q3',
+    photo_url: val.photo_url || val.photo || null,
+    source: 'firebase',
+    ...val
+  }));
+
+  const apiApps = (adminData.membership_applications || []).map(a => ({
+    id: a.id,
+    enlistmentId: a.id,
+    sainikId: a.sainik_id || a.id,
+    fullName: a.full_name,
+    phone: a.mobile,
+    email: a.email,
+    state: a.state_name,
+    city: a.district_name,
+    district: a.district_name,
+    wing: a.wing_name,
+    status: a.status,
+    timestamp: a.created_at ? new Date(a.created_at).getTime() : Date.now(),
+    batchNo: a.batch_no || 'BATCH-2026/Q3',
+    photo_url: a.photo_url,
+    source: 'api',
+    ...a
+  }));
+
+  // Combine and deduplicate by ID
+  const combinedMap = new Map();
+  apiApps.forEach(item => combinedMap.set(item.id, item));
+  firebaseList.forEach(item => {
+    if (!combinedMap.has(item.id)) {
+      combinedMap.set(item.id, item);
+    }
+  });
+
+  let list = filteredList || Array.from(combinedMap.values());
+
+  const countBadge = document.getElementById("badgeMembersCount");
+  if (countBadge) countBadge.textContent = combinedMap.size;
 
   if (list.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: var(--text-muted);">No sainik enlistment records found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: var(--text-muted);"><i class="fa-solid fa-users" style="font-size: 24px; color: var(--primary-orange); margin-bottom: 8px; display: block;"></i>No sainik enlistment records found.</td></tr>';
     return;
   }
 
@@ -1943,38 +2116,45 @@ function renderMembersTable(filteredList = null) {
 
   tbody.innerHTML = list.map(m => {
     const regDate = m.timestamp ? new Date(m.timestamp).toLocaleDateString() : 'Recent';
-    const isApproved = (m.status || '').toLowerCase() === 'approved';
-    const cadetId = m.enlistmentId || ('SSD-' + new Date(m.timestamp || Date.now()).getFullYear() + '-' + (m.state ? m.state.slice(0, 2).toUpperCase() : 'MH') + '-' + (m.id ? m.id.slice(-4).toUpperCase() : '1927'));
-    const batchNo = m.batchNo || 'BATCH-2026/Q3';
+    const sUpper = (m.status || '').toUpperCase();
+    const isApproved = sUpper === 'APPROVED' || sUpper === 'FINAL_APPROVED' || sUpper === 'ACTIVE';
+    const cadetId = m.sainik_id || m.sainikId || m.enlistmentId || m.id;
+    const batchNo = m.batchNo || m.batch_no || 'BATCH-2026/Q3';
 
     return `
       <tr>
         <td style="color: var(--text-muted); font-size: 12px; white-space: nowrap;">${regDate}</td>
         <td>
-          <code style="font-weight: 700; color: var(--dark-navy);">${escapeHtml(cadetId)}</code>
+          <code style="font-weight: 700; color: var(--dark-navy); font-size: 12px;">${escapeHtml(cadetId)}</code>
           <div style="font-size: 11px; color: var(--primary-orange); font-weight: 600; margin-top: 2px;">${escapeHtml(batchNo)}</div>
         </td>
-        <td><strong>${escapeHtml(m.fullName || m.name || 'Unnamed')}</strong></td>
+        <td><strong>${escapeHtml(m.fullName || m.full_name || m.name || 'Unnamed')}</strong></td>
         <td>
-          <div><i class="fa-solid fa-phone" style="font-size: 11px; color: var(--primary-orange);"></i> ${escapeHtml(m.phone || 'N/A')}</div>
+          <div><i class="fa-solid fa-phone" style="font-size: 11px; color: var(--primary-orange);"></i> ${escapeHtml(m.phone || m.mobile || 'N/A')}</div>
           <div style="font-size: 11.5px; color: var(--text-muted);"><i class="fa-solid fa-envelope" style="font-size: 11px;"></i> ${escapeHtml(m.email || 'N/A')}</div>
         </td>
-        <td>${escapeHtml(m.city ? m.city + ', ' + m.state : (m.state || 'N/A'))}</td>
-        <td><span class="badge-status badge-info">${escapeHtml(m.wing || 'Cadet Corps')}</span></td>
+        <td>${escapeHtml((m.district_name || m.city || '') + (m.state_name || m.state ? ', ' + (m.state_name || m.state) : ''))}</td>
+        <td><span class="badge-status badge-info">${escapeHtml(m.wing_name || m.wing || 'Cadet Corps')}</span></td>
         <td>
           <span class="badge-status ${getStatusBadgeClass(m.status || 'Pending')}">
             ${escapeHtml(m.status || 'Pending')}
           </span>
         </td>
         <td style="text-align: right;">
-          <div class="action-btn-group" style="justify-content: flex-end;">
+          <div class="action-btn-group" style="justify-content: flex-end; gap: 4px;">
+            <button type="button" class="btn-admin btn-admin-primary" style="padding: 4px 8px; font-size: 11px;" onclick="openReviewDecisionModal('${m.id}')" title="Review, 6-Point Rubric Evaluation & Approval Actions">
+              <i class="fa-solid fa-file-shield"></i> Review
+            </button>
             ${!isApproved ? `
-            <button type="button" class="action-icon-btn verify" onclick="approveMember('${m.id}')" title="Approve & Send Official Welcome Email">
+            <button type="button" class="action-icon-btn verify" onclick="quickApproveEnlistment('${m.id}')" title="1-Click Final Commission & Approve">
               <i class="fa-solid fa-check"></i>
             </button>` : `
             <button type="button" class="action-icon-btn" onclick="resendApprovalEmail('${m.id}')" title="Resend Official Approval Email" style="color: var(--primary-orange);">
               <i class="fa-solid fa-paper-plane"></i>
             </button>`}
+            <button type="button" class="action-icon-btn" onclick="openMemberDetail('${m.id}')" title="View Full Details">
+              <i class="fa-solid fa-eye"></i>
+            </button>
             <button type="button" class="action-icon-btn delete" onclick="deleteMember('${m.id}')" title="Delete Entry">
               <i class="fa-solid fa-trash"></i>
             </button>
@@ -1989,20 +2169,204 @@ function filterMembersTable() {
   const search = (document.getElementById("memberSearchInput")?.value || "").toLowerCase();
   const status = document.getElementById("memberStatusFilter")?.value || "all";
 
-  const all = Object.entries(adminData.members || {}).map(([key, val]) => ({ id: key, ...val }));
+  const membersObj = adminData.members || {};
+  const firebaseList = Object.entries(membersObj).map(([key, val]) => ({
+    id: key,
+    enlistmentId: val.enlistmentId || key,
+    sainikId: val.sainikId || val.enlistmentId || key,
+    fullName: val.fullName || val.name || 'Unnamed',
+    phone: val.phone || 'N/A',
+    email: val.email || 'N/A',
+    state: val.state || 'Maharashtra',
+    city: val.city || val.district || '',
+    wing: val.wing || 'Central Cadet Corps',
+    status: val.status || 'Pending',
+    timestamp: val.timestamp || Date.now(),
+    batchNo: val.batchNo || 'BATCH-2026/Q3',
+    photo_url: val.photo_url || null,
+    source: 'firebase',
+    ...val
+  }));
+
+  const apiApps = (adminData.membership_applications || []).map(a => ({
+    id: a.id,
+    enlistmentId: a.id,
+    sainikId: a.sainik_id || a.id,
+    fullName: a.full_name,
+    phone: a.mobile,
+    email: a.email,
+    state: a.state_name,
+    city: a.district_name,
+    district: a.district_name,
+    wing: a.wing_name,
+    status: a.status,
+    timestamp: a.created_at ? new Date(a.created_at).getTime() : Date.now(),
+    batchNo: a.batch_no || 'BATCH-2026/Q3',
+    photo_url: a.photo_url,
+    source: 'api',
+    ...a
+  }));
+
+  const combinedMap = new Map();
+  apiApps.forEach(item => combinedMap.set(item.id, item));
+  firebaseList.forEach(item => {
+    if (!combinedMap.has(item.id)) {
+      combinedMap.set(item.id, item);
+    }
+  });
+
+  const all = Array.from(combinedMap.values());
   const filtered = all.filter(m => {
     const matchSearch = (m.fullName || m.name || '').toLowerCase().includes(search) ||
                         (m.phone || '').toLowerCase().includes(search) ||
+                        (m.id || '').toLowerCase().includes(search) ||
+                        (m.sainikId || '').toLowerCase().includes(search) ||
                         (m.state || '').toLowerCase().includes(search) ||
                         (m.city || '').toLowerCase().includes(search) ||
                         (m.wing || '').toLowerCase().includes(search);
-    const mStatus = (m.status || 'Pending').toLowerCase();
-    const fStatus = status.toLowerCase();
-    const matchStatus = (status === "all") || mStatus.includes(fStatus) || fStatus.includes(mStatus);
+    const mStatus = (m.status || 'Pending').toUpperCase();
+    const fStatus = status.toUpperCase();
+    const matchStatus = (status === "all") ||
+                        (status === "Pending" && (mStatus === "PENDING" || mStatus === "SUBMITTED")) ||
+                        mStatus.includes(fStatus) || fStatus.includes(mStatus);
     return matchSearch && matchStatus;
   });
 
   renderMembersTable(filtered);
+}
+
+async function quickApproveEnlistment(appId) {
+  const token = localStorage.getItem("ssd_auth_token");
+  if (!confirm(`Are you sure you want to 1-Click Approve and officially commission Cadet Application ${appId}?`)) return;
+
+  try {
+    const res = await fetch(`/api/membership/applications/${encodeURIComponent(appId)}/approve`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        designation: "Cadet Sainik",
+        batchNo: "BATCH-2026/Q3",
+        remarks: "SuperAdmin 1-Click Approval & Official Rank Commissioning.",
+        assessmentData: {
+          score: 6,
+          total: 6,
+          percentage: 100,
+          criteria: {
+            crit_age: true,
+            crit_jurisdiction: true,
+            crit_photo_id: true,
+            crit_wing_qual: true,
+            crit_ideology: true,
+            crit_discipline: true
+          },
+          evaluated_at: new Date().toISOString()
+        }
+      })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || `Cadet officially commissioned! Sainik ID: ${data.sainikId}`, "success");
+      await loadEnlistmentApplications();
+    } else {
+      showToast(data.error || "Approval failed.", "error");
+    }
+  } catch (err) {
+    showToast("Error approving enlistment: " + err.message, "error");
+  }
+}
+
+async function openMemberDetail(id) {
+  const token = localStorage.getItem("ssd_auth_token");
+  let m = null;
+
+  if (adminData.membership_applications) {
+    m = adminData.membership_applications.find(a => a.id === id);
+  }
+  if (!m && adminData.members && adminData.members[id]) {
+    m = { id, ...adminData.members[id] };
+  }
+
+  if (!m && token) {
+    try {
+      const res = await fetch(`/api/membership/applications/${encodeURIComponent(id)}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success && data.application) {
+        m = data.application;
+      }
+    } catch (e) {}
+  }
+
+  if (!m) {
+    showToast("Enlistment record details not found.", "error");
+    return;
+  }
+
+  const contentEl = document.getElementById("memberDetailContent");
+  if (contentEl) {
+    const sUpper = (m.status || '').toUpperCase();
+    const isApproved = sUpper === 'APPROVED' || sUpper === 'FINAL_APPROVED' || sUpper === 'ACTIVE';
+    contentEl.innerHTML = `
+      <div style="display: flex; gap: 20px; align-items: center; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 16px;">
+        <img src="${m.photo_url || 'logo.png'}" alt="Photo" style="width: 75px; height: 90px; object-fit: cover; border-radius: 6px; border: 2px solid var(--navy-dark); background: #ffffff;">
+        <div>
+          <h3 style="margin: 0 0 4px; color: var(--navy-dark); font-size: 18px;">${escapeHtml(m.full_name || m.fullName || m.name || 'Unnamed')}</h3>
+          <div style="font-size: 13px; font-weight: 700; color: var(--primary-orange);">${escapeHtml(m.wing_name || m.wing || 'Central Cadet Corps')}</div>
+          <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
+            <code>${escapeHtml(m.sainik_id || m.sainikId || m.id)}</code> &bull; 
+            <span class="badge-status ${getStatusBadgeClass(m.status)}">${escapeHtml(m.status || 'Pending')}</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 13px; margin-bottom: 16px;">
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px;">
+          <strong style="color: #64748b; font-size: 11px; display: block;">CONTACT NUMBER</strong>
+          <div>${escapeHtml(m.mobile || m.phone || 'N/A')}</div>
+        </div>
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px;">
+          <strong style="color: #64748b; font-size: 11px; display: block;">EMAIL ADDRESS</strong>
+          <div>${escapeHtml(m.email || 'N/A')}</div>
+        </div>
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px;">
+          <strong style="color: #64748b; font-size: 11px; display: block;">DATE OF BIRTH / BLOOD</strong>
+          <div>${escapeHtml(m.dob || 'N/A')} (${escapeHtml(m.blood_group || 'N/A')})</div>
+        </div>
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px;">
+          <strong style="color: #64748b; font-size: 11px; display: block;">DISTRICT & STATE</strong>
+          <div>${escapeHtml(m.district_name || m.city || '')}, ${escapeHtml(m.state_name || m.state || '')}</div>
+        </div>
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; grid-column: span 2;">
+          <strong style="color: #64748b; font-size: 11px; display: block;">TALUKA / RESIDENCE ADDRESS</strong>
+          <div>${escapeHtml(m.address || m.taluka_name || 'N/A')}</div>
+        </div>
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; grid-column: span 2;">
+          <strong style="color: #64748b; font-size: 11px; display: block;">SPECIAL SKILLS & EXPERIENCE</strong>
+          <div>${escapeHtml(m.special_skills || 'None specified')}</div>
+        </div>
+      </div>
+    `;
+
+    const approveBtn = document.getElementById("btnApproveMemberModal");
+    if (approveBtn) {
+      if (isApproved) {
+        approveBtn.innerHTML = '<i class="fa-solid fa-file-shield"></i> View Review Rubric / Audit';
+      } else {
+        approveBtn.innerHTML = '<i class="fa-solid fa-stamp"></i> Review & Approve Enlistment';
+      }
+      approveBtn.onclick = () => {
+        closeAdminModal('modalMemberDetail');
+        openReviewDecisionModal(m.id || id);
+      };
+    }
+  }
+
+  openAdminModal("modalMemberDetail");
 }
 
 function sendMemberApprovalEmail(m) {
@@ -2073,20 +2437,6 @@ function sendMemberApprovalEmail(m) {
       }
     }
 
-    if (db) {
-      db.ref('email_dispatches').push({
-        type: "Cadet Enlistment Approved",
-        senderEmail: senderEmail,
-        recipientEmail: email,
-        recipientName: m.fullName || m.name || "Cadet",
-        enlistmentId: enlistId,
-        wing: m.wing || "Cadet Corps",
-        state: m.state || "",
-        status: res.success ? "Dispatched" : "Attempted",
-        timestamp: Date.now()
-      }).catch(e => console.warn("Dispatch log error:", e));
-    }
-
     return res;
   })
   .catch(err => {
@@ -2096,6 +2446,12 @@ function sendMemberApprovalEmail(m) {
 }
 
 function approveMember(id) {
+  // If it's an application ID, trigger quickApproveEnlistment
+  if (id.startsWith('SSD-') || id.startsWith('app_')) {
+    quickApproveEnlistment(id);
+    return;
+  }
+
   const member = (adminData.members && adminData.members[id]) ? { id, ...adminData.members[id] } : null;
 
   if (db) {
@@ -5109,10 +5465,10 @@ function showToast(message, type = "success") {
 
 function getStatusBadgeClass(status) {
   if (!status) return "badge-verified";
-  const s = status.toLowerCase();
-  if (s === "approved" || s === "verified" || s === "completed") return "badge-approved";
-  if (s === "pending" || s === "in progress") return "badge-pending";
-  if (s === "rejected" || s === "flagged") return "badge-rejected";
+  const s = status.toUpperCase();
+  if (s === "APPROVED" || s === "FINAL_APPROVED" || s === "ACTIVE" || s === "VERIFIED" || s === "COMPLETED") return "badge-approved";
+  if (s === "PENDING" || s === "SUBMITTED" || s === "UNDER_REVIEW" || s === "RECOMMENDED" || s === "IN PROGRESS") return "badge-pending";
+  if (s === "REJECTED" || s === "FLAGGED" || s === "CORRECTION_REQUIRED") return "badge-rejected";
   return "badge-info";
 }
 
@@ -5748,6 +6104,9 @@ window.submitReviewDecision = submitReviewDecision;
 window.calculateAssessmentScore = calculateAssessmentScore;
 window.quickSetAssessment = quickSetAssessment;
 window.autoGenerateAssessmentRemarks = autoGenerateAssessmentRemarks;
+window.quickApproveEnlistment = quickApproveEnlistment;
+window.openMemberDetail = openMemberDetail;
+window.loadEnlistmentApplications = loadEnlistmentApplications;
 
 
 
