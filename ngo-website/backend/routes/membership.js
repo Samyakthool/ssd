@@ -301,7 +301,7 @@ router.get('/applications/:id', authenticate, async (req, res) => {
 router.post('/applications/:id/review', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    const { remarks } = req.body;
+    const { remarks, assessmentData } = req.body;
     const app = embeddedStore.membership_applications.get(id);
 
     if (!app) return res.status(404).json({ success: false, error: 'Application not found.' });
@@ -309,6 +309,7 @@ router.post('/applications/:id/review', authenticate, async (req, res) => {
 
     const prevStatus = app.status;
     app.status = 'UNDER_REVIEW';
+    if (assessmentData) app.assessment_data = assessmentData;
     app.updated_at = new Date().toISOString();
     embeddedStore.membership_applications.set(id, app);
 
@@ -325,6 +326,7 @@ router.post('/applications/:id/review', authenticate, async (req, res) => {
       previous_status: prevStatus,
       new_status: 'UNDER_REVIEW',
       remarks: remarks || 'Officer has commenced credential and background verification.',
+      assessment_data: assessmentData || null,
       created_at: new Date().toISOString()
     });
 
@@ -339,7 +341,7 @@ router.post('/applications/:id/review', authenticate, async (req, res) => {
 router.post('/applications/:id/recommend', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    const { remarks } = req.body;
+    const { remarks, assessmentData } = req.body;
     const app = embeddedStore.membership_applications.get(id);
 
     if (!app) return res.status(404).json({ success: false, error: 'Application not found.' });
@@ -361,6 +363,7 @@ router.post('/applications/:id/recommend', authenticate, async (req, res) => {
     app.status = 'RECOMMENDED';
     app.current_step_order = nextStepOrder;
     app.assigned_role = nextRole;
+    if (assessmentData) app.assessment_data = assessmentData;
     app.updated_at = new Date().toISOString();
     embeddedStore.membership_applications.set(id, app);
 
@@ -377,6 +380,7 @@ router.post('/applications/:id/recommend', authenticate, async (req, res) => {
       previous_status: prevStatus,
       new_status: 'RECOMMENDED',
       remarks: remarks || `Recommended for promotion to ${nextRole} review.`,
+      assessment_data: assessmentData || null,
       created_at: new Date().toISOString()
     });
 
@@ -395,7 +399,7 @@ router.post('/applications/:id/recommend', authenticate, async (req, res) => {
 router.post('/applications/:id/correction', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    const { reason, remarks } = req.body;
+    const { reason, remarks, assessmentData } = req.body;
     const reasonText = reason || remarks;
 
     if (!reasonText) {
@@ -409,6 +413,7 @@ router.post('/applications/:id/correction', authenticate, async (req, res) => {
     const prevStatus = app.status;
     app.status = 'CORRECTION_REQUIRED';
     app.correction_remarks = reasonText;
+    if (assessmentData) app.assessment_data = assessmentData;
     app.updated_at = new Date().toISOString();
     embeddedStore.membership_applications.set(id, app);
 
@@ -425,6 +430,7 @@ router.post('/applications/:id/correction', authenticate, async (req, res) => {
       previous_status: prevStatus,
       new_status: 'CORRECTION_REQUIRED',
       remarks: reasonText,
+      assessment_data: assessmentData || null,
       created_at: new Date().toISOString()
     });
 
@@ -497,7 +503,7 @@ router.post('/applications/:id/resubmit', upload.single('photo'), async (req, re
 router.post('/applications/:id/reject', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    const { reason, remarks } = req.body;
+    const { reason, remarks, assessmentData } = req.body;
     const reasonText = reason || remarks;
 
     if (!reasonText) {
@@ -511,6 +517,7 @@ router.post('/applications/:id/reject', authenticate, async (req, res) => {
     const prevStatus = app.status;
     app.status = 'REJECTED';
     app.rejection_reason = reasonText;
+    if (assessmentData) app.assessment_data = assessmentData;
     app.updated_at = new Date().toISOString();
     embeddedStore.membership_applications.set(id, app);
 
@@ -527,6 +534,7 @@ router.post('/applications/:id/reject', authenticate, async (req, res) => {
       previous_status: prevStatus,
       new_status: 'REJECTED',
       remarks: reasonText,
+      assessment_data: assessmentData || null,
       created_at: new Date().toISOString()
     });
 
@@ -541,7 +549,7 @@ router.post('/applications/:id/reject', authenticate, async (req, res) => {
 router.post('/applications/:id/escalate', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    const { remarks } = req.body;
+    const { remarks, assessmentData } = req.body;
     const app = embeddedStore.membership_applications.get(id);
 
     if (!app) return res.status(404).json({ success: false, error: 'Application not found.' });
@@ -550,6 +558,7 @@ router.post('/applications/:id/escalate', authenticate, async (req, res) => {
     const prevStatus = app.status;
     app.status = 'ESCALATED';
     app.assigned_role = 'central_admin'; // Escalate to Central Command
+    if (assessmentData) app.assessment_data = assessmentData;
     app.updated_at = new Date().toISOString();
     embeddedStore.membership_applications.set(id, app);
 
@@ -566,6 +575,7 @@ router.post('/applications/:id/escalate', authenticate, async (req, res) => {
       previous_status: prevStatus,
       new_status: 'ESCALATED',
       remarks: remarks || 'Escalated to National Executive Command for special review.',
+      assessment_data: assessmentData || null,
       created_at: new Date().toISOString()
     });
 
@@ -580,7 +590,7 @@ router.post('/applications/:id/escalate', authenticate, async (req, res) => {
 router.post('/applications/:id/approve', authenticate, requireRole('super_admin', 'central_admin', 'state_official'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { designation, batchNo, remarks } = req.body;
+    const { designation, batchNo, remarks, assessmentData } = req.body;
     const app = embeddedStore.membership_applications.get(id);
 
     if (!app) return res.status(404).json({ success: false, error: 'Application not found.' });
@@ -592,6 +602,7 @@ router.post('/applications/:id/approve', authenticate, requireRole('super_admin'
 
     const prevStatus = app.status;
     app.status = 'FINAL_APPROVED';
+    if (assessmentData) app.assessment_data = assessmentData;
     app.updated_at = new Date().toISOString();
     embeddedStore.membership_applications.set(id, app);
 
@@ -617,6 +628,7 @@ router.post('/applications/:id/approve', authenticate, requireRole('super_admin'
       batch_no: batchNo || 'BATCH-2026/Q3',
       status: 'ACTIVE',
       qr_token: qrToken,
+      assessment_data: assessmentData || null,
       approved_by: req.user.id,
       approved_at: new Date().toISOString(),
       created_at: new Date().toISOString(),
@@ -638,6 +650,7 @@ router.post('/applications/:id/approve', authenticate, requireRole('super_admin'
       previous_status: prevStatus,
       new_status: 'FINAL_APPROVED',
       remarks: remarks || `Officially commissioned and active Sainik ID [${sainikId}] issued.`,
+      assessment_data: assessmentData || null,
       created_at: new Date().toISOString()
     });
 

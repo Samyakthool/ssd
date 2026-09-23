@@ -5462,6 +5462,33 @@ async function openReviewDecisionModal(appId) {
     else if (app.status === 'RECOMMENDED' || app.status === 'FINAL_APPROVED') pill.className = 'badge-status badge-approved';
     else pill.className = 'badge-status badge-rejected';
 
+    // Populate Assessment Data in Modal
+    const savedAssessment = app.assessment_data;
+    const critKeys = ['crit_age', 'crit_jurisdiction', 'crit_photo_id', 'crit_wing_qual', 'crit_ideology', 'crit_discipline'];
+    
+    if (savedAssessment && savedAssessment.criteria) {
+      critKeys.forEach(k => {
+        const el = document.getElementById(k);
+        if (el) el.checked = !!savedAssessment.criteria[k];
+      });
+    } else if (app.status === 'FINAL_APPROVED' || app.status === 'RECOMMENDED') {
+      critKeys.forEach(k => {
+        const el = document.getElementById(k);
+        if (el) el.checked = true;
+      });
+    } else {
+      // Default: verify age and jurisdiction if data is present
+      critKeys.forEach(k => {
+        const el = document.getElementById(k);
+        if (el) {
+          if (k === 'crit_age' && app.dob) el.checked = true;
+          else if (k === 'crit_jurisdiction' && app.district_name) el.checked = true;
+          else el.checked = false;
+        }
+      });
+    }
+    calculateAssessmentScore();
+
     // Populate History Timeline
     const timelineEl = document.getElementById("reviewHistoryTimeline");
     if (timelineEl) {
@@ -5472,6 +5499,13 @@ async function openReviewDecisionModal(appId) {
           const dateStr = new Date(h.created_at).toLocaleDateString('en-IN', {
             day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
           });
+          const assessmentBadge = h.assessment_data ? `
+            <div style="margin-top: 4px;">
+              <span style="display: inline-flex; align-items: center; gap: 4px; background: #ecfdf5; color: #065f46; font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 600; border: 1px solid #a7f3d0;">
+                <i class="fa-solid fa-list-check"></i> Rubric Evaluation: ${h.assessment_data.score || 0}/${h.assessment_data.total || 6} (${h.assessment_data.percentage || 0}%)
+              </span>
+            </div>
+          ` : '';
           return `
             <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
               <div style="display: flex; justify-content: space-between; font-weight: 700; color: var(--navy-dark);">
@@ -5479,6 +5513,7 @@ async function openReviewDecisionModal(appId) {
                 <span style="font-size: 11px; color: #64748b;">${dateStr}</span>
               </div>
               <div style="font-size: 12px; color: #334155; margin-top: 2px;">${escapeHtml(h.remarks || 'No remarks')}</div>
+              ${assessmentBadge}
             </div>
           `;
         }).join('');
@@ -5493,20 +5528,188 @@ async function openReviewDecisionModal(appId) {
   }
 }
 
+// ==========================================================================
+// SAINIK CADRE ASSESSMENT & EVALUATION RUBRIC HELPERS
+// ==========================================================================
+
+function calculateAssessmentScore() {
+  const critKeys = [
+    { id: 'crit_age', name: 'Age & Minimum Eligibility' },
+    { id: 'crit_jurisdiction', name: 'Territorial Jurisdiction' },
+    { id: 'crit_photo_id', name: 'Photo & Document Legibility' },
+    { id: 'crit_wing_qual', name: 'Cadre & Wing Alignment' },
+    { id: 'crit_ideology', name: 'Ideological Undertaking' },
+    { id: 'crit_discipline', name: 'Discipline & Drill Commitment' }
+  ];
+
+  let passedCount = 0;
+  const criteriaState = {};
+
+  critKeys.forEach(crit => {
+    const chk = document.getElementById(crit.id);
+    const statusEl = document.getElementById(crit.id + "_status");
+    const parentLabel = chk ? chk.closest('label') : null;
+
+    if (chk && chk.checked) {
+      passedCount++;
+      criteriaState[crit.id] = true;
+      if (statusEl) {
+        statusEl.textContent = "Passed";
+        statusEl.style.color = "#16a34a";
+        statusEl.style.fontWeight = "700";
+      }
+      if (parentLabel) {
+        parentLabel.style.background = "#f0fdf4";
+        parentLabel.style.borderColor = "#86efac";
+      }
+    } else {
+      criteriaState[crit.id] = false;
+      if (statusEl) {
+        statusEl.textContent = "Pending";
+        statusEl.style.color = "#94a3b8";
+        statusEl.style.fontWeight = "500";
+      }
+      if (parentLabel) {
+        parentLabel.style.background = "#f8fafc";
+        parentLabel.style.borderColor = "#e2e8f0";
+      }
+    }
+  });
+
+  const total = critKeys.length;
+  const pct = Math.round((passedCount / total) * 100);
+
+  const countEl = document.getElementById("assessmentScoreCount");
+  const pctEl = document.getElementById("assessmentScorePct");
+  const gaugeTextEl = document.getElementById("assessmentGaugeText");
+  const progressBar = document.getElementById("assessmentProgressBar");
+  const tierBadge = document.getElementById("assessmentTierBadge");
+
+  if (countEl) countEl.textContent = passedCount;
+  if (pctEl) pctEl.textContent = pct;
+  if (gaugeTextEl) gaugeTextEl.textContent = `${passedCount} of ${total} criteria verified compliant`;
+
+  if (progressBar) {
+    progressBar.style.width = `${pct}%`;
+    if (passedCount === 6) {
+      progressBar.style.backgroundColor = "#16a34a";
+    } else if (passedCount >= 4) {
+      progressBar.style.backgroundColor = "#d97706";
+    } else {
+      progressBar.style.backgroundColor = "#dc2626";
+    }
+  }
+
+  if (tierBadge) {
+    if (passedCount === 6) {
+      tierBadge.textContent = "CADRE CLEARANCE READY (100%)";
+      tierBadge.className = "badge-status badge-approved";
+    } else if (passedCount >= 4) {
+      tierBadge.textContent = "CONDITIONAL / UNDER REVIEW";
+      tierBadge.className = "badge-status badge-pending";
+    } else {
+      tierBadge.textContent = "DISCREPANCY DETECTED";
+      tierBadge.className = "badge-status badge-rejected";
+    }
+  }
+
+  return {
+    score: passedCount,
+    total: total,
+    percentage: pct,
+    criteria: criteriaState,
+    evaluated_at: new Date().toISOString()
+  };
+}
+
+function quickSetAssessment(mode) {
+  const critKeys = ['crit_age', 'crit_jurisdiction', 'crit_photo_id', 'crit_wing_qual', 'crit_ideology', 'crit_discipline'];
+
+  if (mode === 'all_compliant') {
+    critKeys.forEach(k => {
+      const el = document.getElementById(k);
+      if (el) el.checked = true;
+    });
+    calculateAssessmentScore();
+    autoGenerateAssessmentRemarks();
+    showToast("All 6 Cadre Assessment criteria marked COMPLIANT.", "success");
+  } else if (mode === 'flag_discrepancy') {
+    critKeys.forEach(k => {
+      const el = document.getElementById(k);
+      if (el) {
+        if (k === 'crit_photo_id' || k === 'crit_wing_qual') el.checked = false;
+        else el.checked = true;
+      }
+    });
+    calculateAssessmentScore();
+    const remarksEl = document.getElementById("reviewActionRemarks");
+    if (remarksEl) {
+      remarksEl.value = "[SSD EVALUATION DISCREPANCY] Discrepancy identified in photographic uniform compliance / cadre qualification alignment. Clarification and updated documents required from applicant.";
+    }
+    showToast("Discrepancy flagged in Assessment Rubric.", "info");
+  } else if (mode === 'reset') {
+    critKeys.forEach(k => {
+      const el = document.getElementById(k);
+      if (el) el.checked = false;
+    });
+    calculateAssessmentScore();
+    showToast("Assessment Rubric reset.", "info");
+  }
+}
+
+function autoGenerateAssessmentRemarks() {
+  const evalData = calculateAssessmentScore();
+  const remarksEl = document.getElementById("reviewActionRemarks");
+  if (!remarksEl) return;
+
+  const critLabels = {
+    crit_age: 'Age Verification',
+    crit_jurisdiction: 'Territorial Jurisdiction',
+    crit_photo_id: 'Photo/ID Proof',
+    crit_wing_qual: 'Wing Alignment',
+    crit_ideology: 'Ideological Undertaking',
+    crit_discipline: 'Parade & Drill Discipline'
+  };
+
+  const failed = Object.keys(evalData.criteria).filter(k => !evalData.criteria[k]).map(k => critLabels[k] || k);
+
+  if (evalData.score === 6) {
+    remarksEl.value = `[SSD CADRE ASSESSMENT: 6/6 PASSED (100%)] All official criteria verified compliant (Age, Jurisdiction, Photo Badge, Wing Alignment, Ideology Pledge, and Parade Drill Commitment). Recommended for final commissioning.`;
+  } else if (evalData.score >= 4) {
+    remarksEl.value = `[SSD CADRE ASSESSMENT: ${evalData.score}/6 PASSED (${evalData.percentage}%)] Core requirements verified compliant. Pending verification on: ${failed.join(', ')}. Escalated for conditional review.`;
+  } else {
+    remarksEl.value = `[SSD CADRE ASSESSMENT: ACTION REQUIRED - ${evalData.score}/6 PASSED] Application fails mandatory criteria: ${failed.join(', ')}. Correction or formal clarification required from applicant.`;
+  }
+}
+
+function getAssessmentData() {
+  return calculateAssessmentScore();
+}
+
 async function submitReviewDecision(actionType) {
   if (!currentSelectedApplication) return;
   const appId = currentSelectedApplication.id;
   const remarks = document.getElementById("reviewActionRemarks").value.trim();
   const token = localStorage.getItem("ssd_auth_token");
+  const assessmentData = getAssessmentData();
 
   if ((actionType === 'correction' || actionType === 'reject') && !remarks) {
     showToast("Please enter remarks/reason before submitting a correction request or rejection.", "error");
     return;
   }
 
+  if ((actionType === 'approve' || actionType === 'recommend') && assessmentData.score < 4) {
+    const confirmProceed = confirm(`Assessment Warning: The candidate has passed only ${assessmentData.score}/6 criteria (${assessmentData.percentage}%). Do you still want to proceed with this action?`);
+    if (!confirmProceed) return;
+  }
+
   try {
     let endpoint = `/api/membership/applications/${encodeURIComponent(appId)}/${actionType}`;
-    let bodyPayload = { remarks: remarks, reason: remarks };
+    let bodyPayload = {
+      remarks: remarks,
+      reason: remarks,
+      assessmentData: assessmentData
+    };
 
     if (actionType === 'approve') {
       const designation = prompt("Enter Official Sainik Designation / Rank:", "Cadet Sainik");
@@ -5542,5 +5745,9 @@ async function submitReviewDecision(actionType) {
 window.loadAuditLogsView = loadAuditLogsView;
 window.openReviewDecisionModal = openReviewDecisionModal;
 window.submitReviewDecision = submitReviewDecision;
+window.calculateAssessmentScore = calculateAssessmentScore;
+window.quickSetAssessment = quickSetAssessment;
+window.autoGenerateAssessmentRemarks = autoGenerateAssessmentRemarks;
+
 
 

@@ -132,18 +132,36 @@ async function runTests() {
     if (!data.success || data.application.status !== 'UNDER_REVIEW') throw new Error('Review status failed');
   });
 
-  // 6. DECISION: RECOMMEND TO HIGHER LEVEL
-  await assert('District Officer Recommendation Action', async () => {
+  // 6. DECISION: RECOMMEND TO HIGHER LEVEL WITH ASSESSMENT RUBRIC
+  await assert('District Officer Recommendation Action with Assessment Rubric', async () => {
     const res = await fetch(`http://localhost:3000/api/membership/applications/${testAppId}/recommend`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${authTokenNagpur}`
       },
-      body: JSON.stringify({ remarks: 'Physical fitness and credentials validated. Recommended.' })
+      body: JSON.stringify({
+        remarks: 'Physical fitness and credentials validated. Recommended.',
+        assessmentData: {
+          score: 6,
+          total: 6,
+          percentage: 100,
+          criteria: {
+            crit_age: true,
+            crit_jurisdiction: true,
+            crit_photo_id: true,
+            crit_wing_qual: true,
+            crit_ideology: true,
+            crit_discipline: true
+          }
+        }
+      })
     });
     const data = await res.json();
     if (!data.success || data.application.status !== 'RECOMMENDED') throw new Error('Recommendation failed');
+    if (!data.application.assessment_data || data.application.assessment_data.score !== 6) {
+      throw new Error('Assessment data not recorded on application record');
+    }
   });
 
   // 7. DECISION: FINAL APPROVAL & COMMISSIONING (Super Admin)
@@ -154,7 +172,16 @@ async function runTests() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${authTokenSuper}`
       },
-      body: JSON.stringify({ designation: 'Cadet Sainik', batchNo: 'BATCH-2026/Q3', remarks: 'Final commission approved.' })
+      body: JSON.stringify({
+        designation: 'Cadet Sainik',
+        batchNo: 'BATCH-2026/Q3',
+        remarks: 'Final commission approved.',
+        assessmentData: {
+          score: 6,
+          total: 6,
+          percentage: 100
+        }
+      })
     });
     const data = await res.json();
     if (!data.success || !data.sainikId) throw new Error('Final approval failed: ' + JSON.stringify(data));

@@ -2154,6 +2154,130 @@
           <!-- Dynamically populated -->
         </div>
 
+        <!-- Sainik Cadre Assessment & Evaluation Rubric (SSD-STD-1927) -->
+        <div style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 18px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h4 style="margin: 0 0 3px; font-size: 15px; color: var(--navy-dark); display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-list-check" style="color: var(--primary-orange);"></i>
+                Sainik Cadre Assessment & Evaluation Rubric
+              </h4>
+              <span style="font-size: 11.5px; color: #64748b; font-weight: 500;">Official 6-Point Enlistment Criteria Verification (SSD-STD-1927)</span>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span id="assessmentScoreBadge" style="background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 20px; font-weight: 700; font-size: 12px; border: 1px solid #cbd5e1;">
+                Score: <span id="assessmentScoreCount">0</span>/6 (<span id="assessmentScorePct">0</span>%)
+              </span>
+              <span id="assessmentTierBadge" class="badge-status badge-pending" style="font-size: 11px;">PENDING EVALUATION</span>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons for Rubric -->
+          <div style="display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;">
+            <button type="button" class="btn-admin" style="font-size: 11.5px; padding: 5px 10px; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;" onclick="quickSetAssessment('all_compliant')">
+              <i class="fa-solid fa-circle-check"></i> Mark All Compliant (6/6)
+            </button>
+            <button type="button" class="btn-admin" style="font-size: 11.5px; padding: 5px 10px; background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa;" onclick="quickSetAssessment('flag_discrepancy')">
+              <i class="fa-solid fa-triangle-exclamation"></i> Flag Discrepancies
+            </button>
+            <button type="button" class="btn-admin btn-admin-outline" style="font-size: 11.5px; padding: 5px 10px;" onclick="quickSetAssessment('reset')">
+              <i class="fa-solid fa-rotate-left"></i> Reset Rubric
+            </button>
+            <button type="button" class="btn-admin btn-admin-outline" style="font-size: 11.5px; padding: 5px 10px; margin-left: auto;" onclick="autoGenerateAssessmentRemarks()">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Generate Remarks
+            </button>
+          </div>
+
+          <!-- 6-Point Criteria Grid -->
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;" id="assessmentCriteriaGrid">
+            
+            <!-- Criterion 1: Age & Eligibility -->
+            <label class="assessment-criterion-card" for="crit_age" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; transition: all 0.2s ease;">
+              <input type="checkbox" id="crit_age" name="assessment_crit" value="crit_age" onchange="calculateAssessmentScore()" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 12.5px; color: #0f172a; display: flex; justify-content: space-between;">
+                  <span>1. Age & Minimum Eligibility</span>
+                  <span id="crit_age_status" style="font-size: 11px; color: #94a3b8;">Pending</span>
+                </div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Applicant is &ge; 18 years of age with verified Date of Birth.</div>
+              </div>
+            </label>
+
+            <!-- Criterion 2: Territorial Jurisdiction -->
+            <label class="assessment-criterion-card" for="crit_jurisdiction" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; transition: all 0.2s ease;">
+              <input type="checkbox" id="crit_jurisdiction" name="assessment_crit" value="crit_jurisdiction" onchange="calculateAssessmentScore()" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 12.5px; color: #0f172a; display: flex; justify-content: space-between;">
+                  <span>2. Territorial Jurisdiction</span>
+                  <span id="crit_jurisdiction_status" style="font-size: 11px; color: #94a3b8;">Pending</span>
+                </div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Resides within declared district/state boundary unit.</div>
+              </div>
+            </label>
+
+            <!-- Criterion 3: Photo ID & Document Legibility -->
+            <label class="assessment-criterion-card" for="crit_photo_id" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; transition: all 0.2s ease;">
+              <input type="checkbox" id="crit_photo_id" name="assessment_crit" value="crit_photo_id" onchange="calculateAssessmentScore()" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 12.5px; color: #0f172a; display: flex; justify-content: space-between;">
+                  <span>3. Photo & Document Legibility</span>
+                  <span id="crit_photo_id_status" style="font-size: 11px; color: #94a3b8;">Pending</span>
+                </div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Badge photo meets uniform standard; clear face & documents.</div>
+              </div>
+            </label>
+
+            <!-- Criterion 4: Cadre & Wing Alignment -->
+            <label class="assessment-criterion-card" for="crit_wing_qual" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; transition: all 0.2s ease;">
+              <input type="checkbox" id="crit_wing_qual" name="assessment_crit" value="crit_wing_qual" onchange="calculateAssessmentScore()" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 12.5px; color: #0f172a; display: flex; justify-content: space-between;">
+                  <span>4. Cadre & Wing Alignment</span>
+                  <span id="crit_wing_qual_status" style="font-size: 11px; color: #94a3b8;">Pending</span>
+                </div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Education & background align with selected Wing/Corps.</div>
+              </div>
+            </label>
+
+            <!-- Criterion 5: Ideological Undertaking -->
+            <label class="assessment-criterion-card" for="crit_ideology" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; transition: all 0.2s ease;">
+              <input type="checkbox" id="crit_ideology" name="assessment_crit" value="crit_ideology" onchange="calculateAssessmentScore()" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 12.5px; color: #0f172a; display: flex; justify-content: space-between;">
+                  <span>5. Ideological Undertaking</span>
+                  <span id="crit_ideology_status" style="font-size: 11px; color: #94a3b8;">Pending</span>
+                </div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Pledged adherence to Dr. Ambedkar's principles & Dal code.</div>
+              </div>
+            </label>
+
+            <!-- Criterion 6: Discipline & Drill Commitment -->
+            <label class="assessment-criterion-card" for="crit_discipline" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; transition: all 0.2s ease;">
+              <input type="checkbox" id="crit_discipline" name="assessment_crit" value="crit_discipline" onchange="calculateAssessmentScore()" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 12.5px; color: #0f172a; display: flex; justify-content: space-between;">
+                  <span>6. Discipline & Drill Commitment</span>
+                  <span id="crit_discipline_status" style="font-size: 11px; color: #94a3b8;">Pending</span>
+                </div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Commitment to weekend parades, drill camps & relief duty.</div>
+              </div>
+            </label>
+
+          </div>
+
+          <!-- Live Evaluation Progress Bar -->
+          <div style="margin-top: 14px;">
+            <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: #64748b; margin-bottom: 4px;">
+              <span>Evaluation Compliance Gauge:</span>
+              <span id="assessmentGaugeText" style="font-weight: 600;">0 of 6 criteria verified</span>
+            </div>
+            <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+              <div id="assessmentProgressBar" style="width: 0%; height: 100%; background: #dc2626; transition: width 0.3s ease, background-color 0.3s ease;"></div>
+            </div>
+          </div>
+        </div>
+
         <!-- Review Decision Actions Box -->
         <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 16px;">
           <h4 style="margin: 0 0 10px; color: #9a3412; font-size: 14px;"><i class="fa-solid fa-gavel"></i> Officer Review Decision</h4>
