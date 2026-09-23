@@ -21,6 +21,7 @@ export async function runMigration() {
     { id: 'district_official', name: 'District Dalpati / Officer', description: 'District verification and recommendation', hierarchy_level: 3 },
     { id: 'taluka_official', name: 'Taluka Executive Officer', description: 'Taluka/Sub-district level verification', hierarchy_level: 2 },
     { id: 'chapter_official', name: 'Local Chapter Commander', description: 'Grassroots chapter verification', hierarchy_level: 1 },
+    { id: 'enlistment_officer', name: 'Enlistment Approval Officer', description: 'Authorized exclusively for enlistment scrutiny, assessment rubric scoring, and member approvals', hierarchy_level: 4 },
     { id: 'finance_admin', name: 'Finance & Treasury Admin', description: 'Donation, 80G tax receipt, and financial audit management', hierarchy_level: 5 },
     { id: 'media_admin', name: 'Media & Gazette Admin', description: 'News, events, press releases, and photo archives', hierarchy_level: 4 },
     { id: 'member', name: 'Enlisted Sainik / Cadet', description: 'Standard verified member portal access', hierarchy_level: 0 }
@@ -258,6 +259,17 @@ export async function runMigration() {
       department: 'Central IT & Public Communications Cell',
       status: 'ACTIVE',
       created_at: new Date().toISOString()
+    },
+    {
+      id: 'usr_enlistment_officer',
+      email: 'approvals@ssd.org',
+      password_hash: hashPassword('APPROVE1927'),
+      full_name: 'Commander Surendra G. Meshram (Enlistment Officer)',
+      phone: '+91 98223 00007',
+      role_id: 'enlistment_officer',
+      department: 'National Enlistment & Scrutiny Board',
+      status: 'ACTIVE',
+      created_at: new Date().toISOString()
     }
   ];
 
@@ -269,6 +281,7 @@ export async function runMigration() {
   const jurisdictions = [
     { id: 'jur_super', user_id: 'usr_super_admin', role_id: 'super_admin', state_id: null, region_id: null, district_id: null, is_primary: true },
     { id: 'jur_central', user_id: 'usr_central_secretary', role_id: 'central_admin', state_id: null, region_id: null, district_id: null, is_primary: true },
+    { id: 'jur_enlistment', user_id: 'usr_enlistment_officer', role_id: 'enlistment_officer', state_id: null, region_id: null, district_id: null, is_primary: true },
     { id: 'jur_state_mh', user_id: 'usr_state_mh', role_id: 'state_official', state_id: 'state_mh', region_id: null, district_id: null, is_primary: true },
     { id: 'jur_reg_vid', user_id: 'usr_region_vidarbha', role_id: 'regional_official', state_id: 'state_mh', region_id: 'reg_mh_vidarbha', district_id: null, is_primary: true },
     { id: 'jur_dist_ngp', user_id: 'usr_district_nagpur', role_id: 'district_official', state_id: 'state_mh', region_id: 'reg_mh_vidarbha', district_id: 'dist_mh_nagpur', is_primary: true },

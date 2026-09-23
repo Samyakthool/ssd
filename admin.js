@@ -611,6 +611,15 @@ const ssdInitialSeed = {
       dept: "Gazette & Public Relations Cell",
       status: "Active",
       timestamp: Date.now()
+    },
+    "usr_enlistment": {
+      name: "Commander Surendra Meshram",
+      email: "approvals@ssd.org",
+      passcode: "APPROVE1927",
+      role: "enlistment_officer",
+      dept: "National Enlistment & Scrutiny Board",
+      status: "Active",
+      timestamp: Date.now()
     }
   }
 };
@@ -907,20 +916,37 @@ function checkAuthSession() {
 function getRoleDisplayName(role) {
   switch (role) {
     case "super_admin": return "Supreme Council Level (Master Access)";
+    case "enlistment_officer":
+    case "enlistment_admin": return "Enlistment Scrutiny & Approval Officer";
     case "executive": return "National Executive Level";
-    case "treasurer": return "Treasury & Finance Level";
-    case "media": return "Gazette & Media Cell";
+    case "central_admin": return "Central Command Executive";
+    case "state_official": return "State Directorate Officer";
+    case "regional_official": return "Regional Commander";
+    case "district_official": return "District Dalpati / Officer";
+    case "treasurer":
+    case "finance_admin": return "Treasury & Finance Level";
+    case "media":
+    case "media_admin": return "Gazette & Media Cell";
     default: return "Command Officer";
   }
 }
 
 function applyRolePermissions(role) {
   const isSuper = isSuperAdmin();
+  const isApprover = isSuper || role === "enlistment_officer" || role === "enlistment_admin" || role === "central_admin" || role === "state_official" || role === "regional_official" || role === "district_official";
+
   const permissions = {
     super_admin: ["overview", "approvals", "members", "donations", "leadership", "chapters", "news", "events", "campaigns", "gallery", "admins", "contacts", "stats", "settings"],
+    enlistment_officer: ["approvals", "members"],
+    enlistment_admin: ["approvals", "members"],
     executive: ["overview", "members", "leadership", "chapters", "news", "events", "campaigns", "gallery", "contacts"],
+    central_admin: ["overview", "approvals", "members", "leadership", "chapters", "news", "events", "campaigns", "gallery", "contacts"],
+    state_official: ["overview", "approvals", "members", "leadership", "chapters"],
+    district_official: ["overview", "approvals", "members"],
     treasurer: ["overview", "donations", "campaigns"],
-    media: ["overview", "news", "events", "gallery"]
+    finance_admin: ["overview", "donations", "campaigns"],
+    media: ["overview", "news", "events", "gallery"],
+    media_admin: ["overview", "news", "events", "gallery"]
   };
 
   const allowed = isSuper ? permissions.super_admin : (permissions[role] || permissions.executive);
@@ -933,19 +959,24 @@ function applyRolePermissions(role) {
     }
   });
 
-  // Approvals Desk, Topbar button, Overview panel, and Badge are strictly for Master Access!
+  // Approvals Desk, Topbar button, Overview panel, and Badge
   const topbarBtn = document.getElementById("topbarApprovalsBtn");
   const overviewApprovalsPanel = document.getElementById("overviewApprovalsPanel");
   const badgeApprovalsCount = document.getElementById("badgeApprovalsCount");
 
   if (topbarBtn) {
-    topbarBtn.style.display = isSuper ? "inline-flex" : "none";
+    topbarBtn.style.display = isApprover ? "inline-flex" : "none";
   }
-  if (overviewApprovalsPanel && !isSuper) {
-    overviewApprovalsPanel.style.display = "none";
+  if (overviewApprovalsPanel) {
+    overviewApprovalsPanel.style.display = isApprover ? "block" : "none";
   }
-  if (badgeApprovalsCount && !isSuper) {
-    badgeApprovalsCount.style.display = "none";
+  if (badgeApprovalsCount) {
+    badgeApprovalsCount.style.display = isApprover ? "inline-flex" : "none";
+  }
+
+  // If role is exclusively enlistment_officer, navigate to approvals view directly
+  if (role === "enlistment_officer" || role === "enlistment_admin") {
+    switchView("approvals");
   }
 }
 
@@ -1806,9 +1837,23 @@ const viewMetadata = {
 
 function switchView(viewKey) {
   const isSuper = isSuperAdmin();
-  if ((viewKey === 'approvals' || viewKey === 'admins' || viewKey === 'settings') && !isSuper) {
-    showToast("Access Restricted: Master Command Access required for this desk.", "error");
+  let userRole = "executive";
+  try {
+    const userJson = sessionStorage.getItem("ssd_admin_user");
+    if (userJson) {
+      const u = JSON.parse(userJson);
+      userRole = u.role || u.role_id || "executive";
+    }
+  } catch (e) {}
+
+  const canAccessApprovals = isSuper || userRole === 'enlistment_officer' || userRole === 'enlistment_admin' || userRole === 'central_admin' || userRole === 'state_official' || userRole === 'regional_official' || userRole === 'district_official';
+
+  if (viewKey === 'approvals' && !canAccessApprovals) {
+    showToast("Access Restricted: Enlistment Scrutiny clearance required.", "error");
     viewKey = 'overview';
+  } else if ((viewKey === 'admins' || viewKey === 'settings') && !isSuper) {
+    showToast("Access Restricted: Master Command Access required for this desk.", "error");
+    viewKey = (userRole === 'enlistment_officer' || userRole === 'enlistment_admin') ? 'approvals' : 'overview';
   }
 
   document.querySelectorAll(".sidebar-item").forEach(item => item.classList.remove("active"));

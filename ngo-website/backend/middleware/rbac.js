@@ -27,8 +27,8 @@ export function enforceJurisdiction(req, res, next) {
 
   const { role_id, jurisdiction } = req.user;
 
-  // Super Admin and Central Command have National Scope
-  if (role_id === 'super_admin' || role_id === 'central_admin' || role_id === 'finance_admin' || role_id === 'media_admin') {
+  // Super Admin, Central Command, and National Enlistment Approver have National Scope by default
+  if (role_id === 'super_admin' || role_id === 'central_admin' || role_id === 'finance_admin' || role_id === 'media_admin' || (role_id === 'enlistment_officer' && (!jurisdiction || !jurisdiction.state_id))) {
     req.jurisdictionFilter = null; // No restriction
     return next();
   }
@@ -57,9 +57,14 @@ export function canAccessRecord(user, record) {
   if (!user || !record) return false;
   const { role_id, jurisdiction } = user;
 
-  if (role_id === 'super_admin' || role_id === 'central_admin') return true;
+  if (role_id === 'super_admin' || role_id === 'central_admin' || (role_id === 'enlistment_officer' && (!jurisdiction || !jurisdiction.state_id))) return true;
   if (!jurisdiction) return false;
 
+  if (role_id === 'enlistment_officer') {
+    if (jurisdiction.district_id && record.district_id !== jurisdiction.district_id) return false;
+    if (jurisdiction.state_id && record.state_id !== jurisdiction.state_id) return false;
+    return true;
+  }
   if (role_id === 'state_official') {
     return record.state_id === jurisdiction.state_id;
   }

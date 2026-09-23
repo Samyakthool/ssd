@@ -53,6 +53,8 @@ async function runTests() {
     if (res.status !== 401 || data.success) throw new Error('Expected 401 Unauthorized');
   });
 
+  let authTokenEnlistment = '';
+
   await assert('District Official Login & Jurisdiction Validation', async () => {
     const res = await fetch('http://localhost:3000/api/auth/login', {
       method: 'POST',
@@ -63,6 +65,32 @@ async function runTests() {
     if (!data.success || !data.token) throw new Error('Failed to login as Nagpur District official');
     authTokenNagpur = data.token;
     if (data.user.jurisdiction.district_id !== 'dist_mh_nagpur') throw new Error('Incorrect district jurisdiction');
+  });
+
+  await assert('Enlistment Officer Login & Role Validation', async () => {
+    const res = await fetch('http://localhost:3000/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'approvals@ssd.org', password: 'APPROVE1927' })
+    });
+    const data = await res.json();
+    if (!data.success || !data.token) throw new Error('Failed to login as Enlistment Approval Officer');
+    authTokenEnlistment = data.token;
+    if (data.user.role !== 'enlistment_officer') throw new Error('Expected role enlistment_officer but got ' + data.user.role);
+  });
+
+  await assert('Enlistment Officer Role Isolation (Restricted from Treasury & User Admin)', async () => {
+    // 1. Try accessing donations endpoint (should return 403)
+    const donRes = await fetch('http://localhost:3000/api/donations', {
+      headers: { 'Authorization': `Bearer ${authTokenEnlistment}` }
+    });
+    if (donRes.status !== 403) throw new Error('Expected 403 Forbidden on donations for enlistment_officer, got ' + donRes.status);
+
+    // 2. Try accessing officers management endpoint (should return 403)
+    const offRes = await fetch('http://localhost:3000/api/auth/officers', {
+      headers: { 'Authorization': `Bearer ${authTokenEnlistment}` }
+    });
+    if (offRes.status !== 403) throw new Error('Expected 403 Forbidden on officers management, got ' + offRes.status);
   });
 
   // 2. MEMBERSHIP APPLICATION SUBMISSION
@@ -132,18 +160,36 @@ async function runTests() {
     if (!data.success || data.application.status !== 'UNDER_REVIEW') throw new Error('Review status failed');
   });
 
-  // 6. DECISION: RECOMMEND TO HIGHER LEVEL
-  await assert('District Officer Recommendation Action', async () => {
+  // 6. DECISION: RECOMMEND TO HIGHER LEVEL WITH ASSESSMENT RUBRIC
+  await assert('District Officer Recommendation Action with Assessment Rubric', async () => {
     const res = await fetch(`http://localhost:3000/api/membership/applications/${testAppId}/recommend`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${authTokenNagpur}`
       },
-      body: JSON.stringify({ remarks: 'Physical fitness and credentials validated. Recommended.' })
+      body: JSON.stringify({
+        remarks: 'Physical fitness and credentials validated. Recommended.',
+        assessmentData: {
+          score: 6,
+          total: 6,
+          percentage: 100,
+          criteria: {
+            crit_age: true,
+            crit_jurisdiction: true,
+            crit_photo_id: true,
+            crit_wing_qual: true,
+            crit_ideology: true,
+            crit_discipline: true
+          }
+        }
+      })
     });
     const data = await res.json();
     if (!data.success || data.application.status !== 'RECOMMENDED') throw new Error('Recommendation failed');
+    if (!data.application.assessment_data || data.application.assessment_data.score !== 6) {
+      throw new Error('Assessment data not recorded on application record');
+    }
   });
 
   // 7. DECISION: FINAL APPROVAL & COMMISSIONING (Super Admin)
@@ -154,12 +200,64 @@ async function runTests() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${authTokenSuper}`
       },
-      body: JSON.stringify({ designation: 'Cadet Sainik', batchNo: 'BATCH-2026/Q3', remarks: 'Final commission approved.' })
+      body: JSON.stringify({
+        designation: 'Cadet Sainik',
+        batchNo: 'BATCH-2026/Q3',
+        remarks: 'Final commission approved.',
+        assessmentData: {
+          score: 6,
+          total: 6,
+          percentage: 100
+        }
+      })
     });
     const data = await res.json();
     if (!data.success || !data.sainikId) throw new Error('Final approval failed: ' + JSON.stringify(data));
     testSainikId = data.sainikId;
     if (!testSainikId.startsWith('SSD-MH-2026-')) throw new Error('Invalid Sainik ID generated: ' + testSainikId);
+  });
+
+  // 7b. DECISION: ENLISTMENT APPROVAL OFFICER APPROVAL ACTION
+  await assert('Enlistment Officer Direct Application Approval & Commissioning', async () => {
+    // 1. Submit second test application
+    const appRes = await fetch('http://localhost:3000/api/membership/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fullName: 'Priya R. Dongre',
+        dob: '2001-08-15',
+        gender: 'Female',
+        mobile: '+91 98223 88888',
+        email: 'priya.dongre@example.com',
+        stateId: 'state_mh',
+        stateName: 'Maharashtra',
+        districtId: 'dist_mh_pune',
+        districtName: 'Pune',
+        wingId: 'wing_mahila',
+        wingName: 'Mahila Samata Sainik Dal (Women Wing)',
+        solemnPledge: true
+      })
+    });
+    const appData = await appRes.json();
+    if (!appData.success) throw new Error('Second app creation failed');
+
+    // 2. Enlistment Officer approves directly
+    const approveRes = await fetch(`http://localhost:3000/api/membership/applications/${appData.applicationId}/approve`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenEnlistment}`
+      },
+      body: JSON.stringify({
+        designation: 'Mahila Dal Platoon Leader',
+        batchNo: 'BATCH-2026/Q3',
+        remarks: 'Approved by Enlistment Approval Board.',
+        assessmentData: { score: 6, total: 6, percentage: 100 }
+      })
+    });
+    const approveData = await approveRes.json();
+    if (!approveData.success || !approveData.sainikId) throw new Error('Enlistment Officer approval failed: ' + JSON.stringify(approveData));
+    if (!approveData.sainikId.startsWith('SSD-MH-2026-')) throw new Error('Invalid Sainik ID format from Enlistment Officer');
   });
 
   // 8. DIGITAL ID CARD PAYLOAD TEST

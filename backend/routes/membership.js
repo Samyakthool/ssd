@@ -586,8 +586,8 @@ router.post('/applications/:id/escalate', authenticate, async (req, res) => {
   }
 });
 
-// 11. DECISION: FINAL APPROVAL & DIGITAL SAINIK ID COMMISSION (Central & Super Admin)
-router.post('/applications/:id/approve', authenticate, requireRole('super_admin', 'central_admin', 'state_official'), async (req, res) => {
+// 11. DECISION: FINAL APPROVAL & DIGITAL SAINIK ID COMMISSION (Central, Super Admin & Enlistment Approver)
+router.post('/applications/:id/approve', authenticate, requireRole('super_admin', 'central_admin', 'state_official', 'enlistment_officer'), async (req, res) => {
   try {
     const { id } = req.params;
     const { designation, batchNo, remarks, assessmentData } = req.body;
