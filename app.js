@@ -708,7 +708,7 @@ function renderNews(newsArray) {
   container.innerHTML = newsArray.map((item, idx) => `
     <div class="news-card">
       <div class="news-image-wrapper">
-        <img src="${item.imageUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'}" alt="${escapeHtml(item.title)}" class="news-img" onerror="this.src='https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'">
+        <img src="${item.imageUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'}" alt="${escapeHtml(item.title)}" class="news-img" onerror="this.onerror=null; this.src='logo.png';">
         <span class="news-category-badge">${escapeHtml(item.category || 'Gazette')}</span>
       </div>
       <div class="news-body">
@@ -808,7 +808,7 @@ function renderGallery(galleryArray) {
   currentGalleryItems = galleryArray;
   container.innerHTML = galleryArray.map((item, idx) => `
     <div class="gallery-item" onclick="openLightbox(${idx})">
-      <img src="${item.imageUrl}" alt="${item.caption || 'SSD Drill Action'}" class="gallery-img" onerror="this.src='https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=800&q=80'">
+      <img src="${item.imageUrl}" alt="${item.caption || 'SSD Drill Action'}" class="gallery-img" onerror="this.onerror=null; this.src='logo.png';">
       <div class="gallery-overlay">
         <div class="gallery-zoom-icon"><i class="fa-solid fa-magnifying-glass-plus"></i></div>
         <p class="gallery-caption">${item.caption || 'Samata Sainik Dal Archive'}</p>
@@ -901,7 +901,7 @@ function renderTestimonials(testimonialsArray) {
       <div class="testimonial-quote-icon"><i class="fa-solid fa-quote-left"></i></div>
       <p class="testimonial-quote-text">"${item.quote}"</p>
       <div class="testimonial-author-box">
-        <img src="${item.photoUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'}" alt="${item.name}" class="testimonial-avatar" onerror="this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'">
+        <img src="${item.photoUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'}" alt="${item.name}" class="testimonial-avatar" onerror="this.onerror=null; this.src='logo.png';">
         <div class="testimonial-meta">
           <div class="testimonial-author-name">${item.name}</div>
           <div class="testimonial-designation">${item.designation || 'Sainik Commander'}</div>
@@ -1416,7 +1416,7 @@ function closeMobileMenu() {
 }
 
 function toggleMobileDropdown(e) {
-  if (window.innerWidth <= 768) {
+  if (window.innerWidth <= 1024) {
     e.preventDefault();
     e.stopPropagation();
     const dropdown = e.currentTarget.nextElementSibling;
@@ -1445,7 +1445,7 @@ function initMobileInteractions() {
   // 2. Auto-close mobile drawer when clicking anchor links
   document.querySelectorAll(".main-nav a[href^='#']").forEach(link => {
     link.addEventListener("click", () => {
-      if (window.innerWidth <= 768) {
+      if (window.innerWidth <= 1024) {
         closeMobileMenu();
       }
     });
@@ -1542,7 +1542,7 @@ function renderCampaigns(campaignsArray) {
     return `
       <div class="campaign-card">
         <div class="campaign-img-wrapper">
-          <img src="${camp.imageUrl}" alt="${camp.title}" class="campaign-img" onerror="this.src='https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'">
+          <img src="${camp.imageUrl}" alt="${camp.title}" class="campaign-img" onerror="this.onerror=null; this.src='logo.png';">
           <span class="campaign-badge"><i class="fa-solid fa-flag"></i> ${camp.category}</span>
         </div>
         <div class="campaign-body">
@@ -1637,7 +1637,7 @@ function renderHomeGallery() {
 
   container.innerHTML = filtered.slice(0, 8).map((item, idx) => `
     <div class="gallery-card-compact" onclick="openLightbox(${idx})">
-      <img src="${item.imageUrl}" alt="${item.caption || 'Samata Sainik Dal Photo'}" onerror="this.src='https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=800&q=80'">
+      <img src="${item.imageUrl}" alt="${item.caption || 'Samata Sainik Dal Photo'}" onerror="this.onerror=null; this.src='logo.png';">
       <div class="gallery-overlay-compact">
         <span>${item.category || 'SSD Action'}</span>
         <h5>${item.caption || 'Samata Sainik Dal Field Unit'}</h5>
@@ -1759,7 +1759,7 @@ function renderGoverningCards(leadersList) {
       return `
         <div class="governing-card" data-level="${isItCell ? 'it_cell' : (isDistrict ? 'district' : (isState ? 'state' : 'national'))}" data-state="${escapeHtml(stateName)}" onclick="openOfficerPortfolioModal('${escapeHtml(lead.id || lead.name)}', false)" title="Click to view ${escapeHtml(lead.name)}'s official portfolio dossier">
           <div class="governing-header">
-            <img src="${lead.photoUrl}" alt="${escapeHtml(lead.name)}" class="governing-photo" onerror="this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80'">
+            <img src="${lead.photoUrl}" alt="${escapeHtml(lead.name)}" class="governing-photo" onerror="this.onerror=null; this.src='logo.png';">
             <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> ${escapeHtml(badgeText)}</span>
             ${tierBadgeHtml}
           </div>
@@ -1786,7 +1786,7 @@ function renderGoverningCards(leadersList) {
     const advToUse = advisoryMembers.length > 0 ? advisoryMembers : (ssdSampleData.advisoryBoard || []);
     advisoryContainer.innerHTML = advToUse.map((adv, idx) => `
       <div class="advisory-member" onclick="openOfficerPortfolioModal('${escapeHtml(adv.id || adv.name || idx)}', true)" title="Click to view ${escapeHtml(adv.name)}'s complete advisory portfolio & movement history">
-        <img src="${adv.photoUrl}" alt="${escapeHtml(adv.name)}" class="advisory-avatar" onerror="this.src='https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80'">
+        <img src="${adv.photoUrl}" alt="${escapeHtml(adv.name)}" class="advisory-avatar" onerror="this.onerror=null; this.src='logo.png';">
         <div style="flex: 1; min-width: 0;">
           <div class="advisory-name">${escapeHtml(adv.name)}</div>
           <div class="advisory-role">${escapeHtml(adv.credentials || adv.role || 'Senior Advisory Member')}</div>

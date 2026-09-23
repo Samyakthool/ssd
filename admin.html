@@ -82,6 +82,9 @@
        ========================================================================== -->
   <div id="adminApp" class="admin-layout" style="display: none;">
     
+    <!-- Mobile & Tablet Sidebar Backdrop Overlay -->
+    <div class="admin-sidebar-overlay" id="adminSidebarOverlay" onclick="toggleSidebarDrawer()"></div>
+
     <!-- SIDEBAR -->
     <aside class="admin-sidebar" id="adminSidebar">
       <div class="sidebar-brand">
@@ -255,15 +258,15 @@
           </div>
 
           <button type="button" class="btn-admin btn-admin-outline" onclick="switchView('approvals')" id="topbarApprovalsBtn" title="Pending Approvals" style="display: none; align-items: center; gap: 6px; padding: 6px 14px; font-size: 12px; font-weight: 700; color: #D95D00; background: rgba(255, 107, 0, 0.08); border-color: rgba(255, 107, 0, 0.3);">
-            <i class="fa-solid fa-stamp"></i> <span id="topbarApprovalsCount">0</span> Pending Approvals
+            <i class="fa-solid fa-stamp"></i> <span id="topbarApprovalsCount">0</span> <span class="topbar-btn-text">Pending Approvals</span>
           </button>
 
           <a href="member-portal.html" class="topbar-view-site" style="color: #c5a059; border-color: rgba(197, 160, 89, 0.4); background: rgba(197, 160, 89, 0.08);" title="View Sainik Member Portal">
-            <i class="fa-solid fa-id-card"></i> Member Portal
+            <i class="fa-solid fa-id-card"></i> <span class="topbar-btn-text">Member Portal</span>
           </a>
 
-          <a href="index.html" target="_blank" class="topbar-view-site">
-            <i class="fa-solid fa-arrow-up-right-from-square"></i> Live Portal
+          <a href="index.html" target="_blank" class="topbar-view-site" title="View Live Public Portal">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> <span class="topbar-btn-text">Live Portal</span>
           </a>
         </div>
       </header>

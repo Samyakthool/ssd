@@ -214,14 +214,51 @@
     @media (max-width: 900px) {
       .portal-grid-layout {
         grid-template-columns: 1fr;
+        gap: 18px;
       }
       .portal-hero-banner {
         flex-direction: column;
         text-align: center;
         gap: 16px;
+        padding: 20px 18px;
       }
       .portal-user-meta {
         flex-direction: column;
+        text-align: center;
+      }
+      .portal-wrapper {
+        padding: 18px 0 40px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .portal-auth-box {
+        margin: 16px auto;
+        padding: 20px 16px;
+        border-radius: 10px;
+      }
+      .portal-auth-header h2 {
+        font-size: 19px;
+      }
+      .portal-user-info h2 {
+        font-size: 19px;
+      }
+      .card-actions-row {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .card-actions-row .btn {
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+      }
+      .portal-section-card {
+        padding: 16px 14px;
+      }
+      .id-card-render-box canvas {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
       }
     }
   </style>

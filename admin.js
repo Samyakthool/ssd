@@ -1957,7 +1957,11 @@ function updateSecurityMetricsDisplay() {
 
 function toggleSidebarDrawer() {
   const sidebar = document.getElementById("adminSidebar");
-  if (sidebar) sidebar.classList.toggle("open");
+  const overlay = document.getElementById("adminSidebarOverlay");
+  if (sidebar) {
+    const isOpen = sidebar.classList.toggle("open");
+    if (overlay) overlay.classList.toggle("active", isOpen);
+  }
 }
 
 // ==========================================================================
@@ -2030,7 +2034,9 @@ function switchView(viewKey) {
 
   if (window.innerWidth <= 1024) {
     const sidebar = document.getElementById("adminSidebar");
+    const overlay = document.getElementById("adminSidebarOverlay");
     if (sidebar) sidebar.classList.remove("open");
+    if (overlay) overlay.classList.remove("active");
   }
 }
 
@@ -5900,11 +5906,15 @@ function seedDatabaseFromAdmin() {
 function openAdminModal(modalId) {
   const m = document.getElementById(modalId);
   if (m) m.classList.add("active");
+  document.body.classList.add("modal-open");
 }
 
 function closeAdminModal(modalId) {
   const m = document.getElementById(modalId);
   if (m) m.classList.remove("active");
+  if (!document.querySelector('.admin-modal.active')) {
+    document.body.classList.remove("modal-open");
+  }
 }
 
 function updateImagePreview(imgElementId, url) {
