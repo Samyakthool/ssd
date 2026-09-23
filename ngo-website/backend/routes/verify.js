@@ -11,11 +11,48 @@ const router = express.Router();
 router.get('/:sainikId', async (req, res) => {
   try {
     const { sainikId } = req.params;
-    const cleanId = (sainikId || '').trim().toUpperCase();
+    if (!sainikId) {
+      return res.status(400).json({ success: false, verified: false, error: 'Sainik ID required.' });
+    }
+    const cleanId = String(sainikId).trim();
+    const upperId = cleanId.toUpperCase();
 
-    const member = Array.from(embeddedStore.members.values()).find(
-      m => m.sainik_id.toUpperCase() === cleanId || (m.qr_token && m.qr_token === sainikId)
-    );
+    let member = embeddedStore.members.get(cleanId);
+    if (!member) {
+      for (const m of embeddedStore.members.values()) {
+        if (m.sainik_id && (m.sainik_id === cleanId || m.sainik_id.toUpperCase() === upperId)) { member = m; break; }
+        if (m.id === cleanId || (m.id && m.id.toUpperCase() === upperId)) { member = m; break; }
+        if (m.application_id && (m.application_id === cleanId || m.application_id.toUpperCase() === upperId)) { member = m; break; }
+        if (m.qr_token && m.qr_token === cleanId) { member = m; break; }
+      }
+    }
+
+    if (!member) {
+      let app = embeddedStore.membership_applications.get(cleanId);
+      if (!app) {
+        for (const a of embeddedStore.membership_applications.values()) {
+          if (a.id === cleanId || (a.id && a.id.toUpperCase() === upperId)) { app = a; break; }
+          if (a.sainik_id && (a.sainik_id === cleanId || a.sainik_id.toUpperCase() === upperId)) { app = a; break; }
+        }
+      }
+
+      if (app) {
+        const s = (app.status || '').toUpperCase();
+        member = {
+          sainik_id: app.sainik_id || app.id,
+          full_name: app.full_name,
+          photo_url: app.photo_url,
+          designation: app.designation || (s === 'FINAL_APPROVED' || s === 'APPROVED' ? 'Cadet Sainik' : 'Enlistment Candidate'),
+          wing_name: app.wing_name,
+          state_name: app.state_name,
+          district_name: app.district_name,
+          chapter_name: `${app.district_name} Central Unit`,
+          status: (s === 'FINAL_APPROVED' || s === 'APPROVED' || s === 'ACTIVE') ? 'ACTIVE' : (app.status || 'SUBMITTED'),
+          approved_at: app.updated_at || app.created_at,
+          batch_no: app.batch_no || 'BATCH-2026/Q3'
+        };
+      }
+    }
 
     if (!member) {
       return res.status(404).json({

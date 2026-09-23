@@ -1494,7 +1494,39 @@
       </div>
       <div class="admin-modal-footer">
         <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalMemberDetail')">Close</button>
+        <button type="button" id="btnMemberIdCardModal" class="btn-admin btn-admin-outline" style="color: var(--primary-orange); border-color: var(--primary-orange);"><i class="fa-solid fa-id-card"></i> Digital ID Card</button>
         <button type="button" id="btnApproveMemberModal" class="btn-admin btn-admin-primary"><i class="fa-solid fa-check"></i> Approve Enlistment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Digital ID Card Modal -->
+  <div id="modalDigitalIdCard" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 580px;">
+      <div class="admin-modal-header" style="background: var(--navy-dark); color: white;">
+        <h3 style="display: flex; align-items: center; gap: 8px; font-size: 16px; color: white;">
+          <i class="fa-solid fa-id-card" style="color: var(--primary-orange);"></i> Official Sainik Digital ID Card
+        </h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalDigitalIdCard')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="admin-modal-body" style="padding: 24px; text-align: center; background: #0b1526;">
+        <div style="display: flex; justify-content: center; margin-bottom: 16px;">
+          <canvas id="adminIdCardCanvas" width="500" height="315" style="width: 100%; max-width: 480px; height: auto; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);"></canvas>
+        </div>
+        <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 12px;">
+          <button type="button" class="btn-admin btn-admin-outline" style="color: #cbd5e1; border-color: #475569;" onclick="flipAdminIdCard()">
+            <i class="fa-solid fa-arrows-rotate"></i> Flip View
+          </button>
+          <button type="button" class="btn-admin btn-admin-primary" onclick="downloadAdminIdCard()">
+            <i class="fa-solid fa-download"></i> Download PNG
+          </button>
+          <button type="button" class="btn-admin btn-admin-outline" style="color: #cbd5e1; border-color: #475569;" onclick="printAdminIdCard()">
+            <i class="fa-solid fa-print"></i> Print Card
+          </button>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalDigitalIdCard')">Close</button>
       </div>
     </div>
   </div>

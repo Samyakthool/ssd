@@ -2309,6 +2309,9 @@ function renderMembersTable(filteredList = null) {
             <button type="button" class="action-icon-btn" onclick="openMemberDetail('${m.id}')" title="View Full Details">
               <i class="fa-solid fa-eye"></i>
             </button>
+            <button type="button" class="action-icon-btn" onclick="openMemberIdCard('${m.id}')" title="Generate Digital Sainik ID Card" style="color: #0284c7;">
+              <i class="fa-solid fa-id-card"></i>
+            </button>
             <button type="button" class="action-icon-btn delete" onclick="deleteMember('${m.id}')" title="Delete Entry">
               <i class="fa-solid fa-trash"></i>
             </button>
@@ -2587,9 +2590,392 @@ async function openMemberDetail(id) {
         openReviewDecisionModal(m.id || m.sainik_id || id);
       };
     }
+
+    const idCardBtn = document.getElementById("btnMemberIdCardModal");
+    if (idCardBtn) {
+      idCardBtn.onclick = () => {
+        openMemberIdCard(m.id || m.sainik_id || id);
+      };
+    }
   }
 
   openAdminModal("modalMemberDetail");
+}
+
+// ==========================================================================
+// ADMIN DIGITAL SAINIK ID CARD GENERATOR & PRINT ENGINE
+// ==========================================================================
+let currentAdminCardData = null;
+let isBackAdminView = false;
+
+async function openMemberIdCard(id) {
+  try {
+    showToast("Generating Digital Sainik ID Card...", "info");
+
+    let cardData = null;
+    try {
+      const res = await fetch(`/api/members/card/${encodeURIComponent(id)}`);
+      const data = await res.json();
+      if (data.success && data.cardData) {
+        cardData = data.cardData;
+      }
+    } catch (e) {
+      console.warn("Backend card fetch error:", e);
+    }
+
+    if (!cardData) {
+      const m = await resolveMemberRecord(id);
+      if (m) {
+        const sainikNum = m.sainik_id || m.sainikId || m.enlistmentId || m.id || id;
+        const host = window.location.host || 'localhost:3000';
+        const protocol = window.location.protocol || 'http:';
+        cardData = {
+          sainikId: sainikNum,
+          fullName: m.fullName || m.full_name || m.name || 'Sainik Cadet',
+          photoUrl: m.photo_url || m.photo || null,
+          designation: m.designation || 'Cadet Sainik',
+          wing: m.wing_name || m.wing || 'Central Cadet Corps',
+          state: m.state_name || m.state || 'Maharashtra',
+          district: m.district_name || m.district || m.city || 'Nagpur',
+          chapter: m.chapter_name || `${m.district_name || m.city || 'Nagpur'} Central Unit`,
+          bloodGroup: m.blood_group || m.bloodGroup || 'N/A',
+          joiningDate: m.approved_at || m.created_at || new Date().toISOString(),
+          batchNo: m.batchNo || m.batch_no || 'BATCH-2026/Q3',
+          status: (m.status || 'ACTIVE').toUpperCase(),
+          qrToken: 'qr_' + sainikNum.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+          verifyUrl: `${protocol}//${host}/verify/${sainikNum}`
+        };
+      }
+    }
+
+    if (!cardData) {
+      showToast("Could not locate record for ID card generation.", "error");
+      return;
+    }
+
+    currentAdminCardData = cardData;
+    isBackAdminView = false;
+    openAdminModal('modalDigitalIdCard');
+    setTimeout(() => {
+      renderAdminIdCardCanvas(currentAdminCardData, isBackAdminView);
+    }, 50);
+  } catch (err) {
+    console.error("openMemberIdCard error:", err);
+    showToast("Error generating ID card: " + err.message, "error");
+  }
+}
+
+function flipAdminIdCard() {
+  if (!currentAdminCardData) return;
+  isBackAdminView = !isBackAdminView;
+  renderAdminIdCardCanvas(currentAdminCardData, isBackAdminView);
+}
+
+function drawAdminCardBackground(ctx, w, h, isBack) {
+  if (!ctx.roundRect) {
+    ctx.roundRect = function (x, y, width, height, radius) {
+      if (typeof radius === 'undefined') radius = 5;
+      this.beginPath();
+      this.moveTo(x + radius, y);
+      this.lineTo(x + width - radius, y);
+      this.quadraticCurveTo(x + width, y, x + width, y + radius);
+      this.lineTo(x + width, y + height - radius);
+      this.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      this.lineTo(x + radius, y + height);
+      this.quadraticCurveTo(x, y + height, x, y + height - radius);
+      this.lineTo(x, y + radius);
+      this.quadraticCurveTo(x, y, x + radius, y);
+      this.closePath();
+      return this;
+    };
+  }
+
+  const bgGrad = ctx.createLinearGradient(0, 0, w, h);
+  if (!isBack) {
+    bgGrad.addColorStop(0, '#001428');
+    bgGrad.addColorStop(0.5, '#002040');
+    bgGrad.addColorStop(1, '#002b55');
+  } else {
+    bgGrad.addColorStop(0, '#001222');
+    bgGrad.addColorStop(1, '#001f3f');
+  }
+  ctx.fillStyle = bgGrad;
+  ctx.roundRect(0, 0, w, h, 16);
+  ctx.fill();
+
+  ctx.strokeStyle = '#c5a059';
+  ctx.lineWidth = 3.5;
+  ctx.roundRect(4, 4, w - 8, h - 8, 14);
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(197, 160, 89, 0.08)';
+  ctx.lineWidth = 1;
+  for (let i = 20; i < w; i += 40) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i, h);
+    ctx.stroke();
+  }
+}
+
+function drawAdminSimulatedQR(ctx, x, y, size, text) {
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x, y, size, size);
+  ctx.strokeStyle = '#001f3f';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x, y, size, size);
+
+  const drawCornerSquare = (cx, cy, s) => {
+    ctx.fillStyle = '#001f3f';
+    ctx.fillRect(cx, cy, s, s);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx + 4, cy + 4, s - 8, s - 8);
+    ctx.fillStyle = '#001f3f';
+    ctx.fillRect(cx + 8, cy + 8, s - 16, s - 16);
+  };
+
+  const cornerSize = 24;
+  drawCornerSquare(x + 4, y + 4, cornerSize);
+  drawCornerSquare(x + size - cornerSize - 4, y + 4, cornerSize);
+  drawCornerSquare(x + 4, y + size - cornerSize - 4, cornerSize);
+
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    hash = ((hash << 5) - hash) + text.charCodeAt(i);
+    hash |= 0;
+  }
+
+  ctx.fillStyle = '#001f3f';
+  const gridSize = 12;
+  const cellSize = (size - 16) / gridSize;
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
+      if ((r < 4 && c < 4) || (r < 4 && c > gridSize - 5) || (r > gridSize - 5 && c < 4)) continue;
+      if (((hash ^ (r * 31 + c * 17)) & 1) === 0) {
+        ctx.fillRect(x + 8 + c * cellSize, y + 8 + r * cellSize, cellSize - 1, cellSize - 1);
+      }
+    }
+  }
+
+  ctx.fillStyle = '#FF6B00';
+  ctx.beginPath();
+  ctx.arc(x + size / 2, y + size / 2, 6, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function renderAdminIdCardCanvas(card, back = false) {
+  const canvas = document.getElementById('adminIdCardCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+  drawAdminCardBackground(ctx, w, h, back);
+
+  if (!back) {
+    // Top Saffron Stripe
+    ctx.fillStyle = '#FF6B00';
+    ctx.fillRect(4, 4, w - 8, 8);
+
+    // Header Title
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 20px Cinzel, serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('SAMATA SAINIK DAL (SSD)', 30, 44);
+
+    ctx.fillStyle = '#c5a059';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.fillText('ARMY OF EQUALITY • ESTD. 1927 BY DR. B.R. AMBEDKAR', 30, 60);
+
+    // Divider Line
+    ctx.strokeStyle = '#c5a059';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(30, 72);
+    ctx.lineTo(w - 30, 72);
+    ctx.stroke();
+
+    // Photo Box
+    const photoX = 30;
+    const photoY = 90;
+    const photoW = 110;
+    const photoH = 140;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(photoX, photoY, photoW, photoH);
+    ctx.strokeStyle = '#c5a059';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(photoX, photoY, photoW, photoH);
+
+    // Cadet Silhouette placeholder
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillRect(photoX + 2, photoY + 2, photoW - 4, photoH - 4);
+    ctx.fillStyle = '#001f3f';
+    ctx.beginPath();
+    ctx.arc(photoX + photoW / 2, photoY + 50, 24, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(photoX + photoW / 2, photoY + 115, 36, 30, 0, Math.PI, Math.PI * 2);
+    ctx.fill();
+
+    if (card.photoUrl) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          ctx.drawImage(img, photoX + 2, photoY + 2, photoW - 4, photoH - 4);
+        } catch (e) {}
+      };
+      img.onerror = () => {};
+      img.src = card.photoUrl;
+    }
+
+    const textX = 160;
+    ctx.fillStyle = '#FF6B00';
+    ctx.font = 'bold 13px monospace';
+    ctx.fillText(`SAINIK ID: ${card.sainikId || 'SSD-CADET-2026'}`, textX, 108);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText(card.fullName || 'Sainik Cadet', textX, 136);
+
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = '12.5px sans-serif';
+    ctx.fillText(`Rank/Designation: ${card.designation || 'Cadet Sainik'}`, textX, 162);
+    ctx.fillText(`Wing: ${card.wing || 'Central Cadet Corps'}`, textX, 184);
+    ctx.fillText(`Chapter: ${card.district || 'Nagpur'}, ${card.state || 'Maharashtra'}`, textX, 206);
+    ctx.fillText(`Blood: ${card.bloodGroup || 'O+'}  •  Batch: ${card.batchNo || 'BATCH-2026/Q3'}`, textX, 228);
+
+    ctx.fillStyle = '#000e1c';
+    ctx.fillRect(4, h - 50, w - 8, 46);
+
+    ctx.fillStyle = '#16a34a';
+    ctx.font = 'bold 11.5px sans-serif';
+    ctx.fillText('● OFFICIALLY VERIFIED ACTIVE CADRE', 30, h - 22);
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('Central Command Directorate, Nagpur HQ', w - 30, h - 22);
+
+  } else {
+    ctx.fillStyle = '#c5a059';
+    ctx.font = 'bold 14px Cinzel, serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('SOLEMN SAINIK PLEDGE & DISCIPLINE', w / 2, 40);
+
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'italic 11px sans-serif';
+    ctx.fillText('"Educate, Agitate, Organize. I pledge to defend constitutional morality,', w / 2, 64);
+    ctx.fillText('maintain non-violent iron discipline, and safeguard human equality across India."', w / 2, 82);
+
+    const qrSize = 96;
+    const qrX = w / 2 - qrSize / 2;
+    const qrY = 100;
+    const qrPayload = card.verifyUrl || `http://localhost:3000/verify/${card.sainikId}`;
+    drawAdminSimulatedQR(ctx, qrX, qrY, qrSize, qrPayload);
+
+    ctx.fillStyle = '#FF6B00';
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(card.sainikId || 'SSD-CADET', w / 2, qrY + qrSize + 20);
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '10.5px monospace';
+    ctx.fillText(`Verify: ${card.verifyUrl || ('/verify/' + card.sainikId)}`, w / 2, qrY + qrSize + 38);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Authorized Signatory:', 30, h - 45);
+    ctx.fillText('National President / General Secretary', 30, h - 30);
+
+    ctx.textAlign = 'right';
+    ctx.fillText('National Helpline: 1800-24-1927', w - 30, h - 45);
+    ctx.fillText('Central Command HQ, Nagpur', w - 30, h - 30);
+  }
+}
+
+function downloadAdminIdCard() {
+  const canvas = document.getElementById('adminIdCardCanvas');
+  if (!canvas) return;
+
+  try {
+    const dataUrl = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.download = `SSD_Sainik_ID_${currentAdminCardData ? (currentAdminCardData.sainikId || 'card') : 'card'}.png`;
+    link.href = dataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast("ID Card downloaded successfully.", "success");
+  } catch (err) {
+    console.warn("Canvas export fallback:", err);
+    if (currentAdminCardData) {
+      const copyData = { ...currentAdminCardData, photoUrl: null };
+      renderAdminIdCardCanvas(copyData, isBackAdminView);
+      setTimeout(() => {
+        const fallbackUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `SSD_Sainik_ID_${currentAdminCardData.sainikId}.png`;
+        link.href = fallbackUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        renderAdminIdCardCanvas(currentAdminCardData, isBackAdminView);
+        showToast("ID Card downloaded (local asset mode).", "success");
+      }, 100);
+    }
+  }
+}
+
+function printAdminIdCard() {
+  if (!currentAdminCardData) return;
+
+  const mainCanvas = document.getElementById('adminIdCardCanvas');
+  const cardDataUrl = mainCanvas.toDataURL('image/png');
+
+  const printWindow = window.open('', '_blank', 'width=800,height=700');
+  if (!printWindow) {
+    showToast("Please allow popups to print ID card.", "warning");
+    return;
+  }
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Print ID Card - ${escapeHtml(currentAdminCardData.sainikId)}</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; text-align: center; background: #fff; color: #1e293b; }
+          .print-container { max-width: 600px; margin: 0 auto; }
+          .header { border-bottom: 2px solid #ff6b00; padding-bottom: 15px; margin-bottom: 25px; }
+          .card-img { width: 100%; max-width: 480px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-bottom: 20px; }
+          @media print {
+            body { padding: 0; background: transparent; }
+            button { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="print-container">
+          <div class="header">
+            <h2 style="margin:0 0 4px; color:#001f3f;">SAMATA SAINIK DAL (SSD)</h2>
+            <p style="margin:0; font-size:13px; color:#64748b;">Official Cadre Identity Card &bull; Central Command Headquarters</p>
+          </div>
+          <img class="card-img" src="${cardDataUrl}" alt="Sainik ID Card">
+          <div style="margin-top: 20px;">
+            <p style="font-size: 12px; color: #64748b;">Cadet: <strong>${escapeHtml(currentAdminCardData.fullName)}</strong> | Sainik ID: <strong>${escapeHtml(currentAdminCardData.sainikId)}</strong></p>
+          </div>
+        </div>
+        <script>
+          window.onload = function() { window.print(); }
+        </script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
 }
 
 function sendMemberApprovalEmail(m) {
@@ -6398,6 +6784,10 @@ window.autoGenerateAssessmentRemarks = autoGenerateAssessmentRemarks;
 window.quickApproveEnlistment = quickApproveEnlistment;
 window.openMemberDetail = openMemberDetail;
 window.loadEnlistmentApplications = loadEnlistmentApplications;
+window.openMemberIdCard = openMemberIdCard;
+window.flipAdminIdCard = flipAdminIdCard;
+window.downloadAdminIdCard = downloadAdminIdCard;
+window.printAdminIdCard = printAdminIdCard;
 
 
 

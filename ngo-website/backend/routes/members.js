@@ -126,31 +126,81 @@ router.get('/:id', authenticate, async (req, res) => {
 router.get('/card/:sainikId', async (req, res) => {
   try {
     const { sainikId } = req.params;
-    const cleanId = (sainikId || '').trim().toUpperCase();
+    if (!sainikId) return res.status(400).json({ success: false, error: 'Sainik ID required.' });
+    const cleanId = String(sainikId).trim();
+    const upperId = cleanId.toUpperCase();
 
-    const member = Array.from(embeddedStore.members.values()).find(m => m.sainik_id.toUpperCase() === cleanId);
+    // 1. Search across embeddedStore.members
+    let member = embeddedStore.members.get(cleanId);
+    if (!member) {
+      for (const m of embeddedStore.members.values()) {
+        if (m.sainik_id && (m.sainik_id === cleanId || m.sainik_id.toUpperCase() === upperId)) { member = m; break; }
+        if (m.id === cleanId || (m.id && m.id.toUpperCase() === upperId)) { member = m; break; }
+        if (m.application_id && (m.application_id === cleanId || m.application_id.toUpperCase() === upperId)) { member = m; break; }
+        if (m.mobile && (m.mobile === cleanId || m.mobile.includes(cleanId))) { member = m; break; }
+      }
+    }
+
+    // 2. Search across embeddedStore.membership_applications
+    if (!member) {
+      let app = embeddedStore.membership_applications.get(cleanId);
+      if (!app) {
+        for (const a of embeddedStore.membership_applications.values()) {
+          if (a.id === cleanId || (a.id && a.id.toUpperCase() === upperId)) { app = a; break; }
+          if (a.sainik_id && (a.sainik_id === cleanId || a.sainik_id.toUpperCase() === upperId)) { app = a; break; }
+          if (a.mobile && (a.mobile === cleanId || a.mobile.includes(cleanId))) { app = a; break; }
+        }
+      }
+
+      if (app) {
+        const s = (app.status || '').toUpperCase();
+        const sainikNum = app.sainik_id || ('SSD-' + (app.state_name ? (app.state_name.slice(0, 2).toUpperCase()) : 'MH') + '-2026-' + (app.id.replace(/\D/g, '').slice(-4) || '1927'));
+        member = {
+          id: app.id,
+          sainik_id: sainikNum,
+          application_id: app.id,
+          full_name: app.full_name,
+          mobile: app.mobile,
+          email: app.email,
+          photo_url: app.photo_url,
+          designation: app.designation || (s === 'FINAL_APPROVED' || s === 'APPROVED' ? 'Cadet Sainik' : 'Enlistment Candidate'),
+          wing_name: app.wing_name,
+          state_name: app.state_name,
+          district_name: app.district_name,
+          chapter_name: `${app.district_name} Central Unit`,
+          blood_group: app.blood_group || 'N/A',
+          approved_at: app.updated_at || app.created_at,
+          created_at: app.created_at,
+          batch_no: app.batch_no || 'BATCH-2026/Q3',
+          status: (s === 'FINAL_APPROVED' || s === 'APPROVED' || s === 'ACTIVE') ? 'ACTIVE' : (app.status || 'SUBMITTED'),
+          qr_token: 'qr_' + sainikNum.toLowerCase().replace(/[^a-z0-9]/g, '_')
+        };
+      }
+    }
+
     if (!member) {
       return res.status(404).json({ success: false, error: 'Active Sainik ID not found or not yet approved.' });
     }
 
     const host = req.get('host') || 'localhost:3000';
     const protocol = req.protocol || 'http';
-    const verifyUrl = `${protocol}://${host}/verify/${member.sainik_id}`;
+    const sainikCode = member.sainik_id || member.id;
+    const verifyUrl = `${protocol}://${host}/verify/${sainikCode}`;
 
     const cardData = {
-      sainikId: member.sainik_id,
-      fullName: member.full_name,
-      photoUrl: member.photo_url,
+      sainikId: sainikCode,
+      fullName: member.full_name || member.fullName || member.name || 'Sainik Cadet',
+      photoUrl: member.photo_url || null,
       designation: member.designation || 'Cadet Sainik',
-      wing: member.wing_name,
-      state: member.state_name,
-      district: member.district_name,
-      chapter: member.chapter_name,
-      bloodGroup: member.blood_group || 'N/A',
-      joiningDate: member.approved_at || member.created_at,
-      batchNo: member.batch_no || 'BATCH-2026/Q3',
-      status: member.status,
-      qrToken: member.qr_token,
+      wing: member.wing_name || member.wing || 'Central Cadet Corps',
+      state: member.state_name || member.state || 'Maharashtra',
+      district: member.district_name || member.district || 'Nagpur',
+      chapter: member.chapter_name || `${member.district_name || 'Nagpur'} Central Unit`,
+      bloodGroup: member.blood_group || member.bloodGroup || 'N/A',
+      joiningDate: member.approved_at || member.created_at || new Date().toISOString(),
+      batchNo: member.batch_no || member.batchNo || 'BATCH-2026/Q3',
+      status: member.status || 'ACTIVE',
+      qrToken: member.qr_token || ('qr_' + sainikCode.toLowerCase().replace(/[^a-z0-9]/g, '_')),
       verifyUrl: verifyUrl
     };
 

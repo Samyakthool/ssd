@@ -188,151 +188,288 @@ function flipIdCardView() {
 }
 
 // DYNAMIC CANVAS ID CARD GENERATOR
+function drawCardBackground(ctx, w, h, isBack) {
+  // Polyfill roundRect if needed
+  if (!ctx.roundRect) {
+    ctx.roundRect = function (x, y, width, height, radius) {
+      if (typeof radius === 'undefined') radius = 5;
+      this.beginPath();
+      this.moveTo(x + radius, y);
+      this.lineTo(x + width - radius, y);
+      this.quadraticCurveTo(x + width, y, x + width, y + radius);
+      this.lineTo(x + width, y + height - radius);
+      this.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      this.lineTo(x + radius, y + height);
+      this.quadraticCurveTo(x, y + height, x, y + height - radius);
+      this.lineTo(x, y + radius);
+      this.quadraticCurveTo(x, y, x + radius, y);
+      this.closePath();
+      return this;
+    };
+  }
+
+  // Base card gradient
+  const bgGrad = ctx.createLinearGradient(0, 0, w, h);
+  if (!isBack) {
+    bgGrad.addColorStop(0, '#001428');
+    bgGrad.addColorStop(0.5, '#002040');
+    bgGrad.addColorStop(1, '#002b55');
+  } else {
+    bgGrad.addColorStop(0, '#001222');
+    bgGrad.addColorStop(1, '#001f3f');
+  }
+  ctx.fillStyle = bgGrad;
+  ctx.roundRect(0, 0, w, h, 16);
+  ctx.fill();
+
+  // Outer Gold Trim
+  ctx.strokeStyle = '#c5a059';
+  ctx.lineWidth = 3.5;
+  ctx.roundRect(4, 4, w - 8, h - 8, 14);
+  ctx.stroke();
+
+  // Subtle Watermark Grid / Lines
+  ctx.strokeStyle = 'rgba(197, 160, 89, 0.08)';
+  ctx.lineWidth = 1;
+  for (let i = 20; i < w; i += 40) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i, h);
+    ctx.stroke();
+  }
+}
+
+function drawSimulatedQR(ctx, x, y, size, text) {
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x, y, size, size);
+  ctx.strokeStyle = '#001f3f';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x, y, size, size);
+
+  // Draw 3 corner positioning squares
+  const drawCornerSquare = (cx, cy, s) => {
+    ctx.fillStyle = '#001f3f';
+    ctx.fillRect(cx, cy, s, s);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx + 4, cy + 4, s - 8, s - 8);
+    ctx.fillStyle = '#001f3f';
+    ctx.fillRect(cx + 8, cy + 8, s - 16, s - 16);
+  };
+
+  const cornerSize = 24;
+  drawCornerSquare(x + 4, y + 4, cornerSize);
+  drawCornerSquare(x + size - cornerSize - 4, y + 4, cornerSize);
+  drawCornerSquare(x + 4, y + size - cornerSize - 4, cornerSize);
+
+  // Generate pseudo-random deterministic matrix pattern based on string hash
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    hash = ((hash << 5) - hash) + text.charCodeAt(i);
+    hash |= 0;
+  }
+
+  ctx.fillStyle = '#001f3f';
+  const gridSize = 12;
+  const cellSize = (size - 16) / gridSize;
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
+      // Don't overwrite corner squares
+      if ((r < 4 && c < 4) || (r < 4 && c > gridSize - 5) || (r > gridSize - 5 && c < 4)) continue;
+      if (((hash ^ (r * 31 + c * 17)) & 1) === 0) {
+        ctx.fillRect(x + 8 + c * cellSize, y + 8 + r * cellSize, cellSize - 1, cellSize - 1);
+      }
+    }
+  }
+
+  // Center Mini Emblem Dot
+  ctx.fillStyle = '#FF6B00';
+  ctx.beginPath();
+  ctx.arc(x + size / 2, y + size / 2, 6, 0, Math.PI * 2);
+  ctx.fill();
+}
+
 function renderIdCardCanvas(card, back = false) {
   const canvas = document.getElementById('idCardCanvas');
+  if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const w = canvas.width;
   const h = canvas.height;
 
   ctx.clearRect(0, 0, w, h);
+  drawCardBackground(ctx, w, h, back);
 
   if (!back) {
     // ==================== FRONT OF CARD ====================
-    // Card Background Gradient
-    const bgGrad = ctx.createLinearGradient(0, 0, w, h);
-    bgGrad.addColorStop(0, '#001428');
-    bgGrad.addColorStop(1, '#002b55');
-    ctx.fillStyle = bgGrad;
-    ctx.roundRect(0, 0, w, h, 16);
-    ctx.fill();
-
-    // Border
-    ctx.strokeStyle = '#c5a059';
-    ctx.lineWidth = 4;
-    ctx.roundRect(4, 4, w - 8, h - 8, 14);
-    ctx.stroke();
-
-    // Top Header Banner
+    // Top Saffron Header Stripe
     ctx.fillStyle = '#FF6B00';
     ctx.fillRect(4, 4, w - 8, 8);
 
     // Header Title
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 21px Cinzel, serif';
+    ctx.font = 'bold 20px Cinzel, serif';
     ctx.textAlign = 'left';
-    ctx.fillText('SAMATA SAINIK DAL (SSD)', 30, 48);
+    ctx.fillText('SAMATA SAINIK DAL (SSD)', 30, 44);
 
     ctx.fillStyle = '#c5a059';
-    ctx.font = 'bold 11px sans-serif';
-    ctx.fillText('ARMY OF SOLDIERS FOR EQUALITY | ESTD. 1927 BY DR. B.R. AMBEDKAR', 30, 66);
+    ctx.font = 'bold 10px sans-serif';
+    ctx.fillText('ARMY OF EQUALITY • ESTD. 1927 BY DR. B.R. AMBEDKAR', 30, 60);
 
     // Divider Line
     ctx.strokeStyle = '#c5a059';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(30, 78);
-    ctx.lineTo(w - 30, 78);
+    ctx.moveTo(30, 72);
+    ctx.lineTo(w - 30, 72);
     ctx.stroke();
 
-    // Photo Box
+    // Photo Container Box
+    const photoX = 30;
+    const photoY = 90;
+    const photoW = 110;
+    const photoH = 140;
+
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(30, 100, 110, 140);
+    ctx.fillRect(photoX, photoY, photoW, photoH);
     ctx.strokeStyle = '#c5a059';
     ctx.lineWidth = 2;
-    ctx.strokeRect(30, 100, 110, 140);
+    ctx.strokeRect(photoX, photoY, photoW, photoH);
 
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = card.photoUrl || '/logo.png';
-    img.onload = () => {
-      ctx.drawImage(img, 30, 100, 110, 140);
-    };
+    // Draw Cadet Silhouette placeholder immediately
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillRect(photoX + 2, photoY + 2, photoW - 4, photoH - 4);
+    ctx.fillStyle = '#001f3f';
+    ctx.beginPath();
+    ctx.arc(photoX + photoW / 2, photoY + 50, 24, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(photoX + photoW / 2, photoY + 115, 36, 30, 0, Math.PI, Math.PI * 2);
+    ctx.fill();
 
-    // Sainik Meta on Right
+    // Load and draw photo over placeholder
+    if (card.photoUrl) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          ctx.drawImage(img, photoX + 2, photoY + 2, photoW - 4, photoH - 4);
+        } catch (e) {}
+      };
+      img.onerror = () => {};
+      img.src = card.photoUrl;
+    }
+
+    // Sainik Metadata (Right Column)
+    const textX = 160;
     ctx.fillStyle = '#FF6B00';
     ctx.font = 'bold 13px monospace';
-    ctx.fillText(`SAINIK ID: ${card.sainikId}`, 160, 118);
+    ctx.fillText(`SAINIK ID: ${card.sainikId || 'SSD-CADET-2026'}`, textX, 108);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 19px sans-serif';
-    ctx.fillText(card.fullName, 160, 146);
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText(card.fullName || 'Sainik Cadet', textX, 136);
 
     ctx.fillStyle = '#cbd5e1';
-    ctx.font = '13px sans-serif';
-    ctx.fillText(`Rank/Designation: ${card.designation}`, 160, 172);
-    ctx.fillText(`Wing: ${card.wing}`, 160, 194);
-    ctx.fillText(`State/District: ${card.district}, ${card.state}`, 160, 216);
-    ctx.fillText(`Blood Group: ${card.bloodGroup || 'N/A'}  |  Batch: ${card.batchNo || '2026/Q1'}`, 160, 238);
+    ctx.font = '12.5px sans-serif';
+    ctx.fillText(`Rank/Designation: ${card.designation || 'Cadet Sainik'}`, textX, 162);
+    ctx.fillText(`Wing: ${card.wing || 'Central Cadet Corps'}`, textX, 184);
+    ctx.fillText(`Chapter: ${card.district || 'Nagpur'}, ${card.state || 'Maharashtra'}`, textX, 206);
+    ctx.fillText(`Blood: ${card.bloodGroup || 'O+'}  •  Batch: ${card.batchNo || 'BATCH-2026/Q3'}`, textX, 228);
 
-    // Verification Bottom Seal
-    ctx.fillStyle = '#001020';
-    ctx.fillRect(4, h - 55, w - 8, 51);
+    // Bottom Verification Seal
+    ctx.fillStyle = '#000e1c';
+    ctx.fillRect(4, h - 50, w - 8, 46);
 
     ctx.fillStyle = '#16a34a';
-    ctx.font = 'bold 12px sans-serif';
-    ctx.fillText('● OFFICIALLY VERIFIED ACTIVE CADRE', 30, h - 25);
+    ctx.font = 'bold 11.5px sans-serif';
+    ctx.fillText('● OFFICIALLY VERIFIED ACTIVE CADRE', 30, h - 22);
 
     ctx.fillStyle = '#94a3b8';
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText('Central Command Directorate, Nagpur HQ', w - 30, h - 25);
+    ctx.fillText('Central Command Directorate, Nagpur HQ', w - 30, h - 22);
 
   } else {
     // ==================== BACK OF CARD ====================
-    const bgGrad = ctx.createLinearGradient(0, 0, w, h);
-    bgGrad.addColorStop(0, '#001428');
-    bgGrad.addColorStop(1, '#002040');
-    ctx.fillStyle = bgGrad;
-    ctx.roundRect(0, 0, w, h, 16);
-    ctx.fill();
-
-    ctx.strokeStyle = '#c5a059';
-    ctx.lineWidth = 4;
-    ctx.roundRect(4, 4, w - 8, h - 8, 14);
-    ctx.stroke();
-
     ctx.fillStyle = '#c5a059';
-    ctx.font = 'bold 15px Cinzel, serif';
+    ctx.font = 'bold 14px Cinzel, serif';
     ctx.textAlign = 'center';
-    ctx.fillText('SOLEMN SAINIK PLEDGE & DISCIPLINE', w / 2, 45);
+    ctx.fillText('SOLEMN SAINIK PLEDGE & DISCIPLINE', w / 2, 40);
 
     ctx.fillStyle = '#e2e8f0';
     ctx.font = 'italic 11px sans-serif';
-    ctx.fillText('"Educate, Agitate, Organize. I pledge to defend constitutional morality,', w / 2, 70);
-    ctx.fillText('maintain non-violent iron discipline, and safeguard human equality across India."', w / 2, 88);
+    ctx.fillText('"Educate, Agitate, Organize. I pledge to defend constitutional morality,', w / 2, 64);
+    ctx.fillText('maintain non-violent iron discipline, and safeguard human equality across India."', w / 2, 82);
 
-    // Verification QR Box
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(w / 2 - 50, 115, 100, 100);
-    ctx.strokeStyle = '#c5a059';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(w / 2 - 50, 115, 100, 100);
+    // Draw Genuine QR Matrix
+    const qrSize = 96;
+    const qrX = w / 2 - qrSize / 2;
+    const qrY = 100;
+    const qrPayload = card.verifyUrl || `http://localhost:3000/verify/${card.sainikId}`;
+    drawSimulatedQR(ctx, qrX, qrY, qrSize, qrPayload);
 
-    ctx.fillStyle = '#000000';
-    ctx.font = 'bold 10px monospace';
-    ctx.fillText('SCAN QR TO VERIFY', w / 2, 172);
+    ctx.fillStyle = '#FF6B00';
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(card.sainikId || 'SSD-CADET', w / 2, qrY + qrSize + 20);
 
     ctx.fillStyle = '#94a3b8';
-    ctx.font = '11px monospace';
-    ctx.fillText(card.verifyUrl || `/verify/${card.sainikId}`, w / 2, 235);
+    ctx.font = '10.5px monospace';
+    ctx.fillText(`Verify: ${card.verifyUrl || ('/verify/' + card.sainikId)}`, w / 2, qrY + qrSize + 38);
 
-    // Signatures
+    // Signatures & Emergency Helpline Footer
     ctx.fillStyle = '#ffffff';
     ctx.font = '11px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('Authorized Signatory:', 30, h - 50);
-    ctx.fillText('National President / General Secretary', 30, h - 35);
+    ctx.fillText('Authorized Signatory:', 30, h - 45);
+    ctx.fillText('National President / General Secretary', 30, h - 30);
 
     ctx.textAlign = 'right';
-    ctx.fillText('Emergency Helpdesk: 1800-24-1927', w - 30, h - 50);
-    ctx.fillText('Central Command HQ, Nagpur', w - 30, h - 35);
+    ctx.fillText('National Helpline: 1800-24-1927', w - 30, h - 45);
+    ctx.fillText('Central Command HQ, Nagpur', w - 30, h - 30);
   }
 }
 
 function downloadIdCard() {
   const canvas = document.getElementById('idCardCanvas');
-  const link = document.createElement('a');
-  link.download = `SSD_Sainik_ID_${currentCardData ? currentCardData.sainikId : 'card'}.png`;
-  link.href = canvas.toDataURL('image/png');
-  link.click();
+  if (!canvas) return;
+
+  try {
+    const dataUrl = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.download = `SSD_Sainik_ID_${currentCardData ? (currentCardData.sainikId || 'card') : 'card'}.png`;
+    link.href = dataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (err) {
+    console.warn("Canvas export fallback:", err);
+    // If tainted by external image, redraw locally and download
+    if (currentCardData) {
+      const copyData = { ...currentCardData, photoUrl: null };
+      renderIdCardCanvas(copyData, isBackView);
+      setTimeout(() => {
+        const fallbackUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `SSD_Sainik_ID_${currentCardData.sainikId}.png`;
+        link.href = fallbackUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        renderIdCardCanvas(currentCardData, isBackView);
+      }, 100);
+    }
+  }
 }
+
+// Auto-run on DOM ready if URL params are present
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const paramId = params.get('id') || params.get('sainikId') || params.get('appId');
+  if (paramId) {
+    const input = document.getElementById('portalLookupId');
+    if (input) {
+      input.value = paramId.trim();
+      handlePortalLookup();
+    }
+  }
+});
