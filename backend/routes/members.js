@@ -58,11 +58,58 @@ router.get('/', authenticate, enforceJurisdiction, async (req, res) => {
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    let member = embeddedStore.members.get(id);
+    if (!id) return res.status(400).json({ success: false, error: 'Member ID required.' });
+    
+    const clean = String(id).trim();
+    const upper = clean.toUpperCase();
+    let member = embeddedStore.members.get(clean);
 
     if (!member) {
-      // Try lookup by sainik_id
-      member = Array.from(embeddedStore.members.values()).find(m => m.sainik_id === id);
+      // Try lookup across members by ID, sainik_id, application_id, or mobile
+      for (const m of embeddedStore.members.values()) {
+        if (m.id === clean || (m.id && m.id.toUpperCase() === upper)) { member = m; break; }
+        if (m.sainik_id && (m.sainik_id === clean || m.sainik_id.toUpperCase() === upper)) { member = m; break; }
+        if (m.application_id && (m.application_id === clean || m.application_id.toUpperCase() === upper)) { member = m; break; }
+        if (m.mobile && (m.mobile === clean || m.mobile.includes(clean))) { member = m; break; }
+      }
+    }
+
+    if (!member) {
+      // Fallback: Check if it's an application in membership_applications
+      let app = embeddedStore.membership_applications.get(clean);
+      if (!app) {
+        for (const a of embeddedStore.membership_applications.values()) {
+          if (a.id === clean || (a.id && a.id.toUpperCase() === upper)) { app = a; break; }
+          if (a.sainik_id && (a.sainik_id === clean || a.sainik_id.toUpperCase() === upper)) { app = a; break; }
+        }
+      }
+
+      if (app) {
+        member = {
+          id: app.id,
+          sainik_id: app.sainik_id || app.id,
+          application_id: app.id,
+          full_name: app.full_name,
+          mobile: app.mobile,
+          email: app.email,
+          dob: app.dob || null,
+          gender: app.gender || 'Unspecified',
+          blood_group: app.blood_group || 'N/A',
+          state_name: app.state_name || 'Maharashtra',
+          district_name: app.district_name || 'Nagpur',
+          taluka_name: app.taluka_name || '',
+          address: app.address || '',
+          chapter_name: `${app.district_name} Central Unit`,
+          wing_name: app.wing_name || 'Central Cadet Corps',
+          designation: app.designation || 'Cadet Sainik',
+          batch_no: app.batch_no || 'BATCH-2026/Q3',
+          status: app.status || 'ACTIVE',
+          photo_url: app.photo_url || null,
+          assessment_data: app.assessment_data || null,
+          created_at: app.created_at,
+          approved_at: app.updated_at || app.created_at
+        };
+      }
     }
 
     if (!member) {

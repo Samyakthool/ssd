@@ -52,6 +52,63 @@ function generateSainikId(stateInput = 'IND') {
   return `SSD-${stateCode}-2026-${num}`;
 }
 
+// Helper to find an application record by ID, sainik_id, email, or mobile
+function findApplicationRecord(id) {
+  if (!id) return null;
+  const clean = String(id).trim();
+  let app = embeddedStore.membership_applications.get(clean);
+  if (app) return app;
+  const upper = clean.toUpperCase();
+  for (const a of embeddedStore.membership_applications.values()) {
+    if (a.id === clean || (a.id && a.id.toUpperCase() === upper)) return a;
+    if (a.sainik_id && (a.sainik_id === clean || a.sainik_id.toUpperCase() === upper)) return a;
+  }
+  return null;
+}
+
+// Helper to find application record or synthesize from member record if already commissioned
+function findApplicationOrMemberRecord(id) {
+  const app = findApplicationRecord(id);
+  if (app) return { record: app, isMember: false, appId: app.id };
+
+  if (!id) return null;
+  const clean = String(id).trim();
+  const upper = clean.toUpperCase();
+
+  let member = embeddedStore.members.get(clean);
+  if (!member) {
+    for (const m of embeddedStore.members.values()) {
+      if (m.id === clean || (m.id && m.id.toUpperCase() === upper)) { member = m; break; }
+      if (m.sainik_id && (m.sainik_id === clean || m.sainik_id.toUpperCase() === upper)) { member = m; break; }
+      if (m.application_id && (m.application_id === clean || m.application_id.toUpperCase() === upper)) { member = m; break; }
+    }
+  }
+
+  if (member) {
+    const syntheticApp = {
+      id: member.application_id || member.id || member.sainik_id,
+      sainik_id: member.sainik_id,
+      full_name: member.full_name,
+      dob: member.dob || null,
+      gender: member.gender || 'Unspecified',
+      mobile: member.mobile || member.phone || '',
+      email: member.email || '',
+      address: member.address || '',
+      state_name: member.state_name || 'Maharashtra',
+      district_name: member.district_name || 'Nagpur',
+      wing_name: member.wing_name || 'Central Cadet Corps',
+      status: member.status || 'FINAL_APPROVED',
+      batch_no: member.batch_no || 'BATCH-2026/Q3',
+      photo_url: member.photo_url || null,
+      created_at: member.created_at || member.approved_at || new Date().toISOString(),
+      assessment_data: member.assessment_data || { score: 6, total: 6, percentage: 100 }
+    };
+    return { record: syntheticApp, isMember: true, rawMember: member, appId: syntheticApp.id };
+  }
+
+  return null;
+}
+
 
 // 1. PUBLIC MEMBERSHIP APPLICATION SUBMISSION
 router.post('/apply', upload.single('photo'), async (req, res) => {
@@ -176,14 +233,15 @@ router.get('/status/:applicationId', async (req, res) => {
     const { applicationId } = req.params;
     const cleanId = (applicationId || '').trim().toUpperCase();
 
-    const app = embeddedStore.membership_applications.get(cleanId);
-    if (!app) {
+    const found = findApplicationOrMemberRecord(cleanId);
+    if (!found) {
       return res.status(404).json({ success: false, error: 'Application ID not found. Please verify your reference number.' });
     }
+    const app = found.record;
 
     // Get History of actions
     const allActions = Array.from(embeddedStore.approval_actions.values())
-      .filter(a => a.application_id === cleanId)
+      .filter(a => a.application_id === app.id || a.application_id === cleanId)
       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
     // Sanitized public timeline (no private officer contact numbers)
@@ -203,7 +261,7 @@ router.get('/status/:applicationId', async (req, res) => {
       state: app.state_name,
       district: app.district_name,
       currentStatus: app.status,
-      currentStage: app.assigned_role,
+      currentStage: app.assigned_role || 'central_admin',
       correctionRemarks: app.status === 'CORRECTION_REQUIRED' ? app.correction_remarks : null,
       submittedAt: app.created_at,
       timeline: timeline
@@ -267,11 +325,12 @@ router.get('/applications', authenticate, enforceJurisdiction, async (req, res) 
 router.get('/applications/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    const app = embeddedStore.membership_applications.get(id);
+    const found = findApplicationOrMemberRecord(id);
 
-    if (!app) {
+    if (!found) {
       return res.status(404).json({ success: false, error: 'Application not found.' });
     }
+    const app = found.record;
 
     // Verify Officer Jurisdiction Access
     if (!canAccessRecord(req.user, app)) {
@@ -283,7 +342,7 @@ router.get('/applications/:id', authenticate, async (req, res) => {
 
     // Fetch Approval Action History
     const actions = Array.from(embeddedStore.approval_actions.values())
-      .filter(a => a.application_id === id)
+      .filter(a => a.application_id === app.id || a.application_id === id)
       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
     return res.json({
@@ -302,7 +361,7 @@ router.post('/applications/:id/review', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const { remarks, assessmentData } = req.body;
-    const app = embeddedStore.membership_applications.get(id);
+    const app = findApplicationRecord(id);
 
     if (!app) return res.status(404).json({ success: false, error: 'Application not found.' });
     if (!canAccessRecord(req.user, app)) return res.status(403).json({ success: false, error: 'Access Denied by jurisdiction.' });
@@ -311,12 +370,12 @@ router.post('/applications/:id/review', authenticate, async (req, res) => {
     app.status = 'UNDER_REVIEW';
     if (assessmentData) app.assessment_data = assessmentData;
     app.updated_at = new Date().toISOString();
-    embeddedStore.membership_applications.set(id, app);
+    embeddedStore.membership_applications.set(app.id, app);
 
-    const actionId = 'act_' + id + '_' + Date.now();
+    const actionId = 'act_' + app.id + '_' + Date.now();
     embeddedStore.approval_actions.set(actionId, {
       id: actionId,
-      application_id: id,
+      application_id: app.id,
       step_id: app.current_step_id,
       official_id: req.user.id,
       official_name: req.user.fullName,
@@ -342,7 +401,7 @@ router.post('/applications/:id/recommend', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const { remarks, assessmentData } = req.body;
-    const app = embeddedStore.membership_applications.get(id);
+    const app = findApplicationRecord(id);
 
     if (!app) return res.status(404).json({ success: false, error: 'Application not found.' });
     if (!canAccessRecord(req.user, app)) return res.status(403).json({ success: false, error: 'Access Denied by jurisdiction.' });
@@ -365,12 +424,12 @@ router.post('/applications/:id/recommend', authenticate, async (req, res) => {
     app.assigned_role = nextRole;
     if (assessmentData) app.assessment_data = assessmentData;
     app.updated_at = new Date().toISOString();
-    embeddedStore.membership_applications.set(id, app);
+    embeddedStore.membership_applications.set(app.id, app);
 
-    const actionId = 'act_' + id + '_' + Date.now();
+    const actionId = 'act_' + app.id + '_' + Date.now();
     embeddedStore.approval_actions.set(actionId, {
       id: actionId,
-      application_id: id,
+      application_id: app.id,
       step_id: app.current_step_id,
       official_id: req.user.id,
       official_name: req.user.fullName,
@@ -406,7 +465,7 @@ router.post('/applications/:id/correction', authenticate, async (req, res) => {
       return res.status(400).json({ success: false, error: 'A specific reason for requesting correction is required.' });
     }
 
-    const app = embeddedStore.membership_applications.get(id);
+    const app = findApplicationRecord(id);
     if (!app) return res.status(404).json({ success: false, error: 'Application not found.' });
     if (!canAccessRecord(req.user, app)) return res.status(403).json({ success: false, error: 'Access Denied by jurisdiction.' });
 
@@ -415,12 +474,12 @@ router.post('/applications/:id/correction', authenticate, async (req, res) => {
     app.correction_remarks = reasonText;
     if (assessmentData) app.assessment_data = assessmentData;
     app.updated_at = new Date().toISOString();
-    embeddedStore.membership_applications.set(id, app);
+    embeddedStore.membership_applications.set(app.id, app);
 
-    const actionId = 'act_' + id + '_' + Date.now();
+    const actionId = 'act_' + app.id + '_' + Date.now();
     embeddedStore.approval_actions.set(actionId, {
       id: actionId,
-      application_id: id,
+      application_id: app.id,
       step_id: app.current_step_id,
       official_id: req.user.id,
       official_name: req.user.fullName,
@@ -451,7 +510,7 @@ router.post('/applications/:id/resubmit', upload.single('photo'), async (req, re
     const { id } = req.params;
     const { fullName, phone, address, specialSkills } = req.body;
 
-    const app = embeddedStore.membership_applications.get(id);
+    const app = findApplicationRecord(id);
     if (!app) return res.status(404).json({ success: false, error: 'Application reference not found.' });
 
     if (app.status !== 'CORRECTION_REQUIRED') {
@@ -470,12 +529,12 @@ router.post('/applications/:id/resubmit', upload.single('photo'), async (req, re
     app.status = 'UNDER_REVIEW';
     app.correction_remarks = null;
     app.updated_at = new Date().toISOString();
-    embeddedStore.membership_applications.set(id, app);
+    embeddedStore.membership_applications.set(app.id, app);
 
-    const actionId = 'act_' + id + '_' + Date.now();
+    const actionId = 'act_' + app.id + '_' + Date.now();
     embeddedStore.approval_actions.set(actionId, {
       id: actionId,
-      application_id: id,
+      application_id: app.id,
       step_id: app.current_step_id,
       official_id: null,
       official_name: 'Applicant Correction Resubmission',
@@ -510,7 +569,7 @@ router.post('/applications/:id/reject', authenticate, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Rejection reason is required.' });
     }
 
-    const app = embeddedStore.membership_applications.get(id);
+    const app = findApplicationRecord(id);
     if (!app) return res.status(404).json({ success: false, error: 'Application not found.' });
     if (!canAccessRecord(req.user, app)) return res.status(403).json({ success: false, error: 'Access Denied by jurisdiction.' });
 
@@ -519,12 +578,12 @@ router.post('/applications/:id/reject', authenticate, async (req, res) => {
     app.rejection_reason = reasonText;
     if (assessmentData) app.assessment_data = assessmentData;
     app.updated_at = new Date().toISOString();
-    embeddedStore.membership_applications.set(id, app);
+    embeddedStore.membership_applications.set(app.id, app);
 
-    const actionId = 'act_' + id + '_' + Date.now();
+    const actionId = 'act_' + app.id + '_' + Date.now();
     embeddedStore.approval_actions.set(actionId, {
       id: actionId,
-      application_id: id,
+      application_id: app.id,
       step_id: app.current_step_id,
       official_id: req.user.id,
       official_name: req.user.fullName,
@@ -550,7 +609,7 @@ router.post('/applications/:id/escalate', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const { remarks, assessmentData } = req.body;
-    const app = embeddedStore.membership_applications.get(id);
+    const app = findApplicationRecord(id);
 
     if (!app) return res.status(404).json({ success: false, error: 'Application not found.' });
     if (!canAccessRecord(req.user, app)) return res.status(403).json({ success: false, error: 'Access Denied by jurisdiction.' });
@@ -560,12 +619,12 @@ router.post('/applications/:id/escalate', authenticate, async (req, res) => {
     app.assigned_role = 'central_admin'; // Escalate to Central Command
     if (assessmentData) app.assessment_data = assessmentData;
     app.updated_at = new Date().toISOString();
-    embeddedStore.membership_applications.set(id, app);
+    embeddedStore.membership_applications.set(app.id, app);
 
-    const actionId = 'act_' + id + '_' + Date.now();
+    const actionId = 'act_' + app.id + '_' + Date.now();
     embeddedStore.approval_actions.set(actionId, {
       id: actionId,
-      application_id: id,
+      application_id: app.id,
       step_id: app.current_step_id,
       official_id: req.user.id,
       official_name: req.user.fullName,
@@ -591,9 +650,20 @@ router.post('/applications/:id/approve', authenticate, requireRole('super_admin'
   try {
     const { id } = req.params;
     const { designation, batchNo, remarks, assessmentData } = req.body;
-    const app = embeddedStore.membership_applications.get(id);
+    let app = findApplicationRecord(id);
 
-    if (!app) return res.status(404).json({ success: false, error: 'Application not found.' });
+    if (!app) {
+      const memFound = findApplicationOrMemberRecord(id);
+      if (memFound && memFound.isMember) {
+        return res.json({
+          success: true,
+          message: `Cadet already officially commissioned! Sainik ID: ${memFound.rawMember.sainik_id}`,
+          sainikId: memFound.rawMember.sainik_id,
+          member: memFound.rawMember
+        });
+      }
+      return res.status(404).json({ success: false, error: 'Application not found.' });
+    }
 
     // Generate Unique Sainik ID: SSD-MH-2026-XXXXXX
     const sainikId = generateSainikId(app.state_name || app.state_id || 'MH');
@@ -602,15 +672,16 @@ router.post('/applications/:id/approve', authenticate, requireRole('super_admin'
 
     const prevStatus = app.status;
     app.status = 'FINAL_APPROVED';
+    app.sainik_id = sainikId;
     if (assessmentData) app.assessment_data = assessmentData;
     app.updated_at = new Date().toISOString();
-    embeddedStore.membership_applications.set(id, app);
+    embeddedStore.membership_applications.set(app.id, app);
 
     // Create Active Member Record
     const newMember = {
       id: memberId,
       sainik_id: sainikId,
-      application_id: id,
+      application_id: app.id,
       full_name: app.full_name,
       email: app.email,
       mobile: app.mobile,
@@ -637,10 +708,10 @@ router.post('/applications/:id/approve', authenticate, requireRole('super_admin'
     embeddedStore.members.set(memberId, newMember);
 
     // Record Final Approval Action
-    const actionId = 'act_' + id + '_' + Date.now();
+    const actionId = 'act_' + app.id + '_' + Date.now();
     embeddedStore.approval_actions.set(actionId, {
       id: actionId,
-      application_id: id,
+      application_id: app.id,
       step_id: 'step_4_central',
       official_id: req.user.id,
       official_name: req.user.fullName,

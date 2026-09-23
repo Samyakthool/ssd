@@ -1218,10 +1218,30 @@ async function loadEnlistmentApplications() {
 
   try {
     const headers = token ? { "Authorization": `Bearer ${token}` } : {};
-    const res = await fetch("/api/membership/applications", { headers });
-    const data = await res.json();
-    if (data.success && data.applications && Array.isArray(data.applications)) {
-      adminData.membership_applications = data.applications;
+    const [appRes, memRes] = await Promise.all([
+      fetch("/api/membership/applications", { headers }).then(r => r.json()).catch(() => null),
+      fetch("/api/members", { headers }).then(r => r.json()).catch(() => null)
+    ]);
+
+    if (appRes && appRes.success && Array.isArray(appRes.applications)) {
+      adminData.membership_applications = appRes.applications;
+    }
+    if (memRes && memRes.success && Array.isArray(memRes.members)) {
+      if (!adminData.members) adminData.members = {};
+      memRes.members.forEach(m => {
+        adminData.members[m.id] = {
+          ...m,
+          id: m.id,
+          sainikId: m.sainik_id || m.sainikId || m.id,
+          fullName: m.full_name || m.fullName || m.name,
+          phone: m.mobile || m.phone,
+          email: m.email,
+          wing: m.wing_name || m.wing,
+          state: m.state_name || m.state,
+          city: m.district_name || m.city,
+          status: m.status || 'Active'
+        };
+      });
     }
   } catch (err) {
     console.warn("Notice: Enlistment applications load:", err.message);
@@ -2413,28 +2433,85 @@ async function quickApproveEnlistment(appId) {
   }
 }
 
+// Multi-index asynchronous resolver for candidates and commissioned members
+async function resolveMemberRecord(id) {
+  if (!id) return null;
+  const cleanId = String(id).trim();
+  const upperId = cleanId.toUpperCase();
+
+  // 1. Check adminData.membership_applications (in-memory)
+  if (Array.isArray(adminData.membership_applications)) {
+    const foundApp = adminData.membership_applications.find(a =>
+      a.id === cleanId ||
+      a.sainik_id === cleanId ||
+      a.sainikId === cleanId ||
+      (a.id && a.id.toUpperCase() === upperId) ||
+      (a.sainik_id && a.sainik_id.toUpperCase() === upperId) ||
+      (a.mobile && a.mobile === cleanId) ||
+      (a.email && a.email.toLowerCase() === cleanId.toLowerCase())
+    );
+    if (foundApp) return foundApp;
+  }
+
+  // 2. Check adminData.members (in-memory)
+  if (adminData.members) {
+    if (adminData.members[cleanId]) {
+      return { id: cleanId, ...adminData.members[cleanId] };
+    }
+    const memList = Array.isArray(adminData.members) ? adminData.members : Object.entries(adminData.members).map(([k, v]) => ({ id: k, ...v }));
+    const foundMem = memList.find(m =>
+      m.id === cleanId ||
+      m.sainikId === cleanId ||
+      m.sainik_id === cleanId ||
+      m.enlistmentId === cleanId ||
+      m.application_id === cleanId ||
+      (m.id && m.id.toUpperCase() === upperId) ||
+      (m.sainikId && m.sainikId.toUpperCase() === upperId) ||
+      (m.sainik_id && m.sainik_id.toUpperCase() === upperId) ||
+      (m.phone && m.phone === cleanId) ||
+      (m.mobile && m.mobile === cleanId)
+    );
+    if (foundMem) return foundMem;
+  }
+
+  // 3. Check pending items from collectAllPendingItems()
+  if (typeof collectAllPendingItems === 'function') {
+    const pendingList = collectAllPendingItems();
+    const foundPending = pendingList.find(p =>
+      p.id === cleanId ||
+      (p.id && p.id.toUpperCase() === upperId) ||
+      (p.applicationData && (p.applicationData.id === cleanId || p.applicationData.sainikId === cleanId || p.applicationData.sainik_id === cleanId))
+    );
+    if (foundPending && foundPending.applicationData) {
+      return foundPending.applicationData;
+    }
+  }
+
+  // 4. Try REST API endpoints with auth handshake
+  let token = localStorage.getItem("ssd_auth_token");
+  const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+
+  try {
+    const resApp = await fetch(`/api/membership/applications/${encodeURIComponent(cleanId)}`, { headers });
+    const dataApp = await resApp.json();
+    if (dataApp.success && dataApp.application) {
+      return dataApp.application;
+    }
+  } catch (e) {}
+
+  try {
+    const resMem = await fetch(`/api/members/${encodeURIComponent(cleanId)}`, { headers });
+    const dataMem = await resMem.json();
+    if (dataMem.success && dataMem.member) {
+      return dataMem.member;
+    }
+  } catch (e) {}
+
+  return null;
+}
+
 async function openMemberDetail(id) {
-  const token = localStorage.getItem("ssd_auth_token");
-  let m = null;
-
-  if (adminData.membership_applications) {
-    m = adminData.membership_applications.find(a => a.id === id);
-  }
-  if (!m && adminData.members && adminData.members[id]) {
-    m = { id, ...adminData.members[id] };
-  }
-
-  if (!m && token) {
-    try {
-      const res = await fetch(`/api/membership/applications/${encodeURIComponent(id)}`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success && data.application) {
-        m = data.application;
-      }
-    } catch (e) {}
-  }
+  const m = await resolveMemberRecord(id);
 
   if (!m) {
     showToast("Enlistment record details not found.", "error");
@@ -2445,14 +2522,26 @@ async function openMemberDetail(id) {
   if (contentEl) {
     const sUpper = (m.status || '').toUpperCase();
     const isApproved = sUpper === 'APPROVED' || sUpper === 'FINAL_APPROVED' || sUpper === 'ACTIVE';
+    const fullName = m.full_name || m.fullName || m.name || 'Unnamed';
+    const wingName = m.wing_name || m.wing || 'Central Cadet Corps';
+    const cadetId = m.sainik_id || m.sainikId || m.enlistmentId || m.id || id;
+    const photoUrl = m.photo_url || m.photo || 'logo.png';
+    const phone = m.mobile || m.phone || 'N/A';
+    const email = m.email || 'N/A';
+    const dob = m.dob || 'N/A';
+    const blood = m.blood_group || m.bloodGroup || 'N/A';
+    const location = (m.district_name || m.city || m.district || '') + (m.state_name || m.state ? ', ' + (m.state_name || m.state) : '');
+    const address = m.address || m.taluka_name || m.taluka || 'N/A';
+    const skills = m.special_skills || m.skills || 'None specified';
+
     contentEl.innerHTML = `
       <div style="display: flex; gap: 20px; align-items: center; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 16px;">
-        <img src="${m.photo_url || 'logo.png'}" alt="Photo" style="width: 75px; height: 90px; object-fit: cover; border-radius: 6px; border: 2px solid var(--navy-dark); background: #ffffff;">
+        <img src="${photoUrl}" alt="Photo" style="width: 75px; height: 90px; object-fit: cover; border-radius: 6px; border: 2px solid var(--navy-dark); background: #ffffff;">
         <div>
-          <h3 style="margin: 0 0 4px; color: var(--navy-dark); font-size: 18px;">${escapeHtml(m.full_name || m.fullName || m.name || 'Unnamed')}</h3>
-          <div style="font-size: 13px; font-weight: 700; color: var(--primary-orange);">${escapeHtml(m.wing_name || m.wing || 'Central Cadet Corps')}</div>
+          <h3 style="margin: 0 0 4px; color: var(--navy-dark); font-size: 18px;">${escapeHtml(fullName)}</h3>
+          <div style="font-size: 13px; font-weight: 700; color: var(--primary-orange);">${escapeHtml(wingName)}</div>
           <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
-            <code>${escapeHtml(m.sainik_id || m.sainikId || m.id)}</code> &bull; 
+            <code>${escapeHtml(cadetId)}</code> &bull; 
             <span class="badge-status ${getStatusBadgeClass(m.status)}">${escapeHtml(m.status || 'Pending')}</span>
           </div>
         </div>
@@ -2461,27 +2550,27 @@ async function openMemberDetail(id) {
       <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 13px; margin-bottom: 16px;">
         <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px;">
           <strong style="color: #64748b; font-size: 11px; display: block;">CONTACT NUMBER</strong>
-          <div>${escapeHtml(m.mobile || m.phone || 'N/A')}</div>
+          <div>${escapeHtml(phone)}</div>
         </div>
         <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px;">
           <strong style="color: #64748b; font-size: 11px; display: block;">EMAIL ADDRESS</strong>
-          <div>${escapeHtml(m.email || 'N/A')}</div>
+          <div>${escapeHtml(email)}</div>
         </div>
         <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px;">
           <strong style="color: #64748b; font-size: 11px; display: block;">DATE OF BIRTH / BLOOD</strong>
-          <div>${escapeHtml(m.dob || 'N/A')} (${escapeHtml(m.blood_group || 'N/A')})</div>
+          <div>${escapeHtml(dob)} (${escapeHtml(blood)})</div>
         </div>
         <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px;">
           <strong style="color: #64748b; font-size: 11px; display: block;">DISTRICT & STATE</strong>
-          <div>${escapeHtml(m.district_name || m.city || '')}, ${escapeHtml(m.state_name || m.state || '')}</div>
+          <div>${escapeHtml(location || 'Maharashtra')}</div>
         </div>
         <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; grid-column: span 2;">
           <strong style="color: #64748b; font-size: 11px; display: block;">TALUKA / RESIDENCE ADDRESS</strong>
-          <div>${escapeHtml(m.address || m.taluka_name || 'N/A')}</div>
+          <div>${escapeHtml(address)}</div>
         </div>
         <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; grid-column: span 2;">
           <strong style="color: #64748b; font-size: 11px; display: block;">SPECIAL SKILLS & EXPERIENCE</strong>
-          <div>${escapeHtml(m.special_skills || 'None specified')}</div>
+          <div>${escapeHtml(skills)}</div>
         </div>
       </div>
     `;
@@ -2495,7 +2584,7 @@ async function openMemberDetail(id) {
       }
       approveBtn.onclick = () => {
         closeAdminModal('modalMemberDetail');
-        openReviewDecisionModal(m.id || id);
+        openReviewDecisionModal(m.id || m.sainik_id || id);
       };
     }
   }
@@ -2514,20 +2603,21 @@ function sendMemberApprovalEmail(m) {
   const cfg = getEmailConfig();
   const senderEmail = cfg.senderEmail || "samyak.ssd@gmail.com";
   const senderName = cfg.senderName || "Samata Sainik Dal (SSD)";
-  const enlistId = m.enlistmentId || ("SSD-CADET-" + (m.id ? m.id.slice(-6).toUpperCase() : Math.floor(1000 + Math.random() * 9000)));
+  const enlistId = m.enlistmentId || m.sainik_id || m.sainikId || ("SSD-CADET-" + (m.id ? m.id.slice(-6).toUpperCase() : Math.floor(1000 + Math.random() * 9000)));
 
   const payload = {
     type: 'approval',
     senderEmail: senderEmail,
     recipientEmail: email,
-    recipientName: m.fullName || m.name || "Sainik Cadet",
+    recipientName: m.fullName || m.full_name || m.name || "Sainik Cadet",
     appPassword: cfg.appPassword,
     data: {
       ...m,
-      name: m.fullName || m.name || "Sainik Cadet",
-      fullName: m.fullName || m.name || "Sainik Cadet",
+      name: m.fullName || m.full_name || m.name || "Sainik Cadet",
+      fullName: m.fullName || m.full_name || m.name || "Sainik Cadet",
       email: email,
       enlistmentId: enlistId,
+      sainikId: m.sainik_id || m.sainikId || enlistId,
       status: "Approved",
       approvedAt: Date.now()
     }
@@ -2555,13 +2645,13 @@ function sendMemberApprovalEmail(m) {
           from_name: senderName,
           from_email: senderEmail,
           reply_to: senderEmail,
-          cadet_name: m.fullName || m.name || "Cadet",
-          to_name: m.fullName || m.name || "Cadet",
+          cadet_name: m.fullName || m.full_name || m.name || "Cadet",
+          to_name: m.fullName || m.full_name || m.name || "Cadet",
           to_email: email,
-          cadet_phone: m.phone || "N/A",
-          cadet_wing: m.wing || "Central Cadet Corps",
-          cadet_state: m.state || "Maharashtra",
-          cadet_city: m.city || "District Command",
+          cadet_phone: m.phone || m.mobile || "N/A",
+          cadet_wing: m.wing || m.wing_name || "Central Cadet Corps",
+          cadet_state: m.state || m.state_name || "Maharashtra",
+          cadet_city: m.city || m.district_name || "District Command",
           enlistment_id: enlistId,
           status: "Officially Approved",
           date: new Date().toLocaleDateString('en-IN')
@@ -2579,17 +2669,17 @@ function sendMemberApprovalEmail(m) {
   });
 }
 
-function approveMember(id) {
-  // If it's an application ID, trigger quickApproveEnlistment
-  if (id.startsWith('SSD-') || id.startsWith('app_')) {
-    quickApproveEnlistment(id);
+async function approveMember(id) {
+  const member = await resolveMemberRecord(id);
+  const targetId = member ? (member.id || id) : id;
+
+  if (targetId.startsWith('SSD-') || targetId.startsWith('app_') || (member && member.status && member.status !== 'Approved' && member.status !== 'ACTIVE' && member.status !== 'FINAL_APPROVED')) {
+    quickApproveEnlistment(targetId);
     return;
   }
 
-  const member = (adminData.members && adminData.members[id]) ? { id, ...adminData.members[id] } : null;
-
   if (db) {
-    db.ref('members/' + id).update({
+    db.ref('members/' + targetId).update({
       status: 'Approved',
       approvedAt: Date.now()
     })
@@ -2602,19 +2692,24 @@ function approveMember(id) {
     })
     .catch(err => showToast("Update error: " + err.message, "error"));
   } else {
-    if (adminData.members && adminData.members[id]) {
-      adminData.members[id].status = "Approved";
-      adminData.members[id].approvedAt = Date.now();
+    if (adminData.members) {
+      if (adminData.members[targetId]) {
+        adminData.members[targetId].status = "Approved";
+        adminData.members[targetId].approvedAt = Date.now();
+        sendMemberApprovalEmail(adminData.members[targetId]);
+      } else if (member) {
+        adminData.members[targetId] = { ...member, status: "Approved", approvedAt: Date.now() };
+        sendMemberApprovalEmail(adminData.members[targetId]);
+      }
       saveLocalStore();
       renderMembersTable();
       showToast("Sainik enlistment verified & approved!", "success");
-      sendMemberApprovalEmail(adminData.members[id]);
     }
   }
 }
 
-function resendApprovalEmail(id) {
-  const member = (adminData.members && adminData.members[id]) ? { id, ...adminData.members[id] } : null;
+async function resendApprovalEmail(id) {
+  const member = await resolveMemberRecord(id);
   if (!member) {
     showToast("Member record not found.", "error");
     return;
@@ -2624,12 +2719,24 @@ function resendApprovalEmail(id) {
 
 function deleteMember(id) {
   if (!confirm("Are you sure you want to remove this sainik enlistment record?")) return;
+  if (Array.isArray(adminData.membership_applications)) {
+    adminData.membership_applications = adminData.membership_applications.filter(a =>
+      a.id !== id && a.sainik_id !== id && a.sainikId !== id
+    );
+  }
   if (db) {
     db.ref('members/' + id).remove()
       .then(() => showToast("Member record deleted.", "info"))
       .catch(err => showToast("Delete error: " + err.message, "error"));
   } else {
-    delete adminData.members[id];
+    if (adminData.members) {
+      delete adminData.members[id];
+      Object.keys(adminData.members).forEach(k => {
+        if (k === id || adminData.members[k]?.id === id || adminData.members[k]?.sainik_id === id || adminData.members[k]?.sainikId === id) {
+          delete adminData.members[k];
+        }
+      });
+    }
     saveLocalStore();
     renderMembersTable();
     showToast("Member record deleted.", "info");
@@ -5914,108 +6021,158 @@ async function loadAuditLogsView() {
 
 async function openReviewDecisionModal(appId) {
   const token = localStorage.getItem("ssd_auth_token");
+  let app = null;
+  let history = [];
+
+  // 1. Try Membership Applications API
   try {
     const res = await fetch(`/api/membership/applications/${encodeURIComponent(appId)}`, {
-      headers: { "Authorization": `Bearer ${token}` }
+      headers: token ? { "Authorization": `Bearer ${token}` } : {}
     });
     const data = await res.json();
-
-    if (!data.success || !data.application) {
-      showToast(data.error || "Unable to fetch application details.", "error");
-      return;
+    if (data.success && data.application) {
+      app = data.application;
+      history = data.approvalHistory || [];
     }
+  } catch (e) {}
 
-    currentSelectedApplication = data.application;
-    const app = data.application;
-    const history = data.approvalHistory || [];
-
-    document.getElementById("reviewModalAppId").textContent = app.id;
-    document.getElementById("reviewApplicantName").textContent = app.full_name;
-    document.getElementById("reviewApplicantWing").textContent = app.wing_name;
-    document.getElementById("reviewApplicantLocation").textContent = `${app.district_name}, ${app.state_name}`;
-    document.getElementById("reviewApplicantPhone").textContent = app.mobile;
-    document.getElementById("reviewApplicantEmail").textContent = app.email;
-    document.getElementById("reviewApplicantDob").textContent = app.dob || 'N/A';
-    document.getElementById("reviewApplicantBlood").textContent = app.blood_group || 'N/A';
-    document.getElementById("reviewApplicantGender").textContent = app.gender || 'N/A';
-    document.getElementById("reviewApplicantEdu").textContent = app.education || 'N/A';
-    document.getElementById("reviewApplicantOcc").textContent = app.occupation || 'N/A';
-    document.getElementById("reviewApplicantAddress").textContent = app.address || app.taluka_name || '-';
-    document.getElementById("reviewApplicantSkills").textContent = app.special_skills || 'None specified';
-
-    const photoEl = document.getElementById("reviewApplicantPhoto");
-    if (photoEl) photoEl.src = app.photo_url || "logo.png";
-
-    const pill = document.getElementById("reviewApplicantStatusPill");
-    pill.textContent = app.status;
-    if (app.status === 'SUBMITTED' || app.status === 'UNDER_REVIEW') pill.className = 'badge-status badge-pending';
-    else if (app.status === 'RECOMMENDED' || app.status === 'FINAL_APPROVED') pill.className = 'badge-status badge-approved';
-    else pill.className = 'badge-status badge-rejected';
-
-    // Populate Assessment Data in Modal
-    const savedAssessment = app.assessment_data;
-    const critKeys = ['crit_age', 'crit_jurisdiction', 'crit_photo_id', 'crit_wing_qual', 'crit_ideology', 'crit_discipline'];
-    
-    if (savedAssessment && savedAssessment.criteria) {
-      critKeys.forEach(k => {
-        const el = document.getElementById(k);
-        if (el) el.checked = !!savedAssessment.criteria[k];
+  // 2. Fallback: Try Members API
+  if (!app) {
+    try {
+      const res = await fetch(`/api/members/${encodeURIComponent(appId)}`, {
+        headers: token ? { "Authorization": `Bearer ${token}` } : {}
       });
-    } else if (app.status === 'FINAL_APPROVED' || app.status === 'RECOMMENDED') {
-      critKeys.forEach(k => {
-        const el = document.getElementById(k);
-        if (el) el.checked = true;
-      });
-    } else {
-      // Default: verify age and jurisdiction if data is present
-      critKeys.forEach(k => {
-        const el = document.getElementById(k);
-        if (el) {
-          if (k === 'crit_age' && app.dob) el.checked = true;
-          else if (k === 'crit_jurisdiction' && app.district_name) el.checked = true;
-          else el.checked = false;
-        }
-      });
-    }
-    calculateAssessmentScore();
-
-    // Populate History Timeline
-    const timelineEl = document.getElementById("reviewHistoryTimeline");
-    if (timelineEl) {
-      if (history.length === 0) {
-        timelineEl.innerHTML = '<div style="color: var(--text-muted);">No prior review actions recorded.</div>';
-      } else {
-        timelineEl.innerHTML = history.map(h => {
-          const dateStr = new Date(h.created_at).toLocaleDateString('en-IN', {
-            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-          });
-          const assessmentBadge = h.assessment_data ? `
-            <div style="margin-top: 4px;">
-              <span style="display: inline-flex; align-items: center; gap: 4px; background: #ecfdf5; color: #065f46; font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 600; border: 1px solid #a7f3d0;">
-                <i class="fa-solid fa-list-check"></i> Rubric Evaluation: ${h.assessment_data.score || 0}/${h.assessment_data.total || 6} (${h.assessment_data.percentage || 0}%)
-              </span>
-            </div>
-          ` : '';
-          return `
-            <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
-              <div style="display: flex; justify-content: space-between; font-weight: 700; color: var(--navy-dark);">
-                <span>${escapeHtml(h.action)} &bull; ${escapeHtml(h.official_name)} (${escapeHtml(h.official_role)})</span>
-                <span style="font-size: 11px; color: #64748b;">${dateStr}</span>
-              </div>
-              <div style="font-size: 12px; color: #334155; margin-top: 2px;">${escapeHtml(h.remarks || 'No remarks')}</div>
-              ${assessmentBadge}
-            </div>
-          `;
-        }).join('');
+      const data = await res.json();
+      if (data.success && data.member) {
+        app = data.member;
       }
-    }
-
-    document.getElementById("reviewActionRemarks").value = "";
-    openAdminModal("modalReviewDecision");
-
-  } catch (err) {
-    showToast("Error opening review modal: " + err.message, "error");
+    } catch (e) {}
   }
+
+  // 3. Fallback: Resolve from in-memory cache/pending items
+  if (!app) {
+    app = await resolveMemberRecord(appId);
+  }
+
+  if (!app) {
+    showToast("Unable to fetch application details.", "error");
+    return;
+  }
+
+  currentSelectedApplication = app;
+
+  const modalAppIdEl = document.getElementById("reviewModalAppId");
+  if (modalAppIdEl) modalAppIdEl.textContent = app.id || app.sainik_id || app.sainikId || appId;
+
+  const nameEl = document.getElementById("reviewApplicantName");
+  if (nameEl) nameEl.textContent = app.full_name || app.fullName || app.name || 'Unnamed';
+
+  const wingEl = document.getElementById("reviewApplicantWing");
+  if (wingEl) wingEl.textContent = app.wing_name || app.wing || 'Central Cadet Corps';
+
+  const locEl = document.getElementById("reviewApplicantLocation");
+  if (locEl) locEl.textContent = `${app.district_name || app.city || app.district || 'Nagpur'}, ${app.state_name || app.state || 'Maharashtra'}`;
+
+  const phoneEl = document.getElementById("reviewApplicantPhone");
+  if (phoneEl) phoneEl.textContent = app.mobile || app.phone || 'N/A';
+
+  const emailEl = document.getElementById("reviewApplicantEmail");
+  if (emailEl) emailEl.textContent = app.email || 'N/A';
+
+  const dobEl = document.getElementById("reviewApplicantDob");
+  if (dobEl) dobEl.textContent = app.dob || 'N/A';
+
+  const bloodEl = document.getElementById("reviewApplicantBlood");
+  if (bloodEl) bloodEl.textContent = app.blood_group || app.bloodGroup || 'N/A';
+
+  const genderEl = document.getElementById("reviewApplicantGender");
+  if (genderEl) genderEl.textContent = app.gender || 'N/A';
+
+  const eduEl = document.getElementById("reviewApplicantEdu");
+  if (eduEl) eduEl.textContent = app.education || 'N/A';
+
+  const occEl = document.getElementById("reviewApplicantOcc");
+  if (occEl) occEl.textContent = app.occupation || 'N/A';
+
+  const addrEl = document.getElementById("reviewApplicantAddress");
+  if (addrEl) addrEl.textContent = app.address || app.taluka_name || app.taluka || '-';
+
+  const skillsEl = document.getElementById("reviewApplicantSkills");
+  if (skillsEl) skillsEl.textContent = app.special_skills || app.skills || 'None specified';
+
+  const photoEl = document.getElementById("reviewApplicantPhoto");
+  if (photoEl) photoEl.src = app.photo_url || app.photo || "logo.png";
+
+  const pill = document.getElementById("reviewApplicantStatusPill");
+  if (pill) {
+    const s = (app.status || 'SUBMITTED').toUpperCase();
+    pill.textContent = app.status || 'SUBMITTED';
+    if (s === 'SUBMITTED' || s === 'UNDER_REVIEW' || s === 'PENDING') pill.className = 'badge-status badge-pending';
+    else if (s === 'RECOMMENDED' || s === 'FINAL_APPROVED' || s === 'APPROVED' || s === 'ACTIVE') pill.className = 'badge-status badge-approved';
+    else pill.className = 'badge-status badge-rejected';
+  }
+
+  // Populate Assessment Data in Modal
+  const savedAssessment = app.assessment_data;
+  const critKeys = ['crit_age', 'crit_jurisdiction', 'crit_photo_id', 'crit_wing_qual', 'crit_ideology', 'crit_discipline'];
+  
+  if (savedAssessment && savedAssessment.criteria) {
+    critKeys.forEach(k => {
+      const el = document.getElementById(k);
+      if (el) el.checked = !!savedAssessment.criteria[k];
+    });
+  } else if (app.status === 'FINAL_APPROVED' || app.status === 'APPROVED' || app.status === 'ACTIVE' || app.status === 'RECOMMENDED') {
+    critKeys.forEach(k => {
+      const el = document.getElementById(k);
+      if (el) el.checked = true;
+    });
+  } else {
+    // Default: verify age and jurisdiction if data is present
+    critKeys.forEach(k => {
+      const el = document.getElementById(k);
+      if (el) {
+        if (k === 'crit_age' && app.dob) el.checked = true;
+        else if (k === 'crit_jurisdiction' && (app.district_name || app.city)) el.checked = true;
+        else el.checked = false;
+      }
+    });
+  }
+  calculateAssessmentScore();
+
+  // Populate History Timeline
+  const timelineEl = document.getElementById("reviewHistoryTimeline");
+  if (timelineEl) {
+    if (history.length === 0) {
+      timelineEl.innerHTML = '<div style="color: var(--text-muted);">No prior review actions recorded.</div>';
+    } else {
+      timelineEl.innerHTML = history.map(h => {
+        const dateStr = new Date(h.created_at).toLocaleDateString('en-IN', {
+          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        const assessmentBadge = h.assessment_data ? `
+          <div style="margin-top: 4px;">
+            <span style="display: inline-flex; align-items: center; gap: 4px; background: #ecfdf5; color: #065f46; font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 600; border: 1px solid #a7f3d0;">
+              <i class="fa-solid fa-list-check"></i> Rubric Evaluation: ${h.assessment_data.score || 0}/${h.assessment_data.total || 6} (${h.assessment_data.percentage || 0}%)
+            </span>
+          </div>
+        ` : '';
+        return `
+          <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
+            <div style="display: flex; justify-content: space-between; font-weight: 700; color: var(--navy-dark);">
+              <span>${escapeHtml(h.action)} &bull; ${escapeHtml(h.official_name)} (${escapeHtml(h.official_role)})</span>
+              <span style="font-size: 11px; color: #64748b;">${dateStr}</span>
+            </div>
+            <div style="font-size: 12px; color: #334155; margin-top: 2px;">${escapeHtml(h.remarks || 'No remarks')}</div>
+            ${assessmentBadge}
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  const remarksInput = document.getElementById("reviewActionRemarks");
+  if (remarksInput) remarksInput.value = "";
+  openAdminModal("modalReviewDecision");
 }
 
 // ==========================================================================
