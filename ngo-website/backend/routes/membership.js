@@ -59,21 +59,31 @@ function findApplicationRecord(id) {
   let app = embeddedStore.membership_applications.get(clean);
   if (app) return app;
   const upper = clean.toUpperCase();
+  const cleanDigits = clean.replace(/\D/g, '');
+
   for (const a of embeddedStore.membership_applications.values()) {
     if (a.id === clean || (a.id && a.id.toUpperCase() === upper)) return a;
     if (a.sainik_id && (a.sainik_id === clean || a.sainik_id.toUpperCase() === upper)) return a;
+    if (a.mobile && (a.mobile === clean || (cleanDigits.length >= 8 && a.mobile.replace(/\D/g, '').includes(cleanDigits)))) return a;
+    if (a.phone && (a.phone === clean || (cleanDigits.length >= 8 && a.phone.replace(/\D/g, '').includes(cleanDigits)))) return a;
+    if (a.email && a.email.toLowerCase() === clean.toLowerCase()) return a;
+    if (clean.length >= 4) {
+      if (a.id && a.id.toUpperCase().includes(upper)) return a;
+      if (a.sainik_id && a.sainik_id.toUpperCase().includes(upper)) return a;
+    }
   }
   return null;
 }
 
 // Helper to find application record or synthesize from member record if already commissioned
 function findApplicationOrMemberRecord(id) {
-  const app = findApplicationRecord(id);
-  if (app) return { record: app, isMember: false, appId: app.id };
-
   if (!id) return null;
   const clean = String(id).trim();
   const upper = clean.toUpperCase();
+  const cleanDigits = clean.replace(/\D/g, '');
+
+  const app = findApplicationRecord(id);
+  if (app) return { record: app, isMember: false, appId: app.id };
 
   let member = embeddedStore.members.get(clean);
   if (!member) {
@@ -81,6 +91,14 @@ function findApplicationOrMemberRecord(id) {
       if (m.id === clean || (m.id && m.id.toUpperCase() === upper)) { member = m; break; }
       if (m.sainik_id && (m.sainik_id === clean || m.sainik_id.toUpperCase() === upper)) { member = m; break; }
       if (m.application_id && (m.application_id === clean || m.application_id.toUpperCase() === upper)) { member = m; break; }
+      if (m.mobile && (m.mobile === clean || (cleanDigits.length >= 8 && m.mobile.replace(/\D/g, '').includes(cleanDigits)))) { member = m; break; }
+      if (m.phone && (m.phone === clean || (cleanDigits.length >= 8 && m.phone.replace(/\D/g, '').includes(cleanDigits)))) { member = m; break; }
+      if (m.email && m.email.toLowerCase() === clean.toLowerCase()) { member = m; break; }
+      if (clean.length >= 4) {
+        if (m.id && m.id.toUpperCase().includes(upper)) { member = m; break; }
+        if (m.sainik_id && m.sainik_id.toUpperCase().includes(upper)) { member = m; break; }
+        if (m.application_id && m.application_id.toUpperCase().includes(upper)) { member = m; break; }
+      }
     }
   }
 
@@ -88,18 +106,18 @@ function findApplicationOrMemberRecord(id) {
     const syntheticApp = {
       id: member.application_id || member.id || member.sainik_id,
       sainik_id: member.sainik_id,
-      full_name: member.full_name,
+      full_name: member.full_name || member.fullName || member.name || 'Sainik Cadet',
       dob: member.dob || null,
       gender: member.gender || 'Unspecified',
       mobile: member.mobile || member.phone || '',
       email: member.email || '',
       address: member.address || '',
-      state_name: member.state_name || 'Maharashtra',
-      district_name: member.district_name || 'Nagpur',
-      wing_name: member.wing_name || 'Central Cadet Corps',
+      state_name: member.state_name || member.state || 'Maharashtra',
+      district_name: member.district_name || member.district || member.city || 'Nagpur',
+      wing_name: member.wing_name || member.wing || 'Central Cadet Corps',
       status: member.status || 'FINAL_APPROVED',
-      batch_no: member.batch_no || 'BATCH-2026/Q3',
-      photo_url: member.photo_url || null,
+      batch_no: member.batch_no || member.batchNo || 'BATCH-2026/Q3',
+      photo_url: member.photo_url || member.photo || null,
       created_at: member.created_at || member.approved_at || new Date().toISOString(),
       assessment_data: member.assessment_data || { score: 6, total: 6, percentage: 100 }
     };

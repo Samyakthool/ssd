@@ -974,6 +974,36 @@ function applyRolePermissions(role) {
     badgeApprovalsCount.style.display = isApprover ? "inline-flex" : "none";
   }
 
+  // SuperAdmin-exclusive bulk buttons
+  const btnDeskBulkApprove = document.getElementById("btnDeskBulkApprove");
+  const btnOverviewBulkApprove = document.getElementById("btnOverviewBulkApprove");
+  if (btnDeskBulkApprove) btnDeskBulkApprove.style.display = isSuper ? "inline-flex" : "none";
+  if (btnOverviewBulkApprove) btnOverviewBulkApprove.style.display = isSuper ? "inline-flex" : "none";
+
+  // Contextual headers
+  const viewApprovalsHeading = document.getElementById("viewApprovalsHeading");
+  const viewApprovalsSubtext = document.getElementById("viewApprovalsSubtext");
+  if (viewApprovalsHeading) {
+    viewApprovalsHeading.textContent = isSuper ? "Supreme Command Authorization & Approvals Desk (/approvals)" : "Sainik Enlistment Approvals & Scrutiny Desk (/approvals)";
+  }
+  if (viewApprovalsSubtext) {
+    viewApprovalsSubtext.textContent = isSuper
+      ? "All admin posts, news dispatches, events, campaigns, gallery photos, and leadership appointees require SuperAdmin authorization before going live on the public portal."
+      : "Evaluate cadet applications against the 6-point criteria rubric, record assessment scores, and authorize enlistments.";
+  }
+
+  // Filter approval dropdown options for non-superadmin
+  const typeFilter = document.getElementById("approvalTypeFilter");
+  if (typeFilter && !isSuper) {
+    Array.from(typeFilter.options).forEach(opt => {
+      if (opt.value !== 'all' && opt.value !== 'enlistment') {
+        opt.style.display = 'none';
+      } else {
+        opt.style.display = '';
+      }
+    });
+  }
+
   // If role is exclusively enlistment_officer, navigate to approvals view directly
   if (role === "enlistment_officer" || role === "enlistment_admin") {
     switchView("approvals");
@@ -1298,17 +1328,25 @@ function renderApprovalsView() {
   const typeFilter = document.getElementById("approvalTypeFilter")?.value || "all";
   const allPending = collectAllPendingItems();
   
-  // Update live counters
-  updateApprovalsCounters(allPending.length);
+  const isSuper = isSuperAdmin();
+  const officer = getActiveOfficer();
+  const role = (officer.role || '').toLowerCase();
 
-  const filtered = typeFilter === "all" ? allPending : allPending.filter(p => p.type === typeFilter);
-
-  if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);"><i class="fa-solid fa-circle-check" style="color: var(--primary-orange); font-size: 24px; margin-bottom: 8px; display: block;"></i>All admin submissions and cadet enlistments have been reviewed. Queue is clear!</td></tr>';
-    return;
+  // If not SuperAdmin, restrict queue to items authorized for this officer's role (enlistments)
+  let visiblePending = allPending;
+  if (!isSuper) {
+    visiblePending = allPending.filter(p => p.type === 'enlistment');
   }
 
-  const isSuper = isSuperAdmin();
+  // Update live counters based on visible items
+  updateApprovalsCounters(visiblePending.length);
+
+  const filtered = typeFilter === "all" ? visiblePending : visiblePending.filter(p => p.type === typeFilter);
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);"><i class="fa-solid fa-circle-check" style="color: var(--primary-orange); font-size: 24px; margin-bottom: 8px; display: block;"></i>All submissions and cadet enlistments in your queue have been reviewed. Queue is clear!</td></tr>';
+    return;
+  }
 
   tbody.innerHTML = filtered.map(item => {
     const dateStr = item.submittedAt ? new Date(item.submittedAt).toLocaleString() : 'Recent';
@@ -1347,9 +1385,7 @@ function renderApprovalsView() {
               <button type="button" class="btn-admin btn-admin-danger" style="padding: 4px 10px; font-size: 11.5px;" onclick="rejectPost('${item.type}', '${item.id}')" title="Reject Submission">
                 <i class="fa-solid fa-xmark"></i> Reject
               </button>
-            ` : `
-              <span style="font-size: 11.5px; color: var(--text-muted); font-style: italic;">SuperAdmin Only</span>
-            `}
+            ` : ''}
           </div>
         </td>
       </tr>
@@ -1973,10 +2009,18 @@ function switchView(viewKey) {
   if (targetPanel) targetPanel.classList.add("active");
 
   const meta = viewMetadata[viewKey] || { title: "Admin Portal", sub: "" };
+  let pageTitle = meta.title;
+  let pageSub = meta.sub;
+
+  if (viewKey === 'approvals' && !isSuper) {
+    pageTitle = "Sainik Enlistment Approvals Desk";
+    pageSub = "Scrutiny and authorization queue for sainik enlistment applications";
+  }
+
   const hTitle = document.getElementById("pageHeadingTitle");
   const hSub = document.getElementById("pageHeadingSubtitle");
-  if (hTitle) hTitle.textContent = meta.title;
-  if (hSub) hSub.textContent = meta.sub;
+  if (hTitle) hTitle.textContent = pageTitle;
+  if (hSub) hSub.textContent = pageSub;
 
   if (viewKey === 'approvals') {
     loadEnlistmentApplications();
@@ -2268,6 +2312,8 @@ function renderMembersTable(filteredList = null) {
   // Sort newest first
   list.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
+  const isSuper = isSuperAdmin();
+
   tbody.innerHTML = list.map(m => {
     const regDate = m.timestamp ? new Date(m.timestamp).toLocaleDateString() : 'Recent';
     const sUpper = (m.status || '').toUpperCase();
@@ -2312,9 +2358,10 @@ function renderMembersTable(filteredList = null) {
             <button type="button" class="action-icon-btn" onclick="openMemberIdCard('${m.id}')" title="Generate Digital Sainik ID Card" style="color: #0284c7;">
               <i class="fa-solid fa-id-card"></i>
             </button>
-            <button type="button" class="action-icon-btn delete" onclick="deleteMember('${m.id}')" title="Delete Entry">
+            ${isSuper ? `
+            <button type="button" class="action-icon-btn delete" onclick="deleteMember('${m.id}')" title="Delete Entry (SuperAdmin Only)">
               <i class="fa-solid fa-trash"></i>
-            </button>
+            </button>` : ''}
           </div>
         </td>
       </tr>

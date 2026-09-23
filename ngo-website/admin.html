@@ -319,12 +319,12 @@
               <div class="card-panel-title">
                 <i class="fa-solid fa-stamp" style="color: var(--primary-orange);"></i>
                 <div>
-                  <h3 style="font-size: 16px;">SuperAdmin Publication Approvals Queue</h3>
-                  <p style="font-size: 12.5px; color: var(--text-muted); margin: 2px 0 0;">Subordinate admin posts, news, drills, campaigns, and leadership entries awaiting Supreme Command authorization.</p>
+                  <h3 style="font-size: 16px;" id="overviewApprovalsTitle">Pending Authorization & Enlistment Queue</h3>
+                  <p style="font-size: 12.5px; color: var(--text-muted); margin: 2px 0 0;">Submissions and cadet applications awaiting official command review and authorization.</p>
                 </div>
               </div>
               <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button type="button" class="btn-admin btn-admin-primary" onclick="bulkApproveAllPending()">
+                <button type="button" class="btn-admin btn-admin-primary" id="btnOverviewBulkApprove" onclick="bulkApproveAllPending()">
                   <i class="fa-solid fa-check-double"></i> 1-Click Approve All
                 </button>
                 <button type="button" class="btn-admin btn-admin-outline" onclick="switchView('approvals')">
@@ -415,8 +415,8 @@
               <div class="card-panel-title">
                 <i class="fa-solid fa-stamp" style="color: var(--primary-orange);"></i>
                 <div>
-                  <h3>Supreme Command Authorization & Approvals Desk (/approvals)</h3>
-                  <p style="font-size: 12.5px; color: var(--text-muted); margin: 2px 0 0;">All admin posts, news dispatches, events, campaigns, gallery photos, and leadership appointees require SuperAdmin authorization before going live on the public portal.</p>
+                  <h3 id="viewApprovalsHeading">Supreme Command Authorization & Approvals Desk (/approvals)</h3>
+                  <p id="viewApprovalsSubtext" style="font-size: 12.5px; color: var(--text-muted); margin: 2px 0 0;">All admin posts, news dispatches, events, campaigns, gallery photos, and leadership appointees require official authorization before going live on the public portal.</p>
                 </div>
               </div>
               <div class="card-panel-actions">
@@ -429,7 +429,7 @@
                   <option value="gallery">Photo Archives (/gallery)</option>
                   <option value="leadership">Governing Body (/leadership)</option>
                 </select>
-                <button type="button" class="btn-admin btn-admin-primary" onclick="bulkApproveAllPending()">
+                <button type="button" class="btn-admin btn-admin-primary" id="btnDeskBulkApprove" onclick="bulkApproveAllPending()">
                   <i class="fa-solid fa-check-double"></i> 1-Click Approve All Pending
                 </button>
               </div>
@@ -444,7 +444,7 @@
                     <th>Date Submitted</th>
                     <th>Summary / Details</th>
                     <th>Approval Status</th>
-                    <th style="text-align: right;">SuperAdmin Action</th>
+                    <th style="text-align: right;" id="approvalsActionColHeader">Approval Action</th>
                   </tr>
                 </thead>
                 <tbody id="approvalsTableBody">
