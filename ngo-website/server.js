@@ -53,8 +53,22 @@ app.use(cors({
 }));
 
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(morgan('dev'));
+
+// URL Normalization & Serverless Compatibility Middleware
+app.use((req, res, next) => {
+  if (req.url === '/api' || req.url === '/api/') {
+    return res.json({
+      status: 'OK',
+      service: 'Samata Sainik Dal Central Command API',
+      timestamp: new Date().toISOString()
+    });
+  }
+  if (!req.url.startsWith('/api/') && !req.url.startsWith('/verify') && !req.url.startsWith('/uploads') && !req.url.startsWith('/portal') && !req.url.startsWith('/admin') && !req.url.includes('.')) {
+    req.url = '/api' + (req.url.startsWith('/') ? req.url : '/' + req.url);
+  }
+  next();
+});
 
 // Static Uploads & Public Assets
 const uploadsPath = process.env.VERCEL ? '/tmp/uploads' : path.join(__dirname, 'uploads');
