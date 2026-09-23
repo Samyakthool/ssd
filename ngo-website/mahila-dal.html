@@ -84,9 +84,17 @@
           </div>
           <ul class="nav-list">
             <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
-            <li class="nav-item"><a href="about.html" class="nav-link">History & About</a></li>
             <li class="nav-item">
-              <a href="mahila-dal.html" class="nav-link active" onclick="toggleMobileDropdown(event)">Departments & Wings <i class="fa-solid fa-chevron-down"></i></a>
+              <a href="about.html" class="nav-link" onclick="toggleMobileDropdown(event)">About <i class="fa-solid fa-chevron-down"></i></a>
+              <div class="dropdown-menu">
+                <a href="about.html#genesis" class="dropdown-link"><i class="fa-solid fa-scroll"></i> Genesis by Dr. B.R. Ambedkar</a>
+                <a href="about.html#mahad" class="dropdown-link"><i class="fa-solid fa-water"></i> Mahad Satyagraha (1927)</a>
+                <a href="index.html#governing-body" class="dropdown-link"><i class="fa-solid fa-landmark-dome"></i> Governing Body & Leadership</a>
+                <a href="about.html#centenary" class="dropdown-link"><i class="fa-solid fa-flag"></i> Centenary Roadmap (1927–2027)</a>
+              </div>
+            </li>
+            <li class="nav-item">
+              <a href="cadet-corps.html" class="nav-link active" onclick="toggleMobileDropdown(event)">Wings <i class="fa-solid fa-chevron-down"></i></a>
               <div class="dropdown-menu">
                 <a href="cadet-corps.html" class="dropdown-link"><i class="fa-solid fa-shield"></i> Central Cadet Corps (Sainik Wing)</a>
                 <a href="mahila-dal.html" class="dropdown-link"><i class="fa-solid fa-venus"></i> Mahila Samata Sainik Dal</a>
@@ -95,13 +103,28 @@
                 <a href="sewa-relief.html" class="dropdown-link"><i class="fa-solid fa-hand-holding-heart"></i> Community Sewa & Relief Force</a>
               </div>
             </li>
-            <li class="nav-item"><a href="membership.html" class="nav-link">Sainik Enlistment</a></li>
-            <li class="nav-item"><a href="gallery.html" class="nav-link">Photo Archives</a></li>
-            <li class="nav-item"><a href="news-events.html" class="nav-link">Gazette & Events</a></li>
+            <li class="nav-item">
+              <a href="member-portal.html" class="nav-link" onclick="toggleMobileDropdown(event)">Membership <i class="fa-solid fa-chevron-down"></i></a>
+              <div class="dropdown-menu">
+                <a href="member-portal.html" class="dropdown-link"><i class="fa-solid fa-id-card"></i> Sainik Member Portal & ID Card</a>
+                <a href="membership.html" class="dropdown-link"><i class="fa-solid fa-user-plus"></i> Join Dal / New Enlistment</a>
+                <a href="verify.html" class="dropdown-link"><i class="fa-solid fa-certificate"></i> Public QR Credential Verification</a>
+                <a href="admin.html" class="dropdown-link"><i class="fa-solid fa-user-shield"></i> Officer / Command Login</a>
+              </div>
+            </li>
+            <li class="nav-item">
+              <a href="news-events.html" class="nav-link" onclick="toggleMobileDropdown(event)">Gazette & Media <i class="fa-solid fa-chevron-down"></i></a>
+              <div class="dropdown-menu">
+                <a href="news-events.html" class="dropdown-link"><i class="fa-solid fa-newspaper"></i> Official Gazette & Circulars</a>
+                <a href="gallery.html" class="dropdown-link"><i class="fa-solid fa-images"></i> Photo & Video Archives</a>
+                <a href="index.html#campaigns" class="dropdown-link"><i class="fa-solid fa-bullhorn"></i> Campaigns & Memorials</a>
+              </div>
+            </li>
             <li class="nav-item"><a href="contact.html" class="nav-link">Contact</a></li>
           </ul>
-          <div class="nav-cta">
-            <a href="membership.html" class="btn btn-primary btn-sm"><i class="fa-solid fa-person-dress"></i> Join Mahila Dal</a>
+          <div class="nav-cta" style="display: flex; gap: 8px;">
+            <a href="index.html#donate" class="btn btn-secondary btn-sm" style="color: var(--primary-orange); border-color: rgba(255,107,0,0.3);"><i class="fa-solid fa-hand-holding-heart"></i> Donate</a>
+            <a href="member-portal.html" class="btn btn-primary btn-sm"><i class="fa-solid fa-id-badge"></i> Member Portal</a>
           </div>
         </nav>
       </div>
@@ -202,7 +225,7 @@
         <div class="footer-col">
           <img src="logo.png" alt="SSD Logo" class="footer-logo" onerror="handleLogoError(this)" style="height: 60px; width: 60px; margin-bottom: 12px;">
           <h4 style="margin-bottom: 8px;">Samata Sainik Dal</h4>
-          <p class="footer-about-text">Army of Soldiers for Equality, founded by Bodhisattva Dr. B.R. Ambedkar on 24 September 1927. Dedicated to non-violent social defense, constitutional rights, and human dignity across India.</p>
+          <p class="footer-about-text">Samata Sainik Dal (SSD), founded by Bodhisattva Dr. B.R. Ambedkar on 24 September 1927. Dedicated to non-violent social defense, constitutional rights, and human dignity across India.</p>
         </div>
         <div class="footer-col">
           <h4>Departments</h4>

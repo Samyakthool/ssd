@@ -1352,13 +1352,59 @@ async function handleAdminLogin(e) {
   const passcodeInput = document.getElementById("adminPasscode");
   const identifier = usernameInput ? usernameInput.value.trim() : "";
   const passcode = passcodeInput ? passcodeInput.value.trim() : "";
-  const activeMasterPass = getMasterPasscode();
 
+  const submitBtn = document.getElementById("loginBtn");
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating...';
+  }
+
+  // 1. Authenticate with Secure REST API
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: identifier,
+        password: passcode
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.success && data.token) {
+      recordSuccessfulLogin();
+      localStorage.setItem("ssd_auth_token", data.token);
+      sessionStorage.setItem("ssd_admin_auth", "true");
+      sessionStorage.setItem("ssd_admin_user", JSON.stringify(data.user));
+
+      const jurText = data.user.jurisdiction?.district_id
+        ? `${data.user.jurisdiction.district_id.replace('dist_mh_', '').toUpperCase()} Command (${data.user.role})`
+        : data.user.jurisdiction?.state_id
+          ? `${data.user.jurisdiction.state_id.replace('state_', '').toUpperCase()} State Command (${data.user.role})`
+          : 'National Executive HQ';
+
+      const jurPill = document.getElementById("officerJurisdictionText");
+      if (jurPill) jurPill.textContent = jurText;
+
+      showToast(`Access Granted. Welcome, Officer ${data.user.fullName}.`, "success");
+      checkAuthSession();
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-solid fa-key"></i> Authenticate & Enter Portal';
+      }
+      return;
+    }
+  } catch (apiErr) {
+    console.warn("Backend API auth notice, testing local fallback:", apiErr.message);
+  }
+
+  // 2. Fallback to Local Auth if Backend is in offline standalone mode
+  const activeMasterPass = getMasterPasscode();
   const idLower = identifier.toLowerCase();
   const passLower = passcode.toLowerCase();
   const masterLower = (activeMasterPass || "SSD1927").toLowerCase();
 
-  // 1. Master Passcode Authentication
   const isMasterPassGiven = passcode === activeMasterPass || passLower === "ssd1927" || passLower === masterLower;
   const isMasterIdentGiven = identifier === activeMasterPass || idLower === "ssd1927" || idLower === masterLower;
   const isSuperUserIdent = idLower === "admin@ssd.org" || idLower === "superadmin@ssd.org.in" || idLower === "admin" || idLower === "superadmin" || idLower === "super_admin" || idLower === "commander" || !identifier;
@@ -1367,31 +1413,24 @@ async function handleAdminLogin(e) {
     recordSuccessfulLogin();
     const superAdmin = {
       id: "usr_master",
-      name: "Commander-in-Chief (Master Access)",
+      fullName: "Commander-in-Chief (Super Admin)",
+      name: "Commander-in-Chief",
       email: "admin@ssd.org",
       role: "super_admin",
-      dept: "Supreme Command Council",
-      status: "Active",
-      passwordUpdatedAt: (adminData.admin_config && adminData.admin_config.master_passcode_updatedAt) || null
+      department: "Supreme Command Council",
+      jurisdiction: { state_id: null, district_id: null }
     };
     sessionStorage.setItem("ssd_admin_auth", "true");
     sessionStorage.setItem("ssd_admin_user", JSON.stringify(superAdmin));
     showToast("Master Command Access Granted. Welcome, Commander.", "success");
     checkAuthSession();
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fa-solid fa-key"></i> Authenticate & Enter Portal';
+    }
     return;
   }
 
-  // 2. Ensure freshest admin_users data from localStorage & Firebase
-  try {
-    const localStore = localStorage.getItem("ssd_admin_local_data");
-    if (localStore) {
-      const parsed = JSON.parse(localStore);
-      if (parsed && parsed.admin_users) {
-        if (!adminData.admin_users) adminData.admin_users = {};
-        adminData.admin_users = { ...ssdInitialSeed.admin_users, ...adminData.admin_users, ...parsed.admin_users };
-      }
-    }
-  } catch(err){}
 
   let adminsObj = adminData.admin_users || ssdInitialSeed.admin_users;
   let adminList = Object.entries(adminsObj).map(([k, v]) => ({ id: k, ...v }));
@@ -5327,4 +5366,181 @@ window.renderApprovalsView = renderApprovalsView;
 window.openOfficerPortfolioModal = openOfficerPortfolioModal;
 window.closeOfficerPortfolioModal = closeOfficerPortfolioModal;
 window.closeOfficerPortfolioModalOnBackdrop = closeOfficerPortfolioModalOnBackdrop;
+
+// ==========================================================================
+// REST API CONNECTORS & HIERARCHICAL APPROVAL ACTIONS
+// ==========================================================================
+let currentSelectedApplication = null;
+
+async function loadAuditLogsView() {
+  const tbody = document.getElementById("auditLogsTableBody");
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 24px;"><i class="fa-solid fa-spinner fa-spin"></i> Fetching audit records...</td></tr>';
+  const token = localStorage.getItem("ssd_auth_token");
+
+  try {
+    const res = await fetch("/api/admin/audit-logs", {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    const data = await res.json();
+
+    if (data.success && data.logs) {
+      if (data.logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 24px; color: var(--text-muted);">No audit records logged yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.logs.map(log => {
+        const d = new Date(log.created_at).toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+
+        return `
+          <tr>
+            <td style="font-family: monospace; font-size: 11.5px;">${d}</td>
+            <td>
+              <strong>${escapeHtml(log.user_name || 'System')}</strong>
+              <div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(log.user_role || 'Public/Guest')}</div>
+            </td>
+            <td><span class="badge-status badge-approved">${escapeHtml(log.action)}</span></td>
+            <td><span style="font-family: monospace; font-size: 12px;">${escapeHtml(log.entity_type)}: ${escapeHtml(log.entity_id || '-')}</span></td>
+            <td>${escapeHtml(log.jurisdiction_summary || 'National HQ')}</td>
+            <td style="font-family: monospace; font-size: 11.5px; color: #64748b;">${escapeHtml(log.ip_address || '127.0.0.1')}</td>
+          </tr>
+        `;
+      }).join('');
+    } else {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: #dc2626;">${data.error || 'Unable to fetch audit logs.'}</td></tr>`;
+    }
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: #dc2626;">Error connecting to API: ${err.message}</td></tr>`;
+  }
+}
+
+async function openReviewDecisionModal(appId) {
+  const token = localStorage.getItem("ssd_auth_token");
+  try {
+    const res = await fetch(`/api/membership/applications/${encodeURIComponent(appId)}`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    const data = await res.json();
+
+    if (!data.success || !data.application) {
+      showToast(data.error || "Unable to fetch application details.", "error");
+      return;
+    }
+
+    currentSelectedApplication = data.application;
+    const app = data.application;
+    const history = data.approvalHistory || [];
+
+    document.getElementById("reviewModalAppId").textContent = app.id;
+    document.getElementById("reviewApplicantName").textContent = app.full_name;
+    document.getElementById("reviewApplicantWing").textContent = app.wing_name;
+    document.getElementById("reviewApplicantLocation").textContent = `${app.district_name}, ${app.state_name}`;
+    document.getElementById("reviewApplicantPhone").textContent = app.mobile;
+    document.getElementById("reviewApplicantEmail").textContent = app.email;
+    document.getElementById("reviewApplicantDob").textContent = app.dob || 'N/A';
+    document.getElementById("reviewApplicantBlood").textContent = app.blood_group || 'N/A';
+    document.getElementById("reviewApplicantGender").textContent = app.gender || 'N/A';
+    document.getElementById("reviewApplicantEdu").textContent = app.education || 'N/A';
+    document.getElementById("reviewApplicantOcc").textContent = app.occupation || 'N/A';
+    document.getElementById("reviewApplicantAddress").textContent = app.address || app.taluka_name || '-';
+    document.getElementById("reviewApplicantSkills").textContent = app.special_skills || 'None specified';
+
+    const photoEl = document.getElementById("reviewApplicantPhoto");
+    if (photoEl) photoEl.src = app.photo_url || "logo.png";
+
+    const pill = document.getElementById("reviewApplicantStatusPill");
+    pill.textContent = app.status;
+    if (app.status === 'SUBMITTED' || app.status === 'UNDER_REVIEW') pill.className = 'badge-status badge-pending';
+    else if (app.status === 'RECOMMENDED' || app.status === 'FINAL_APPROVED') pill.className = 'badge-status badge-approved';
+    else pill.className = 'badge-status badge-rejected';
+
+    // Populate History Timeline
+    const timelineEl = document.getElementById("reviewHistoryTimeline");
+    if (timelineEl) {
+      if (history.length === 0) {
+        timelineEl.innerHTML = '<div style="color: var(--text-muted);">No prior review actions recorded.</div>';
+      } else {
+        timelineEl.innerHTML = history.map(h => {
+          const dateStr = new Date(h.created_at).toLocaleDateString('en-IN', {
+            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+          });
+          return `
+            <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
+              <div style="display: flex; justify-content: space-between; font-weight: 700; color: var(--navy-dark);">
+                <span>${escapeHtml(h.action)} &bull; ${escapeHtml(h.official_name)} (${escapeHtml(h.official_role)})</span>
+                <span style="font-size: 11px; color: #64748b;">${dateStr}</span>
+              </div>
+              <div style="font-size: 12px; color: #334155; margin-top: 2px;">${escapeHtml(h.remarks || 'No remarks')}</div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    document.getElementById("reviewActionRemarks").value = "";
+    openAdminModal("modalReviewDecision");
+
+  } catch (err) {
+    showToast("Error opening review modal: " + err.message, "error");
+  }
+}
+
+async function submitReviewDecision(actionType) {
+  if (!currentSelectedApplication) return;
+  const appId = currentSelectedApplication.id;
+  const remarks = document.getElementById("reviewActionRemarks").value.trim();
+  const token = localStorage.getItem("ssd_auth_token");
+
+  if ((actionType === 'correction' || actionType === 'reject') && !remarks) {
+    showToast("Please enter remarks/reason before submitting a correction request or rejection.", "error");
+    return;
+  }
+
+  try {
+    let endpoint = `/api/membership/applications/${encodeURIComponent(appId)}/${actionType}`;
+    let bodyPayload = { remarks: remarks, reason: remarks };
+
+    if (actionType === 'approve') {
+      const designation = prompt("Enter Official Sainik Designation / Rank:", "Cadet Sainik");
+      if (designation === null) return;
+      bodyPayload.designation = designation || "Cadet Sainik";
+      bodyPayload.batchNo = "BATCH-2026/Q3";
+    }
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(bodyPayload)
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      showToast(data.message || `Action ${actionType} executed successfully.`, "success");
+      closeAdminModal("modalReviewDecision");
+      // Refresh member/approval tables
+      renderMembersTable();
+    } else {
+      showToast(data.error || "Action failed.", "error");
+    }
+  } catch (err) {
+    showToast("Error executing review decision: " + err.message, "error");
+  }
+}
+
+window.loadAuditLogsView = loadAuditLogsView;
+window.openReviewDecisionModal = openReviewDecisionModal;
+window.submitReviewDecision = submitReviewDecision;
+
 

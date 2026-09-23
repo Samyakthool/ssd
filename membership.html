@@ -84,9 +84,17 @@
           </div>
           <ul class="nav-list">
             <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
-            <li class="nav-item"><a href="about.html" class="nav-link">History & About</a></li>
             <li class="nav-item">
-              <a href="cadet-corps.html" class="nav-link" onclick="toggleMobileDropdown(event)">Departments & Wings <i class="fa-solid fa-chevron-down"></i></a>
+              <a href="about.html" class="nav-link" onclick="toggleMobileDropdown(event)">About <i class="fa-solid fa-chevron-down"></i></a>
+              <div class="dropdown-menu">
+                <a href="about.html#genesis" class="dropdown-link"><i class="fa-solid fa-scroll"></i> Genesis by Dr. B.R. Ambedkar</a>
+                <a href="about.html#mahad" class="dropdown-link"><i class="fa-solid fa-water"></i> Mahad Satyagraha (1927)</a>
+                <a href="index.html#governing-body" class="dropdown-link"><i class="fa-solid fa-landmark-dome"></i> Governing Body & Leadership</a>
+                <a href="about.html#centenary" class="dropdown-link"><i class="fa-solid fa-flag"></i> Centenary Roadmap (1927–2027)</a>
+              </div>
+            </li>
+            <li class="nav-item">
+              <a href="cadet-corps.html" class="nav-link" onclick="toggleMobileDropdown(event)">Wings <i class="fa-solid fa-chevron-down"></i></a>
               <div class="dropdown-menu">
                 <a href="cadet-corps.html" class="dropdown-link"><i class="fa-solid fa-shield"></i> Central Cadet Corps (Sainik Wing)</a>
                 <a href="mahila-dal.html" class="dropdown-link"><i class="fa-solid fa-venus"></i> Mahila Samata Sainik Dal</a>
@@ -95,13 +103,28 @@
                 <a href="sewa-relief.html" class="dropdown-link"><i class="fa-solid fa-hand-holding-heart"></i> Community Sewa & Relief Force</a>
               </div>
             </li>
-            <li class="nav-item"><a href="membership.html" class="nav-link active">Sainik Enlistment</a></li>
-            <li class="nav-item"><a href="gallery.html" class="nav-link">Photo Archives</a></li>
-            <li class="nav-item"><a href="news-events.html" class="nav-link">Gazette & Events</a></li>
+            <li class="nav-item">
+              <a href="member-portal.html" class="nav-link active" onclick="toggleMobileDropdown(event)">Membership <i class="fa-solid fa-chevron-down"></i></a>
+              <div class="dropdown-menu">
+                <a href="member-portal.html" class="dropdown-link"><i class="fa-solid fa-id-card"></i> Sainik Member Portal & ID Card</a>
+                <a href="membership.html" class="dropdown-link"><i class="fa-solid fa-user-plus"></i> Join Dal / New Enlistment</a>
+                <a href="verify.html" class="dropdown-link"><i class="fa-solid fa-certificate"></i> Public QR Credential Verification</a>
+                <a href="admin.html" class="dropdown-link"><i class="fa-solid fa-user-shield"></i> Officer / Command Login</a>
+              </div>
+            </li>
+            <li class="nav-item">
+              <a href="news-events.html" class="nav-link" onclick="toggleMobileDropdown(event)">Gazette & Media <i class="fa-solid fa-chevron-down"></i></a>
+              <div class="dropdown-menu">
+                <a href="news-events.html" class="dropdown-link"><i class="fa-solid fa-newspaper"></i> Official Gazette & Circulars</a>
+                <a href="gallery.html" class="dropdown-link"><i class="fa-solid fa-images"></i> Photo & Video Archives</a>
+                <a href="index.html#campaigns" class="dropdown-link"><i class="fa-solid fa-bullhorn"></i> Campaigns & Memorials</a>
+              </div>
+            </li>
             <li class="nav-item"><a href="contact.html" class="nav-link">Contact</a></li>
           </ul>
-          <div class="nav-cta">
-            <a href="#membershipForm" class="btn btn-primary btn-sm"><i class="fa-solid fa-file-pen"></i> Fill Form Below</a>
+          <div class="nav-cta" style="display: flex; gap: 8px;">
+            <a href="index.html#donate" class="btn btn-secondary btn-sm" style="color: var(--primary-orange); border-color: rgba(255,107,0,0.3);"><i class="fa-solid fa-hand-holding-heart"></i> Donate</a>
+            <a href="member-portal.html" class="btn btn-primary btn-sm"><i class="fa-solid fa-id-badge"></i> Member Portal</a>
           </div>
         </nav>
       </div>
@@ -163,10 +186,10 @@
         <div class="form-container-box" id="membershipForm">
           <div class="form-header-box">
             <h3>Official Sainik Application Form</h3>
-            <p>Please enter accurate details for administrative registration and identity verification.</p>
+            <p>Please enter accurate details for administrative registration and multi-tier hierarchical identity verification.</p>
           </div>
 
-          <form id="memberRegistrationForm" onsubmit="handleMemberRegistration(event)">
+          <form id="memberRegistrationForm" onsubmit="handleEnhancedMemberRegistration(event)">
             <div class="form-grid-2">
               <div class="form-group">
                 <label for="memberName">Full Legal Name <span class="req">*</span></label>
@@ -178,11 +201,27 @@
               </div>
             </div>
 
-            <div class="form-grid-2">
+            <div class="form-grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px;">
               <div class="form-group">
-                <label for="memberPhone">Mobile / WhatsApp Number <span class="req">*</span></label>
-                <input type="tel" id="memberPhone" class="form-control" placeholder="e.g. +91 98765 43210" pattern="[0-9+ -]{10,15}" required>
+                <label for="memberPhone">Mobile / WhatsApp <span class="req">*</span></label>
+                <input type="tel" id="memberPhone" class="form-control" placeholder="+91 98765 43210" required>
               </div>
+              <div class="form-group">
+                <label for="memberDob">Date of Birth <span class="req">*</span></label>
+                <input type="date" id="memberDob" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="memberGender">Gender <span class="req">*</span></label>
+                <select id="memberGender" class="form-control" required>
+                  <option value="">-- Select Gender --</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-grid-2">
               <div class="form-group">
                 <label for="memberWing">Preferred SSD Wing / Division <span class="req">*</span></label>
                 <select id="memberWing" class="form-control" required>
@@ -194,60 +233,93 @@
                   <option value="Community Sewa & Relief Force">Community Sewa & Relief Force</option>
                 </select>
               </div>
+              <div class="form-group">
+                <label for="memberBloodGroup">Blood Group <span class="req">*</span></label>
+                <select id="memberBloodGroup" class="form-control" required>
+                  <option value="">-- Select Blood Group --</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                </select>
+              </div>
             </div>
 
             <div class="form-grid-2">
               <div class="form-group">
+                <label for="memberQualification">Educational Qualification <span class="req">*</span></label>
+                <input type="text" id="memberQualification" class="form-control" placeholder="e.g. Graduate / B.A. / B.Tech / LL.B." required>
+              </div>
+              <div class="form-group">
                 <label for="memberOccupation">Occupation / Profession <span class="req">*</span></label>
                 <select id="memberOccupation" class="form-control" required>
                   <option value="">-- Select Occupation --</option>
-                  <option value="Government Service">Government / Public Sector</option>
+                  <option value="Student / Youth Scholar">Student / Youth Scholar</option>
                   <option value="Advocate / Legal Professional">Advocate / Legal Professional</option>
+                  <option value="Government / Public Sector">Government / Public Sector</option>
                   <option value="Doctor / Healthcare Worker">Doctor / Healthcare Professional</option>
                   <option value="Teacher / Academician">Teacher / Academician</option>
-                  <option value="Student / Youth Scholar">Student / Youth Scholar</option>
                   <option value="Private Sector Employee">Private Sector Employee</option>
                   <option value="Business / Entrepreneur">Business / Self-Employed</option>
-                  <option value="Social Worker">Social Worker / Activist</option>
+                  <option value="Social Worker / Activist">Social Worker / Activist</option>
                   <option value="Retired Defense / Police Officer">Retired Defense / Police Officer</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
+            </div>
+
+            <div class="form-grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px;">
               <div class="form-group">
-                <label for="memberState">State / Union Territory <span class="req">*</span></label>
-                <select id="memberState" class="form-control" required>
-                  <option value="">-- Select State / UT --</option>
-                  <option value="Maharashtra">Maharashtra</option>
-                  <option value="Delhi (NCT)">Delhi (NCT)</option>
-                  <option value="Uttar Pradesh">Uttar Pradesh</option>
-                  <option value="Madhya Pradesh">Madhya Pradesh</option>
-                  <option value="Bihar">Bihar</option>
-                  <option value="Karnataka">Karnataka</option>
-                  <option value="Telangana">Telangana</option>
-                  <option value="Andhra Pradesh">Andhra Pradesh</option>
-                  <option value="Tamil Nadu">Tamil Nadu</option>
-                  <option value="Punjab">Punjab</option>
-                  <option value="Rajasthan">Rajasthan</option>
-                  <option value="Gujarat">Gujarat</option>
-                  <option value="Haryana">Haryana</option>
-                  <option value="Chhattisgarh">Chhattisgarh</option>
-                  <option value="Jharkhand">Jharkhand</option>
-                  <option value="Odisha">Odisha</option>
-                  <option value="West Bengal">West Bengal</option>
-                  <option value="Assam">Assam</option>
-                  <option value="Kerala">Kerala</option>
-                  <option value="Himachal Pradesh">Himachal Pradesh</option>
-                  <option value="Uttarakhand">Uttarakhand</option>
-                  <option value="Goa">Goa</option>
-                  <option value="Jammu & Kashmir">Jammu & Kashmir</option>
-                  <option value="Other">Other State / UT</option>
+                <label for="memberState">State Chapter <span class="req">*</span></label>
+                <select id="memberState" class="form-control" required onchange="handleStateChange(this.value)">
+                  <option value="">-- Select State --</option>
+                  <option value="Maharashtra">Maharashtra (महाराष्ट्र)</option>
+                  <option value="Delhi NCR">Delhi NCR (दिल्ली एनसीआर)</option>
+                  <option value="Uttar Pradesh">Uttar Pradesh (उत्तर प्रदेश)</option>
+                  <option value="Madhya Pradesh">Madhya Pradesh (मध्य प्रदेश)</option>
+                  <option value="Bihar">Bihar (बिहार)</option>
+                  <option value="Karnataka">Karnataka (कर्नाटक)</option>
+                  <option value="Rajasthan">Rajasthan (राजस्थान)</option>
+                  <option value="Punjab">Punjab (पंजाब)</option>
+                  <option value="Gujarat">Gujarat (गुजरात)</option>
+                  <option value="Telangana">Telangana (तेलंगाना)</option>
+                  <option value="Andhra Pradesh">Andhra Pradesh (आंध्र प्रदेश)</option>
+                  <option value="Tamil Nadu">Tamil Nadu (तमिलनाडु)</option>
+                  <option value="West Bengal">West Bengal (पश्चिम बंगाल)</option>
                 </select>
+              </div>
+              <div class="form-group">
+                <label for="memberRegion">Region / Division</label>
+                <input type="text" id="memberRegion" class="form-control" placeholder="e.g. Vidarbha / Western MH">
+              </div>
+              <div class="form-group">
+                <label for="memberCity">District Command <span class="req">*</span></label>
+                <input type="text" id="memberCity" class="form-control" placeholder="e.g. Nagpur / Pune / Mumbai" required>
               </div>
             </div>
 
-            <div class="form-group">
-              <label for="memberCity">District / City <span class="req">*</span></label>
-              <input type="text" id="memberCity" class="form-control" placeholder="e.g. Nagpur / Mumbai / Lucknow / New Delhi" required>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="memberTaluka">Taluka / Sub-District</label>
+                <input type="text" id="memberTaluka" class="form-control" placeholder="e.g. Nagpur Urban / Haveli">
+              </div>
+              <div class="form-group">
+                <label for="memberAddress">Residential Address <span class="req">*</span></label>
+                <input type="text" id="memberAddress" class="form-control" placeholder="House/Plot No, Street, Landmark" required>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="memberPhotoFile">Passport-Size Photograph <span class="req">*</span></label>
+              <input type="file" id="memberPhotoFile" class="form-control" accept="image/jpeg,image/png,image/webp" onchange="previewPhotoUpload(event)">
+              <div style="font-size: 11.5px; color: #64748b; margin-top: 4px;">JPG, PNG or WEBP (Max 5MB). Professional or clear front-facing portrait photo.</div>
+              <div id="photoPreviewContainer" style="margin-top: 10px; display: none;">
+                <img id="photoPreviewImg" src="" alt="Passport Photo Preview" style="width: 80px; height: 95px; border-radius: 6px; border: 2px solid #001f3f; object-fit: cover;">
+              </div>
             </div>
 
             <div class="form-group">
@@ -261,13 +333,53 @@
             </div>
 
             <div class="form-submit-row">
-              <button type="submit" id="memberSubmitBtn" class="btn btn-primary">
+              <button type="submit" id="memberSubmitBtn" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;">
                 <span class="btn-text"><i class="fa-solid fa-user-shield"></i> Submit Enlistment Application</span>
-                <span class="btn-spinner" style="display: none;"><i class="fa-solid fa-circle-notch fa-spin"></i> Enlisting...</span>
+                <span class="btn-spinner" style="display: none;"><i class="fa-solid fa-circle-notch fa-spin"></i> Submitting to Central Command...</span>
               </button>
             </div>
           </form>
         </div>
+
+        <!-- APPLICATION CONFIRMATION MODAL -->
+        <div id="appConfirmModal" class="modal" style="display: none;">
+          <div class="modal-content" style="max-width: 540px; text-align: center;">
+            <div style="color: var(--success-green); font-size: 48px; margin-bottom: 12px;">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <h3 style="color: var(--dark-navy); margin: 0 0 6px;">Application Submitted Successfully!</h3>
+            <p style="color: #64748b; font-size: 13.5px; margin-bottom: 20px;">
+              Your enlistment application has been indexed into the Central Command verification queue.
+            </p>
+
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px; text-align: left;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: #64748b; font-size: 12px; font-weight: 700;">APPLICATION ID:</span>
+                <span style="font-family: monospace; font-weight: 800; color: #FF6B00; font-size: 15px;" id="confirmAppId">SSD-2026-XXXXXX</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: #64748b; font-size: 12px; font-weight: 700;">APPLICANT:</span>
+                <span style="font-weight: 700; color: #0f172a;" id="confirmApplicantName"></span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: #64748b; font-size: 12px; font-weight: 700;">ASSIGNED COMMAND:</span>
+                <span style="font-weight: 700; color: #0f172a;" id="confirmDistrictName"></span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: #64748b; font-size: 12px; font-weight: 700;">CURRENT STATUS:</span>
+                <span class="badge-status badge-pending">SUBMITTED (Pending District Review)</span>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+              <a href="/member-portal.html" id="confirmPortalBtn" class="btn btn-primary" style="flex: 1; justify-content: center;">
+                <i class="fa-solid fa-id-badge"></i> Track in Member Portal
+              </a>
+              <button type="button" class="btn btn-secondary" onclick="closeConfirmModal()">Close</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
   </main>
@@ -279,7 +391,7 @@
         <div class="footer-col">
           <img src="logo.png" alt="SSD Logo" class="footer-logo" onerror="handleLogoError(this)" style="height: 60px; width: 60px; margin-bottom: 12px;">
           <h4 style="margin-bottom: 8px;">Samata Sainik Dal</h4>
-          <p class="footer-about-text">Army of Soldiers for Equality, founded by Bodhisattva Dr. B.R. Ambedkar on 24 September 1927. Dedicated to non-violent social defense, constitutional rights, and human dignity across India.</p>
+          <p class="footer-about-text">Samata Sainik Dal (SSD), founded by Bodhisattva Dr. B.R. Ambedkar on 24 September 1927. Dedicated to non-violent social defense, constitutional rights, and human dignity across India.</p>
         </div>
         <div class="footer-col">
           <h4>Departments</h4>

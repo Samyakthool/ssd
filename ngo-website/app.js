@@ -1391,7 +1391,7 @@ function changeLanguage(lang) {
     if (orgTagline) orgTagline.textContent = "समता, स्वातंत्र्य आणि बंधुतेचे रक्षक | डॉ. बाबासाहेब आंबेडकर यांनी स्थापन केलेले (१९२७)";
   } else {
     if (orgName) orgName.textContent = "SAMATA SAINIK DAL (SSD)";
-    if (orgTagline) orgTagline.textContent = "समता सैनिक दल (स्थापना: १९२७) | Army of Soldiers for Equality | Founded by Dr. B.R. Ambedkar";
+    if (orgTagline) orgTagline.textContent = "समता सैनिक दल (स्थापना: १९२७) | Founded by Dr. B.R. Ambedkar";
   }
 }
 
@@ -2539,4 +2539,148 @@ function handleQuickJoinSubmit(e) {
     setTimeout(onSuccess, 1000);
   }
 }
+
+// ==========================================================================
+// ENHANCED MEMBERSHIP APPLICATION & PHOTO UPLOAD LOGIC
+// ==========================================================================
+let uploadedPhotoBase64 = null;
+
+function previewPhotoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    uploadedPhotoBase64 = e.target.result;
+    const previewContainer = document.getElementById("photoPreviewContainer");
+    const previewImg = document.getElementById("photoPreviewImg");
+    if (previewContainer && previewImg) {
+      previewImg.src = uploadedPhotoBase64;
+      previewContainer.style.display = "block";
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleStateChange(stateValue) {
+  const regionInput = document.getElementById("memberRegion");
+  if (!regionInput) return;
+
+  if (stateValue === "Maharashtra") {
+    regionInput.placeholder = "e.g. Vidarbha / Western MH / Konkan";
+  } else if (stateValue === "Delhi NCR") {
+    regionInput.placeholder = "e.g. Central Delhi / South Delhi";
+  } else {
+    regionInput.placeholder = "e.g. Central / Northern Region";
+  }
+}
+
+async function handleEnhancedMemberRegistration(e) {
+  e.preventDefault();
+  const form = document.getElementById("memberRegistrationForm");
+  const submitBtn = document.getElementById("memberSubmitBtn");
+  const btnText = submitBtn.querySelector(".btn-text");
+  const btnSpinner = submitBtn.querySelector(".btn-spinner");
+
+  const fullName = document.getElementById("memberName") ? document.getElementById("memberName").value.trim() : "";
+  const email = document.getElementById("memberEmail") ? document.getElementById("memberEmail").value.trim() : "";
+  const phone = document.getElementById("memberPhone") ? document.getElementById("memberPhone").value.trim() : "";
+  const dob = document.getElementById("memberDob") ? document.getElementById("memberDob").value : "";
+  const gender = document.getElementById("memberGender") ? document.getElementById("memberGender").value : "Unspecified";
+  const wing = document.getElementById("memberWing") ? document.getElementById("memberWing").value : "Central Cadet Corps (Sainik Wing)";
+  const bloodGroup = document.getElementById("memberBloodGroup") ? document.getElementById("memberBloodGroup").value : "O+";
+  const qualification = document.getElementById("memberQualification") ? document.getElementById("memberQualification").value.trim() : "";
+  const occupation = document.getElementById("memberOccupation") ? document.getElementById("memberOccupation").value : "Citizen";
+  const state = document.getElementById("memberState") ? document.getElementById("memberState").value : "Maharashtra";
+  const region = document.getElementById("memberRegion") ? document.getElementById("memberRegion").value.trim() : "";
+  const district = document.getElementById("memberCity") ? document.getElementById("memberCity").value.trim() : "";
+  const taluka = document.getElementById("memberTaluka") ? document.getElementById("memberTaluka").value.trim() : "";
+  const address = document.getElementById("memberAddress") ? document.getElementById("memberAddress").value.trim() : "";
+  const message = document.getElementById("memberMessage") ? document.getElementById("memberMessage").value.trim() : "";
+  const pledgeAccepted = document.getElementById("memberConsent") ? document.getElementById("memberConsent").checked : true;
+
+  const photoFileInput = document.getElementById("memberPhotoFile");
+  const photoFile = photoFileInput && photoFileInput.files ? photoFileInput.files[0] : null;
+
+  submitBtn.disabled = true;
+  if (btnText) btnText.style.display = "none";
+  if (btnSpinner) btnSpinner.style.display = "inline-flex";
+
+  try {
+    const formData = new FormData();
+    formData.append("fullName", fullName);
+    formData.append("email", email);
+    formData.append("mobile", phone);
+    formData.append("dob", dob);
+    formData.append("gender", gender);
+    formData.append("wingName", wing);
+    formData.append("bloodGroup", bloodGroup);
+    formData.append("education", qualification);
+    formData.append("occupation", occupation);
+    formData.append("stateName", state);
+    formData.append("regionName", region);
+    formData.append("districtName", district);
+    formData.append("talukaName", taluka);
+    formData.append("address", address);
+    formData.append("specialSkills", message);
+    formData.append("solemnPledge", pledgeAccepted);
+
+    if (photoFile) {
+      formData.append("photo", photoFile);
+    } else if (uploadedPhotoBase64) {
+      formData.append("photoBase64", uploadedPhotoBase64);
+    }
+
+    const res = await fetch("/api/membership/apply", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+
+    if (data.success && data.applicationId) {
+      showToast(`Enlistment Application registered! Reference: ${data.applicationId}`, "success");
+      
+      // Populate and Show Confirmation Modal
+      const modal = document.getElementById("appConfirmModal");
+      if (modal) {
+        document.getElementById("confirmAppId").textContent = data.applicationId;
+        document.getElementById("confirmApplicantName").textContent = data.applicantName || fullName;
+        document.getElementById("confirmDistrictName").textContent = `${district}, ${state}`;
+        const portalBtn = document.getElementById("confirmPortalBtn");
+        if (portalBtn) {
+          portalBtn.href = `/member-portal.html?id=${data.applicationId}`;
+        }
+        modal.style.display = "flex";
+      }
+
+      form.reset();
+      uploadedPhotoBase64 = null;
+      const previewContainer = document.getElementById("photoPreviewContainer");
+      if (previewContainer) previewContainer.style.display = "none";
+
+    } else {
+      showToast(data.error || "Submission failed. Please check your details.", "error");
+    }
+
+  } catch (err) {
+    console.error("Application submission error:", err);
+    showToast("Network error submitting application to Central Command: " + err.message, "error");
+  } finally {
+    submitBtn.disabled = false;
+    if (btnText) btnText.style.display = "inline-flex";
+    if (btnSpinner) btnSpinner.style.display = "none";
+  }
+}
+
+function closeConfirmModal() {
+  const modal = document.getElementById("appConfirmModal");
+  if (modal) modal.style.display = "none";
+}
+
+window.handleEnhancedMemberRegistration = handleEnhancedMemberRegistration;
+window.previewPhotoUpload = previewPhotoUpload;
+window.handleStateChange = handleStateChange;
+window.closeConfirmModal = closeConfirmModal;
+
 

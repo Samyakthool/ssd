@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Official Sainik Credential Verification | Samata Sainik Dal (SSD)</title>
+  <meta name="description" content="Official Central Command Identity & Credential Verification Registry of Samata Sainik Dal (SSD).">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  
+  <link rel="stylesheet" href="styles.css?v=4.0">
+  <style>
+    .verify-container {
+      max-width: 680px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    .verify-card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 31, 63, 0.12);
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+    }
+    .verify-header {
+      background: linear-gradient(135deg, #001f3f 0%, #0a2e5c 100%);
+      color: #ffffff;
+      padding: 24px;
+      text-align: center;
+      border-bottom: 4px solid #FF6B00;
+      position: relative;
+    }
+    .verify-emblem {
+      width: 68px;
+      height: 68px;
+      margin-bottom: 10px;
+      border-radius: 50%;
+      border: 2px solid #FF6B00;
+      background: #ffffff;
+      padding: 4px;
+    }
+    .verify-badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #86efac;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 13.5px;
+      margin-top: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .verify-badge-invalid {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fca5a5;
+    }
+    .verify-body {
+      padding: 28px;
+    }
+    .sainik-profile-row {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .sainik-photo {
+      width: 90px;
+      height: 105px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 2px solid #001f3f;
+      background: #f1f5f9;
+    }
+    .sainik-main-meta h3 {
+      margin: 0 0 6px;
+      color: #001f3f;
+      font-size: 20px;
+      font-family: 'Cinzel', serif;
+    }
+    .sainik-id-tag {
+      display: inline-block;
+      font-family: monospace;
+      font-size: 15px;
+      font-weight: 800;
+      color: #FF6B00;
+      background: #fff7ed;
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid #fed7aa;
+    }
+    .verify-details-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      font-size: 14px;
+    }
+    .detail-item {
+      background: #f8fafc;
+      padding: 12px 14px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+    .detail-label {
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+    .detail-value {
+      color: #0f172a;
+      font-weight: 700;
+    }
+    .verify-footer-seal {
+      background: #f1f5f9;
+      padding: 18px 24px;
+      font-size: 12px;
+      color: #64748b;
+      text-align: center;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .privacy-notice {
+      margin-top: 18px;
+      background: #eff6ff;
+      border-left: 4px solid #001f3f;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #1e3a8a;
+    }
+    @media (max-width: 600px) {
+      .verify-details-grid {
+        grid-template-columns: 1fr;
+      }
+      .sainik-profile-row {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body class="font-md" style="background: #f8fafc;">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="container">
+      <div class="top-bar-inner">
+        <div class="top-contact-info">
+          <span><i class="fa-solid fa-shield-halved"></i> Central Command Verification Desk</span>
+          <span><i class="fa-solid fa-phone"></i> 1800-24-1927</span>
+        </div>
+        <div class="top-bar-tools">
+          <a href="/index.html" style="color: #ffffff; text-decoration: none; font-size: 12.5px;">
+            <i class="fa-solid fa-arrow-left"></i> Return to Portal
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tricolor-stripe"></div>
+
+  <main class="verify-container" id="verifyMain">
+    <div class="verify-card">
+      <div class="verify-header">
+        <img src="/logo.png" alt="SSD Emblem" class="verify-emblem" onerror="this.src='https://via.placeholder.com/68?text=SSD'">
+        <h2 style="margin: 0; font-size: 20px; letter-spacing: 0.5px;">SAMATA SAINIK DAL (SSD)</h2>
+        <div style="font-size: 12px; color: #FF6B00; font-weight: 700; margin-top: 4px;">CENTRAL COMMAND VERIFICATION REGISTRY</div>
+        
+        <div id="verifyStatusBadge" class="verify-badge-status">
+          <i class="fa-solid fa-circle-notch fa-spin"></i> Validating Credentials...
+        </div>
+      </div>
+
+      <div class="verify-body" id="verifyBody">
+        <div style="text-align: center; padding: 30px; color: #64748b;">
+          <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+          <p style="margin-top: 12px;">Querying encrypted Central Command registry...</p>
+        </div>
+      </div>
+
+      <div class="verify-footer-seal">
+        <div><i class="fa-solid fa-certificate" style="color: #FF6B00;"></i> Digitally Verified by National Executive Directorate, Nagpur HQ</div>
+        <div>In accordance with SSD Central Cadre Rules (Estd. 24 September 1927 by Dr. B.R. Ambedkar)</div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    async function loadVerification() {
+      const pathParts = window.location.pathname.split('/');
+      let sainikId = pathParts[pathParts.length - 1];
+      
+      // Fallback query parameter: ?id=SSD-MH-2026-001245
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('id')) {
+        sainikId = urlParams.get('id');
+      }
+
+      if (!sainikId || sainikId === 'verify' || sainikId === 'verify.html') {
+        sainikId = 'SSD-MH-2026-001245'; // Default showcase verified sainik
+      }
+
+      try {
+        const res = await fetch(`/api/verify/${encodeURIComponent(sainikId)}`);
+        const data = await res.json();
+
+        const badge = document.getElementById('verifyStatusBadge');
+        const body = document.getElementById('verifyBody');
+
+        if (data.success && data.verification && data.verification.verified) {
+          const v = data.verification;
+          badge.className = 'verify-badge-status';
+          badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Verified Active Sainik';
+
+          const formattedDate = new Date(v.commissionDate).toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+          });
+
+          body.innerHTML = `
+            <div class="sainik-profile-row">
+              <img src="${v.photoUrl || '/logo.png'}" alt="${v.fullName}" class="sainik-photo" onerror="this.src='/logo.png'">
+              <div class="sainik-main-meta">
+                <span class="sainik-id-tag"><i class="fa-solid fa-id-badge"></i> ${v.sainikId}</span>
+                <h3>${v.fullName}</h3>
+                <div style="font-size: 13.5px; color: #1e293b; font-weight: 600;">${v.designation}</div>
+                <div style="font-size: 12.5px; color: #64748b;">${v.wing}</div>
+              </div>
+            </div>
+
+            <div class="verify-details-grid">
+              <div class="detail-item">
+                <div class="detail-label">State Directorate</div>
+                <div class="detail-value">${v.state}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">District Command</div>
+                <div class="detail-value">${v.district}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Assigned Chapter</div>
+                <div class="detail-value">${v.chapter}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Commission Status</div>
+                <div class="detail-value" style="color: #15803d;"><i class="fa-solid fa-shield"></i> ${v.status}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Batch Allotment</div>
+                <div class="detail-value">${v.batchNo || 'BATCH-2026/Q1'}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Commission Date</div>
+                <div class="detail-value">${formattedDate}</div>
+              </div>
+            </div>
+
+            <div class="privacy-notice">
+              <i class="fa-solid fa-lock"></i> <strong>Institutional Privacy Protection:</strong> In compliance with the SSD Member Charter, residential addresses, contact numbers, and personal records remain strictly confidential and are not published on public verification channels.
+            </div>
+          `;
+        } else {
+          badge.className = 'verify-badge-status verify-badge-invalid';
+          badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Unverified / Invalid ID';
+
+          body.innerHTML = `
+            <div style="text-align: center; padding: 24px; color: #b91c1c;">
+              <i class="fa-solid fa-circle-xmark fa-3x" style="margin-bottom: 12px;"></i>
+              <h3 style="margin: 0 0 8px; color: #991b1b;">Credential Validation Failed</h3>
+              <p style="font-size: 14px; color: #4b5563; max-width: 480px; margin: auto;">
+                The identifier <strong>${sainikId}</strong> was not found in the active Central Command registry. It may be pending review, rejected, or entered incorrectly.
+              </p>
+              <div style="margin-top: 20px;">
+                <a href="/membership.html" class="btn btn-primary btn-sm" style="display: inline-block;">
+                  <i class="fa-solid fa-file-signature"></i> Apply for Official Sainik Enlistment
+                </a>
+              </div>
+            </div>
+          `;
+        }
+      } catch (err) {
+        document.getElementById('verifyBody').innerHTML = `
+          <div style="text-align: center; padding: 24px; color: #b91c1c;">
+            <p>Verification service temporarily unavailable: ${err.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadVerification);
+  </script>
+</body>
+</html>

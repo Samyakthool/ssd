@@ -1,9 +1,28 @@
 {
   "name": "samata-sainik-dal",
-  "version": "1.0.0",
-  "description": "Official Web Portal and Central Command for Samata Sainik Dal",
+  "version": "2.0.0",
+  "description": "Official Digital Command & Membership Platform for Samata Sainik Dal",
   "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "migrate": "node backend/db/migrate.js",
+    "test:api": "node backend/tests/run-tests.js"
+  },
   "dependencies": {
-    "nodemailer": "^6.9.15"
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.15",
+    "pg": "^8.12.0",
+    "razorpay": "^2.9.4"
   }
 }
+

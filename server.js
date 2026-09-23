@@ -1,0 +1,119 @@
+// ==========================================================================
+// SAMATA SAINIK DAL (SSD) - DIGITAL COMMAND & MEMBERSHIP PLATFORM SERVER
+// Production Express Server & REST API Gateway
+// ==========================================================================
+
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+import { initDb } from './backend/db/index.js';
+import { runMigration } from './backend/db/migrate.js';
+
+// Route Handlers
+import authRoutes from './backend/routes/auth.js';
+import membershipRoutes from './backend/routes/membership.js';
+import workflowRoutes from './backend/routes/workflows.js';
+import memberRoutes from './backend/routes/members.js';
+import verifyRoutes from './backend/routes/verify.js';
+import donationRoutes from './backend/routes/donations.js';
+import chapterRoutes from './backend/routes/chapters.js';
+import eventRoutes from './backend/routes/events.js';
+import newsRoutes from './backend/routes/news.js';
+import mediaRoutes from './backend/routes/media.js';
+import adminRoutes from './backend/routes/admin.js';
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Initialize Database & Storage
+await initDb();
+await runMigration();
+
+// Security Middlewares
+app.use(helmet({
+  contentSecurityPolicy: false, // Permit CDN fonts, fontawesome, styles
+  crossOriginEmbedderPolicy: false
+}));
+
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(morgan('dev'));
+
+// Static Uploads & Public Assets
+const uploadsPath = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsPath));
+app.use(express.static(__dirname));
+
+// Mount REST API Endpoints
+app.use('/api/auth', authRoutes);
+app.use('/api/membership', membershipRoutes);
+app.use('/api/workflows', workflowRoutes);
+app.use('/api/members', memberRoutes);
+app.use('/api/verify', verifyRoutes);
+app.use('/api/donations', donationRoutes);
+app.use('/api/chapters', chapterRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/news', newsRoutes);
+app.use('/api/media', mediaRoutes);
+app.use('/api/admin', adminRoutes);
+
+// Friendly URL Rewrites
+app.get('/verify/:sainikId', (req, res) => {
+  res.sendFile(path.join(__dirname, 'verify.html'));
+});
+
+app.get('/portal', (req, res) => {
+  res.sendFile(path.join(__dirname, 'member-portal.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    service: 'Samata Sainik Dal Central Command API',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Start HTTP Server
+const server = app.listen(PORT, () => {
+  console.log(`\n==========================================================================`);
+  console.log(` 🛡️  SAMATA SAINIK DAL (SSD) - DIGITAL COMMAND PLATFORM`);
+  console.log(` 🌐  Web Server Active: http://localhost:${PORT}`);
+  console.log(` 🔑  Admin Command Portal: http://localhost:${PORT}/admin.html`);
+  console.log(` 🎖️  Sainik Member Portal: http://localhost:${PORT}/member-portal.html`);
+  console.log(` 🔍  Public QR Verification: http://localhost:${PORT}/verify/SSD-MH-2026-001245`);
+  console.log(`==========================================================================\n`);
+}).on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(` ℹ️  Server is already running on port ${PORT}. Continuing...`);
+  } else {
+    console.error('Server error:', err);
+  }
+});
+
+export default app;

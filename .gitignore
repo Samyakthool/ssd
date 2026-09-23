@@ -4,4 +4,8 @@ Thumbs.db
 .env
 .venv
 __pycache__/
+node_modules/
+uploads/
+data_store.json
 ngo-website/new/
+
