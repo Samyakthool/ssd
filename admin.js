@@ -887,18 +887,12 @@ function checkAuthSession() {
     if (authGate) authGate.style.display = "none";
     if (adminApp) adminApp.style.display = "flex";
 
-    let officer = null;
-    try {
-      if (userJson) officer = JSON.parse(userJson);
-    } catch (e) {}
-
-    if (!officer) {
-      officer = { name: "Command Officer", role: "executive", dept: "National Executive Secretariat", email: "officer@ssd.org" };
-    }
+    // Use getActiveOfficer() to ensure name/fullName normalization for both API and local logins
+    const officer = getActiveOfficer();
 
     const nameEl = document.getElementById("sidebarUserName");
     const roleEl = document.getElementById("sidebarUserRole");
-    if (nameEl) nameEl.textContent = officer.name || "Command Officer";
+    if (nameEl) nameEl.textContent = officer.name || officer.fullName || "Command Officer";
     if (roleEl) roleEl.textContent = getRoleDisplayName(officer.role);
 
     updateSecurityMetricsDisplay();
@@ -1029,10 +1023,14 @@ function getActiveOfficer() {
   const userJson = sessionStorage.getItem("ssd_admin_user");
   if (userJson) {
     try {
-      return JSON.parse(userJson);
+      const u = JSON.parse(userJson);
+      // Normalize: ensure both 'name' and 'fullName' fields exist
+      if (u && !u.name && u.fullName) u.name = u.fullName;
+      if (u && !u.fullName && u.name) u.fullName = u.name;
+      return u;
     } catch(e){}
   }
-  return { name: "Command Officer", email: "officer@ssd.org", role: "executive" };
+  return { name: "Command Officer", fullName: "Command Officer", email: "officer@ssd.org", role: "executive" };
 }
 
 // ==========================================================================
@@ -1225,14 +1223,19 @@ async function loadEnlistmentApplications() {
   // Auto-handshake for active SuperAdmin or officer session if token is missing
   if (!token) {
     try {
-      const userJson = sessionStorage.getItem("ssd_admin_user");
-      let email = "admin@ssd.org";
-      let pass = "SSD1927";
-      if (userJson) {
-        const u = JSON.parse(userJson);
-        if (u.email) email = u.email;
-        if (u.passcode) pass = u.passcode;
-      }
+      const officer = getActiveOfficer();
+      // Role-based password mapping for token refresh (matches migrate.js seed data)
+      const rolePassMap = {
+        'super_admin': 'SSD1927',
+        'central_admin': 'EXEC1927',
+        'state_official': 'MH1927',
+        'enlistment_officer': 'APPROVE1927',
+        'finance_admin': 'TREASURY1927',
+        'media_admin': 'MEDIA1927',
+        'district_official': 'NAGPUR1927'
+      };
+      const email = officer.email || 'admin@ssd.org';
+      const pass = officer.passcode || rolePassMap[officer.role] || 'SSD1927';
       const loginRes = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1675,7 +1678,9 @@ async function handleAdminLogin(e) {
       recordSuccessfulLogin();
       localStorage.setItem("ssd_auth_token", data.token);
       sessionStorage.setItem("ssd_admin_auth", "true");
-      sessionStorage.setItem("ssd_admin_user", JSON.stringify(data.user));
+      // Normalize user object: ensure both 'name' and 'fullName' are set
+      const normalizedUser = { ...data.user, name: data.user.fullName || data.user.name, fullName: data.user.fullName || data.user.name };
+      sessionStorage.setItem("ssd_admin_user", JSON.stringify(normalizedUser));
 
       const jurText = data.user.jurisdiction?.district_id
         ? `${data.user.jurisdiction.district_id.replace('dist_mh_', '').toUpperCase()} Command (${data.user.role})`
@@ -1803,15 +1808,11 @@ function openChangePasswordModal() {
   const isAuth = sessionStorage.getItem("ssd_admin_auth") === "true";
   if (!isAuth) return;
 
-  const userJson = sessionStorage.getItem("ssd_admin_user");
-  let officer = { name: "Commander-in-Chief", email: "admin@ssd.org", role: "super_admin" };
-  try {
-    if (userJson) officer = JSON.parse(userJson);
-  } catch (e) {}
+  const officer = getActiveOfficer();
 
   const nameEl = document.getElementById("cpOfficerName");
   const emailEl = document.getElementById("cpOfficerEmail");
-  if (nameEl) nameEl.textContent = officer.name || "Command Officer";
+  if (nameEl) nameEl.textContent = officer.name || officer.fullName || "Command Officer";
   if (emailEl) emailEl.textContent = officer.email || "admin@ssd.org";
 
   setInputValue("currentPassword", "");
@@ -6812,8 +6813,10 @@ async function submitReviewDecision(actionType) {
     if (data.success) {
       showToast(data.message || `Action ${actionType} executed successfully.`, "success");
       closeAdminModal("modalReviewDecision");
-      // Refresh member/approval tables
+      // Refresh member/approval tables and reload enlistment applications from backend
+      await loadEnlistmentApplications();
       renderMembersTable();
+      renderApprovalsView();
     } else {
       showToast(data.error || "Action failed.", "error");
     }
