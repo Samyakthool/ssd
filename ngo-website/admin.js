@@ -2317,11 +2317,30 @@ function renderMembersTable(filteredList = null) {
     ...a
   }));
 
-  // Combine and deduplicate by ID
+  // Combine and deduplicate by ID, application_id, or sainik_id
   const combinedMap = new Map();
   apiApps.forEach(item => combinedMap.set(item.id, item));
   firebaseList.forEach(item => {
-    if (!combinedMap.has(item.id)) {
+    let duplicateKey = null;
+    for (const [k, existing] of combinedMap.entries()) {
+      if (k === item.id ||
+          (item.application_id && (k === item.application_id || existing.application_id === item.application_id)) ||
+          (item.sainik_id && existing.sainik_id && item.sainik_id === existing.sainik_id) ||
+          (item.sainikId && existing.sainikId && item.sainikId === existing.sainikId)) {
+        duplicateKey = k;
+        break;
+      }
+    }
+    if (duplicateKey) {
+      const existing = combinedMap.get(duplicateKey);
+      combinedMap.set(duplicateKey, {
+        ...existing,
+        ...item,
+        id: duplicateKey,
+        sainik_id: item.sainik_id || existing.sainik_id,
+        sainikId: item.sainikId || item.sainik_id || existing.sainikId
+      });
+    } else {
       combinedMap.set(item.id, item);
     }
   });
@@ -2534,6 +2553,11 @@ async function quickApproveEnlistment(appId) {
       await loadEnlistmentApplications();
       renderMembersTable();
       renderApprovalsView();
+      if (data.sainikId) {
+        setTimeout(() => {
+          openMemberIdCard(data.sainikId);
+        }, 300);
+      }
     } else {
       showToast(data.error || "Approval failed.", "error");
     }
@@ -2597,7 +2621,7 @@ async function resolveMemberRecord(id) {
   }
 
   // 4. Try REST API endpoints with auth handshake
-  let token = localStorage.getItem("ssd_auth_token");
+  let token = await ensureAuthToken();
   const headers = token ? { "Authorization": `Bearer ${token}` } : {};
 
   try {
@@ -2979,8 +3003,20 @@ function renderAdminIdCardCanvas(card, back = false) {
     const qrSize = 96;
     const qrX = w / 2 - qrSize / 2;
     const qrY = 100;
-    const qrPayload = card.verifyUrl || `http://localhost:3000/verify/${card.sainikId}`;
+    const host = window.location.host || 'localhost:3000';
+    const proto = window.location.protocol || 'http:';
+    const qrPayload = card.verifyUrl || `${proto}//${host}/verify/${card.sainikId}`;
     drawAdminSimulatedQR(ctx, qrX, qrY, qrSize, qrPayload);
+
+    // Overlay real scannable QR Code asynchronously
+    const qrImg = new Image();
+    qrImg.crossOrigin = 'anonymous';
+    qrImg.onload = () => {
+      try {
+        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+      } catch (e) {}
+    };
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrPayload)}`;
 
     ctx.fillStyle = '#FF6B00';
     ctx.font = 'bold 11px monospace';
@@ -6906,6 +6942,12 @@ async function submitReviewDecision(actionType) {
       await loadEnlistmentApplications();
       renderMembersTable();
       renderApprovalsView();
+      if (actionType === 'approve' && (data.sainikId || data.member?.sainik_id)) {
+        const sid = data.sainikId || data.member.sainik_id;
+        setTimeout(() => {
+          openMemberIdCard(sid);
+        }, 300);
+      }
     } else {
       showToast(data.error || "Action failed.", "error");
     }

@@ -186,12 +186,15 @@ router.get('/card/:sainikId', async (req, res) => {
     const protocol = req.protocol || 'http';
     const sainikCode = member.sainik_id || member.id;
     const verifyUrl = `${protocol}://${host}/verify/${sainikCode}`;
+    const s = (member.status || '').toUpperCase();
+    const isApproved = (s === 'FINAL_APPROVED' || s === 'APPROVED' || s === 'ACTIVE');
 
     const cardData = {
       sainikId: sainikCode,
+      applicationId: member.application_id || member.id,
       fullName: member.full_name || member.fullName || member.name || 'Sainik Cadet',
       photoUrl: member.photo_url || null,
-      designation: member.designation || 'Cadet Sainik',
+      designation: member.designation || (isApproved ? 'Cadet Sainik' : 'Enlistment Candidate'),
       wing: member.wing_name || member.wing || 'Central Cadet Corps',
       state: member.state_name || member.state || 'Maharashtra',
       district: member.district_name || member.district || 'Nagpur',
@@ -200,6 +203,7 @@ router.get('/card/:sainikId', async (req, res) => {
       joiningDate: member.approved_at || member.created_at || new Date().toISOString(),
       batchNo: member.batch_no || member.batchNo || 'BATCH-2026/Q3',
       status: member.status || 'ACTIVE',
+      isApproved: isApproved,
       qrToken: member.qr_token || ('qr_' + sainikCode.toLowerCase().replace(/[^a-z0-9]/g, '_')),
       verifyUrl: verifyUrl
     };

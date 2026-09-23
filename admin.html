@@ -2357,7 +2357,10 @@
 
       </div>
 
-      <div class="admin-modal-footer">
+      <div class="admin-modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button type="button" class="btn-admin btn-admin-outline" style="border-color: #0284c7; color: #0284c7;" onclick="openMemberIdCard(currentSelectedApplication?.sainik_id || currentSelectedApplication?.sainikId || currentSelectedApplication?.id)" title="View / Generate Digital Sainik ID Card">
+          <i class="fa-solid fa-id-card"></i> Digital ID Card
+        </button>
         <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalReviewDecision')">Close</button>
       </div>
     </div>
@@ -2370,6 +2373,6 @@
   </div>
 
   <!-- Admin Application Script -->
-  <script src="admin.js?v=4.2"></script>
+  <script src="admin.js?v=4.3"></script>
 </body>
 </html>

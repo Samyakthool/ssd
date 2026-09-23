@@ -41,9 +41,15 @@ async function handlePortalLookup(e) {
       const cardJson = await parseJsonSafe(cardRes);
 
       if (cardJson.success && cardJson.cardData) {
-        currentCardData = cardJson.cardData;
-        displayMemberDashboard(currentCardData);
-        found = true;
+        const isAppr = cardJson.cardData.isApproved !== undefined 
+          ? cardJson.cardData.isApproved 
+          : (cardJson.cardData.status === 'ACTIVE' || cardJson.cardData.status === 'FINAL_APPROVED' || cardJson.cardData.status === 'APPROVED');
+        
+        if (isAppr) {
+          currentCardData = cardJson.cardData;
+          displayMemberDashboard(currentCardData);
+          found = true;
+        }
       }
     } catch (e) {
       console.warn("Card fetch error:", e);
@@ -485,12 +491,24 @@ function renderIdCardCanvas(card, back = false) {
     ctx.fillText('"Educate, Agitate, Organize. I pledge to defend constitutional morality,', w / 2, 64);
     ctx.fillText('maintain non-violent iron discipline, and safeguard human equality across India."', w / 2, 82);
 
-    // Draw Genuine QR Matrix
+    // Draw Scannable QR Matrix
     const qrSize = 96;
     const qrX = w / 2 - qrSize / 2;
     const qrY = 100;
-    const qrPayload = card.verifyUrl || `http://localhost:3000/verify/${card.sainikId}`;
+    const host = window.location.host || 'localhost:3000';
+    const proto = window.location.protocol || 'http:';
+    const qrPayload = card.verifyUrl || `${proto}//${host}/verify/${card.sainikId}`;
     drawSimulatedQR(ctx, qrX, qrY, qrSize, qrPayload);
+
+    // Overlay real scannable QR Code asynchronously
+    const qrImg = new Image();
+    qrImg.crossOrigin = 'anonymous';
+    qrImg.onload = () => {
+      try {
+        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+      } catch (e) {}
+    };
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrPayload)}`;
 
     ctx.fillStyle = '#FF6B00';
     ctx.font = 'bold 11px monospace';
