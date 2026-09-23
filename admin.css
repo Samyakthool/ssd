@@ -795,7 +795,8 @@ body.modal-open {
 /* ==========================================================================
    FORM MODALS & DIALOGUES
    ========================================================================== */
-.admin-modal {
+.admin-modal,
+.admin-modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(7, 21, 46, 0.75);
@@ -809,8 +810,9 @@ body.modal-open {
   overflow: hidden;
 }
 
-.admin-modal.active {
-  display: flex;
+.admin-modal.active,
+.admin-modal-overlay.active {
+  display: flex !important;
 }
 
 .admin-modal-card {

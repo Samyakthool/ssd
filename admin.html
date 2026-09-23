@@ -22,7 +22,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
   <!-- Admin Stylesheet -->
-  <link rel="stylesheet" href="admin.css?v=4.0">
+  <link rel="stylesheet" href="admin.css?v=4.2">
 </head>
 <body>
 
@@ -2127,17 +2127,17 @@
   <!-- ==========================================================================
        HIERARCHICAL SAINIK APPLICATION REVIEW & DECISION MODAL
        ========================================================================== -->
-  <div id="modalReviewDecision" class="admin-modal-overlay">
-    <div class="admin-modal" style="max-width: 820px;">
+  <div id="modalReviewDecision" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 820px;">
       <div class="admin-modal-header">
-        <div class="admin-modal-title">
-          <i class="fa-solid fa-file-shield" style="color: var(--primary-orange);"></i>
+        <div class="admin-modal-title" style="display: flex; align-items: center; gap: 10px;">
+          <i class="fa-solid fa-file-shield" style="color: var(--primary-orange); font-size: 20px;"></i>
           <div>
-            <h3>Sainik Enlistment Review & Hierarchy Action</h3>
+            <h3 style="margin: 0; font-size: 16px;">Sainik Enlistment Review & Hierarchy Action</h3>
             <span style="font-size: 12px; font-family: monospace; color: var(--text-muted);" id="reviewModalAppId">SSD-2026-XXXXXX</span>
           </div>
         </div>
-        <button type="button" class="btn-modal-close" onclick="closeAdminModal('modalReviewDecision')" aria-label="Close Modal">
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalReviewDecision')" aria-label="Close Modal">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -2370,6 +2370,6 @@
   </div>
 
   <!-- Admin Application Script -->
-  <script src="admin.js?v=4.0"></script>
+  <script src="admin.js?v=4.2"></script>
 </body>
 </html>
