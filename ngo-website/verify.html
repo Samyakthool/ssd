@@ -215,7 +215,13 @@
 
       try {
         const res = await fetch(`/api/verify/${encodeURIComponent(sainikId)}`);
-        const data = await res.json();
+        let data = { success: false };
+        try {
+          const text = await res.text();
+          data = JSON.parse(text);
+        } catch (e) {
+          data = { success: false, error: 'Unable to parse verification data' };
+        }
 
         const badge = document.getElementById('verifyStatusBadge');
         const body = document.getElementById('verifyBody');

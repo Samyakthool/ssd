@@ -10,6 +10,15 @@ function quickFill(id) {
   document.getElementById('portalLookupId').value = id;
 }
 
+async function parseJsonSafe(res) {
+  try {
+    const text = await res.text();
+    return JSON.parse(text);
+  } catch (err) {
+    return { success: false, error: 'Server response was not valid JSON. Please verify network connectivity.' };
+  }
+}
+
 async function handlePortalLookup(e) {
   if (e) e.preventDefault();
   const inputId = document.getElementById('portalLookupId').value.trim().toUpperCase();
@@ -22,7 +31,7 @@ async function handlePortalLookup(e) {
   try {
     // 1. Try fetching Digital ID Card
     const cardRes = await fetch(`/api/members/card/${encodeURIComponent(inputId)}`);
-    const cardJson = await cardRes.json();
+    const cardJson = await parseJsonSafe(cardRes);
 
     if (cardJson.success && cardJson.cardData) {
       currentCardData = cardJson.cardData;
@@ -30,12 +39,12 @@ async function handlePortalLookup(e) {
     } else {
       // 2. Try fetching as pending/in-process Application
       const appRes = await fetch(`/api/membership/status/${encodeURIComponent(inputId)}`);
-      const appJson = await appRes.json();
+      const appJson = await parseJsonSafe(appRes);
 
       if (appJson.success) {
         displayApplicationDashboard(appJson);
       } else {
-        alert('Identifier not found: ' + (appJson.error || 'Please check your reference ID.'));
+        alert(appJson.error || 'Identifier not found. Please verify your reference ID.');
       }
     }
   } catch (err) {
