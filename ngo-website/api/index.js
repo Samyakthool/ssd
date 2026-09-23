@@ -2,6 +2,9 @@
 // SAMATA SAINIK DAL (SSD) - VERCEL SERVERLESS REST API ENTRY POINT
 // ==========================================================================
 
-import app from '../server.js';
+import app, { ensureDb } from '../server.js';
 
-export default app;
+export default async function handler(req, res) {
+  await ensureDb();
+  return app(req, res);
+}

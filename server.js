@@ -36,9 +36,31 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Initialize Database & Storage
-await initDb();
-await runMigration();
+let dbInitPromise = null;
+export async function ensureDb() {
+  if (!dbInitPromise) {
+    dbInitPromise = (async () => {
+      try {
+        await initDb();
+        await runMigration();
+      } catch (err) {
+        console.error('DB Initialization warning:', err.message);
+      }
+    })();
+  }
+  return dbInitPromise;
+}
+
+// Initialize on startup in non-serverless local environments
+if (!process.env.VERCEL) {
+  ensureDb();
+}
+
+// Database initialization hydration middleware
+app.use(async (req, res, next) => {
+  await ensureDb();
+  next();
+});
 
 // Security Middlewares
 app.use(helmet({

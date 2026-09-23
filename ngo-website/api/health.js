@@ -1,5 +1,5 @@
 // ==========================================================================
-// SAMATA SAINIK DAL (SSD) - VERCEL SERVERLESS CATCH-ALL API HANDLER
+// SAMATA SAINIK DAL (SSD) - VERCEL SERVERLESS HEALTH ENDPOINT
 // ==========================================================================
 
 import app, { ensureDb } from '../server.js';
