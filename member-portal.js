@@ -116,8 +116,13 @@ function displayMemberDashboard(card) {
   document.getElementById('portalStatusPill').textContent = card.status || 'ACTIVE';
   document.getElementById('portalStatusPill').className = 'badge-status badge-approved';
 
-  if (card.photoUrl) {
-    document.getElementById('portalUserPhoto').src = card.photoUrl;
+  const photoEl = document.getElementById('portalUserPhoto');
+  if (photoEl) {
+    photoEl.onerror = function() {
+      this.onerror = null;
+      this.src = "logo.png";
+    };
+    photoEl.src = card.photoUrl || "logo.png";
   }
 
   const verifyLink = document.getElementById('portalVerifyLink');
@@ -226,7 +231,7 @@ function displayApplicationDashboard(app) {
     const cardData = {
       sainikId: app.sainikId || app.applicationId,
       fullName: app.applicantName,
-      photoUrl: app.photoUrl || null,
+      photoUrl: app.photoUrl || app.photo_url || app.photoBase64 || app.photo || null,
       designation: 'Cadet Sainik',
       wing: app.wing,
       state: app.state,

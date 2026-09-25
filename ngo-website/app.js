@@ -708,7 +708,7 @@ function renderNews(newsArray) {
   container.innerHTML = newsArray.map((item, idx) => `
     <div class="news-card">
       <div class="news-image-wrapper">
-        <img src="${item.imageUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'}" alt="${escapeHtml(item.title)}" class="news-img" onerror="this.src='https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'">
+        <img src="${item.imageUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'}" alt="${escapeHtml(item.title)}" class="news-img" onerror="this.onerror=null; this.src='logo.png';">
         <span class="news-category-badge">${escapeHtml(item.category || 'Gazette')}</span>
       </div>
       <div class="news-body">
@@ -808,7 +808,7 @@ function renderGallery(galleryArray) {
   currentGalleryItems = galleryArray;
   container.innerHTML = galleryArray.map((item, idx) => `
     <div class="gallery-item" onclick="openLightbox(${idx})">
-      <img src="${item.imageUrl}" alt="${item.caption || 'SSD Drill Action'}" class="gallery-img" onerror="this.src='https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=800&q=80'">
+      <img src="${item.imageUrl}" alt="${item.caption || 'SSD Drill Action'}" class="gallery-img" onerror="this.onerror=null; this.src='logo.png';">
       <div class="gallery-overlay">
         <div class="gallery-zoom-icon"><i class="fa-solid fa-magnifying-glass-plus"></i></div>
         <p class="gallery-caption">${item.caption || 'Samata Sainik Dal Archive'}</p>
@@ -901,7 +901,7 @@ function renderTestimonials(testimonialsArray) {
       <div class="testimonial-quote-icon"><i class="fa-solid fa-quote-left"></i></div>
       <p class="testimonial-quote-text">"${item.quote}"</p>
       <div class="testimonial-author-box">
-        <img src="${item.photoUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'}" alt="${item.name}" class="testimonial-avatar" onerror="this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'">
+        <img src="${item.photoUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'}" alt="${item.name}" class="testimonial-avatar" onerror="this.onerror=null; this.src='logo.png';">
         <div class="testimonial-meta">
           <div class="testimonial-author-name">${item.name}</div>
           <div class="testimonial-designation">${item.designation || 'Sainik Commander'}</div>
@@ -1415,19 +1415,52 @@ function closeMobileMenu() {
   document.body.classList.remove("nav-open");
 }
 
-function toggleMobileDropdown(e) {
-  if (window.innerWidth <= 768) {
+function handleDropdownToggle(e) {
+  if (e) {
     e.preventDefault();
     e.stopPropagation();
-    const dropdown = e.currentTarget.nextElementSibling;
-    if (dropdown) {
-      dropdown.classList.toggle("mobile-open");
-      const icon = e.currentTarget.querySelector("i.fa-chevron-down");
-      if (icon) {
-        icon.style.transform = dropdown.classList.contains("mobile-open") ? "rotate(180deg)" : "rotate(0deg)";
-      }
-    }
   }
+
+  const trigger = e.currentTarget || e.target;
+  const navItem = trigger.closest('.nav-item');
+  if (!navItem) return;
+
+  const dropdownMenu = navItem.querySelector('.dropdown-menu');
+  const chevron = navItem.querySelector('i.fa-chevron-down');
+  const isMobile = window.innerWidth <= 1024;
+  const isAlreadyOpen = navItem.classList.contains('dropdown-open') || 
+                        navItem.classList.contains('open') ||
+                        (isMobile && dropdownMenu && dropdownMenu.classList.contains('mobile-open'));
+
+  // Close any other open dropdowns
+  document.querySelectorAll('.nav-item').forEach(item => {
+    if (item !== navItem) {
+      item.classList.remove('dropdown-open', 'open');
+      const d = item.querySelector('.dropdown-menu');
+      if (d) d.classList.remove('mobile-open');
+      const icon = item.querySelector('i.fa-chevron-down');
+      if (icon) icon.style.transform = 'rotate(0deg)';
+      const btn = item.querySelector('.nav-link');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  // Toggle this dropdown
+  if (isAlreadyOpen) {
+    navItem.classList.remove('dropdown-open', 'open');
+    if (dropdownMenu) dropdownMenu.classList.remove('mobile-open');
+    if (chevron) chevron.style.transform = 'rotate(0deg)';
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+  } else {
+    navItem.classList.add('dropdown-open', 'open');
+    if (dropdownMenu) dropdownMenu.classList.add('mobile-open');
+    if (chevron) chevron.style.transform = 'rotate(180deg)';
+    if (trigger) trigger.setAttribute('aria-expanded', 'true');
+  }
+}
+
+function toggleMobileDropdown(e) {
+  handleDropdownToggle(e);
 }
 
 // Mobile & Touch Ergonomics Initializer
@@ -1445,7 +1478,7 @@ function initMobileInteractions() {
   // 2. Auto-close mobile drawer when clicking anchor links
   document.querySelectorAll(".main-nav a[href^='#']").forEach(link => {
     link.addEventListener("click", () => {
-      if (window.innerWidth <= 768) {
+      if (window.innerWidth <= 1024) {
         closeMobileMenu();
       }
     });
@@ -1511,6 +1544,29 @@ function initMobileInteractions() {
       }
     }
   }
+
+  // 6. Dropdown Click Outside & Interaction Ergonomics
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.nav-item')) {
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('dropdown-open', 'open');
+        const d = item.querySelector('.dropdown-menu');
+        if (d && window.innerWidth > 1024) d.classList.remove('mobile-open');
+        const icon = item.querySelector('i.fa-chevron-down');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+        const btn = item.querySelector('.nav-link');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      });
+    }
+  });
+
+  document.querySelectorAll('.dropdown-menu').forEach(menu => {
+    menu.addEventListener('click', (e) => {
+      if (!e.target.closest('a')) {
+        e.stopPropagation();
+      }
+    });
+  });
 }
 
 // ==========================================================================
@@ -1542,7 +1598,7 @@ function renderCampaigns(campaignsArray) {
     return `
       <div class="campaign-card">
         <div class="campaign-img-wrapper">
-          <img src="${camp.imageUrl}" alt="${camp.title}" class="campaign-img" onerror="this.src='https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'">
+          <img src="${camp.imageUrl}" alt="${camp.title}" class="campaign-img" onerror="this.onerror=null; this.src='logo.png';">
           <span class="campaign-badge"><i class="fa-solid fa-flag"></i> ${camp.category}</span>
         </div>
         <div class="campaign-body">
@@ -1637,7 +1693,7 @@ function renderHomeGallery() {
 
   container.innerHTML = filtered.slice(0, 8).map((item, idx) => `
     <div class="gallery-card-compact" onclick="openLightbox(${idx})">
-      <img src="${item.imageUrl}" alt="${item.caption || 'Samata Sainik Dal Photo'}" onerror="this.src='https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=800&q=80'">
+      <img src="${item.imageUrl}" alt="${item.caption || 'Samata Sainik Dal Photo'}" onerror="this.onerror=null; this.src='logo.png';">
       <div class="gallery-overlay-compact">
         <span>${item.category || 'SSD Action'}</span>
         <h5>${item.caption || 'Samata Sainik Dal Field Unit'}</h5>
@@ -1759,7 +1815,7 @@ function renderGoverningCards(leadersList) {
       return `
         <div class="governing-card" data-level="${isItCell ? 'it_cell' : (isDistrict ? 'district' : (isState ? 'state' : 'national'))}" data-state="${escapeHtml(stateName)}" onclick="openOfficerPortfolioModal('${escapeHtml(lead.id || lead.name)}', false)" title="Click to view ${escapeHtml(lead.name)}'s official portfolio dossier">
           <div class="governing-header">
-            <img src="${lead.photoUrl}" alt="${escapeHtml(lead.name)}" class="governing-photo" onerror="this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80'">
+            <img src="${lead.photoUrl}" alt="${escapeHtml(lead.name)}" class="governing-photo" onerror="this.onerror=null; this.src='logo.png';">
             <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> ${escapeHtml(badgeText)}</span>
             ${tierBadgeHtml}
           </div>
@@ -1786,7 +1842,7 @@ function renderGoverningCards(leadersList) {
     const advToUse = advisoryMembers.length > 0 ? advisoryMembers : (ssdSampleData.advisoryBoard || []);
     advisoryContainer.innerHTML = advToUse.map((adv, idx) => `
       <div class="advisory-member" onclick="openOfficerPortfolioModal('${escapeHtml(adv.id || adv.name || idx)}', true)" title="Click to view ${escapeHtml(adv.name)}'s complete advisory portfolio & movement history">
-        <img src="${adv.photoUrl}" alt="${escapeHtml(adv.name)}" class="advisory-avatar" onerror="this.src='https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80'">
+        <img src="${adv.photoUrl}" alt="${escapeHtml(adv.name)}" class="advisory-avatar" onerror="this.onerror=null; this.src='logo.png';">
         <div style="flex: 1; min-width: 0;">
           <div class="advisory-name">${escapeHtml(adv.name)}</div>
           <div class="advisory-role">${escapeHtml(adv.credentials || adv.role || 'Senior Advisory Member')}</div>
@@ -2545,21 +2601,50 @@ function handleQuickJoinSubmit(e) {
 // ==========================================================================
 let uploadedPhotoBase64 = null;
 
-function previewPhotoUpload(event) {
+function compressImageFile(file, maxWidth = 500, quality = 0.82) {
+  return new Promise((resolve) => {
+    if (!file || !file.type.startsWith("image/")) {
+      resolve(null);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(dataUrl);
+      };
+      img.onerror = () => resolve(e.target.result);
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function previewPhotoUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    uploadedPhotoBase64 = e.target.result;
-    const previewContainer = document.getElementById("photoPreviewContainer");
-    const previewImg = document.getElementById("photoPreviewImg");
-    if (previewContainer && previewImg) {
-      previewImg.src = uploadedPhotoBase64;
-      previewContainer.style.display = "block";
-    }
-  };
-  reader.readAsDataURL(file);
+  const compressed = await compressImageFile(file, 500, 0.82);
+  uploadedPhotoBase64 = compressed;
+  const previewContainer = document.getElementById("photoPreviewContainer");
+  const previewImg = document.getElementById("photoPreviewImg");
+  if (previewContainer && previewImg) {
+    previewImg.src = uploadedPhotoBase64;
+    previewContainer.style.display = "block";
+  }
 }
 
 function handleStateChange(stateValue) {
@@ -2607,6 +2692,10 @@ async function handleEnhancedMemberRegistration(e) {
   if (btnSpinner) btnSpinner.style.display = "inline-flex";
 
   try {
+    if (photoFile && !uploadedPhotoBase64) {
+      uploadedPhotoBase64 = await compressImageFile(photoFile, 500, 0.82);
+    }
+
     const formData = new FormData();
     formData.append("fullName", fullName);
     formData.append("email", email);
@@ -2627,7 +2716,8 @@ async function handleEnhancedMemberRegistration(e) {
 
     if (photoFile) {
       formData.append("photo", photoFile);
-    } else if (uploadedPhotoBase64) {
+    }
+    if (uploadedPhotoBase64) {
       formData.append("photoBase64", uploadedPhotoBase64);
     }
 
@@ -2640,6 +2730,39 @@ async function handleEnhancedMemberRegistration(e) {
 
     if (data.success && data.applicationId) {
       showToast(`Enlistment Application registered! Reference: ${data.applicationId}`, "success");
+
+      const appRecord = {
+        id: data.applicationId,
+        full_name: fullName,
+        email: email,
+        mobile: phone,
+        dob: dob,
+        gender: gender,
+        wing_name: wing,
+        blood_group: bloodGroup,
+        education: qualification,
+        occupation: occupation,
+        state_name: state,
+        region_name: region,
+        district_name: district,
+        taluka_name: taluka,
+        address: address,
+        special_skills: message,
+        photo_url: uploadedPhotoBase64 || null,
+        status: 'SUBMITTED',
+        created_at: new Date().toISOString()
+      };
+
+      if (db) {
+        db.ref('membership_applications/' + data.applicationId).set(appRecord).catch(e => console.warn(e));
+        db.ref('members/' + data.applicationId).set({
+          ...appRecord,
+          sainikId: data.applicationId,
+          enlistmentId: data.applicationId,
+          status: 'Pending',
+          timestamp: Date.now()
+        }).catch(e => console.warn(e));
+      }
       
       // Populate and Show Confirmation Modal
       const modal = document.getElementById("appConfirmModal");
@@ -2682,5 +2805,7 @@ window.handleEnhancedMemberRegistration = handleEnhancedMemberRegistration;
 window.previewPhotoUpload = previewPhotoUpload;
 window.handleStateChange = handleStateChange;
 window.closeConfirmModal = closeConfirmModal;
+window.handleDropdownToggle = handleDropdownToggle;
+window.toggleMobileDropdown = toggleMobileDropdown;
 
 

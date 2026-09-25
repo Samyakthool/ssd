@@ -3,6 +3,7 @@
 // ==========================================================================
 
 import express from 'express';
+import fs from 'fs';
 import { query, embeddedStore, saveEmbeddedStore } from '../db/index.js';
 import { authenticate, optionalAuth } from '../middleware/auth.js';
 import { requireRole, enforceJurisdiction, canAccessRecord } from '../middleware/rbac.js';
@@ -127,6 +128,58 @@ function findApplicationOrMemberRecord(id) {
   return null;
 }
 
+// Helper to find, synthesize, or hydrate an application record with multi-source fallback
+function resolveOrHydrateApplication(id, req = null) {
+  if (!id) return null;
+  const cleanId = String(id).trim();
+
+  // 1. Check membership_applications map
+  let app = findApplicationRecord(cleanId);
+  if (app) return app;
+
+  // 2. Check members map or synthesize from member
+  const memFound = findApplicationOrMemberRecord(cleanId);
+  if (memFound && memFound.record) {
+    app = memFound.record;
+    embeddedStore.membership_applications.set(app.id, app);
+    return app;
+  }
+
+  // 3. Hydrate from request body if sent by client
+  const candidate = req?.body?.application || req?.body?.applicationData;
+  if (candidate && typeof candidate === 'object') {
+    const finalId = candidate.id || candidate.sainik_id || candidate.sainikId || candidate.application_id || cleanId;
+    app = {
+      ...candidate,
+      id: finalId,
+      sainik_id: candidate.sainik_id || candidate.sainikId || (finalId.startsWith('SSD-MH-') || finalId.startsWith('SSD-DL-') ? finalId : null),
+      full_name: candidate.full_name || candidate.fullName || candidate.name || 'Cadet Applicant',
+      mobile: candidate.mobile || candidate.phone || '',
+      email: candidate.email || '',
+      state_name: candidate.state_name || candidate.state || 'Maharashtra',
+      state_id: candidate.state_id || 'state_mh',
+      district_name: candidate.district_name || candidate.district || candidate.city || 'Nagpur',
+      district_id: candidate.district_id || null,
+      region_name: candidate.region_name || candidate.region || '',
+      region_id: candidate.region_id || null,
+      wing_name: candidate.wing_name || candidate.wing || 'Central Cadet Corps (Sainik Wing)',
+      wing_id: candidate.wing_id || 'wing_cadet',
+      photo_url: candidate.photo_url || candidate.photoUrl || candidate.photoBase64 || candidate.photo || 'logo.png',
+      status: candidate.status || 'SUBMITTED',
+      current_step_id: candidate.current_step_id || 'step_1_district',
+      current_step_order: candidate.current_step_order || 1,
+      assigned_role: candidate.assigned_role || 'district_official',
+      created_at: candidate.created_at || (candidate.timestamp ? new Date(candidate.timestamp).toISOString() : new Date().toISOString()),
+      updated_at: new Date().toISOString()
+    };
+    embeddedStore.membership_applications.set(finalId, app);
+    saveEmbeddedStore();
+    return app;
+  }
+
+  return null;
+}
+
 
 // 1. PUBLIC MEMBERSHIP APPLICATION SUBMISSION
 router.post('/apply', upload.single('photo'), async (req, res) => {
@@ -146,11 +199,20 @@ router.post('/apply', upload.single('photo'), async (req, res) => {
     }
 
     const appId = generateApplicationId();
-    let photoUrl = req.file ? `/uploads/photos/${req.file.filename}` : null;
-    
-    // If photo is provided as Base64 in body (fallback from frontend camera/canvas)
-    if (!photoUrl && req.body.photoBase64) {
-      photoUrl = req.body.photoBase64;
+    let photoUrl = req.body.photoBase64 || null;
+
+    if (!photoUrl && req.file) {
+      try {
+        const fileBuffer = fs.readFileSync(req.file.path);
+        const mime = req.file.mimetype || 'image/jpeg';
+        photoUrl = `data:${mime};base64,${fileBuffer.toString('base64')}`;
+      } catch (err) {
+        photoUrl = `/uploads/photos/${req.file.filename}`;
+      }
+    }
+
+    if (!photoUrl) {
+      photoUrl = 'logo.png';
     }
 
     // Assign Default Workflow and First Step (District Executive)
@@ -179,7 +241,7 @@ router.post('/apply', upload.single('photo'), async (req, res) => {
       blood_group: bloodGroup || 'N/A',
       wing_id: wingId || 'wing_cadet',
       wing_name: wingName || 'Central Cadet Corps (Sainik Wing)',
-      photo_url: photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+      photo_url: photoUrl,
       documents_json: [],
       special_skills: specialSkills || '',
       solemn_pledge_accepted: solemnPledge === 'true' || solemnPledge === true,
@@ -379,7 +441,7 @@ router.post('/applications/:id/review', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const { remarks, assessmentData } = req.body;
-    const app = findApplicationRecord(id);
+    const app = resolveOrHydrateApplication(id, req);
 
     if (!app) return res.status(404).json({ success: false, error: 'Application not found.' });
     if (!canAccessRecord(req.user, app)) return res.status(403).json({ success: false, error: 'Access Denied by jurisdiction.' });
@@ -419,7 +481,7 @@ router.post('/applications/:id/recommend', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const { remarks, assessmentData } = req.body;
-    const app = findApplicationRecord(id);
+    const app = resolveOrHydrateApplication(id, req);
 
     if (!app) return res.status(404).json({ success: false, error: 'Application not found.' });
     if (!canAccessRecord(req.user, app)) return res.status(403).json({ success: false, error: 'Access Denied by jurisdiction.' });
@@ -483,7 +545,7 @@ router.post('/applications/:id/correction', authenticate, async (req, res) => {
       return res.status(400).json({ success: false, error: 'A specific reason for requesting correction is required.' });
     }
 
-    const app = findApplicationRecord(id);
+    const app = resolveOrHydrateApplication(id, req);
     if (!app) return res.status(404).json({ success: false, error: 'Application not found.' });
     if (!canAccessRecord(req.user, app)) return res.status(403).json({ success: false, error: 'Access Denied by jurisdiction.' });
 
@@ -528,7 +590,7 @@ router.post('/applications/:id/resubmit', upload.single('photo'), async (req, re
     const { id } = req.params;
     const { fullName, phone, address, specialSkills } = req.body;
 
-    const app = findApplicationRecord(id);
+    const app = resolveOrHydrateApplication(id, req);
     if (!app) return res.status(404).json({ success: false, error: 'Application reference not found.' });
 
     if (app.status !== 'CORRECTION_REQUIRED') {
@@ -539,8 +601,16 @@ router.post('/applications/:id/resubmit', upload.single('photo'), async (req, re
     if (phone) app.mobile = phone.trim();
     if (address) app.address = address.trim();
     if (specialSkills) app.special_skills = specialSkills.trim();
-    if (req.file) {
-      app.photo_url = `/uploads/photos/${req.file.filename}`;
+    if (req.body.photoBase64) {
+      app.photo_url = req.body.photoBase64;
+    } else if (req.file) {
+      try {
+        const fileBuffer = fs.readFileSync(req.file.path);
+        const mime = req.file.mimetype || 'image/jpeg';
+        app.photo_url = `data:${mime};base64,${fileBuffer.toString('base64')}`;
+      } catch (err) {
+        app.photo_url = `/uploads/photos/${req.file.filename}`;
+      }
     }
 
     const prevStatus = app.status;
@@ -587,7 +657,7 @@ router.post('/applications/:id/reject', authenticate, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Rejection reason is required.' });
     }
 
-    const app = findApplicationRecord(id);
+    const app = resolveOrHydrateApplication(id, req);
     if (!app) return res.status(404).json({ success: false, error: 'Application not found.' });
     if (!canAccessRecord(req.user, app)) return res.status(403).json({ success: false, error: 'Access Denied by jurisdiction.' });
 
@@ -627,7 +697,7 @@ router.post('/applications/:id/escalate', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const { remarks, assessmentData } = req.body;
-    const app = findApplicationRecord(id);
+    const app = resolveOrHydrateApplication(id, req);
 
     if (!app) return res.status(404).json({ success: false, error: 'Application not found.' });
     if (!canAccessRecord(req.user, app)) return res.status(403).json({ success: false, error: 'Access Denied by jurisdiction.' });
@@ -668,7 +738,7 @@ router.post('/applications/:id/approve', authenticate, requireRole('super_admin'
   try {
     const { id } = req.params;
     const { designation, batchNo, remarks, assessmentData } = req.body;
-    let app = findApplicationRecord(id);
+    let app = resolveOrHydrateApplication(id, req);
 
     if (!app) {
       const memFound = findApplicationOrMemberRecord(id);
@@ -706,7 +776,7 @@ router.post('/applications/:id/approve', authenticate, requireRole('super_admin'
       dob: app.dob,
       gender: app.gender,
       blood_group: app.blood_group,
-      photo_url: app.photo_url,
+      photo_url: app.photo_url || app.photoUrl || app.photoBase64 || app.photo || 'logo.png',
       state_name: app.state_name,
       region_name: app.region_name,
       district_name: app.district_name,

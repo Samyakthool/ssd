@@ -454,6 +454,7 @@ button, input, select, textarea {
   box-shadow: 0 3px 15px rgba(0, 0, 0, 0.09);
   transition: all 0.3s ease;
   width: 100%;
+  overflow: visible !important;
 }
 
 .header-main {
@@ -464,6 +465,7 @@ button, input, select, textarea {
   transition: padding 0.3s ease;
   gap: clamp(6px, 1vw, 16px);
   width: 100%;
+  overflow: visible;
 }
 
 .header-wrapper.scrolled .header-main {
@@ -599,7 +601,9 @@ button, input, select, textarea {
   transition: transform 0.2s ease;
 }
 
-.nav-item:hover .nav-link i.fa-chevron-down {
+.nav-item:hover .nav-link i.fa-chevron-down,
+.nav-item.dropdown-open .nav-link i.fa-chevron-down,
+.nav-item.open .nav-link i.fa-chevron-down {
   transform: rotate(180deg);
 }
 
@@ -626,14 +630,17 @@ button, input, select, textarea {
   visibility: hidden;
   transform: translateY(12px);
   transition: all 0.25s ease;
-  z-index: 100;
+  z-index: 9999;
   padding: 6px 0;
 }
 
-.nav-item:hover .dropdown-menu {
+.nav-item:hover .dropdown-menu,
+.nav-item.dropdown-open .dropdown-menu,
+.nav-item.open .dropdown-menu {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
+  pointer-events: auto;
 }
 
 .dropdown-link {
@@ -1950,8 +1957,9 @@ textarea.form-control {
 .donation-calculator-card {
   max-width: 680px;
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
+  background: rgba(10, 31, 68, 0.95);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 10px;
   padding: 32px;
@@ -2575,8 +2583,9 @@ textarea.form-control {
   position: absolute;
   top: 12px;
   right: 12px;
-  background: rgba(0, 31, 63, 0.85);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 31, 63, 0.95);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   color: var(--white);
   font-size: 10.5px;
   font-weight: 700;
@@ -2726,9 +2735,9 @@ textarea.form-control {
 .nav-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(7, 21, 46, 0.7);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   z-index: 1001;
   opacity: 0;
   visibility: hidden;
@@ -2740,6 +2749,15 @@ textarea.form-control {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
+}
+
+@media (min-width: 1025px) {
+  .nav-backdrop {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
 }
 
 body.nav-open {
@@ -3133,8 +3151,10 @@ body.nav-open {
     margin: 0;
   }
 
-  .dropdown-menu.mobile-open {
-    display: block;
+  .dropdown-menu.mobile-open,
+  .nav-item.dropdown-open .dropdown-menu,
+  .nav-item.open .dropdown-menu {
+    display: block !important;
     animation: slideDown 0.25s ease-out;
   }
 
@@ -3617,8 +3637,8 @@ body.nav-open {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .officer-portfolio-modal.active {

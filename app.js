@@ -1415,19 +1415,52 @@ function closeMobileMenu() {
   document.body.classList.remove("nav-open");
 }
 
-function toggleMobileDropdown(e) {
-  if (window.innerWidth <= 1024) {
+function handleDropdownToggle(e) {
+  if (e) {
     e.preventDefault();
     e.stopPropagation();
-    const dropdown = e.currentTarget.nextElementSibling;
-    if (dropdown) {
-      dropdown.classList.toggle("mobile-open");
-      const icon = e.currentTarget.querySelector("i.fa-chevron-down");
-      if (icon) {
-        icon.style.transform = dropdown.classList.contains("mobile-open") ? "rotate(180deg)" : "rotate(0deg)";
-      }
-    }
   }
+
+  const trigger = e.currentTarget || e.target;
+  const navItem = trigger.closest('.nav-item');
+  if (!navItem) return;
+
+  const dropdownMenu = navItem.querySelector('.dropdown-menu');
+  const chevron = navItem.querySelector('i.fa-chevron-down');
+  const isMobile = window.innerWidth <= 1024;
+  const isAlreadyOpen = navItem.classList.contains('dropdown-open') || 
+                        navItem.classList.contains('open') ||
+                        (isMobile && dropdownMenu && dropdownMenu.classList.contains('mobile-open'));
+
+  // Close any other open dropdowns
+  document.querySelectorAll('.nav-item').forEach(item => {
+    if (item !== navItem) {
+      item.classList.remove('dropdown-open', 'open');
+      const d = item.querySelector('.dropdown-menu');
+      if (d) d.classList.remove('mobile-open');
+      const icon = item.querySelector('i.fa-chevron-down');
+      if (icon) icon.style.transform = 'rotate(0deg)';
+      const btn = item.querySelector('.nav-link');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  // Toggle this dropdown
+  if (isAlreadyOpen) {
+    navItem.classList.remove('dropdown-open', 'open');
+    if (dropdownMenu) dropdownMenu.classList.remove('mobile-open');
+    if (chevron) chevron.style.transform = 'rotate(0deg)';
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+  } else {
+    navItem.classList.add('dropdown-open', 'open');
+    if (dropdownMenu) dropdownMenu.classList.add('mobile-open');
+    if (chevron) chevron.style.transform = 'rotate(180deg)';
+    if (trigger) trigger.setAttribute('aria-expanded', 'true');
+  }
+}
+
+function toggleMobileDropdown(e) {
+  handleDropdownToggle(e);
 }
 
 // Mobile & Touch Ergonomics Initializer
@@ -1511,6 +1544,29 @@ function initMobileInteractions() {
       }
     }
   }
+
+  // 6. Dropdown Click Outside & Interaction Ergonomics
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.nav-item')) {
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('dropdown-open', 'open');
+        const d = item.querySelector('.dropdown-menu');
+        if (d && window.innerWidth > 1024) d.classList.remove('mobile-open');
+        const icon = item.querySelector('i.fa-chevron-down');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+        const btn = item.querySelector('.nav-link');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      });
+    }
+  });
+
+  document.querySelectorAll('.dropdown-menu').forEach(menu => {
+    menu.addEventListener('click', (e) => {
+      if (!e.target.closest('a')) {
+        e.stopPropagation();
+      }
+    });
+  });
 }
 
 // ==========================================================================
@@ -2545,21 +2601,50 @@ function handleQuickJoinSubmit(e) {
 // ==========================================================================
 let uploadedPhotoBase64 = null;
 
-function previewPhotoUpload(event) {
+function compressImageFile(file, maxWidth = 500, quality = 0.82) {
+  return new Promise((resolve) => {
+    if (!file || !file.type.startsWith("image/")) {
+      resolve(null);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(dataUrl);
+      };
+      img.onerror = () => resolve(e.target.result);
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function previewPhotoUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    uploadedPhotoBase64 = e.target.result;
-    const previewContainer = document.getElementById("photoPreviewContainer");
-    const previewImg = document.getElementById("photoPreviewImg");
-    if (previewContainer && previewImg) {
-      previewImg.src = uploadedPhotoBase64;
-      previewContainer.style.display = "block";
-    }
-  };
-  reader.readAsDataURL(file);
+  const compressed = await compressImageFile(file, 500, 0.82);
+  uploadedPhotoBase64 = compressed;
+  const previewContainer = document.getElementById("photoPreviewContainer");
+  const previewImg = document.getElementById("photoPreviewImg");
+  if (previewContainer && previewImg) {
+    previewImg.src = uploadedPhotoBase64;
+    previewContainer.style.display = "block";
+  }
 }
 
 function handleStateChange(stateValue) {
@@ -2607,6 +2692,10 @@ async function handleEnhancedMemberRegistration(e) {
   if (btnSpinner) btnSpinner.style.display = "inline-flex";
 
   try {
+    if (photoFile && !uploadedPhotoBase64) {
+      uploadedPhotoBase64 = await compressImageFile(photoFile, 500, 0.82);
+    }
+
     const formData = new FormData();
     formData.append("fullName", fullName);
     formData.append("email", email);
@@ -2627,7 +2716,8 @@ async function handleEnhancedMemberRegistration(e) {
 
     if (photoFile) {
       formData.append("photo", photoFile);
-    } else if (uploadedPhotoBase64) {
+    }
+    if (uploadedPhotoBase64) {
       formData.append("photoBase64", uploadedPhotoBase64);
     }
 
@@ -2640,6 +2730,39 @@ async function handleEnhancedMemberRegistration(e) {
 
     if (data.success && data.applicationId) {
       showToast(`Enlistment Application registered! Reference: ${data.applicationId}`, "success");
+
+      const appRecord = {
+        id: data.applicationId,
+        full_name: fullName,
+        email: email,
+        mobile: phone,
+        dob: dob,
+        gender: gender,
+        wing_name: wing,
+        blood_group: bloodGroup,
+        education: qualification,
+        occupation: occupation,
+        state_name: state,
+        region_name: region,
+        district_name: district,
+        taluka_name: taluka,
+        address: address,
+        special_skills: message,
+        photo_url: uploadedPhotoBase64 || null,
+        status: 'SUBMITTED',
+        created_at: new Date().toISOString()
+      };
+
+      if (db) {
+        db.ref('membership_applications/' + data.applicationId).set(appRecord).catch(e => console.warn(e));
+        db.ref('members/' + data.applicationId).set({
+          ...appRecord,
+          sainikId: data.applicationId,
+          enlistmentId: data.applicationId,
+          status: 'Pending',
+          timestamp: Date.now()
+        }).catch(e => console.warn(e));
+      }
       
       // Populate and Show Confirmation Modal
       const modal = document.getElementById("appConfirmModal");
@@ -2682,5 +2805,7 @@ window.handleEnhancedMemberRegistration = handleEnhancedMemberRegistration;
 window.previewPhotoUpload = previewPhotoUpload;
 window.handleStateChange = handleStateChange;
 window.closeConfirmModal = closeConfirmModal;
+window.handleDropdownToggle = handleDropdownToggle;
+window.toggleMobileDropdown = toggleMobileDropdown;
 
 

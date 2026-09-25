@@ -41,7 +41,7 @@ router.get('/:sainikId', async (req, res) => {
         member = {
           sainik_id: app.sainik_id || app.id,
           full_name: app.full_name,
-          photo_url: app.photo_url,
+          photo_url: app.photo_url || app.photoUrl || app.photoBase64 || app.photo || null,
           designation: app.designation || (s === 'FINAL_APPROVED' || s === 'APPROVED' ? 'Cadet Sainik' : 'Enlistment Candidate'),
           wing_name: app.wing_name,
           state_name: app.state_name,
@@ -67,7 +67,7 @@ router.get('/:sainikId', async (req, res) => {
       verified: true,
       sainikId: member.sainik_id,
       fullName: member.full_name,
-      photoUrl: member.photo_url,
+      photoUrl: member.photo_url || member.photoUrl || member.photoBase64 || member.photo || null,
       designation: member.designation,
       wing: member.wing_name,
       state: member.state_name,
