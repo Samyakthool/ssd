@@ -3,7 +3,7 @@
 // ==========================================================================
 
 import express from 'express';
-import { query, embeddedStore } from '../db/index.js';
+import { query, embeddedStore, supabase } from '../db/index.js';
 import { authenticate, optionalAuth } from '../middleware/auth.js';
 import { enforceJurisdiction, canAccessRecord } from '../middleware/rbac.js';
 
@@ -62,25 +62,56 @@ router.get('/:id', authenticate, async (req, res) => {
     
     const clean = String(id).trim();
     const upper = clean.toUpperCase();
-    let member = embeddedStore.members.get(clean);
+    const cleanLower = clean.toLowerCase();
+    const cleanDigits = clean.replace(/\D/g, '');
+    let member = embeddedStore.members.get(clean) || embeddedStore.members.get(upper);
 
     if (!member) {
-      // Try lookup across members by ID, sainik_id, application_id, or mobile
+      // Try lookup across members by ID, sainik_id, application_id, email, or mobile
       for (const m of embeddedStore.members.values()) {
         if (m.id === clean || (m.id && m.id.toUpperCase() === upper)) { member = m; break; }
         if (m.sainik_id && (m.sainik_id === clean || m.sainik_id.toUpperCase() === upper)) { member = m; break; }
         if (m.application_id && (m.application_id === clean || m.application_id.toUpperCase() === upper)) { member = m; break; }
-        if (m.mobile && (m.mobile === clean || m.mobile.includes(clean))) { member = m; break; }
+        if (m.email && m.email.toLowerCase() === cleanLower) { member = m; break; }
+        if (m.mobile) {
+          const mDigits = m.mobile.replace(/\D/g, '');
+          if (m.mobile === clean || (cleanDigits.length >= 8 && (mDigits.includes(cleanDigits) || cleanDigits.includes(mDigits)))) {
+            member = m;
+            break;
+          }
+        }
+        if (m.phone) {
+          const pDigits = m.phone.replace(/\D/g, '');
+          if (m.phone === clean || (cleanDigits.length >= 8 && (pDigits.includes(cleanDigits) || cleanDigits.includes(pDigits)))) {
+            member = m;
+            break;
+          }
+        }
       }
     }
 
     if (!member) {
       // Fallback: Check if it's an application in membership_applications
-      let app = embeddedStore.membership_applications.get(clean);
+      let app = embeddedStore.membership_applications.get(clean) || embeddedStore.membership_applications.get(upper);
       if (!app) {
         for (const a of embeddedStore.membership_applications.values()) {
           if (a.id === clean || (a.id && a.id.toUpperCase() === upper)) { app = a; break; }
           if (a.sainik_id && (a.sainik_id === clean || a.sainik_id.toUpperCase() === upper)) { app = a; break; }
+          if (a.email && a.email.toLowerCase() === cleanLower) { app = a; break; }
+          if (a.mobile) {
+            const aDigits = a.mobile.replace(/\D/g, '');
+            if (a.mobile === clean || (cleanDigits.length >= 8 && (aDigits.includes(cleanDigits) || cleanDigits.includes(aDigits)))) {
+              app = a;
+              break;
+            }
+          }
+          if (a.phone) {
+            const pDigits = a.phone.replace(/\D/g, '');
+            if (a.phone === clean || (cleanDigits.length >= 8 && (pDigits.includes(cleanDigits) || cleanDigits.includes(pDigits)))) {
+              app = a;
+              break;
+            }
+          }
         }
       }
 
@@ -99,7 +130,7 @@ router.get('/:id', authenticate, async (req, res) => {
           district_name: app.district_name || 'Nagpur',
           taluka_name: app.taluka_name || '',
           address: app.address || '',
-          chapter_name: `${app.district_name} Central Unit`,
+          chapter_name: `${app.district_name || 'Nagpur'} Central Unit`,
           wing_name: app.wing_name || 'Central Cadet Corps',
           designation: app.designation || 'Cadet Sainik',
           batch_no: app.batch_no || 'BATCH-2026/Q3',
@@ -129,26 +160,109 @@ router.get('/card/:sainikId', async (req, res) => {
     if (!sainikId) return res.status(400).json({ success: false, error: 'Sainik ID required.' });
     const cleanId = String(sainikId).trim();
     const upperId = cleanId.toUpperCase();
+    const cleanLower = cleanId.toLowerCase();
+    const cleanDigits = cleanId.replace(/\D/g, '');
+
+    // 0. Search Supabase Cloud database first if configured
+    let member = null;
+    if (supabase) {
+      try {
+        const { data: supaMember } = await supabase
+          .from('members')
+          .select('*')
+          .or(`sainik_id.ilike.${cleanId},id.ilike.${cleanId},mobile.ilike.%${cleanDigits || cleanId}%,email.ilike.${cleanId}`)
+          .limit(1)
+          .maybeSingle();
+
+        if (supaMember) {
+          member = supaMember;
+        } else {
+          const { data: supaApp } = await supabase
+            .from('membership_applications')
+            .select('*')
+            .or(`sainik_id.ilike.${cleanId},id.ilike.${cleanId},mobile.ilike.%${cleanDigits || cleanId}%,email.ilike.${cleanId}`)
+            .limit(1)
+            .maybeSingle();
+
+          if (supaApp) {
+            const s = (supaApp.status || '').toUpperCase();
+            const sainikNum = supaApp.sainik_id || ('SSD-' + (supaApp.state_name ? (supaApp.state_name.slice(0, 2).toUpperCase()) : 'MH') + '-2026-' + (String(supaApp.id).replace(/\D/g, '').slice(-4) || '1927'));
+            member = {
+              id: supaApp.id,
+              sainik_id: sainikNum,
+              application_id: supaApp.id,
+              full_name: supaApp.full_name,
+              mobile: supaApp.mobile,
+              email: supaApp.email,
+              photo_url: supaApp.photo_url || supaApp.photoUrl || null,
+              designation: supaApp.designation || (s === 'FINAL_APPROVED' || s === 'APPROVED' ? 'Cadet Sainik' : 'Enlistment Candidate'),
+              wing_name: supaApp.wing_name,
+              state_name: supaApp.state_name,
+              district_name: supaApp.district_name,
+              chapter_name: `${supaApp.district_name || 'Nagpur'} Central Unit`,
+              blood_group: supaApp.blood_group || 'N/A',
+              approved_at: supaApp.updated_at || supaApp.created_at,
+              created_at: supaApp.created_at,
+              batch_no: supaApp.batch_no || 'BATCH-2026/Q3',
+              status: (s === 'FINAL_APPROVED' || s === 'APPROVED' || s === 'ACTIVE') ? 'ACTIVE' : (supaApp.status || 'SUBMITTED'),
+              qr_token: 'qr_' + sainikNum.toLowerCase().replace(/[^a-z0-9]/g, '_')
+            };
+          }
+        }
+      } catch (supaErr) {
+        // Fallback to embeddedStore
+      }
+    }
 
     // 1. Search across embeddedStore.members
-    let member = embeddedStore.members.get(cleanId);
     if (!member) {
-      for (const m of embeddedStore.members.values()) {
-        if (m.sainik_id && (m.sainik_id === cleanId || m.sainik_id.toUpperCase() === upperId)) { member = m; break; }
-        if (m.id === cleanId || (m.id && m.id.toUpperCase() === upperId)) { member = m; break; }
-        if (m.application_id && (m.application_id === cleanId || m.application_id.toUpperCase() === upperId)) { member = m; break; }
-        if (m.mobile && (m.mobile === cleanId || m.mobile.includes(cleanId))) { member = m; break; }
+      member = embeddedStore.members.get(cleanId) || embeddedStore.members.get(upperId);
+      if (!member) {
+        for (const m of embeddedStore.members.values()) {
+          if (m.sainik_id && (m.sainik_id === cleanId || m.sainik_id.toUpperCase() === upperId)) { member = m; break; }
+          if (m.id === cleanId || (m.id && m.id.toUpperCase() === upperId)) { member = m; break; }
+          if (m.application_id && (m.application_id === cleanId || m.application_id.toUpperCase() === upperId)) { member = m; break; }
+          if (m.email && m.email.toLowerCase() === cleanLower) { member = m; break; }
+          if (m.mobile) {
+            const mDigits = m.mobile.replace(/\D/g, '');
+            if (m.mobile === cleanId || (cleanDigits.length >= 8 && (mDigits.includes(cleanDigits) || cleanDigits.includes(mDigits)))) {
+              member = m;
+              break;
+            }
+          }
+          if (m.phone) {
+            const pDigits = m.phone.replace(/\D/g, '');
+            if (m.phone === cleanId || (cleanDigits.length >= 8 && (pDigits.includes(cleanDigits) || cleanDigits.includes(pDigits)))) {
+              member = m;
+              break;
+            }
+          }
+        }
       }
     }
 
     // 2. Search across embeddedStore.membership_applications
     if (!member) {
-      let app = embeddedStore.membership_applications.get(cleanId);
+      let app = embeddedStore.membership_applications.get(cleanId) || embeddedStore.membership_applications.get(upperId);
       if (!app) {
         for (const a of embeddedStore.membership_applications.values()) {
           if (a.id === cleanId || (a.id && a.id.toUpperCase() === upperId)) { app = a; break; }
           if (a.sainik_id && (a.sainik_id === cleanId || a.sainik_id.toUpperCase() === upperId)) { app = a; break; }
-          if (a.mobile && (a.mobile === cleanId || a.mobile.includes(cleanId))) { app = a; break; }
+          if (a.email && a.email.toLowerCase() === cleanLower) { app = a; break; }
+          if (a.mobile) {
+            const aDigits = a.mobile.replace(/\D/g, '');
+            if (a.mobile === cleanId || (cleanDigits.length >= 8 && (aDigits.includes(cleanDigits) || cleanDigits.includes(aDigits)))) {
+              app = a;
+              break;
+            }
+          }
+          if (a.phone) {
+            const pDigits = a.phone.replace(/\D/g, '');
+            if (a.phone === cleanId || (cleanDigits.length >= 8 && (pDigits.includes(cleanDigits) || cleanDigits.includes(pDigits)))) {
+              app = a;
+              break;
+            }
+          }
         }
       }
 
@@ -167,7 +281,7 @@ router.get('/card/:sainikId', async (req, res) => {
           wing_name: app.wing_name,
           state_name: app.state_name,
           district_name: app.district_name,
-          chapter_name: `${app.district_name} Central Unit`,
+          chapter_name: `${app.district_name || 'Nagpur'} Central Unit`,
           blood_group: app.blood_group || 'N/A',
           approved_at: app.updated_at || app.created_at,
           created_at: app.created_at,

@@ -131,6 +131,9 @@ function loadEmbeddedStore() {
   }
 }
 
+// Auto-hydrate embedded store immediately on module evaluation
+loadEmbeddedStore();
+
 // Initialize Database (Supabase / PostgreSQL with resilient fallback)
 export async function initDb() {
   loadEmbeddedStore();

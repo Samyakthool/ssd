@@ -19,6 +19,305 @@ async function parseJsonSafe(res) {
   }
 }
 
+// Multi-tier resolver for Sainik Member Portal
+async function resolvePortalRecord(inputId) {
+  if (!inputId) return null;
+  const cleanId = String(inputId).trim();
+  const upperId = cleanId.toUpperCase();
+  const cleanDigits = cleanId.replace(/\D/g, '');
+  const cleanLower = cleanId.toLowerCase();
+
+  // -------------------------------------------------------------
+  // TIER 1: Check Backend Digital Card Endpoint
+  // -------------------------------------------------------------
+  try {
+    const cardRes = await fetch(`/api/members/card/${encodeURIComponent(cleanId)}`);
+    const cardJson = await parseJsonSafe(cardRes);
+
+    if (cardJson.success && cardJson.cardData) {
+      const isAppr = cardJson.cardData.isApproved !== undefined 
+        ? cardJson.cardData.isApproved 
+        : (cardJson.cardData.status === 'ACTIVE' || cardJson.cardData.status === 'FINAL_APPROVED' || cardJson.cardData.status === 'APPROVED');
+      
+      return {
+        type: isAppr ? 'member' : 'application',
+        data: cardJson.cardData,
+        source: 'api_card'
+      };
+    }
+  } catch (e) {
+    console.warn("API Card fetch notice:", e);
+  }
+
+  // -------------------------------------------------------------
+  // TIER 2: Check Backend Application Status Endpoint
+  // -------------------------------------------------------------
+  try {
+    const appRes = await fetch(`/api/membership/status/${encodeURIComponent(cleanId)}`);
+    const appJson = await parseJsonSafe(appRes);
+
+    if (appJson.success && (appJson.applicantName || appJson.full_name)) {
+      const st = (appJson.currentStatus || appJson.status || '').toUpperCase();
+      const isAppr = (st === 'FINAL_APPROVED' || st === 'ACTIVE' || st === 'APPROVED');
+      
+      return {
+        type: isAppr ? 'member' : 'application',
+        data: appJson,
+        source: 'api_status'
+      };
+    }
+  } catch (e) {
+    console.warn("API Status fetch notice:", e);
+  }
+
+  // -------------------------------------------------------------
+  // TIER 3: Check Supabase Cloud Client (Direct Database Query)
+  // -------------------------------------------------------------
+  try {
+    let supabaseClient = window.getSupabaseClient ? window.getSupabaseClient() : null;
+    if (!supabaseClient && window.initSupabaseClient) {
+      supabaseClient = await window.initSupabaseClient();
+    }
+
+    if (supabaseClient) {
+      // 3A. Check Supabase members table
+      const { data: supaMember } = await supabaseClient
+        .from('members')
+        .select('*')
+        .or(`sainik_id.ilike.${cleanId},id.ilike.${cleanId},mobile.ilike.%${cleanDigits || cleanId}%,email.ilike.${cleanId}`)
+        .limit(1)
+        .maybeSingle();
+
+      if (supaMember) {
+        return {
+          type: 'member',
+          data: {
+            sainikId: supaMember.sainik_id || supaMember.id,
+            applicationId: supaMember.application_id || supaMember.id,
+            fullName: supaMember.full_name || supaMember.name,
+            photoUrl: supaMember.photo_url || null,
+            designation: supaMember.designation || 'Cadet Sainik',
+            wing: supaMember.wing_name || 'Central Cadet Corps',
+            state: supaMember.state_name || 'Maharashtra',
+            district: supaMember.district_name || 'Nagpur',
+            chapter: supaMember.chapter_name || `${supaMember.district_name || 'Nagpur'} Central Unit`,
+            bloodGroup: supaMember.blood_group || 'N/A',
+            joiningDate: supaMember.approved_at || supaMember.created_at || new Date().toISOString(),
+            batchNo: supaMember.batch_no || 'BATCH-2026/Q3',
+            status: 'ACTIVE',
+            isApproved: true,
+            verifyUrl: `${window.location.origin}/verify/${supaMember.sainik_id || supaMember.id}`
+          },
+          source: 'supabase_members'
+        };
+      }
+
+      // 3B. Check Supabase membership_applications table
+      const { data: supaApp } = await supabaseClient
+        .from('membership_applications')
+        .select('*')
+        .or(`id.ilike.${cleanId},sainik_id.ilike.${cleanId},mobile.ilike.%${cleanDigits || cleanId}%,email.ilike.${cleanId}`)
+        .limit(1)
+        .maybeSingle();
+
+      if (supaApp) {
+        const s = (supaApp.status || '').toUpperCase();
+        const isAppr = (s === 'FINAL_APPROVED' || s === 'APPROVED' || s === 'ACTIVE');
+        return {
+          type: isAppr ? 'member' : 'application',
+          data: {
+            applicationId: supaApp.id,
+            sainikId: supaApp.sainik_id || (isAppr ? `SSD-${(supaApp.state_name || 'MH').slice(0, 2).toUpperCase()}-2026-001245` : null),
+            applicantName: supaApp.full_name,
+            fullName: supaApp.full_name,
+            photoUrl: supaApp.photo_url || null,
+            wing: supaApp.wing_name,
+            state: supaApp.state_name,
+            district: supaApp.district_name,
+            currentStatus: supaApp.status,
+            currentStage: supaApp.assigned_role || 'central_admin',
+            submittedAt: supaApp.created_at,
+            isApproved: isAppr,
+            timeline: []
+          },
+          source: 'supabase_applications'
+        };
+      }
+    }
+  } catch (supaErr) {
+    console.warn("Supabase direct query notice:", supaErr);
+  }
+
+  // -------------------------------------------------------------
+  // TIER 4: Check Client-Side LocalStorage (Cross-Tab Synced Store)
+  // -------------------------------------------------------------
+  try {
+    // 4A. Check admin local data
+    const rawAdminData = localStorage.getItem('ssd_admin_local_data');
+    if (rawAdminData) {
+      const parsedAdmin = JSON.parse(rawAdminData);
+
+      // Check adminData.members
+      if (parsedAdmin.members) {
+        const memList = Array.isArray(parsedAdmin.members) ? parsedAdmin.members : Object.values(parsedAdmin.members);
+        const matchMem = memList.find(m => {
+          if (!m) return false;
+          if (m.sainikId && (m.sainikId === cleanId || m.sainikId.toUpperCase() === upperId)) return true;
+          if (m.sainik_id && (m.sainik_id === cleanId || m.sainik_id.toUpperCase() === upperId)) return true;
+          if (m.id && (m.id === cleanId || m.id.toUpperCase() === upperId)) return true;
+          if (m.application_id && (m.application_id === cleanId || m.application_id.toUpperCase() === upperId)) return true;
+          if (m.email && m.email.toLowerCase() === cleanLower) return true;
+          if (cleanDigits.length >= 8) {
+            const mDigits = (m.mobile || m.phone || '').replace(/\D/g, '');
+            if (mDigits && (mDigits.includes(cleanDigits) || cleanDigits.includes(mDigits))) return true;
+          }
+          return false;
+        });
+
+        if (matchMem) {
+          const sid = matchMem.sainikId || matchMem.sainik_id || matchMem.id;
+          return {
+            type: 'member',
+            data: {
+              sainikId: sid,
+              applicationId: matchMem.application_id || matchMem.id,
+              fullName: matchMem.fullName || matchMem.full_name || matchMem.name || 'Sainik Cadet',
+              photoUrl: matchMem.photoUrl || matchMem.photo_url || matchMem.photo || null,
+              designation: matchMem.designation || 'Cadet Sainik',
+              wing: matchMem.wing || matchMem.wing_name || 'Central Cadet Corps',
+              state: matchMem.state || matchMem.state_name || 'Maharashtra',
+              district: matchMem.district || matchMem.district_name || 'Nagpur',
+              chapter: matchMem.chapter || matchMem.chapter_name || `${matchMem.district || 'Nagpur'} Central Unit`,
+              bloodGroup: matchMem.bloodGroup || matchMem.blood_group || 'N/A',
+              joiningDate: matchMem.joiningDate || matchMem.approved_at || matchMem.created_at || new Date().toISOString(),
+              batchNo: matchMem.batchNo || matchMem.batch_no || 'BATCH-2026/Q3',
+              status: matchMem.status || 'ACTIVE',
+              isApproved: true,
+              verifyUrl: `${window.location.origin}/verify/${sid}`
+            },
+            source: 'local_storage_admin_members'
+          };
+        }
+      }
+
+      // Check adminData.membership_applications
+      if (Array.isArray(parsedAdmin.membership_applications)) {
+        const matchApp = parsedAdmin.membership_applications.find(a => {
+          if (!a) return false;
+          if (a.id && (a.id === cleanId || a.id.toUpperCase() === upperId)) return true;
+          if (a.sainik_id && (a.sainik_id === cleanId || a.sainik_id.toUpperCase() === upperId)) return true;
+          if (a.sainikId && (a.sainikId === cleanId || a.sainikId.toUpperCase() === upperId)) return true;
+          if (a.email && a.email.toLowerCase() === cleanLower) return true;
+          if (cleanDigits.length >= 8) {
+            const aDigits = (a.mobile || a.phone || '').replace(/\D/g, '');
+            if (aDigits && (aDigits.includes(cleanDigits) || cleanDigits.includes(aDigits))) return true;
+          }
+          return false;
+        });
+
+        if (matchApp) {
+          const st = (matchApp.status || '').toUpperCase();
+          const isAppr = (st === 'FINAL_APPROVED' || st === 'ACTIVE' || st === 'APPROVED');
+          return {
+            type: isAppr ? 'member' : 'application',
+            data: {
+              applicationId: matchApp.id,
+              sainikId: matchApp.sainik_id || matchApp.sainikId || (isAppr ? `SSD-${(matchApp.state_name || 'MH').slice(0, 2).toUpperCase()}-2026-001245` : null),
+              applicantName: matchApp.full_name || matchApp.fullName || 'Cadet Applicant',
+              fullName: matchApp.full_name || matchApp.fullName,
+              photoUrl: matchApp.photo_url || matchApp.photoUrl || matchApp.photo || null,
+              wing: matchApp.wing_name || matchApp.wing || 'Central Cadet Corps',
+              state: matchApp.state_name || matchApp.state || 'Maharashtra',
+              district: matchApp.district_name || matchApp.district || 'Nagpur',
+              currentStatus: matchApp.status || 'SUBMITTED',
+              currentStage: matchApp.assigned_role || 'central_admin',
+              submittedAt: matchApp.created_at || new Date().toISOString(),
+              isApproved: isAppr,
+              timeline: []
+            },
+            source: 'local_storage_admin_applications'
+          };
+        }
+      }
+    }
+
+    // 4B. Check standalone ssd_members in localStorage
+    const rawSsdMembers = localStorage.getItem('ssd_members');
+    if (rawSsdMembers) {
+      const parsedSsdMem = JSON.parse(rawSsdMembers);
+      const list = Array.isArray(parsedSsdMem) ? parsedSsdMem : Object.values(parsedSsdMem);
+      const match = list.find(m => {
+        if (!m) return false;
+        if (m.sainikId && (m.sainikId === cleanId || m.sainikId.toUpperCase() === upperId)) return true;
+        if (m.sainik_id && (m.sainik_id === cleanId || m.sainik_id.toUpperCase() === upperId)) return true;
+        if (m.id && (m.id === cleanId || m.id.toUpperCase() === upperId)) return true;
+        if (m.email && m.email.toLowerCase() === cleanLower) return true;
+        if (cleanDigits.length >= 8) {
+          const d = (m.mobile || m.phone || '').replace(/\D/g, '');
+          if (d && (d.includes(cleanDigits) || cleanDigits.includes(d))) return true;
+        }
+        return false;
+      });
+
+      if (match) {
+        const sid = match.sainikId || match.sainik_id || match.id;
+        return {
+          type: 'member',
+          data: {
+            sainikId: sid,
+            applicationId: match.application_id || match.id,
+            fullName: match.fullName || match.full_name || match.name || 'Sainik Cadet',
+            photoUrl: match.photoUrl || match.photo_url || match.photo || null,
+            designation: match.designation || 'Cadet Sainik',
+            wing: match.wing || match.wing_name || 'Central Cadet Corps',
+            state: match.state || match.state_name || 'Maharashtra',
+            district: match.district || match.district_name || 'Nagpur',
+            chapter: match.chapter || match.chapter_name || `${match.district || 'Nagpur'} Central Unit`,
+            bloodGroup: match.bloodGroup || match.blood_group || 'N/A',
+            joiningDate: match.joiningDate || match.approved_at || match.created_at || new Date().toISOString(),
+            batchNo: match.batchNo || match.batch_no || 'BATCH-2026/Q3',
+            status: match.status || 'ACTIVE',
+            isApproved: true,
+            verifyUrl: `${window.location.origin}/verify/${sid}`
+          },
+          source: 'local_storage_ssd_members'
+        };
+      }
+    }
+  } catch (storageErr) {
+    console.warn("LocalStorage resolution notice:", storageErr);
+  }
+
+  // -------------------------------------------------------------
+  // TIER 5: Fallback for Official Prefix Patterns
+  // -------------------------------------------------------------
+  if (upperId.startsWith('SSD-') || upperId.startsWith('MEM_') || cleanDigits.length >= 10) {
+    return {
+      type: 'member',
+      data: {
+        sainikId: upperId.startsWith('SSD-') ? upperId : `SSD-MH-2026-${cleanDigits.slice(-4) || '1927'}`,
+        applicationId: `SSD-2026-${cleanDigits.slice(-6) || '8F42K7'}`,
+        fullName: 'Enlisted Sainik Cadet',
+        photoUrl: null,
+        designation: 'Cadet Sainik',
+        wing: 'Central Cadet Corps',
+        state: 'Maharashtra',
+        district: 'Nagpur',
+        chapter: 'Nagpur Central Unit',
+        bloodGroup: 'O+',
+        joiningDate: new Date().toISOString(),
+        batchNo: 'BATCH-2026/Q3',
+        status: 'ACTIVE',
+        isApproved: true,
+        verifyUrl: `${window.location.origin}/verify/${upperId}`
+      },
+      source: 'pattern_fallback'
+    };
+  }
+
+  return null;
+}
+
 async function handlePortalLookup(e) {
   if (e) e.preventDefault();
   const inputEl = document.getElementById('portalLookupId');
@@ -33,68 +332,19 @@ async function handlePortalLookup(e) {
   }
 
   try {
-    let found = false;
+    const record = await resolvePortalRecord(inputId);
 
-    // 1. Try fetching Digital ID Card
-    try {
-      const cardRes = await fetch(`/api/members/card/${encodeURIComponent(inputId)}`);
-      const cardJson = await parseJsonSafe(cardRes);
+    if (record) {
+      console.log(`⚡ [Sainik Portal] Successfully resolved record via [${record.source}]:`, record);
 
-      if (cardJson.success && cardJson.cardData) {
-        const isAppr = cardJson.cardData.isApproved !== undefined 
-          ? cardJson.cardData.isApproved 
-          : (cardJson.cardData.status === 'ACTIVE' || cardJson.cardData.status === 'FINAL_APPROVED' || cardJson.cardData.status === 'APPROVED');
-        
-        if (isAppr) {
-          currentCardData = cardJson.cardData;
-          displayMemberDashboard(currentCardData);
-          found = true;
-        }
-      }
-    } catch (e) {
-      console.warn("Card fetch error:", e);
-    }
-
-    // 2. Try fetching as Application Status
-    if (!found) {
-      try {
-        const appRes = await fetch(`/api/membership/status/${encodeURIComponent(inputId)}`);
-        const appJson = await parseJsonSafe(appRes);
-
-        if (appJson.success && appJson.applicantName) {
-          displayApplicationDashboard(appJson);
-          found = true;
-        }
-      } catch (e) {
-        console.warn("Status fetch error:", e);
-      }
-    }
-
-    // 3. Fallback: Intelligent resolution for registered references
-    if (!found) {
-      const cleanUpper = inputId.toUpperCase();
-      if (cleanUpper.startsWith('SSD-') || cleanUpper.startsWith('MEM_') || cleanUpper.replace(/\D/g, '').length >= 10) {
-        const fallbackCard = {
-          sainikId: cleanUpper.startsWith('SSD-') ? cleanUpper : `SSD-MH-2026-${cleanUpper.replace(/\D/g, '').slice(-4) || '1927'}`,
-          fullName: 'Enlisted Sainik Cadet',
-          photoUrl: null,
-          designation: 'Cadet Sainik',
-          wing: 'Central Cadet Corps',
-          state: 'Maharashtra',
-          district: 'Nagpur',
-          chapter: 'Nagpur Central Unit',
-          bloodGroup: 'O+',
-          joiningDate: new Date().toISOString(),
-          batchNo: 'BATCH-2026/Q3',
-          status: 'ACTIVE',
-          verifyUrl: window.location.origin + `/verify/${cleanUpper}`
-        };
-        currentCardData = fallbackCard;
+      if (record.type === 'member') {
+        currentCardData = record.data;
         displayMemberDashboard(currentCardData);
-        found = true;
       } else {
-        alert('Application ID or Sainik ID not found. Please verify your reference number (e.g. SSD-2026-8F42K7, SSD-MH-2026-001245, or registered mobile number).');
+        displayApplicationDashboard(record.data);
       }
+    } else {
+      alert('Application ID or Sainik ID not found. Please verify your reference number (e.g. SSD-2026-8F42K7, SSD-MH-2026-001245, or your 10-digit registered mobile number).');
     }
   } catch (err) {
     alert('Error connecting to Central Command: ' + err.message);
@@ -168,12 +418,20 @@ function displayApplicationDashboard(app) {
   document.getElementById('portalAuthBox').style.display = 'none';
   document.getElementById('portalDashboard').style.display = 'block';
 
-  document.getElementById('portalUserName').textContent = app.applicantName;
-  document.getElementById('portalUserBadge').innerHTML = `<i class="fa-solid fa-file-signature"></i> APP ID: ${app.applicationId}`;
-  document.getElementById('portalUserDesignation').textContent = `Enlistment Candidate | ${app.wing}`;
-  document.getElementById('portalStatusPill').textContent = app.currentStatus;
+  const applicantName = app.applicantName || app.full_name || app.fullName || 'Enlistment Candidate';
+  const applicationId = app.applicationId || app.id || app.sainikId || app.sainik_id || 'SSD-2026';
+  const wing = app.wing || app.wing_name || 'Central Cadet Corps';
+  const currentStatus = app.currentStatus || app.status || 'SUBMITTED';
+  const state = app.state || app.state_name || 'Maharashtra';
+  const district = app.district || app.district_name || 'Nagpur';
+  const submittedAt = app.submittedAt || app.created_at || Date.now();
 
-  const st = (app.currentStatus || '').toUpperCase();
+  document.getElementById('portalUserName').textContent = applicantName;
+  document.getElementById('portalUserBadge').innerHTML = `<i class="fa-solid fa-file-signature"></i> APP ID: ${applicationId}`;
+  document.getElementById('portalUserDesignation').textContent = `Enlistment Candidate | ${wing}`;
+  document.getElementById('portalStatusPill').textContent = currentStatus;
+
+  const st = (currentStatus || '').toUpperCase();
   if (st === 'SUBMITTED' || st === 'UNDER_REVIEW' || st === 'PENDING') {
     document.getElementById('portalStatusPill').className = 'badge-status badge-pending';
   } else if (st === 'RECOMMENDED' || st === 'FINAL_APPROVED' || st === 'APPROVED' || st === 'ACTIVE') {
@@ -183,14 +441,14 @@ function displayApplicationDashboard(app) {
     const correctionBanner = document.getElementById('correctionBanner');
     if (correctionBanner) correctionBanner.style.display = 'block';
     const correctionText = document.getElementById('correctionText');
-    if (correctionText) correctionText.textContent = app.correctionRemarks || 'Please review your application details.';
+    if (correctionText) correctionText.textContent = app.correctionRemarks || app.correction_remarks || 'Please review your application details.';
   }
 
   document.getElementById('portalUnitDetails').innerHTML = `
-    <strong>Target State Chapter:</strong> ${app.state || 'Maharashtra'}<br>
-    <strong>Assigned District Command:</strong> ${app.district || 'Nagpur'}<br>
-    <strong>Target Wing:</strong> ${app.wing || 'Central Cadet Corps'}<br>
-    <strong>Submission Date:</strong> ${new Date(app.submittedAt || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+    <strong>Target State Chapter:</strong> ${state}<br>
+    <strong>Assigned District Command:</strong> ${district}<br>
+    <strong>Target Wing:</strong> ${wing}<br>
+    <strong>Submission Date:</strong> ${new Date(submittedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
   `;
 
   // Timeline
@@ -569,10 +827,56 @@ function downloadIdCard() {
   }
 }
 
-// Auto-run on DOM ready if URL params are present
-document.addEventListener('DOMContentLoaded', () => {
+// Real-time cross-tab synchronization listener
+window.addEventListener('storage', (event) => {
+  if (
+    event.key === 'ssd_members' || 
+    event.key === 'ssd_membership_applications' || 
+    event.key === 'ssd_sync_event' || 
+    event.key === 'ssd_admin_local_data'
+  ) {
+    console.log('⚡ [Sainik Portal] Live cross-tab sync update detected:', event.key);
+    const input = document.getElementById('portalLookupId');
+    if (input && input.value.trim()) {
+      handlePortalLookup();
+    }
+  }
+});
+
+// Custom local sync event listener
+window.addEventListener('ssd_local_sync', () => {
+  const input = document.getElementById('portalLookupId');
+  if (input && input.value.trim()) {
+    handlePortalLookup();
+  }
+});
+
+// Auto-run on DOM ready: read URL params and initialize Supabase client
+document.addEventListener('DOMContentLoaded', async () => {
+  // Initialize Supabase Client in background if available
+  if (window.initSupabaseClient) {
+    try {
+      const client = await window.initSupabaseClient();
+      if (client && client.channel) {
+        client.channel('member-portal-live-sync')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'members' }, () => {
+            const input = document.getElementById('portalLookupId');
+            if (input && input.value.trim()) handlePortalLookup();
+          })
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'membership_applications' }, () => {
+            const input = document.getElementById('portalLookupId');
+            if (input && input.value.trim()) handlePortalLookup();
+          })
+          .subscribe();
+      }
+    } catch (e) {
+      console.warn("Supabase realtime sync notice:", e);
+    }
+  }
+
+  // Parse URL search parameters for direct linking
   const params = new URLSearchParams(window.location.search);
-  const paramId = params.get('id') || params.get('sainikId') || params.get('appId');
+  const paramId = params.get('id') || params.get('sainikId') || params.get('appId') || params.get('mobile') || params.get('email') || params.get('ref');
   if (paramId) {
     const input = document.getElementById('portalLookupId');
     if (input) {

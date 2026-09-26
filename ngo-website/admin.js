@@ -2660,6 +2660,29 @@ async function quickApproveEnlistment(appId) {
     const data = await res.json().catch(() => null);
     if (data && data.success) {
       showToast(data.message || `Cadet officially commissioned! Sainik ID: ${data.sainikId}`, "success");
+      
+      // Update local stores and broadcast cross-tab sync to Sainik Member Portal
+      if (!adminData.members) adminData.members = {};
+      const newSid = data.sainikId || (data.member && data.member.sainik_id);
+      if (newSid && data.member) {
+        adminData.members[newSid] = data.member;
+        adminData.members[appId] = data.member;
+      }
+      if (Array.isArray(adminData.membership_applications)) {
+        const idx = adminData.membership_applications.findIndex(a => a.id === appId || (a.sainik_id && a.sainik_id === appId));
+        if (idx !== -1) {
+          adminData.membership_applications[idx].status = 'FINAL_APPROVED';
+          if (newSid) adminData.membership_applications[idx].sainik_id = newSid;
+        }
+      }
+      saveLocalStore();
+      try {
+        localStorage.setItem('ssd_members', JSON.stringify(adminData.members));
+        localStorage.setItem('ssd_membership_applications', JSON.stringify(adminData.membership_applications));
+        localStorage.setItem('ssd_sync_event', JSON.stringify({ action: 'MEMBER_COMMISSIONED', sainikId: newSid, appId: appId, timestamp: Date.now() }));
+        window.dispatchEvent(new CustomEvent('ssd_local_sync', { detail: { action: 'MEMBER_COMMISSIONED', sainikId: newSid, appId: appId } }));
+      } catch (e) {}
+
       await loadEnlistmentApplications();
       renderMembersTable();
       renderApprovalsView();
@@ -7208,6 +7231,29 @@ async function submitReviewDecision(actionType) {
   if (apiSuccess && data) {
     showToast(data.message || `Action ${actionType} executed successfully.`, "success");
     closeAdminModal("modalReviewDecision");
+
+    // Update local stores and broadcast cross-tab sync to Sainik Member Portal
+    if (!adminData.members) adminData.members = {};
+    const newSid = data.sainikId || (data.member && data.member.sainik_id);
+    if (newSid && data.member) {
+      adminData.members[newSid] = data.member;
+      adminData.members[appId] = data.member;
+    }
+    if (Array.isArray(adminData.membership_applications)) {
+      const idx = adminData.membership_applications.findIndex(a => a.id === appId || (a.sainik_id && a.sainik_id === appId));
+      if (idx !== -1) {
+        adminData.membership_applications[idx].status = actionType === 'approve' ? 'FINAL_APPROVED' : actionType.toUpperCase();
+        if (newSid) adminData.membership_applications[idx].sainik_id = newSid;
+      }
+    }
+    saveLocalStore();
+    try {
+      localStorage.setItem('ssd_members', JSON.stringify(adminData.members));
+      localStorage.setItem('ssd_membership_applications', JSON.stringify(adminData.membership_applications));
+      localStorage.setItem('ssd_sync_event', JSON.stringify({ action: actionType, sainikId: newSid, appId: appId, timestamp: Date.now() }));
+      window.dispatchEvent(new CustomEvent('ssd_local_sync', { detail: { action: actionType, sainikId: newSid, appId: appId } }));
+    } catch (e) {}
+
     await loadEnlistmentApplications();
     renderMembersTable();
     renderApprovalsView();
@@ -7309,6 +7355,12 @@ async function submitReviewDecision(actionType) {
 
   // 5. Persist local store
   saveLocalStore();
+  try {
+    localStorage.setItem('ssd_members', JSON.stringify(adminData.members));
+    localStorage.setItem('ssd_membership_applications', JSON.stringify(adminData.membership_applications));
+    localStorage.setItem('ssd_sync_event', JSON.stringify({ action: actionType, sainikId: assignedSainikId, appId: appId, timestamp: Date.now() }));
+    window.dispatchEvent(new CustomEvent('ssd_local_sync', { detail: { action: actionType, sainikId: assignedSainikId, appId: appId } }));
+  } catch (e) {}
 
   // 6. User feedback & UI update
   if (actionType === 'approve') {

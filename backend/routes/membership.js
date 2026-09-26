@@ -4,7 +4,7 @@
 
 import express from 'express';
 import fs from 'fs';
-import { query, embeddedStore, saveEmbeddedStore } from '../db/index.js';
+import { query, embeddedStore, saveEmbeddedStore, supabase } from '../db/index.js';
 import { authenticate, optionalAuth } from '../middleware/auth.js';
 import { requireRole, enforceJurisdiction, canAccessRecord } from '../middleware/rbac.js';
 import { upload } from '../middleware/upload.js';
@@ -62,13 +62,20 @@ function findApplicationRecord(id) {
   if (app) return app;
   const upper = clean.toUpperCase();
   const cleanDigits = clean.replace(/\D/g, '');
+  const cleanLower = clean.toLowerCase();
 
   for (const a of embeddedStore.membership_applications.values()) {
     if (a.id === clean || (a.id && a.id.toUpperCase() === upper)) return a;
     if (a.sainik_id && (a.sainik_id === clean || a.sainik_id.toUpperCase() === upper)) return a;
-    if (a.mobile && (a.mobile === clean || (cleanDigits.length >= 8 && a.mobile.replace(/\D/g, '').includes(cleanDigits)))) return a;
-    if (a.phone && (a.phone === clean || (cleanDigits.length >= 8 && a.phone.replace(/\D/g, '').includes(cleanDigits)))) return a;
-    if (a.email && a.email.toLowerCase() === clean.toLowerCase()) return a;
+    if (a.email && a.email.toLowerCase() === cleanLower) return a;
+    if (a.mobile) {
+      const aDigits = a.mobile.replace(/\D/g, '');
+      if (a.mobile === clean || (cleanDigits.length >= 8 && (aDigits.includes(cleanDigits) || cleanDigits.includes(aDigits)))) return a;
+    }
+    if (a.phone) {
+      const pDigits = a.phone.replace(/\D/g, '');
+      if (a.phone === clean || (cleanDigits.length >= 8 && (pDigits.includes(cleanDigits) || cleanDigits.includes(pDigits)))) return a;
+    }
     if (clean.length >= 4) {
       if (a.id && a.id.toUpperCase().includes(upper)) return a;
       if (a.sainik_id && a.sainik_id.toUpperCase().includes(upper)) return a;
@@ -83,19 +90,26 @@ function findApplicationOrMemberRecord(id) {
   const clean = String(id).trim();
   const upper = clean.toUpperCase();
   const cleanDigits = clean.replace(/\D/g, '');
+  const cleanLower = clean.toLowerCase();
 
   const app = findApplicationRecord(id);
   if (app) return { record: app, isMember: false, appId: app.id };
 
-  let member = embeddedStore.members.get(clean);
+  let member = embeddedStore.members.get(clean) || embeddedStore.members.get(upper);
   if (!member) {
     for (const m of embeddedStore.members.values()) {
       if (m.id === clean || (m.id && m.id.toUpperCase() === upper)) { member = m; break; }
       if (m.sainik_id && (m.sainik_id === clean || m.sainik_id.toUpperCase() === upper)) { member = m; break; }
       if (m.application_id && (m.application_id === clean || m.application_id.toUpperCase() === upper)) { member = m; break; }
-      if (m.mobile && (m.mobile === clean || (cleanDigits.length >= 8 && m.mobile.replace(/\D/g, '').includes(cleanDigits)))) { member = m; break; }
-      if (m.phone && (m.phone === clean || (cleanDigits.length >= 8 && m.phone.replace(/\D/g, '').includes(cleanDigits)))) { member = m; break; }
-      if (m.email && m.email.toLowerCase() === clean.toLowerCase()) { member = m; break; }
+      if (m.email && m.email.toLowerCase() === cleanLower) { member = m; break; }
+      if (m.mobile) {
+        const mDigits = m.mobile.replace(/\D/g, '');
+        if (m.mobile === clean || (cleanDigits.length >= 8 && (mDigits.includes(cleanDigits) || cleanDigits.includes(mDigits)))) { member = m; break; }
+      }
+      if (m.phone) {
+        const pDigits = m.phone.replace(/\D/g, '');
+        if (m.phone === clean || (cleanDigits.length >= 8 && (pDigits.includes(cleanDigits) || cleanDigits.includes(pDigits)))) { member = m; break; }
+      }
       if (clean.length >= 4) {
         if (m.id && m.id.toUpperCase().includes(upper)) { member = m; break; }
         if (m.sainik_id && m.sainik_id.toUpperCase().includes(upper)) { member = m; break; }
@@ -293,6 +307,13 @@ router.post('/apply', applicationRateLimiter, upload.single('photo'), async (req
 
     saveEmbeddedStore();
 
+    // Async attempt to persist to Supabase Cloud if configured
+    if (supabase) {
+      supabase.from('membership_applications').insert(newApp).then(({ error }) => {
+        if (error && error.code !== 'PGRST205') console.warn('Supabase application sync notice:', error.message);
+      }).catch(() => {});
+    }
+
     return res.status(201).json({
       success: true,
       message: 'Sainik enlistment application submitted successfully.',
@@ -312,21 +333,69 @@ router.post('/apply', applicationRateLimiter, upload.single('photo'), async (req
 router.get('/status/:applicationId', async (req, res) => {
   try {
     const { applicationId } = req.params;
-    const cleanId = (applicationId || '').trim().toUpperCase();
+    const cleanId = (applicationId || '').trim();
+    const upperId = cleanId.toUpperCase();
+    const cleanDigits = cleanId.replace(/\D/g, '');
 
-    const found = findApplicationOrMemberRecord(cleanId);
-    if (!found) {
+    let app = null;
+
+    // 0. Query Supabase Cloud database first if configured
+    if (supabase) {
+      try {
+        const { data: supaApp } = await supabase
+          .from('membership_applications')
+          .select('*')
+          .or(`id.ilike.${cleanId},sainik_id.ilike.${cleanId},mobile.ilike.%${cleanDigits || cleanId}%,email.ilike.${cleanId}`)
+          .limit(1)
+          .maybeSingle();
+
+        if (supaApp) {
+          app = supaApp;
+        } else {
+          const { data: supaMem } = await supabase
+            .from('members')
+            .select('*')
+            .or(`sainik_id.ilike.${cleanId},id.ilike.${cleanId},mobile.ilike.%${cleanDigits || cleanId}%,email.ilike.${cleanId}`)
+            .limit(1)
+            .maybeSingle();
+
+          if (supaMem) {
+            app = {
+              id: supaMem.application_id || supaMem.id,
+              sainik_id: supaMem.sainik_id,
+              full_name: supaMem.full_name,
+              wing_name: supaMem.wing_name,
+              state_name: supaMem.state_name,
+              district_name: supaMem.district_name,
+              status: supaMem.status || 'FINAL_APPROVED',
+              assigned_role: 'central_admin',
+              created_at: supaMem.created_at
+            };
+          }
+        }
+      } catch (supaErr) {
+        // Fallback to embeddedStore
+      }
+    }
+
+    if (!app) {
+      const found = findApplicationOrMemberRecord(cleanId) || findApplicationOrMemberRecord(upperId);
+      if (found) {
+        app = found.record;
+      }
+    }
+
+    if (!app) {
       return res.status(404).json({ success: false, error: 'Application ID not found. Please verify your reference number.' });
     }
-    const app = found.record;
 
     // Get History of actions
     const allActions = Array.from(embeddedStore.approval_actions.values())
-      .filter(a => a.application_id === app.id || a.application_id === cleanId)
+      .filter(a => a.application_id === app.id || a.application_id === cleanId || a.application_id === upperId)
       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
     // Sanitized public timeline (no private officer contact numbers)
-    const timeline = allActions.map(a => ({
+    let timeline = allActions.map(a => ({
       step: a.official_role,
       action: a.action,
       status: a.new_status,
@@ -334,9 +403,31 @@ router.get('/status/:applicationId', async (req, res) => {
       timestamp: a.created_at
     }));
 
+    if (timeline.length === 0) {
+      timeline = [
+        {
+          step: 'Applicant',
+          action: 'SUBMIT',
+          status: 'SUBMITTED',
+          remarks: 'Application submitted successfully via the official online enlistment portal.',
+          timestamp: app.created_at || new Date().toISOString()
+        }
+      ];
+      if (app.status === 'FINAL_APPROVED' || app.status === 'ACTIVE') {
+        timeline.push({
+          step: 'Central Executive Command',
+          action: 'FINAL_APPROVE',
+          status: 'FINAL_APPROVED',
+          remarks: `Officially commissioned and active Sainik ID [${app.sainik_id || app.id}] issued.`,
+          timestamp: app.updated_at || app.created_at || new Date().toISOString()
+        });
+      }
+    }
+
     return res.json({
       success: true,
       applicationId: app.id,
+      sainikId: app.sainik_id || null,
       applicantName: app.full_name,
       wing: app.wing_name,
       state: app.state_name,
@@ -795,6 +886,8 @@ router.post('/applications/:id/approve', authenticate, requireRole('super_admin'
       updated_at: new Date().toISOString()
     };
     embeddedStore.members.set(memberId, newMember);
+    embeddedStore.members.set(sainikId, newMember);
+    if (app.id) embeddedStore.members.set(app.id, newMember);
 
     // Record Final Approval Action
     const actionId = 'act_' + app.id + '_' + Date.now();
@@ -830,6 +923,21 @@ router.post('/applications/:id/approve', authenticate, requireRole('super_admin'
     });
 
     saveEmbeddedStore();
+
+    // Async attempt to sync commissioned member & updated application to Supabase Cloud
+    if (supabase) {
+      supabase.from('membership_applications').update({
+        status: 'FINAL_APPROVED',
+        sainik_id: sainikId,
+        updated_at: new Date().toISOString()
+      }).eq('id', app.id).then(({ error }) => {
+        if (error && error.code !== 'PGRST205') console.warn('Supabase application approve sync notice:', error.message);
+      }).catch(() => {});
+
+      supabase.from('members').upsert(newMember).then(({ error }) => {
+        if (error && error.code !== 'PGRST205') console.warn('Supabase member commission sync notice:', error.message);
+      }).catch(() => {});
+    }
 
     return res.json({
       success: true,
