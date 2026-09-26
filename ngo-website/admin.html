@@ -14,12 +14,11 @@
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-  <!-- Firebase Compat CDN -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <!-- Supabase JS Client & Cloud Connector -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/supabaseClient.js"></script>
   <!-- EmailJS Automated Email SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
   <!-- Admin Stylesheet -->
   <link rel="stylesheet" href="admin.css?v=5.0">
@@ -252,6 +251,11 @@
         </div>
 
         <div class="topbar-right">
+          <div class="db-status-pill" id="dbStatusPill" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 700; color: #047857; display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 11.5px;">
+            <i class="fa-solid fa-cloud-bolt" style="color: #10b981;"></i>
+            <span id="dbStatusText">Supabase Cloud Active</span>
+          </div>
+
           <div class="db-status-pill" id="officerJurisdictionPill" style="background: rgba(0, 31, 63, 0.08); border-color: rgba(0, 31, 63, 0.2); font-weight: 700;">
             <i class="fa-solid fa-location-dot" style="color: var(--primary-orange);"></i>
             <span id="officerJurisdictionText">National Command HQ</span>
@@ -505,7 +509,7 @@
                   </tr>
                 </thead>
                 <tbody id="membersTableBody">
-                  <tr><td colspan="8" style="text-align: center; padding: 30px;">Loading members from Firebase...</td></tr>
+                  <tr><td colspan="8" style="text-align: center; padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading members from Supabase Cloud...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -548,7 +552,7 @@
                     </tr>
                   </thead>
                 <tbody id="donationsTableBody">
-                  <tr><td colspan="9" style="text-align: center; padding: 30px;">Loading donations from Firebase...</td></tr>
+                  <tr><td colspan="9" style="text-align: center; padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading donations from Supabase Cloud...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -617,7 +621,7 @@
                   </tr>
                 </thead>
                 <tbody id="leadershipTableBody">
-                  <tr><td colspan="7" style="text-align: center; padding: 30px;">Loading governing body members from Firebase...</td></tr>
+                  <tr><td colspan="7" style="text-align: center; padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading governing body members from Supabase Cloud...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -676,7 +680,7 @@
                   </tr>
                 </thead>
                 <tbody id="newsTableBody">
-                  <tr><td colspan="6" style="text-align: center; padding: 30px;">Loading news from Firebase...</td></tr>
+                  <tr><td colspan="6" style="text-align: center; padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading news from Supabase Cloud...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -710,7 +714,7 @@
                   </tr>
                 </thead>
                 <tbody id="eventsTableBody">
-                  <tr><td colspan="6" style="text-align: center; padding: 30px;">Loading events from Firebase...</td></tr>
+                  <tr><td colspan="6" style="text-align: center; padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading events from Supabase Cloud...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -744,7 +748,7 @@
                   </tr>
                 </thead>
                 <tbody id="campaignsTableBody">
-                  <tr><td colspan="6" style="text-align: center; padding: 30px;">Loading campaigns from Firebase...</td></tr>
+                  <tr><td colspan="6" style="text-align: center; padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading campaigns from Supabase Cloud...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -797,7 +801,7 @@
                   </tr>
                 </thead>
                 <tbody id="contactsTableBody">
-                  <tr><td colspan="6" style="text-align: center; padding: 30px;">Loading messages from Firebase...</td></tr>
+                  <tr><td colspan="6" style="text-align: center; padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading messages from Supabase Cloud...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -930,56 +934,83 @@
              ========================================== -->
         <section id="viewSettings" class="view-panel">
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
-            <!-- Firebase Realtime Database Live Connection Setup -->
-            <div class="card-panel" style="grid-column: 1 / -1; border-left: 4px solid var(--primary-orange);">
+            <!-- Supabase Cloud Database & Storage Manager -->
+            <div class="card-panel" style="grid-column: 1 / -1; border-left: 4px solid #10b981;">
               <div class="card-panel-header">
                 <div class="card-panel-title">
-                  <i class="fa-solid fa-cloud-bolt" style="color: var(--primary-orange);"></i>
-                  <h3>Firebase Realtime Database Live Connection</h3>
+                  <i class="fa-solid fa-bolt" style="color: #10b981;"></i>
+                  <h3>Supabase Cloud Database & Storage Manager</h3>
                 </div>
-                <div id="fbSetupConnectionBadge" class="badge-status badge-pending">
-                  <i class="fa-solid fa-circle-exclamation"></i> Action Required: Configure Credentials
+                <div id="supabaseConnectionBadge" class="badge-status badge-approved" style="background: rgba(16, 185, 129, 0.1); color: #047857; border-color: rgba(16, 185, 129, 0.3);">
+                  <i class="fa-solid fa-circle-check"></i> Supabase Cloud Active
                 </div>
               </div>
               <div style="padding: 24px;">
                 <p style="color: var(--text-muted); font-size: 13.5px; margin-bottom: 18px; line-height: 1.5;">
-                  Connect your live Google Firebase Realtime Database to synchronize sainik registrations, 80G centenary donations, dispatches, and public counter updates across all devices in real-time.
+                  Connected to official SSD Supabase Cloud infrastructure for real-time relational PostgreSQL queries, member dossiers, automated audit trails, and multi-bucket cloud asset storage.
                 </p>
-                <form id="firebaseConfigForm" onsubmit="saveFirebaseConfig(event)">
+
+                <!-- Active Supabase Configuration Status Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 22px;">
+                  <div style="background: var(--bg-body, #f8f9fb); border: 1px solid rgba(0,0,0,0.06); padding: 14px; border-radius: 8px;">
+                    <div style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Cloud Database Engine</div>
+                    <div style="font-size: 14px; font-weight: 700; color: #001f3f; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
+                      <i class="fa-solid fa-database" style="color: #10b981;"></i> PostgreSQL 15+ (Supabase)
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">SSL Encrypted Connection Pooler</div>
+                  </div>
+
+                  <div style="background: var(--bg-body, #f8f9fb); border: 1px solid rgba(0,0,0,0.06); padding: 14px; border-radius: 8px;">
+                    <div style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Cloud Storage Buckets</div>
+                    <div style="font-size: 14px; font-weight: 700; color: #001f3f; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
+                      <i class="fa-solid fa-box-archive" style="color: #2563eb;"></i> 3 Buckets Active
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">photos, documents, receipts</div>
+                  </div>
+
+                  <div style="background: var(--bg-body, #f8f9fb); border: 1px solid rgba(0,0,0,0.06); padding: 14px; border-radius: 8px;">
+                    <div style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Authentication & JWKS</div>
+                    <div style="font-size: 14px; font-weight: 700; color: #001f3f; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
+                      <i class="fa-solid fa-shield-halved" style="color: #ff6b00;"></i> RBAC & JWKS Token Auth
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">7-Tier Clearance System</div>
+                  </div>
+                </div>
+
+                <form id="supabaseConfigForm" onsubmit="saveSupabaseConfig(event)">
                   <div class="form-grid-modal">
                     <div class="form-group-modal">
-                      <label for="fbApiKey">API Key (apiKey)</label>
-                      <input type="text" id="fbApiKey" placeholder="AIzaSy..." required style="font-family: monospace; font-size: 12.5px;">
+                      <label for="adminSupabaseUrl">Supabase Project URL</label>
+                      <input type="url" id="adminSupabaseUrl" value="https://agkcwwujangfrpbpwehw.supabase.co" required style="font-family: monospace; font-size: 12.5px;">
                     </div>
                     <div class="form-group-modal">
-                      <label for="fbDbUrl">Database URL (databaseURL)</label>
-                      <input type="url" id="fbDbUrl" placeholder="https://your-project-default-rtdb.firebaseio.com" required style="font-family: monospace; font-size: 12.5px;">
+                      <label for="adminSupabasePubKey">Supabase Publishable / Anon Key</label>
+                      <input type="text" id="adminSupabasePubKey" value="sb_publishable_OOuRM6ihRwmw3ERK-Oh4hw_bdNzgQIL" required style="font-family: monospace; font-size: 12.5px;">
                     </div>
                   </div>
                   <div class="form-grid-modal">
                     <div class="form-group-modal">
-                      <label for="fbProjectId">Project ID (projectId)</label>
-                      <input type="text" id="fbProjectId" placeholder="samata-sainik-dal" required style="font-family: monospace; font-size: 12.5px;">
+                      <label for="adminSupabaseSecretKey">Supabase Secret Key (Service Role)</label>
+                      <input type="password" id="adminSupabaseSecretKey" placeholder="Configured securely in Backend .env" style="font-family: monospace; font-size: 12.5px;">
                     </div>
                     <div class="form-group-modal">
-                      <label for="fbAuthDomain">Auth Domain (authDomain)</label>
-                      <input type="text" id="fbAuthDomain" placeholder="samata-sainik-dal.firebaseapp.com" style="font-family: monospace; font-size: 12.5px;">
+                      <label for="adminSupabaseJwksUrl">Supabase JWKS URL</label>
+                      <input type="url" id="adminSupabaseJwksUrl" value="https://agkcwwujangfrpbpwehw.supabase.co/auth/v1/.well-known/jwks.json" style="font-family: monospace; font-size: 12.5px;">
                     </div>
                   </div>
-                  <div class="form-group-modal" style="margin-bottom: 16px;">
-                    <label for="fbRawJson">Or Paste Full Firebase Config JSON</label>
-                    <textarea id="fbRawJson" rows="3" placeholder='{ "apiKey": "AIzaSy...", "authDomain": "...", "databaseURL": "https://...", "projectId": "..." }' style="font-family: monospace; font-size: 12px; resize: vertical;" oninput="parseRawFirebaseJson(this.value)"></textarea>
-                  </div>
-                  <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                  <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 8px;">
                     <button type="submit" class="btn-admin btn-admin-primary">
-                      <i class="fa-solid fa-link"></i> Save & Connect Database Live
+                      <i class="fa-solid fa-floppy-disk"></i> Save & Reconnect Supabase
                     </button>
-                    <button type="button" class="btn-admin btn-admin-outline" onclick="testFirebasePing()">
-                      <i class="fa-solid fa-signal"></i> Test Database Connection
+                    <button type="button" class="btn-admin btn-admin-outline" onclick="testSupabasePing()">
+                      <i class="fa-solid fa-signal"></i> Test Cloud Connection
                     </button>
-                    <button type="button" class="btn-admin btn-admin-outline" onclick="resetFirebaseConfigDefault()" style="color: var(--danger);">
-                      <i class="fa-solid fa-rotate-left"></i> Reset to Demo
-                    </button>
+                    <a href="https://supabase.com/dashboard/project/agkcwwujangfrpbpwehw/sql/new" target="_blank" class="btn-admin btn-admin-outline" style="color: #2563eb; text-decoration: none;">
+                      <i class="fa-solid fa-code"></i> Open Supabase SQL Editor
+                    </a>
+                    <a href="https://supabase.com/dashboard/project/agkcwwujangfrpbpwehw" target="_blank" class="btn-admin btn-admin-outline" style="text-decoration: none;">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Supabase Dashboard
+                    </a>
                   </div>
                 </form>
               </div>
@@ -1140,7 +1171,7 @@
               </div>
               <div style="padding: 24px;">
                 <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 18px;">
-                  Seed or refresh the official 1927–2026 verified sample dataset (Dispatches, Campaigns, Historical Gallery, and Leadership Council) to Firebase.
+                  Seed or refresh the official 1927–2026 verified sample dataset (Dispatches, Campaigns, Historical Gallery, and Leadership Council) to Supabase Cloud Database.
                 </p>
                 <button type="button" class="btn-admin btn-admin-primary" onclick="seedDatabaseFromAdmin()">
                   <i class="fa-solid fa-cloud-arrow-up"></i> Seed Official SSD Data

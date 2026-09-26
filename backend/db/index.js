@@ -25,18 +25,25 @@ let usePostgres = false;
 let isSupabasePostgres = false;
 export let supabase = null;
 
-// Initialize Supabase Client if URL and Key are provided
-if (supabaseUrl && supabaseKey && !supabaseUrl.includes('placeholder')) {
+import { createAdminClient } from '@supabase/server/core';
+
+// Initialize Supabase Client using @supabase/server
+if (supabaseUrl && (process.env.SUPABASE_SECRET_KEY || supabaseKey) && !supabaseUrl.includes('placeholder')) {
   try {
-    supabase = createClient(supabaseUrl, supabaseKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false
-      }
-    });
-    console.log('⚡ [Supabase] JavaScript Client initialized successfully.');
-  } catch (err) {
-    console.warn('⚠️ [Supabase] Client initialization notice:', err.message);
+    supabase = createAdminClient();
+    console.log('⚡ [Supabase Server] Admin Client initialized successfully via @supabase/server.');
+  } catch (serverErr) {
+    try {
+      supabase = createClient(supabaseUrl, supabaseKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false
+        }
+      });
+      console.log('⚡ [Supabase] JavaScript Client initialized successfully.');
+    } catch (err) {
+      console.warn('⚠️ [Supabase] Client initialization notice:', err.message);
+    }
   }
 }
 

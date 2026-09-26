@@ -12,6 +12,7 @@
     "test:api": "node backend/tests/run-tests.js"
   },
   "dependencies": {
+    "@supabase/server": "^1.8.0",
     "@supabase/supabase-js": "^2.117.2",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
