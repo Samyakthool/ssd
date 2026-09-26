@@ -909,25 +909,27 @@ function checkAuthSession() {
 
 function getRoleDisplayName(role) {
   switch (role) {
-    case "super_admin": return "Supreme Council Level (Master Access)";
+    case "super_admin": return "Supreme Commander (L7)";
+    case "central_admin": return "Executive Secretary (L6)";
     case "enlistment_officer":
-    case "enlistment_admin": return "Enlistment Scrutiny & Approval Officer";
-    case "executive": return "National Executive Level";
-    case "central_admin": return "Central Command Executive";
-    case "state_official": return "State Directorate Officer";
-    case "regional_official": return "Regional Commander";
-    case "district_official": return "District Dalpati / Officer";
+    case "enlistment_admin": return "Enlistment Officer (L6)";
+    case "state_official": return "State Officer (L5)";
+    case "regional_official": return "Regional Officer (L4)";
+    case "district_official": return "District Officer / Dalpati (L3)";
+    case "taluka_official": return "Taluka Officer (L2)";
+    case "chapter_official": return "Chapter Officer (L1)";
     case "treasurer":
-    case "finance_admin": return "Treasury & Finance Level";
+    case "finance_admin": return "National Treasurer";
     case "media":
-    case "media_admin": return "Gazette & Media Cell";
-    default: return "Command Officer";
+    case "media_admin": return "Media & IT Officer";
+    case "executive": return "Executive Officer";
+    default: return (role ? role.replace(/_/g, " ").toUpperCase() : "Command Officer");
   }
 }
 
 function applyRolePermissions(role) {
   const isSuper = isSuperAdmin();
-  const isApprover = isSuper || role === "enlistment_officer" || role === "enlistment_admin" || role === "central_admin" || role === "state_official" || role === "regional_official" || role === "district_official";
+  const isApprover = isSuper || role === "enlistment_officer" || role === "enlistment_admin" || role === "central_admin" || role === "state_official" || role === "regional_official" || role === "district_official" || role === "taluka_official" || role === "chapter_official";
 
   const permissions = {
     super_admin: ["overview", "approvals", "members", "donations", "leadership", "chapters", "news", "events", "campaigns", "gallery", "admins", "contacts", "stats", "settings"],
@@ -936,7 +938,10 @@ function applyRolePermissions(role) {
     executive: ["overview", "members", "leadership", "chapters", "news", "events", "campaigns", "gallery", "contacts"],
     central_admin: ["overview", "approvals", "members", "leadership", "chapters", "news", "events", "campaigns", "gallery", "contacts"],
     state_official: ["overview", "approvals", "members", "leadership", "chapters"],
+    regional_official: ["overview", "approvals", "members", "leadership", "chapters"],
     district_official: ["overview", "approvals", "members"],
+    taluka_official: ["overview", "approvals", "members"],
+    chapter_official: ["overview", "approvals", "members"],
     treasurer: ["overview", "donations", "campaigns"],
     finance_admin: ["overview", "donations", "campaigns"],
     media: ["overview", "news", "events", "gallery"],
@@ -4366,88 +4371,190 @@ function forceGenerateOfficerEmail() {
 // ==========================================================================
 // RENDERERS: AUTHORIZED ADMIN USERS & ROLES (/admin_users)
 // ==========================================================================
-function renderAdminsTable() {
+function formatJurisdictionName(code) {
+  if (!code) return '';
+  const clean = code.replace(/^(dist_|reg_|state_|taluka_)(mh_|dl_|up_|mp_|br_|ka_|rj_|pb_|gj_|tg_|ap_|tn_|wb_)?/, '');
+  return clean.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+function handleAdminRoleChange(role) {
+  const container = document.getElementById("jurisdictionFieldsContainer");
+  const grpState = document.getElementById("groupAdminState");
+  const grpRegion = document.getElementById("groupAdminRegion");
+  const grpDist = document.getElementById("groupAdminDistrict");
+  const grpTaluka = document.getElementById("groupAdminTaluka");
+  if (!container) return;
+
+  const territorialRoles = ['state_official', 'regional_official', 'district_official', 'taluka_official', 'chapter_official'];
+  if (territorialRoles.includes(role)) {
+    container.style.display = "block";
+    if (grpState) grpState.style.display = "block";
+    if (grpRegion) grpRegion.style.display = (role === 'regional_official') ? "block" : "none";
+    if (grpDist) grpDist.style.display = (role === 'district_official' || role === 'taluka_official' || role === 'chapter_official') ? "block" : "none";
+    if (grpTaluka) grpTaluka.style.display = (role === 'taluka_official' || role === 'chapter_official') ? "block" : "none";
+  } else {
+    container.style.display = "none";
+  }
+}
+
+async function renderAdminsTable() {
   const tbody = document.getElementById("adminsTableBody");
   if (!tbody) return;
 
-  const adminsObj = adminData.admin_users || ssdInitialSeed.admin_users;
-  const list = Object.entries(adminsObj).map(([key, val]) => ({ id: key, ...val }));
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 25px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading authorized officers...</td></tr>';
 
-  if (list.length === 0) {
+  let officersList = [];
+  const token = localStorage.getItem("ssd_token");
+
+  if (token) {
+    try {
+      const res = await fetch("/api/auth/officers", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.officers)) {
+        officersList = data.officers;
+      }
+    } catch (err) {
+      console.warn("Backend /api/auth/officers unreachable, using fallback:", err);
+    }
+  }
+
+  if (officersList.length === 0) {
+    const adminsObj = adminData.admin_users || ssdInitialSeed.admin_users || {};
+    officersList = Object.entries(adminsObj).map(([key, val]) => ({ id: key, ...val }));
+  }
+
+  window._currentOfficersList = officersList;
+  updateBadgeCount("badgeAdminsCount", officersList.length);
+
+  if (officersList.length === 0) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: var(--text-muted);">No authorized officers found.</td></tr>';
     return;
   }
 
-  tbody.innerHTML = list.map(u => `
-    <tr>
-      <td>
-        <code style="font-weight: 700; color: var(--dark-navy);">${escapeHtml(u.officerId || ('SSD-OFF-' + (u.id ? u.id.slice(-4).toUpperCase() : '2026')))}</code>
-        <div style="font-size: 11px; color: var(--primary-orange); font-weight: 600; margin-top: 2px;">${escapeHtml(u.batchNo || 'BATCH-2026/EXEC')}</div>
-      </td>
-      <td>
-        <strong>${escapeHtml(u.name)}</strong>
-        ${u.designation ? `<div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(u.designation)}</div>` : ''}
-      </td>
-      <td>
-        <code style="color: var(--primary-orange); font-weight: 700; background: rgba(255,107,0,0.08); padding: 3px 7px; border-radius: 4px; font-size: 12px;">
-          ${escapeHtml(u.email)}
-        </code>
-      </td>
-      <td><span class="badge-status ${u.role === 'super_admin' ? 'badge-approved' : 'badge-info'}">${escapeHtml(getRoleDisplayName(u.role))}</span></td>
-      <td>${escapeHtml(u.dept || 'Central Command')}</td>
-      <td><code>••••••••</code></td>
-      <td><span class="badge-status ${u.status === 'Active' ? 'badge-approved' : 'badge-rejected'}">${escapeHtml(u.status || 'Active')}</span></td>
-      <td style="text-align: right;">
-        <div class="action-btn-group" style="justify-content: flex-end;">
-          <button type="button" class="action-icon-btn" onclick="openEditAdminUserModal('${u.id}')" title="Edit Officer Permissions">
-            <i class="fa-solid fa-user-pen"></i>
-          </button>
-          <button type="button" class="action-icon-btn ${u.status === 'Active' ? 'warning' : 'verify'}" onclick="toggleAdminStatus('${u.id}')" title="${u.status === 'Active' ? 'Suspend Officer' : 'Activate Officer'}">
-            <i class="fa-solid ${u.status === 'Active' ? 'fa-ban' : 'fa-check'}"></i>
-          </button>
-          <button type="button" class="action-icon-btn delete" onclick="deleteAdminUser('${u.id}')" title="Revoke Authorization">
-            <i class="fa-solid fa-trash"></i>
-          </button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = officersList.map(u => {
+    const jur = u.primaryJurisdiction || (u.jurisdictions && u.jurisdictions[0]) || u.jurisdiction || {};
+    let jurText = 'National HQ (All-India)';
+    if (jur.taluka_id || u.talukaId) {
+      jurText = `${formatJurisdictionName(jur.taluka_id || u.talukaId)}, ${formatJurisdictionName(jur.district_id || u.districtId)}`;
+    } else if (jur.district_id || u.districtId) {
+      jurText = `${formatJurisdictionName(jur.district_id || u.districtId)} District`;
+    } else if (jur.region_id || u.regionId) {
+      jurText = `${formatJurisdictionName(jur.region_id || u.regionId)} Region`;
+    } else if (jur.state_id || u.stateId) {
+      jurText = `${formatJurisdictionName(jur.state_id || u.stateId)} State`;
+    }
+
+    const roleId = u.role_id || u.role || 'executive';
+    const roleName = getRoleDisplayName(roleId);
+    const isSuper = roleId === 'super_admin' || roleId === 'central_admin';
+    const isActive = (u.status || 'Active').toLowerCase() === 'active';
+
+    return `
+      <tr>
+        <td>
+          <code style="font-weight: 700; color: var(--dark-navy);">${escapeHtml(u.officerId || u.id || ('SSD-OFF-' + (u.id ? u.id.slice(-4).toUpperCase() : '2026')))}</code>
+          <div style="font-size: 11px; color: var(--primary-orange); font-weight: 600; margin-top: 2px;">${escapeHtml(u.batchNo || 'BATCH-2026/EXEC')}</div>
+        </td>
+        <td>
+          <strong>${escapeHtml(u.full_name || u.name || '')}</strong>
+          ${u.phone ? `<div style="font-size: 11.5px; color: var(--text-muted);"><i class="fa-solid fa-phone" style="font-size: 10px;"></i> ${escapeHtml(u.phone)}</div>` : ''}
+        </td>
+        <td>
+          <code style="color: var(--primary-orange); font-weight: 700; background: rgba(255,107,0,0.08); padding: 3px 7px; border-radius: 4px; font-size: 12px;">
+            ${escapeHtml(u.email)}
+          </code>
+        </td>
+        <td>
+          <span class="badge-status ${isSuper ? 'badge-approved' : 'badge-info'}" style="font-weight: 600;">
+            ${escapeHtml(roleName)}
+          </span>
+        </td>
+        <td>
+          <div style="font-size: 12px; font-weight: 600; color: var(--dark-navy); display: flex; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-map-pin" style="color: ${jurText.includes('National') ? 'var(--dark-navy)' : 'var(--primary-orange)'};"></i>
+            ${escapeHtml(jurText)}
+          </div>
+        </td>
+        <td>${escapeHtml(u.department || u.dept || 'General Directorate')}</td>
+        <td>
+          <span class="badge-status ${isActive ? 'badge-approved' : 'badge-rejected'}">
+            ${isActive ? 'Active' : 'Suspended'}
+          </span>
+        </td>
+        <td style="text-align: right;">
+          <div class="action-btn-group" style="justify-content: flex-end;">
+            <button type="button" class="action-icon-btn" onclick="openEditAdminUserModal('${u.id}')" title="Edit Officer Permissions & Jurisdiction">
+              <i class="fa-solid fa-user-pen"></i>
+            </button>
+            <button type="button" class="action-icon-btn ${isActive ? 'warning' : 'verify'}" onclick="toggleAdminStatus('${u.id}', '${u.status}')" title="${isActive ? 'Suspend Officer' : 'Activate Officer'}">
+              <i class="fa-solid ${isActive ? 'fa-ban' : 'fa-check'}"></i>
+            </button>
+            <button type="button" class="action-icon-btn delete" onclick="deleteAdminUser('${u.id}')" title="Revoke Authorization">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 function openAddAdminUserModal() {
-  const count = Object.keys(adminData.admin_users || {}).length + 1;
+  const count = (window._currentOfficersList ? window._currentOfficersList.length : Object.keys(adminData.admin_users || {}).length) + 1;
   setInputValue("adminUserKey", "");
   setInputValue("newAdminOfficerId", generateOfficerId(count));
   setInputValue("newAdminBatchNo", "BATCH-" + new Date().getFullYear() + "/EXEC");
   setInputValue("newAdminName", "");
   setInputValue("newAdminEmail", "");
+  setInputValue("newAdminPhone", "");
   setInputValue("newAdminPasscode", "SSD" + new Date().getFullYear() + "!");
-  setInputValue("newAdminRole", "executive");
-  setInputValue("newAdminDept", "National Secretariat");
-  setInputValue("newAdminStatus", "Active");
+  setInputValue("newAdminRole", "district_official");
+  setInputValue("newAdminDept", "District Directorate");
+  setInputValue("newAdminStatus", "ACTIVE");
+  setInputValue("newAdminState", "state_mh");
+  setInputValue("newAdminRegion", "");
+  setInputValue("newAdminDistrict", "dist_mh_nagpur");
+  setInputValue("newAdminTaluka", "");
+  handleAdminRoleChange("district_official");
   setText("modalAdminUserHeading", "Authorize New Command Officer");
   openAdminModal("modalAdminUser");
 }
 
 function openEditAdminUserModal(id) {
-  const adminsObj = adminData.admin_users || ssdInitialSeed.admin_users;
-  const u = adminsObj[id];
+  const officers = window._currentOfficersList || [];
+  let u = officers.find(o => o.id === id);
+  if (!u) {
+    const adminsObj = adminData.admin_users || ssdInitialSeed.admin_users || {};
+    u = adminsObj[id];
+  }
   if (!u) return;
 
+  const jur = u.primaryJurisdiction || (u.jurisdictions && u.jurisdictions[0]) || u.jurisdiction || {};
+  const roleVal = u.role_id || u.role || 'district_official';
+
   setInputValue("adminUserKey", id);
-  setInputValue("newAdminOfficerId", u.officerId || generateOfficerId());
+  setInputValue("newAdminOfficerId", u.officerId || u.id || generateOfficerId());
   setInputValue("newAdminBatchNo", u.batchNo || ("BATCH-" + new Date().getFullYear() + "/EXEC"));
-  setInputValue("newAdminName", u.name || "");
+  setInputValue("newAdminName", u.full_name || u.name || "");
   setInputValue("newAdminEmail", u.email || "");
-  setInputValue("newAdminPasscode", u.passcode || "");
-  setInputValue("newAdminRole", u.role || "executive");
-  setInputValue("newAdminDept", u.dept || "National Secretariat");
-  setInputValue("newAdminStatus", u.status || "Active");
-  setText("modalAdminUserHeading", `Edit Officer Authorization: ${u.name}`);
+  setInputValue("newAdminPhone", u.phone || "");
+  setInputValue("newAdminPasscode", "");
+  setInputValue("newAdminRole", roleVal);
+  setInputValue("newAdminDept", u.department || u.dept || "District Directorate");
+  setInputValue("newAdminStatus", (u.status || 'ACTIVE').toUpperCase());
+  setInputValue("newAdminState", jur.state_id || u.stateId || "");
+  setInputValue("newAdminRegion", jur.region_id || u.regionId || "");
+  setInputValue("newAdminDistrict", jur.district_id || u.districtId || "");
+  setInputValue("newAdminTaluka", jur.taluka_id || u.talukaId || "");
+  
+  handleAdminRoleChange(roleVal);
+  setText("modalAdminUserHeading", `Edit Officer Authorization: ${u.full_name || u.name}`);
   openAdminModal("modalAdminUser");
 }
 
-function handleSaveAdminUser(e) {
+async function handleSaveAdminUser(e) {
   e.preventDefault();
   const key = document.getElementById("adminUserKey").value;
   const officerName = document.getElementById("newAdminName").value.trim();
@@ -4458,96 +4565,157 @@ function handleSaveAdminUser(e) {
 
   const officerId = document.getElementById("newAdminOfficerId") ? document.getElementById("newAdminOfficerId").value.trim() : generateOfficerId();
   const batchNo = document.getElementById("newAdminBatchNo") ? document.getElementById("newAdminBatchNo").value.trim() : generateBatchNo();
+  const phone = document.getElementById("newAdminPhone") ? document.getElementById("newAdminPhone").value.trim() : "";
+  const role = document.getElementById("newAdminRole").value;
+  const dept = document.getElementById("newAdminDept").value.trim() || "Organizational Directorate";
+  const status = document.getElementById("newAdminStatus").value || "ACTIVE";
+  const passcode = document.getElementById("newAdminPasscode").value.trim();
+  const stateId = document.getElementById("newAdminState") ? document.getElementById("newAdminState").value : null;
+  const regionId = document.getElementById("newAdminRegion") ? document.getElementById("newAdminRegion").value : null;
+  const districtId = document.getElementById("newAdminDistrict") ? document.getElementById("newAdminDistrict").value : null;
+  const talukaId = document.getElementById("newAdminTaluka") ? document.getElementById("newAdminTaluka").value : null;
 
-  const userData = {
-    officerId: officerId || generateOfficerId(),
-    batchNo: batchNo || ("BATCH-" + new Date().getFullYear() + "/EXEC"),
-    name: officerName,
-    email: officerEmail,
-    passcode: document.getElementById("newAdminPasscode").value.trim(),
-    role: document.getElementById("newAdminRole").value,
-    dept: document.getElementById("newAdminDept").value.trim() || "National Secretariat",
-    status: document.getElementById("newAdminStatus").value || "Active",
-    updatedAt: Date.now()
-  };
-
-  if (!userData.name) {
+  if (!officerName) {
     showToast("Please provide officer full name.", "error");
     return;
   }
-  if (!userData.email) {
+  if (!officerEmail) {
     showToast("Please provide officer email or username.", "error");
     return;
   }
-  if (!userData.passcode) {
-    showToast("Please provide officer passcode.", "error");
+  if (!key && !passcode) {
+    showToast("Please provide an access password for the new officer.", "error");
     return;
   }
 
-  const targetKey = key || ("usr_" + Date.now());
-  if (!adminData.admin_users) {
-    adminData.admin_users = { ...ssdInitialSeed.admin_users };
+  const token = localStorage.getItem("ssd_token");
+
+  if (token) {
+    try {
+      const url = key ? `/api/auth/officers/${encodeURIComponent(key)}` : `/api/auth/officers`;
+      const method = key ? 'PUT' : 'POST';
+      const payload = {
+        fullName: officerName,
+        email: officerEmail,
+        phone: phone,
+        roleId: role,
+        department: dept,
+        status: status,
+        stateId: stateId,
+        regionId: regionId,
+        districtId: districtId,
+        talukaId: talukaId
+      };
+      if (passcode) payload.password = passcode;
+
+      const res = await fetch(url, {
+        method: method,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!data.success) {
+        showToast(data.error || "Failed to update officer on backend.", "warning");
+      }
+    } catch (err) {
+      console.warn("Backend officer save error, fallback to local storage:", err);
+    }
   }
+
+  // Update local memory and local store as well
+  const userData = {
+    id: key || ("usr_" + Date.now()),
+    officerId: officerId,
+    batchNo: batchNo,
+    name: officerName,
+    full_name: officerName,
+    email: officerEmail,
+    phone: phone,
+    role: role,
+    role_id: role,
+    dept: dept,
+    department: dept,
+    status: status,
+    stateId: stateId,
+    regionId: regionId,
+    districtId: districtId,
+    talukaId: talukaId,
+    updatedAt: Date.now()
+  };
+  if (passcode) userData.passcode = passcode;
+
+  const targetKey = key || userData.id;
+  if (!adminData.admin_users) adminData.admin_users = { ...ssdInitialSeed.admin_users };
   adminData.admin_users[targetKey] = userData;
   saveLocalStore();
-  renderAdminsTable();
 
-  const onSuccess = () => {
-    showToast(`Officer ${userData.name} (${userData.email}) authorized successfully!`, "success");
-    closeAdminModal("modalAdminUser");
-  };
+  showToast(`Officer ${userData.name} (${userData.email}) authorized successfully!`, "success");
+  closeAdminModal("modalAdminUser");
+  await renderAdminsTable();
+}
 
-  if (db) {
-    if (key) {
-      db.ref(`admin_users/${key}`).update(userData).then(onSuccess).catch(err => {
-        onSuccess();
+async function toggleAdminStatus(id, currentStatus) {
+  const newStatus = (currentStatus || 'ACTIVE').toUpperCase() === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+  const token = localStorage.getItem("ssd_token");
+
+  if (token) {
+    try {
+      const res = await fetch(`/api/auth/officers/${encodeURIComponent(id)}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
       });
-    } else {
-      db.ref(`admin_users/${targetKey}`).set(userData).then(onSuccess).catch(err => {
-        onSuccess();
-      });
+      const data = await res.json();
+      if (!data.success) {
+        showToast(data.error || "Could not toggle status on backend.", "warning");
+      }
+    } catch (err) {
+      console.warn("Backend status toggle failed, falling back locally:", err);
     }
-  } else {
-    onSuccess();
   }
+
+  if (adminData.admin_users && adminData.admin_users[id]) {
+    adminData.admin_users[id].status = newStatus;
+    saveLocalStore();
+  }
+  showToast(`Officer account status updated to ${newStatus}.`, "info");
+  await renderAdminsTable();
 }
 
-function toggleAdminStatus(id) {
-  if (!adminData.admin_users) adminData.admin_users = { ...ssdInitialSeed.admin_users };
-  const u = adminData.admin_users[id];
-  if (!u) return;
-  const newStatus = u.status === "Active" ? "Suspended" : "Active";
+async function deleteAdminUser(id) {
+  if (!confirm(`Are you sure you want to revoke authorization for this officer?`)) return;
 
-  adminData.admin_users[id].status = newStatus;
-  saveLocalStore();
-  renderAdminsTable();
-
-  if (db) {
-    db.ref(`admin_users/${id}/status`).set(newStatus).then(() => {
-      showToast(`Officer status set to ${newStatus}.`, "info");
-    });
-  } else {
-    showToast(`Officer status set to ${newStatus}.`, "info");
+  const token = localStorage.getItem("ssd_token");
+  if (token) {
+    try {
+      const res = await fetch(`/api/auth/officers/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (!data.success) {
+        showToast(data.error || "Could not revoke officer on backend.", "error");
+        return;
+      }
+    } catch (err) {
+      console.warn("Backend delete failed, falling back locally:", err);
+    }
   }
-}
 
-function deleteAdminUser(id) {
-  if (!adminData.admin_users) adminData.admin_users = { ...ssdInitialSeed.admin_users };
-  const u = adminData.admin_users[id];
-  const name = u ? u.name : "this officer";
-  if (!confirm(`Are you sure you want to revoke admin access for ${name}?`)) return;
-
-  delete adminData.admin_users[id];
-  saveLocalStore();
-  renderAdminsTable();
-
-  if (db) {
-    db.ref(`admin_users/${id}`).remove().then(() => {
-      showToast("Officer access revoked.", "info");
-    });
-  } else {
-    showToast("Officer access revoked.", "info");
+  if (adminData.admin_users && adminData.admin_users[id]) {
+    delete adminData.admin_users[id];
+    saveLocalStore();
   }
+  showToast("Officer authorization revoked successfully.", "success");
+  await renderAdminsTable();
 }
 
 // ==========================================================================
@@ -7147,6 +7315,14 @@ window.openMemberIdCard = openMemberIdCard;
 window.flipAdminIdCard = flipAdminIdCard;
 window.downloadAdminIdCard = downloadAdminIdCard;
 window.printAdminIdCard = printAdminIdCard;
+window.handleAdminRoleChange = handleAdminRoleChange;
+window.formatJurisdictionName = formatJurisdictionName;
+window.renderAdminsTable = renderAdminsTable;
+window.openAddAdminUserModal = openAddAdminUserModal;
+window.openEditAdminUserModal = openEditAdminUserModal;
+window.handleSaveAdminUser = handleSaveAdminUser;
+window.toggleAdminStatus = toggleAdminStatus;
+window.deleteAdminUser = deleteAdminUser;
 
 
 

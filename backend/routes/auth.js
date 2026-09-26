@@ -225,4 +225,58 @@ router.patch('/officers/:id/status', authenticate, requireRole('super_admin'), a
   }
 });
 
+// 7. UPDATE OFFICER DETAILS & JURISDICTION
+router.put('/officers/:id', authenticate, requireRole('super_admin', 'central_admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fullName, phone, roleId, department, status, password, stateId, regionId, districtId, talukaId, chapterId } = req.body;
+
+    const userRes = await query('SELECT * FROM users WHERE id = $1', [id]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Officer account not found.' });
+    }
+
+    if (password && password.trim()) {
+      const hash = bcrypt.hashSync(password.trim(), 10);
+      await query(
+        'UPDATE users SET full_name = $1, phone = $2, role_id = $3, department = $4, status = $5, password_hash = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7',
+        [fullName || userRes.rows[0].full_name, phone || userRes.rows[0].phone, roleId || userRes.rows[0].role_id, department || userRes.rows[0].department, status || userRes.rows[0].status, hash, id]
+      );
+    } else {
+      await query(
+        'UPDATE users SET full_name = $1, phone = $2, role_id = $3, department = $4, status = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6',
+        [fullName || userRes.rows[0].full_name, phone || userRes.rows[0].phone, roleId || userRes.rows[0].role_id, department || userRes.rows[0].department, status || userRes.rows[0].status, id]
+      );
+    }
+
+    // Update Jurisdiction
+    await query('DELETE FROM user_jurisdictions WHERE user_id = $1', [id]);
+    const jurId = 'jur_' + id;
+    await query(
+      `INSERT INTO user_jurisdictions (id, user_id, role_id, state_id, region_id, district_id, taluka_id, chapter_id, is_primary, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE, CURRENT_TIMESTAMP)`,
+      [jurId, id, roleId || userRes.rows[0].role_id, stateId || null, regionId || null, districtId || null, talukaId || null, chapterId || null]
+    );
+
+    return res.json({ success: true, message: 'Officer details and jurisdiction updated successfully.' });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 8. REVOKE / DELETE OFFICER
+router.delete('/officers/:id', authenticate, requireRole('super_admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (id === req.user.id) {
+      return res.status(400).json({ success: false, error: 'Cannot revoke your own active super admin credentials.' });
+    }
+    await query('DELETE FROM user_jurisdictions WHERE user_id = $1', [id]);
+    await query('DELETE FROM users WHERE id = $1', [id]);
+    return res.json({ success: true, message: 'Officer authorization revoked successfully.' });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;

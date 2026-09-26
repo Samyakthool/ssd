@@ -870,14 +870,14 @@
                     <th>Officer Name</th>
                     <th>Official SSD Email</th>
                     <th>Assigned Role & Level</th>
+                    <th>Territorial Jurisdiction</th>
                     <th>Department / Unit</th>
-                    <th>Passcode</th>
                     <th>Status</th>
                     <th style="text-align: right;">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="adminsTableBody">
-                  <tr><td colspan="8" style="text-align: center; padding: 30px;">Loading admin officers from Firebase...</td></tr>
+                  <tr><td colspan="8" style="text-align: center; padding: 30px;">Loading authorized officers...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1845,6 +1845,10 @@
           </div>
           <div class="form-grid-modal">
             <div class="form-group-modal">
+              <label for="newAdminPhone">Official Contact Phone</label>
+              <input type="text" id="newAdminPhone" placeholder="+91 98223 00000">
+            </div>
+            <div class="form-group-modal">
               <label for="newAdminPasscode">Access Passcode / Password</label>
               <div class="password-input-wrap">
                 <input type="password" id="newAdminPasscode" required placeholder="e.g. SSD2026!" style="font-family: monospace;">
@@ -1853,27 +1857,102 @@
                 </button>
               </div>
             </div>
-            <div class="form-group-modal">
-              <label for="newAdminRole">Assigned Access Role</label>
-              <select id="newAdminRole" required>
-                <option value="super_admin">Supreme Commander (Full Super Admin Access)</option>
-                <option value="enlistment_officer">Enlistment Approval Officer (Approvals Queue & Scrutiny Only)</option>
-                <option value="executive">National Executive (Members, Drills, Gazette, Missions)</option>
-                <option value="treasurer">Treasury Officer (Centenary Fund, Ledger, 80G Receipts)</option>
-                <option value="media">Media & PR Officer (Gazette, Drills, Archives)</option>
-              </select>
-            </div>
           </div>
+
           <div class="form-grid-modal">
             <div class="form-group-modal">
-              <label for="newAdminDept">Department / Council Unit</label>
+              <label for="newAdminRole">Assigned Access Role</label>
+              <select id="newAdminRole" required onchange="handleAdminRoleChange(this.value)">
+                <option value="super_admin">Supreme Commander (Full National Super Admin Access - L7)</option>
+                <option value="central_admin">National Executive Secretariat (Central Authority - L6)</option>
+                <option value="enlistment_officer">Enlistment Scrutiny Board (Commissioning Officer - L6)</option>
+                <option value="state_official">State Directorate Officer (State Command - L5)</option>
+                <option value="regional_official">Regional Command Officer (Regional Directorate - L4)</option>
+                <option value="district_official">District Command Officer / Dalpati (District Scrutiny - L3)</option>
+                <option value="taluka_official">Taluka Executive Officer (Sub-District Ground Verification - L2)</option>
+                <option value="chapter_official">Chapter Unit Official (Local Unit - L1)</option>
+                <option value="finance_admin">National Treasury Officer (Centenary Fund & 80G Audit)</option>
+                <option value="media_admin">Chief Media & IT Cell Officer (Gazette & Media)</option>
+              </select>
+            </div>
+            <div class="form-group-modal">
+              <label for="newAdminDept">Department / Directorate Unit</label>
               <input type="text" id="newAdminDept" placeholder="e.g. Central Cadet Directorate" required>
             </div>
+          </div>
+
+          <!-- DYNAMIC TERRITORIAL JURISDICTION ASSIGNMENT -->
+          <div id="jurisdictionFieldsContainer" style="display: none; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;">
+            <div style="font-weight: 700; font-size: 13px; color: var(--navy-dark); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-map-location-dot" style="color: var(--primary-orange);"></i> Assigned Territorial Jurisdiction
+            </div>
+            <div class="form-grid-modal" style="margin-bottom: 0;">
+              <div class="form-group-modal" id="groupAdminState">
+                <label for="newAdminState">Assigned State</label>
+                <select id="newAdminState">
+                  <option value="">-- Select State --</option>
+                  <option value="state_mh">Maharashtra</option>
+                  <option value="state_dl">Delhi (NCT)</option>
+                  <option value="state_up">Uttar Pradesh</option>
+                  <option value="state_mp">Madhya Pradesh</option>
+                  <option value="state_br">Bihar</option>
+                  <option value="state_ka">Karnataka</option>
+                  <option value="state_rj">Rajasthan</option>
+                  <option value="state_pb">Punjab</option>
+                  <option value="state_gj">Gujarat</option>
+                  <option value="state_tg">Telangana</option>
+                  <option value="state_ap">Andhra Pradesh</option>
+                  <option value="state_tn">Tamil Nadu</option>
+                  <option value="state_wb">West Bengal</option>
+                </select>
+              </div>
+              <div class="form-group-modal" id="groupAdminRegion" style="display: none;">
+                <label for="newAdminRegion">Assigned Region</label>
+                <select id="newAdminRegion">
+                  <option value="">-- Select Region --</option>
+                  <option value="reg_mh_vidarbha">Vidarbha (Nagpur HQ)</option>
+                  <option value="reg_mh_western">Western Maharashtra (Pune Command)</option>
+                  <option value="reg_mh_konkan">Konkan & Mumbai Metropolitan</option>
+                  <option value="reg_mh_marathwada">Marathwada</option>
+                  <option value="reg_mh_north">North Maharashtra (Khandesh)</option>
+                </select>
+              </div>
+              <div class="form-group-modal" id="groupAdminDistrict" style="display: none;">
+                <label for="newAdminDistrict">Assigned District</label>
+                <select id="newAdminDistrict">
+                  <option value="">-- Select District --</option>
+                  <option value="dist_mh_nagpur">Nagpur</option>
+                  <option value="dist_mh_pune">Pune</option>
+                  <option value="dist_mh_mumbai">Mumbai City</option>
+                  <option value="dist_mh_amravati">Amravati</option>
+                  <option value="dist_mh_thane">Thane</option>
+                  <option value="dist_mh_nashik">Nashik</option>
+                  <option value="dist_dl_central">Central Delhi</option>
+                  <option value="dist_up_lucknow">Lucknow</option>
+                </select>
+              </div>
+              <div class="form-group-modal" id="groupAdminTaluka" style="display: none;">
+                <label for="newAdminTaluka">Assigned Taluka / Sub-District</label>
+                <select id="newAdminTaluka">
+                  <option value="">-- Select Taluka --</option>
+                  <option value="taluka_mh_nagpur_urban">Nagpur Urban</option>
+                  <option value="taluka_mh_nagpur_rural">Nagpur Rural</option>
+                  <option value="taluka_mh_haveli">Haveli (Pune)</option>
+                  <option value="taluka_mh_pune_city">Pune City</option>
+                </select>
+              </div>
+            </div>
+            <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 6px;">
+              <i class="fa-solid fa-shield-halved"></i> Backend Enforced: Officer will strictly be authorized within this designated territorial boundary.
+            </small>
+          </div>
+
+          <div class="form-grid-modal">
             <div class="form-group-modal">
               <label for="newAdminStatus">Account Status</label>
               <select id="newAdminStatus" required>
-                <option value="Active">Active (Permit Access)</option>
-                <option value="Suspended">Suspended (Block Access)</option>
+                <option value="ACTIVE">Active (Permit Access)</option>
+                <option value="SUSPENDED">Suspended (Block Access)</option>
               </select>
             </div>
           </div>
