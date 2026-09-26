@@ -8,9 +8,11 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "migrate": "node backend/db/migrate.js",
+    "migrate:supabase": "node backend/db/supabase-migrate.js",
     "test:api": "node backend/tests/run-tests.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -25,4 +27,3 @@
     "razorpay": "^2.9.4"
   }
 }
-

@@ -12,7 +12,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
-import { initDb } from './backend/db/index.js';
+import { initDb, isSupabaseConfigured, getDatabaseType } from './backend/db/index.js';
 import { runMigration } from './backend/db/migrate.js';
 
 // Route Handlers
@@ -77,6 +77,9 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan('dev'));
 
+import { globalApiRateLimiter } from './backend/middleware/rateLimiter.js';
+app.use('/api', globalApiRateLimiter);
+
 // URL Normalization & Serverless Compatibility Middleware
 app.use((req, res, next) => {
   if (req.url === '/api' || req.url === '/api/') {
@@ -133,7 +136,19 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
     service: 'Samata Sainik Dal Central Command API',
+    database: getDatabaseType(),
+    supabaseConfigured: isSupabaseConfigured(),
     timestamp: new Date().toISOString()
+  });
+});
+
+// Safe public Supabase configuration endpoint for client-side connector
+app.get('/api/config/supabase', (req, res) => {
+  res.json({
+    supabaseUrl: process.env.SUPABASE_URL || null,
+    supabaseAnonKey: process.env.SUPABASE_ANON_KEY || null,
+    databaseType: getDatabaseType(),
+    configured: isSupabaseConfigured()
   });
 });
 

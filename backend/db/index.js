@@ -1,9 +1,10 @@
 // ==========================================================================
-// SAMATA SAINIK DAL (SSD) - UNIFIED RESILIENT DATABASE ADAPTER
-// Supports PostgreSQL in production and high-speed embedded engine in dev/fallback
+// SAMATA SAINIK DAL (SSD) - UNIFIED SUPABASE & POSTGRESQL ADAPTER
+// Supports Supabase (PostgreSQL Cloud & JS Client) with Resilient Embedded Fallback
 // ==========================================================================
 
 import pg from 'pg';
+import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -15,10 +16,40 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const isProduction = process.env.NODE_ENV === 'production';
-const databaseUrl = process.env.DATABASE_URL;
+const databaseUrl = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY;
 
 let pgPool = null;
 let usePostgres = false;
+let isSupabasePostgres = false;
+export let supabase = null;
+
+// Initialize Supabase Client if URL and Key are provided
+if (supabaseUrl && supabaseKey && !supabaseUrl.includes('placeholder')) {
+  try {
+    supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false
+      }
+    });
+    console.log('⚡ [Supabase] JavaScript Client initialized successfully.');
+  } catch (err) {
+    console.warn('⚠️ [Supabase] Client initialization notice:', err.message);
+  }
+}
+
+export function isSupabaseConfigured() {
+  return !!(supabase || (isSupabasePostgres && usePostgres));
+}
+
+export function getDatabaseType() {
+  if (isSupabasePostgres && usePostgres) return 'supabase_postgres';
+  if (supabase) return 'supabase_api';
+  if (usePostgres) return 'postgres';
+  return 'embedded';
+}
 
 // Embedded Storage Store for resilient local dev
 const embeddedStore = {
@@ -93,28 +124,43 @@ function loadEmbeddedStore() {
   }
 }
 
-// Try initializing PostgreSQL if available
+// Initialize Database (Supabase / PostgreSQL with resilient fallback)
 export async function initDb() {
   loadEmbeddedStore();
   
-  if (databaseUrl && !databaseUrl.includes('placeholder')) {
+  const rawDbUrl = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
+  if (rawDbUrl && !rawDbUrl.includes('placeholder')) {
+    isSupabasePostgres = rawDbUrl.includes('supabase.co') || rawDbUrl.includes('supabase.com') || rawDbUrl.includes('pooler.supabase.com');
+    const ssl = (isProduction || isSupabasePostgres) ? { rejectUnauthorized: false } : false;
+
     try {
       pgPool = new pg.Pool({
-        connectionString: databaseUrl,
-        ssl: isProduction ? { rejectUnauthorized: false } : false,
-        connectionTimeoutMillis: 3000
+        connectionString: rawDbUrl,
+        ssl: ssl,
+        connectionTimeoutMillis: 5000
       });
       const client = await pgPool.connect();
       client.release();
       usePostgres = true;
-      console.log(' [Database] Connected successfully to PostgreSQL.');
+      if (isSupabasePostgres) {
+        console.log('⚡ [Database] Connected successfully to Supabase PostgreSQL Database (Cloud).');
+      } else {
+        console.log('✅ [Database] Connected successfully to PostgreSQL.');
+      }
       return;
     } catch (err) {
-      console.warn(' [Database] PostgreSQL connection not reachable. Using Resilient Embedded Storage engine.');
+      if (isSupabasePostgres) {
+        console.warn(`⚠️ [Database] Supabase PostgreSQL (${rawDbUrl.split('@')[1] || 'remote'}) unreachable: ${err.message}. Using Resilient Embedded Storage engine.`);
+      } else {
+        console.warn('⚠️ [Database] PostgreSQL connection not reachable. Using Resilient Embedded Storage engine.');
+      }
       usePostgres = false;
     }
+  } else if (supabase) {
+    console.log('⚡ [Database] Supabase API Client active. Ready for cloud database transactions.');
+    usePostgres = false;
   } else {
-    console.log('ℹ [Database] PostgreSQL DATABASE_URL not supplied. Running in Resilient Embedded mode.');
+    console.log('ℹ️ [Database] Supabase / PostgreSQL credentials not supplied. Running in Resilient Embedded mode.');
     usePostgres = false;
   }
 }
