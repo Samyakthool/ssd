@@ -2106,6 +2106,34 @@ function switchView(viewKey) {
   if (viewKey === 'approvals') {
     loadEnlistmentApplications();
     renderApprovalsView();
+  } else if (viewKey === 'admins') {
+    renderAdminsTable();
+  } else if (viewKey === 'members') {
+    renderMembersTable();
+  } else if (viewKey === 'donations') {
+    renderDonationsTable();
+  } else if (viewKey === 'leadership') {
+    renderLeadershipTable();
+  } else if (viewKey === 'chapters') {
+    renderChaptersView();
+  } else if (viewKey === 'news') {
+    renderNewsTable();
+  } else if (viewKey === 'events') {
+    renderEventsTable();
+  } else if (viewKey === 'campaigns') {
+    renderCampaignsTable();
+  } else if (viewKey === 'gallery') {
+    renderGalleryGrid();
+  } else if (viewKey === 'contacts') {
+    renderContactsTable();
+  } else if (viewKey === 'stats') {
+    populateStatsForm();
+  } else if (viewKey === 'settings') {
+    initSupabaseConfigForm();
+    initRazorpayAdminConfig();
+    initEmailConfigForm();
+  } else if (viewKey === 'overview') {
+    renderOverview();
   }
 
   if (window.innerWidth <= 1024) {
@@ -4402,6 +4430,10 @@ function forceGenerateOfficerEmail() {
 // ==========================================================================
 function formatJurisdictionName(code) {
   if (!code) return '';
+  if (typeof code !== 'string') {
+    if (typeof code === 'object' && code.name) return String(code.name);
+    code = String(code);
+  }
   const clean = code.replace(/^(dist_|reg_|state_|taluka_)(mh_|dl_|up_|mp_|br_|ka_|rj_|pb_|gj_|tg_|ap_|tn_|wb_)?/, '');
   return clean.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
@@ -4433,101 +4465,142 @@ async function renderAdminsTable() {
   tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 25px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading authorized officers...</td></tr>';
 
   let officersList = [];
-  const token = localStorage.getItem("ssd_token");
+  const token = localStorage.getItem("ssd_auth_token") || localStorage.getItem("ssd_token");
 
   if (token) {
     try {
       const res = await fetch("/api/auth/officers", {
         headers: { "Authorization": `Bearer ${token}` }
       });
-      const data = await res.json();
-      if (data.success && Array.isArray(data.officers)) {
-        officersList = data.officers;
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.officers) && data.officers.length > 0) {
+          officersList = data.officers;
+        }
       }
     } catch (err) {
       console.warn("Backend /api/auth/officers unreachable, using fallback:", err);
     }
   }
 
-  if (officersList.length === 0) {
-    const adminsObj = adminData.admin_users || ssdInitialSeed.admin_users || {};
+  if (!officersList || officersList.length === 0) {
+    const adminsObj = (adminData && adminData.admin_users) ? adminData.admin_users : (ssdInitialSeed.admin_users || {});
     officersList = Object.entries(adminsObj).map(([key, val]) => ({ id: key, ...val }));
   }
 
   window._currentOfficersList = officersList;
   updateBadgeCount("badgeAdminsCount", officersList.length);
 
-  if (officersList.length === 0) {
+  if (!officersList || officersList.length === 0) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: var(--text-muted);">No authorized officers found.</td></tr>';
     return;
   }
 
-  tbody.innerHTML = officersList.map(u => {
-    const jur = u.primaryJurisdiction || (u.jurisdictions && u.jurisdictions[0]) || u.jurisdiction || {};
-    let jurText = 'National HQ (All-India)';
-    if (jur.taluka_id || u.talukaId) {
-      jurText = `${formatJurisdictionName(jur.taluka_id || u.talukaId)}, ${formatJurisdictionName(jur.district_id || u.districtId)}`;
-    } else if (jur.district_id || u.districtId) {
-      jurText = `${formatJurisdictionName(jur.district_id || u.districtId)} District`;
-    } else if (jur.region_id || u.regionId) {
-      jurText = `${formatJurisdictionName(jur.region_id || u.regionId)} Region`;
-    } else if (jur.state_id || u.stateId) {
-      jurText = `${formatJurisdictionName(jur.state_id || u.stateId)} State`;
-    }
+  try {
+    tbody.innerHTML = officersList.map(u => {
+      const uId = String(u.id || u.officerId || 'off_2026');
+      const uOfficerId = String(u.officerId || uId || ('SSD-OFF-' + (uId.length >= 4 ? uId.slice(-4).toUpperCase() : uId.toUpperCase())));
+      const uBatch = String(u.batchNo || 'BATCH-2026/EXEC');
+      const uName = String(u.full_name || u.name || 'Command Officer');
+      const uEmail = String(u.email || 'officer@ssd.org');
+      const uPhone = u.phone ? String(u.phone) : '';
+      const uDept = String(u.department || u.dept || 'General Directorate');
+      const uStatus = String(u.status || 'Active');
+      const isActive = uStatus.toLowerCase() === 'active';
 
-    const roleId = u.role_id || u.role || 'executive';
-    const roleName = getRoleDisplayName(roleId);
-    const isSuper = roleId === 'super_admin' || roleId === 'central_admin';
-    const isActive = (u.status || 'Active').toLowerCase() === 'active';
+      const jur = (u.primaryJurisdiction && typeof u.primaryJurisdiction === 'object')
+        ? u.primaryJurisdiction
+        : ((Array.isArray(u.jurisdictions) && u.jurisdictions[0] && typeof u.jurisdictions[0] === 'object')
+          ? u.jurisdictions[0]
+          : ((u.jurisdiction && typeof u.jurisdiction === 'object') ? u.jurisdiction : {}));
 
-    return `
+      let jurText = 'National HQ (All-India)';
+      const tId = jur.taluka_id || u.talukaId;
+      const dId = jur.district_id || u.districtId;
+      const rId = jur.region_id || u.regionId;
+      const sId = jur.state_id || u.stateId;
+
+      if (tId && dId) {
+        jurText = `${formatJurisdictionName(tId)}, ${formatJurisdictionName(dId)}`;
+      } else if (dId) {
+        jurText = `${formatJurisdictionName(dId)} District`;
+      } else if (rId) {
+        jurText = `${formatJurisdictionName(rId)} Region`;
+      } else if (sId) {
+        jurText = `${formatJurisdictionName(sId)} State`;
+      } else if (jur.state_name || jur.state) {
+        jurText = `${String(jur.state_name || jur.state)} State`;
+      }
+
+      const roleId = String(u.role_id || u.role || 'executive');
+      const roleName = getRoleDisplayName(roleId);
+      const isSuper = roleId === 'super_admin' || roleId === 'central_admin';
+
+      return `
+        <tr>
+          <td>
+            <code style="font-weight: 700; color: var(--dark-navy);">${escapeHtml(uOfficerId)}</code>
+            <div style="font-size: 11px; color: var(--primary-orange); font-weight: 600; margin-top: 2px;">${escapeHtml(uBatch)}</div>
+          </td>
+          <td>
+            <strong>${escapeHtml(uName)}</strong>
+            ${uPhone ? `<div style="font-size: 11.5px; color: var(--text-muted);"><i class="fa-solid fa-phone" style="font-size: 10px;"></i> ${escapeHtml(uPhone)}</div>` : ''}
+          </td>
+          <td>
+            <code style="color: var(--primary-orange); font-weight: 700; background: rgba(255,107,0,0.08); padding: 3px 7px; border-radius: 4px; font-size: 12px;">
+              ${escapeHtml(uEmail)}
+            </code>
+          </td>
+          <td>
+            <span class="badge-status ${isSuper ? 'badge-approved' : 'badge-info'}" style="font-weight: 600;">
+              ${escapeHtml(roleName)}
+            </span>
+          </td>
+          <td>
+            <div style="font-size: 12px; font-weight: 600; color: var(--dark-navy); display: flex; align-items: center; gap: 5px;">
+              <i class="fa-solid fa-map-pin" style="color: ${jurText.includes('National') ? 'var(--dark-navy)' : 'var(--primary-orange)'};"></i>
+              ${escapeHtml(jurText)}
+            </div>
+          </td>
+          <td>${escapeHtml(uDept)}</td>
+          <td>
+            <span class="badge-status ${isActive ? 'badge-approved' : 'badge-rejected'}">
+              ${isActive ? 'Active' : 'Suspended'}
+            </span>
+          </td>
+          <td style="text-align: right;">
+            <div class="action-btn-group" style="justify-content: flex-end;">
+              <button type="button" class="action-icon-btn" onclick="openEditAdminUserModal('${escapeHtml(uId)}')" title="Edit Officer Permissions & Jurisdiction">
+                <i class="fa-solid fa-user-pen"></i>
+              </button>
+              <button type="button" class="action-icon-btn ${isActive ? 'warning' : 'verify'}" onclick="toggleAdminStatus('${escapeHtml(uId)}', '${escapeHtml(uStatus)}')" title="${isActive ? 'Suspend Officer' : 'Activate Officer'}">
+                <i class="fa-solid ${isActive ? 'fa-ban' : 'fa-check'}"></i>
+              </button>
+              <button type="button" class="action-icon-btn delete" onclick="deleteAdminUser('${escapeHtml(uId)}')" title="Revoke Authorization">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (renderErr) {
+    console.error("renderAdminsTable render error:", renderErr);
+    tbody.innerHTML = officersList.map(u => `
       <tr>
-        <td>
-          <code style="font-weight: 700; color: var(--dark-navy);">${escapeHtml(u.officerId || u.id || ('SSD-OFF-' + (u.id ? u.id.slice(-4).toUpperCase() : '2026')))}</code>
-          <div style="font-size: 11px; color: var(--primary-orange); font-weight: 600; margin-top: 2px;">${escapeHtml(u.batchNo || 'BATCH-2026/EXEC')}</div>
-        </td>
-        <td>
-          <strong>${escapeHtml(u.full_name || u.name || '')}</strong>
-          ${u.phone ? `<div style="font-size: 11.5px; color: var(--text-muted);"><i class="fa-solid fa-phone" style="font-size: 10px;"></i> ${escapeHtml(u.phone)}</div>` : ''}
-        </td>
-        <td>
-          <code style="color: var(--primary-orange); font-weight: 700; background: rgba(255,107,0,0.08); padding: 3px 7px; border-radius: 4px; font-size: 12px;">
-            ${escapeHtml(u.email)}
-          </code>
-        </td>
-        <td>
-          <span class="badge-status ${isSuper ? 'badge-approved' : 'badge-info'}" style="font-weight: 600;">
-            ${escapeHtml(roleName)}
-          </span>
-        </td>
-        <td>
-          <div style="font-size: 12px; font-weight: 600; color: var(--dark-navy); display: flex; align-items: center; gap: 5px;">
-            <i class="fa-solid fa-map-pin" style="color: ${jurText.includes('National') ? 'var(--dark-navy)' : 'var(--primary-orange)'};"></i>
-            ${escapeHtml(jurText)}
-          </div>
-        </td>
-        <td>${escapeHtml(u.department || u.dept || 'General Directorate')}</td>
-        <td>
-          <span class="badge-status ${isActive ? 'badge-approved' : 'badge-rejected'}">
-            ${isActive ? 'Active' : 'Suspended'}
-          </span>
-        </td>
+        <td><code>${escapeHtml(String(u.officerId || u.id || 'OFFICER'))}</code></td>
+        <td><strong>${escapeHtml(String(u.full_name || u.name || 'Officer'))}</strong></td>
+        <td><code>${escapeHtml(String(u.email || ''))}</code></td>
+        <td><span class="badge-status badge-info">${escapeHtml(String(u.role_id || u.role || 'Officer'))}</span></td>
+        <td>National HQ</td>
+        <td>${escapeHtml(String(u.department || u.dept || 'Command'))}</td>
+        <td><span class="badge-status badge-approved">${escapeHtml(String(u.status || 'Active'))}</span></td>
         <td style="text-align: right;">
-          <div class="action-btn-group" style="justify-content: flex-end;">
-            <button type="button" class="action-icon-btn" onclick="openEditAdminUserModal('${u.id}')" title="Edit Officer Permissions & Jurisdiction">
-              <i class="fa-solid fa-user-pen"></i>
-            </button>
-            <button type="button" class="action-icon-btn ${isActive ? 'warning' : 'verify'}" onclick="toggleAdminStatus('${u.id}', '${u.status}')" title="${isActive ? 'Suspend Officer' : 'Activate Officer'}">
-              <i class="fa-solid ${isActive ? 'fa-ban' : 'fa-check'}"></i>
-            </button>
-            <button type="button" class="action-icon-btn delete" onclick="deleteAdminUser('${u.id}')" title="Revoke Authorization">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          </div>
+          <button type="button" class="action-icon-btn" onclick="openEditAdminUserModal('${escapeHtml(String(u.id))}')"><i class="fa-solid fa-user-pen"></i></button>
         </td>
       </tr>
-    `;
-  }).join('');
+    `).join('');
+  }
 }
 
 function openAddAdminUserModal() {
