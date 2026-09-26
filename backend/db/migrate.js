@@ -89,6 +89,18 @@ export async function runMigration() {
     embeddedStore.districts.set(d.id, d);
   }
 
+  // Talukas (Sample Sub-districts)
+  const talukas = [
+    { id: 'taluka_mh_nagpur_urban', district_id: 'dist_mh_nagpur', name: 'Nagpur Urban', commander_name: 'Sainik Chandrashekhar Wankhede', status: 'ACTIVE' },
+    { id: 'taluka_mh_nagpur_rural', district_id: 'dist_mh_nagpur', name: 'Nagpur Rural', commander_name: 'Sainik Pravin Meshram', status: 'ACTIVE' },
+    { id: 'taluka_mh_haveli', district_id: 'dist_mh_pune', name: 'Haveli', commander_name: 'Sainik Rahul Kamble', status: 'ACTIVE' },
+    { id: 'taluka_mh_pune_city', district_id: 'dist_mh_pune', name: 'Pune City', commander_name: 'Sainik Vishal Gaikwad', status: 'ACTIVE' }
+  ];
+
+  for (const t of talukas) {
+    embeddedStore.talukas.set(t.id, t);
+  }
+
   // Chapters
   const chapters = [
     { id: 'chap_nagpur_deekshabhoomi', name: 'Deekshabhoomi Central Chapter', state_id: 'state_mh', region_id: 'reg_mh_vidarbha', district_id: 'dist_mh_nagpur', taluka_id: null, location_address: 'Deekshabhoomi Complex, Wardha Road, Nagpur', commander_name: 'Rajesh Shinde', secretary_name: 'Nitin Meshram', contact_phone: '+91 98223 41927', contact_email: 'nagpur.central@ssd.org', members_count: 1450, status: 'ACTIVE' },
@@ -270,6 +282,28 @@ export async function runMigration() {
       department: 'National Enlistment & Scrutiny Board',
       status: 'ACTIVE',
       created_at: new Date().toISOString()
+    },
+    {
+      id: 'usr_taluka_nagpur',
+      email: 'taluka.nagpur@ssd.org',
+      password_hash: hashPassword('TALUKA1927'),
+      full_name: 'Sainik Chandrashekhar Wankhede (Taluka Executive Officer)',
+      phone: '+91 98223 00008',
+      role_id: 'taluka_official',
+      department: 'Nagpur Urban Taluka Directorate',
+      status: 'ACTIVE',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'usr_taluka_haveli',
+      email: 'taluka.haveli@ssd.org',
+      password_hash: hashPassword('HAVELI1927'),
+      full_name: 'Sainik Rahul Kamble (Haveli Taluka Officer)',
+      phone: '+91 94220 00009',
+      role_id: 'taluka_official',
+      department: 'Haveli (Pune) Taluka Directorate',
+      status: 'ACTIVE',
+      created_at: new Date().toISOString()
     }
   ];
 
@@ -286,6 +320,8 @@ export async function runMigration() {
     { id: 'jur_reg_vid', user_id: 'usr_region_vidarbha', role_id: 'regional_official', state_id: 'state_mh', region_id: 'reg_mh_vidarbha', district_id: null, is_primary: true },
     { id: 'jur_dist_ngp', user_id: 'usr_district_nagpur', role_id: 'district_official', state_id: 'state_mh', region_id: 'reg_mh_vidarbha', district_id: 'dist_mh_nagpur', is_primary: true },
     { id: 'jur_dist_pun', user_id: 'usr_district_pune', role_id: 'district_official', state_id: 'state_mh', region_id: 'reg_mh_western', district_id: 'dist_mh_pune', is_primary: true },
+    { id: 'jur_tal_ngp', user_id: 'usr_taluka_nagpur', role_id: 'taluka_official', state_id: 'state_mh', region_id: 'reg_mh_vidarbha', district_id: 'dist_mh_nagpur', taluka_id: 'taluka_mh_nagpur_urban', is_primary: true },
+    { id: 'jur_tal_pun', user_id: 'usr_taluka_haveli', role_id: 'taluka_official', state_id: 'state_mh', region_id: 'reg_mh_western', district_id: 'dist_mh_pune', taluka_id: 'taluka_mh_haveli', is_primary: true },
     { id: 'jur_fin', user_id: 'usr_finance_admin', role_id: 'finance_admin', state_id: null, region_id: null, district_id: null, is_primary: true },
     { id: 'jur_med', user_id: 'usr_media_admin', role_id: 'media_admin', state_id: null, region_id: null, district_id: null, is_primary: true }
   ];

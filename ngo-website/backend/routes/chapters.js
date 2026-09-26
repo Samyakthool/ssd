@@ -49,6 +49,19 @@ router.get('/districts/:stateId', async (req, res) => {
   }
 });
 
+// GET TALUKAS FOR A DISTRICT
+router.get('/talukas/:districtId', async (req, res) => {
+  try {
+    const { districtId } = req.params;
+    const talukas = Array.from(embeddedStore.talukas.values()).filter(
+      t => t.district_id === districtId || t.district_id.toLowerCase().includes(districtId.toLowerCase())
+    );
+    return res.json({ success: true, talukas: talukas });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 3. CREATE STATE CHAPTER (Super Admin / Central Command)
 router.post('/states', authenticate, requireRole('super_admin', 'central_admin'), async (req, res) => {
   try {
