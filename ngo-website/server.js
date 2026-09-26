@@ -119,7 +119,7 @@ app.use('/api/media', mediaRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Friendly URL Rewrites
-app.get('/verify/:sainikId', (req, res) => {
+app.get(['/verify', '/verify/', '/verify/:sainikId', '/verify/:sainikId/'], (req, res) => {
   res.sendFile(path.join(__dirname, 'verify.html'));
 });
 
