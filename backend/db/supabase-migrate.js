@@ -18,7 +18,7 @@ const __dirname = path.dirname(__filename);
 
 const databaseUrl = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
 
 console.log(`\n==========================================================================`);
 console.log(` ⚡ SAMATA SAINIK DAL - SUPABASE DATABASE MIGRATION ENGINE`);
