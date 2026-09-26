@@ -8,6 +8,7 @@ import { query, embeddedStore, saveEmbeddedStore } from '../db/index.js';
 import { authenticate, optionalAuth } from '../middleware/auth.js';
 import { requireRole, enforceJurisdiction, canAccessRecord } from '../middleware/rbac.js';
 import { upload } from '../middleware/upload.js';
+import { applicationRateLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
@@ -182,7 +183,7 @@ function resolveOrHydrateApplication(id, req = null) {
 
 
 // 1. PUBLIC MEMBERSHIP APPLICATION SUBMISSION
-router.post('/apply', upload.single('photo'), async (req, res) => {
+router.post('/apply', applicationRateLimiter, upload.single('photo'), async (req, res) => {
   try {
     const {
       fullName, dob, gender, mobile, email, address,

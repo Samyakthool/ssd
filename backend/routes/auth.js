@@ -8,12 +8,13 @@ import jwt from 'jsonwebtoken';
 import { query, embeddedStore, saveEmbeddedStore } from '../db/index.js';
 import { authenticate } from '../middleware/auth.js';
 import { requireRole } from '../middleware/rbac.js';
+import { authRateLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'ssd_prod_secret_key_change_in_production_1927_2027';
 
 // 1. OFFICER LOGIN
-router.post('/login', async (req, res) => {
+router.post('/login', authRateLimiter, async (req, res) => {
   try {
     const { username, email, password, passcode } = req.body;
     const inputEmail = (email || username || '').trim().toLowerCase();

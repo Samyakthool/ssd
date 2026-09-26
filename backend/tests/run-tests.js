@@ -53,6 +53,11 @@ async function runTests() {
     if (res.status !== 401 || data.success) throw new Error('Expected 401 Unauthorized');
   });
 
+  await assert('Unauthenticated access rejection on protected review queue', async () => {
+    const res = await fetch('http://localhost:3000/api/membership/applications');
+    if (res.status !== 401) throw new Error('Expected 401 Unauthorized, got ' + res.status);
+  });
+
   let authTokenEnlistment = '';
 
   await assert('District Official Login & Jurisdiction Validation', async () => {

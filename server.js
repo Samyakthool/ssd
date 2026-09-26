@@ -77,6 +77,9 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan('dev'));
 
+import { globalApiRateLimiter } from './backend/middleware/rateLimiter.js';
+app.use('/api', globalApiRateLimiter);
+
 // URL Normalization & Serverless Compatibility Middleware
 app.use((req, res, next) => {
   if (req.url === '/api' || req.url === '/api/') {
