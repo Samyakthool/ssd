@@ -59,10 +59,6 @@
             <i class="fa-solid fa-key"></i> Authenticate & Enter Portal
           </button>
         </form>
-        <div style="margin-top: 14px; text-align: center; font-size: 11.5px; color: var(--text-muted); display: flex; flex-direction: column; gap: 3px;">
-          <span>Master Admin: <code>admin@ssd.org</code> / <code>SSD1927</code></span>
-          <span>Enlistment Approver: <code>approvals@ssd.org</code> / <code>APPROVE1927</code></span>
-        </div>
         <div style="text-align: center; margin-top: 16px; display: flex; justify-content: center; align-items: center; gap: 14px;">
           <a href="member-portal.html" style="font-size: 12.5px; color: #c5a059; text-decoration: none; font-weight: 600;">
             <i class="fa-solid fa-id-card"></i> Sainik Member Portal
@@ -1003,7 +999,7 @@
                       <i class="fa-solid fa-floppy-disk"></i> Save & Reconnect Supabase
                     </button>
                     <button type="button" class="btn-admin btn-admin-outline" onclick="testSupabasePing()">
-                      <i class="fa-solid fa-signal"></i> Test Cloud Connection
+                      <i class="fa-solid fa-signal"></i> Verify Cloud Connection
                     </button>
                     <a href="https://supabase.com/dashboard/project/agkcwwujangfrpbpwehw/sql/new" target="_blank" class="btn-admin btn-admin-outline" style="color: #2563eb; text-decoration: none;">
                       <i class="fa-solid fa-code"></i> Open Supabase SQL Editor
@@ -1052,9 +1048,9 @@
                     <input type="text" id="adminRazorpayKeyId" placeholder="rzp_test_... or rzp_live_..." required style="font-family: monospace; font-size: 13px;">
                   </div>
                   <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; font-size: 12.5px;">
-                    <span id="razorpayModeBadge" class="badge-status badge-approved"><i class="fa-solid fa-vial"></i> Test Mode Active</span>
+                    <span id="razorpayModeBadge" class="badge-status badge-approved"><i class="fa-solid fa-shield-check"></i> Gateway Active</span>
                     <button type="button" class="btn-admin btn-admin-outline" style="padding: 6px 12px; font-size: 11.5px;" onclick="testRazorpayPing()">
-                      <i class="fa-solid fa-bolt"></i> Test Gateway Ping
+                      <i class="fa-solid fa-bolt"></i> Verify Gateway
                     </button>
                   </div>
                   <button type="submit" class="btn-admin btn-admin-primary">
@@ -1124,10 +1120,10 @@
                       <i class="fa-solid fa-floppy-disk"></i> Save Email Settings
                     </button>
                     <button type="button" class="btn-admin btn-admin-outline" onclick="testSendDonationEmail()">
-                      <i class="fa-solid fa-receipt"></i> Send Test 80G Email
+                      <i class="fa-solid fa-receipt"></i> Send Sample 80G Email
                     </button>
                     <button type="button" class="btn-admin btn-admin-outline" onclick="testSendEnrollmentEmail()">
-                      <i class="fa-solid fa-user-check"></i> Send Test Enlistment Email
+                      <i class="fa-solid fa-user-check"></i> Send Sample Enlistment Email
                     </button>
                   </div>
                 </form>
@@ -2188,7 +2184,7 @@
             </div>
             <div>
               <span style="color: var(--text-muted);">Payment ID (Razorpay):</span>
-              <div style="font-weight: 700; color: var(--navy-dark); font-family: monospace;" id="admReceiptPayId">pay_test123</div>
+              <div style="font-weight: 700; color: var(--navy-dark); font-family: monospace;" id="admReceiptPayId">—</div>
             </div>
             <div>
               <span style="color: var(--text-muted);">Date & Time:</span>
