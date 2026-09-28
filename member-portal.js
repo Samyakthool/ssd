@@ -593,20 +593,46 @@ function drawCardBackground(ctx, w, h, isBack) {
   }
 }
 
-function drawSimulatedQR(ctx, x, y, size, text) {
+function drawAuthenticQR(ctx, x, y, size, text, darkColor = '#001f3f') {
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(x, y, size, size);
-  ctx.strokeStyle = '#001f3f';
+
+  if (typeof QRCode !== 'undefined' && QRCode.create) {
+    try {
+      const qr = QRCode.create(text, { errorCorrectionLevel: 'M' });
+      const modCount = qr.modules.size;
+      const cellSize = size / modCount;
+
+      ctx.fillStyle = darkColor;
+      for (let r = 0; r < modCount; r++) {
+        for (let c = 0; c < modCount; c++) {
+          if (qr.modules.get(r, c)) {
+            ctx.fillRect(
+              Math.floor(x + c * cellSize),
+              Math.floor(y + r * cellSize),
+              Math.ceil(cellSize),
+              Math.ceil(cellSize)
+            );
+          }
+        }
+      }
+      return true;
+    } catch (e) {
+      console.warn('QRCode.create drawing error:', e);
+    }
+  }
+
+  // Backup corner squares if library is still initializing
+  ctx.strokeStyle = darkColor;
   ctx.lineWidth = 2;
   ctx.strokeRect(x, y, size, size);
 
-  // Draw 3 corner positioning squares
   const drawCornerSquare = (cx, cy, s) => {
-    ctx.fillStyle = '#001f3f';
+    ctx.fillStyle = darkColor;
     ctx.fillRect(cx, cy, s, s);
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(cx + 4, cy + 4, s - 8, s - 8);
-    ctx.fillStyle = '#001f3f';
+    ctx.fillStyle = darkColor;
     ctx.fillRect(cx + 8, cy + 8, s - 16, s - 16);
   };
 
@@ -615,32 +641,10 @@ function drawSimulatedQR(ctx, x, y, size, text) {
   drawCornerSquare(x + size - cornerSize - 4, y + 4, cornerSize);
   drawCornerSquare(x + 4, y + size - cornerSize - 4, cornerSize);
 
-  // Generate pseudo-random deterministic matrix pattern based on string hash
-  let hash = 0;
-  for (let i = 0; i < text.length; i++) {
-    hash = ((hash << 5) - hash) + text.charCodeAt(i);
-    hash |= 0;
-  }
-
-  ctx.fillStyle = '#001f3f';
-  const gridSize = 12;
-  const cellSize = (size - 16) / gridSize;
-  for (let r = 0; r < gridSize; r++) {
-    for (let c = 0; c < gridSize; c++) {
-      // Don't overwrite corner squares
-      if ((r < 4 && c < 4) || (r < 4 && c > gridSize - 5) || (r > gridSize - 5 && c < 4)) continue;
-      if (((hash ^ (r * 31 + c * 17)) & 1) === 0) {
-        ctx.fillRect(x + 8 + c * cellSize, y + 8 + r * cellSize, cellSize - 1, cellSize - 1);
-      }
-    }
-  }
-
-  // Center Mini Emblem Dot
-  ctx.fillStyle = '#FF6B00';
-  ctx.beginPath();
-  ctx.arc(x + size / 2, y + size / 2, 6, 0, Math.PI * 2);
-  ctx.fill();
+  return false;
 }
+
+const drawSimulatedQR = drawAuthenticQR;
 
 function renderIdCardCanvas(card, back = false) {
   const canvas = document.getElementById('idCardCanvas');
@@ -761,17 +765,21 @@ function renderIdCardCanvas(card, back = false) {
     const host = window.location.host || 'localhost:3000';
     const proto = window.location.protocol || 'http:';
     const qrPayload = card.verifyUrl || `${proto}//${host}/verify/${card.sainikId}`;
-    drawSimulatedQR(ctx, qrX, qrY, qrSize, qrPayload);
+    
+    // 1. Synchronously render authentic ISO standard QR matrix
+    drawAuthenticQR(ctx, qrX, qrY, qrSize, qrPayload, '#001f3f');
 
-    // Overlay real scannable QR Code asynchronously
+    // 2. High-res local raster overlay (same-origin, no CORS or canvas taint issues)
+    const qrSrc = card.qrCodeDataUrl || `/api/qr?text=${encodeURIComponent(qrPayload)}`;
     const qrImg = new Image();
-    qrImg.crossOrigin = 'anonymous';
     qrImg.onload = () => {
       try {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(qrX, qrY, qrSize, qrSize);
         ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
       } catch (e) {}
     };
-    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrPayload)}`;
+    qrImg.src = qrSrc;
 
     ctx.fillStyle = '#FF6B00';
     ctx.font = 'bold 11px monospace';

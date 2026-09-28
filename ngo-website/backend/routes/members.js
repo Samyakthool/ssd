@@ -3,6 +3,7 @@
 // ==========================================================================
 
 import express from 'express';
+import QRCode from 'qrcode';
 import { query, embeddedStore, supabase } from '../db/index.js';
 import { authenticate, optionalAuth } from '../middleware/auth.js';
 import { enforceJurisdiction, canAccessRecord } from '../middleware/rbac.js';
@@ -303,6 +304,21 @@ router.get('/card/:sainikId', async (req, res) => {
     const s = (member.status || '').toUpperCase();
     const isApproved = (s === 'FINAL_APPROVED' || s === 'APPROVED' || s === 'ACTIVE');
 
+    let qrCodeDataUrl = null;
+    try {
+      qrCodeDataUrl = await QRCode.toDataURL(verifyUrl, {
+        width: 250,
+        margin: 1,
+        color: {
+          dark: '#001f3f',
+          light: '#ffffff'
+        },
+        errorCorrectionLevel: 'M'
+      });
+    } catch (qrErr) {
+      console.warn('QR Code generation fallback:', qrErr.message);
+    }
+
     const cardData = {
       sainikId: sainikCode,
       applicationId: member.application_id || member.id,
@@ -319,10 +335,41 @@ router.get('/card/:sainikId', async (req, res) => {
       status: member.status || 'ACTIVE',
       isApproved: isApproved,
       qrToken: member.qr_token || ('qr_' + sainikCode.toLowerCase().replace(/[^a-z0-9]/g, '_')),
-      verifyUrl: verifyUrl
+      verifyUrl: verifyUrl,
+      qrCodeDataUrl: qrCodeDataUrl
     };
 
     return res.json({ success: true, cardData: cardData });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 6. DEDICATED SAINIK QR CODE ENDPOINT
+router.get('/qr/:sainikId', async (req, res) => {
+  try {
+    const { sainikId } = req.params;
+    const host = req.get('host') || 'localhost:3000';
+    const protocol = req.protocol || 'http';
+    const verifyUrl = `${protocol}://${host}/verify/${sainikId}`;
+
+    if (req.query.format === 'json') {
+      const dataUrl = await QRCode.toDataURL(verifyUrl, {
+        width: parseInt(req.query.size, 10) || 250,
+        margin: 1,
+        color: { dark: '#001f3f', light: '#ffffff' }
+      });
+      return res.json({ success: true, sainikId, verifyUrl, qrCodeDataUrl: dataUrl });
+    }
+
+    const pngBuffer = await QRCode.toBuffer(verifyUrl, {
+      width: parseInt(req.query.size, 10) || 250,
+      margin: 1,
+      color: { dark: '#001f3f', light: '#ffffff' }
+    });
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.send(pngBuffer);
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }

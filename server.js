@@ -11,6 +11,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import QRCode from 'qrcode';
 
 import { initDb, isSupabaseConfigured, getDatabaseType } from './backend/db/index.js';
 import { runMigration } from './backend/db/migrate.js';
@@ -117,6 +118,28 @@ app.use('/api/events', eventRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/admin', adminRoutes);
+
+// Universal High-Resolution QR Code Endpoint
+app.get('/api/qr', async (req, res) => {
+  const text = req.query.text || req.query.data || req.query.url || req.query.id || 'https://samatasainikdal.org';
+  try {
+    const size = Math.min(Math.max(parseInt(req.query.size, 10) || 250, 64), 1024);
+    const pngBuffer = await QRCode.toBuffer(String(text), {
+      width: size,
+      margin: 1,
+      color: {
+        dark: req.query.dark || '#001f3f',
+        light: req.query.light || '#ffffff'
+      },
+      errorCorrectionLevel: 'M'
+    });
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.send(pngBuffer);
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // Friendly URL Rewrites
 app.get(['/verify', '/verify/', '/verify/:sainikId', '/verify/:sainikId/'], (req, res) => {
