@@ -4,6 +4,7 @@
 
 let currentMemberData = null;
 let currentCardData = null;
+let currentApplicationData = null;
 let isBackView = false;
 
 function quickFill(id) {
@@ -360,6 +361,9 @@ function displayMemberDashboard(card) {
   document.getElementById('portalAuthBox').style.display = 'none';
   document.getElementById('portalDashboard').style.display = 'block';
 
+  const correctionBanner = document.getElementById('correctionBanner');
+  if (correctionBanner) correctionBanner.style.display = 'none';
+
   document.getElementById('portalUserName').textContent = card.fullName;
   document.getElementById('portalUserBadge').innerHTML = `<i class="fa-solid fa-shield"></i> SAINIK ID: ${card.sainikId}`;
   document.getElementById('portalUserDesignation').textContent = `${card.designation} | ${card.wing}`;
@@ -415,6 +419,7 @@ function displayMemberDashboard(card) {
 }
 
 function displayApplicationDashboard(app) {
+  currentApplicationData = app;
   document.getElementById('portalAuthBox').style.display = 'none';
   document.getElementById('portalDashboard').style.display = 'block';
 
@@ -432,16 +437,20 @@ function displayApplicationDashboard(app) {
   document.getElementById('portalStatusPill').textContent = currentStatus;
 
   const st = (currentStatus || '').toUpperCase();
+  const correctionBanner = document.getElementById('correctionBanner');
   if (st === 'SUBMITTED' || st === 'UNDER_REVIEW' || st === 'PENDING') {
     document.getElementById('portalStatusPill').className = 'badge-status badge-pending';
+    if (correctionBanner) correctionBanner.style.display = 'none';
   } else if (st === 'RECOMMENDED' || st === 'FINAL_APPROVED' || st === 'APPROVED' || st === 'ACTIVE') {
     document.getElementById('portalStatusPill').className = 'badge-status badge-approved';
+    if (correctionBanner) correctionBanner.style.display = 'none';
   } else if (st === 'CORRECTION_REQUIRED') {
     document.getElementById('portalStatusPill').className = 'badge-status badge-rejected';
-    const correctionBanner = document.getElementById('correctionBanner');
     if (correctionBanner) correctionBanner.style.display = 'block';
     const correctionText = document.getElementById('correctionText');
     if (correctionText) correctionText.textContent = app.correctionRemarks || app.correction_remarks || 'Please review your application details.';
+  } else {
+    if (correctionBanner) correctionBanner.style.display = 'none';
   }
 
   document.getElementById('portalUnitDetails').innerHTML = `
@@ -893,3 +902,241 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 });
+
+// ==========================================================================
+// CORRECTION & RESUBMISSION MODAL CONTROLLERS
+// ==========================================================================
+
+function toggleCorrectionModal(forceOpen) {
+  const modal = document.getElementById('correctionModal');
+  if (!modal) return;
+
+  const isOpen = modal.classList.contains('open');
+  const shouldOpen = forceOpen !== undefined ? forceOpen : !isOpen;
+
+  if (shouldOpen) {
+    populateCorrectionModal();
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  } else {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+}
+
+function populateCorrectionModal() {
+  if (!currentApplicationData) return;
+  const app = currentApplicationData;
+  const appId = app.applicationId || app.id || app.sainikId || 'SSD-2026';
+
+  const appIdEl = document.getElementById('correctionModalAppId');
+  if (appIdEl) appIdEl.textContent = appId;
+
+  const remarksEl = document.getElementById('correctionModalRemarksText');
+  if (remarksEl) {
+    remarksEl.textContent = app.correctionRemarks || app.correction_remarks || 'Official remarks: Please verify and update your submitted details/photograph according to the constitutional guidelines of Samata Sainik Dal.';
+  }
+
+  // Pre-fill inputs
+  const nameInput = document.getElementById('correctionFullName');
+  if (nameInput) nameInput.value = app.fullName || app.full_name || app.applicantName || '';
+
+  const phoneInput = document.getElementById('correctionPhone');
+  if (phoneInput) {
+    const rawPhone = app.phone || app.mobile || '';
+    phoneInput.value = rawPhone.replace(/\D/g, '').slice(-10);
+  }
+
+  const addressInput = document.getElementById('correctionAddress');
+  if (addressInput) addressInput.value = app.address || '';
+
+  const skillsInput = document.getElementById('correctionSpecialSkills');
+  if (skillsInput) skillsInput.value = app.specialSkills || app.special_skills || '';
+
+  // Photo preview
+  const photoPreview = document.getElementById('correctionPhotoPreview');
+  const photoUrl = app.photoUrl || app.photo_url || app.photoBase64 || app.photo;
+  if (photoPreview) {
+    photoPreview.src = photoUrl || 'logo.png';
+  }
+
+  const photoInput = document.getElementById('correctionPhoto');
+  if (photoInput) photoInput.value = '';
+
+  const statusMsg = document.getElementById('correctionStatusMsg');
+  if (statusMsg) {
+    statusMsg.style.display = 'none';
+    statusMsg.textContent = '';
+  }
+}
+
+function handleCorrectionPhotoSelect(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    alert('Please select a valid image file (JPG, PNG, or WebP).');
+    e.target.value = '';
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    alert('Image file size must be under 5MB.');
+    e.target.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const preview = document.getElementById('correctionPhotoPreview');
+    if (preview) {
+      preview.src = evt.target.result;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function handleResubmitApplication(e) {
+  if (e) e.preventDefault();
+  if (!currentApplicationData) {
+    alert('Application data not loaded. Please re-enter your Application ID.');
+    return;
+  }
+
+  const appId = currentApplicationData.applicationId || currentApplicationData.id;
+  if (!appId) {
+    alert('Invalid application reference.');
+    return;
+  }
+
+  const fullName = document.getElementById('correctionFullName')?.value?.trim();
+  const phone = document.getElementById('correctionPhone')?.value?.trim();
+  const address = document.getElementById('correctionAddress')?.value?.trim();
+  const specialSkills = document.getElementById('correctionSpecialSkills')?.value?.trim();
+  const photoInput = document.getElementById('correctionPhoto');
+  const photoFile = photoInput?.files && photoInput.files[0];
+
+  if (!fullName) {
+    alert('Please enter your full legal name.');
+    document.getElementById('correctionFullName')?.focus();
+    return;
+  }
+
+  const cleanPhone = (phone || '').replace(/\D/g, '');
+  if (cleanPhone.length < 10) {
+    alert('Please enter a valid 10-digit mobile contact number.');
+    document.getElementById('correctionPhone')?.focus();
+    return;
+  }
+
+  if (!address) {
+    alert('Please enter your residential address.');
+    document.getElementById('correctionAddress')?.focus();
+    return;
+  }
+
+  const btn = document.getElementById('btnSubmitCorrection');
+  const statusMsg = document.getElementById('correctionStatusMsg');
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting Resubmission...';
+  }
+  if (statusMsg) {
+    statusMsg.style.display = 'block';
+    statusMsg.className = 'correction-status-alert info';
+    statusMsg.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Transmitting updated details to Central Review Queue...';
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('fullName', fullName);
+    formData.append('phone', phone);
+    formData.append('address', address);
+    formData.append('specialSkills', specialSkills || '');
+    formData.append('forceResubmit', 'true');
+    if (photoFile) {
+      formData.append('photo', photoFile);
+    }
+
+    const res = await fetch(`/api/membership/applications/${encodeURIComponent(appId)}/resubmit`, {
+      method: 'POST',
+      body: formData
+    });
+
+    const result = await parseJsonSafe(res);
+
+    if (res.ok && result.success) {
+      if (statusMsg) {
+        statusMsg.className = 'correction-status-alert success';
+        statusMsg.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (result.message || 'Corrections submitted successfully! Application returned to review queue.');
+      }
+
+      // Update local storage if present
+      try {
+        const rawAdmin = localStorage.getItem('ssd_admin_local_data');
+        if (rawAdmin) {
+          const parsed = JSON.parse(rawAdmin);
+          if (Array.isArray(parsed.membership_applications)) {
+            const idx = parsed.membership_applications.findIndex(a => a && (a.id === appId || a.sainik_id === appId));
+            if (idx !== -1) {
+              parsed.membership_applications[idx].status = 'UNDER_REVIEW';
+              parsed.membership_applications[idx].full_name = fullName;
+              parsed.membership_applications[idx].mobile = phone;
+              parsed.membership_applications[idx].address = address;
+              parsed.membership_applications[idx].correction_remarks = null;
+              localStorage.setItem('ssd_admin_local_data', JSON.stringify(parsed));
+            }
+          }
+        }
+      } catch (storageErr) {}
+
+      // Update active application state
+      if (result.application) {
+        currentApplicationData = {
+          ...currentApplicationData,
+          ...result.application,
+          applicationId: result.application.applicationId || result.application.id || appId,
+          applicantName: result.application.fullName || result.application.applicantName || fullName,
+          currentStatus: 'UNDER_REVIEW',
+          status: 'UNDER_REVIEW',
+          correctionRemarks: null,
+          correction_remarks: null
+        };
+      } else {
+        currentApplicationData.currentStatus = 'UNDER_REVIEW';
+        currentApplicationData.status = 'UNDER_REVIEW';
+        currentApplicationData.correctionRemarks = null;
+        currentApplicationData.correction_remarks = null;
+      }
+
+      setTimeout(() => {
+        toggleCorrectionModal(false);
+        // Refresh display
+        displayApplicationDashboard(currentApplicationData);
+      }, 900);
+    } else {
+      const errMsg = result.error || result.message || 'Failed to submit corrections. Please verify details.';
+      if (statusMsg) {
+        statusMsg.className = 'correction-status-alert error';
+        statusMsg.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + errMsg;
+      }
+      alert('Resubmission Notice: ' + errMsg);
+    }
+  } catch (err) {
+    if (statusMsg) {
+      statusMsg.className = 'correction-status-alert error';
+      statusMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Connection error: ' + err.message;
+    }
+    alert('Connection error: ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Resubmission for Verification';
+    }
+  }
+}
+
+window.toggleCorrectionModal = toggleCorrectionModal;
+window.handleCorrectionPhotoSelect = handleCorrectionPhotoSelect;
+window.handleResubmitApplication = handleResubmitApplication;

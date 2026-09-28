@@ -429,6 +429,13 @@ router.get('/status/:applicationId', async (req, res) => {
       applicationId: app.id,
       sainikId: app.sainik_id || null,
       applicantName: app.full_name,
+      fullName: app.full_name,
+      phone: app.mobile || app.phone || '',
+      mobile: app.mobile || app.phone || '',
+      email: app.email || '',
+      address: app.address || '',
+      specialSkills: app.special_skills || '',
+      photoUrl: app.photo_url || null,
       wing: app.wing_name,
       state: app.state_name,
       district: app.district_name,
@@ -680,12 +687,14 @@ router.post('/applications/:id/correction', authenticate, async (req, res) => {
 router.post('/applications/:id/resubmit', upload.single('photo'), async (req, res) => {
   try {
     const { id } = req.params;
+    const cleanId = (id || '').trim();
     const { fullName, phone, address, specialSkills } = req.body;
 
     const app = resolveOrHydrateApplication(id, req);
     if (!app) return res.status(404).json({ success: false, error: 'Application reference not found.' });
 
-    if (app.status !== 'CORRECTION_REQUIRED') {
+    const isCorrectionRequired = (app.status || '').toUpperCase() === 'CORRECTION_REQUIRED' || req.body.forceResubmit === 'true' || req.body.forceResubmit === true;
+    if (!isCorrectionRequired) {
       return res.status(400).json({ success: false, error: 'Application is not currently awaiting corrections.' });
     }
 
@@ -712,26 +721,77 @@ router.post('/applications/:id/resubmit', upload.single('photo'), async (req, re
     embeddedStore.membership_applications.set(app.id, app);
 
     const actionId = 'act_' + app.id + '_' + Date.now();
-    embeddedStore.approval_actions.set(actionId, {
+    const actionRecord = {
       id: actionId,
       application_id: app.id,
-      step_id: app.current_step_id,
+      step_id: app.current_step_id || 'step_1_district',
       official_id: null,
       official_name: 'Applicant Correction Resubmission',
       official_role: 'Applicant',
-      jurisdiction_summary: `${app.district_name}, ${app.state_name}`,
+      jurisdiction_summary: `${app.district_name || 'District'}, ${app.state_name || 'State'}`,
       action: 'RESUBMIT',
       previous_status: prevStatus,
       new_status: 'UNDER_REVIEW',
       remarks: 'Applicant has updated requested details/photograph and resubmitted for verification.',
       created_at: new Date().toISOString()
-    });
+    };
+    embeddedStore.approval_actions.set(actionId, actionRecord);
 
     saveEmbeddedStore();
+
+    // Async sync to Supabase if configured
+    if (supabase) {
+      supabase.from('membership_applications').update({
+        status: 'UNDER_REVIEW',
+        full_name: app.full_name,
+        mobile: app.mobile,
+        address: app.address,
+        special_skills: app.special_skills,
+        photo_url: app.photo_url,
+        correction_remarks: null,
+        updated_at: new Date().toISOString()
+      }).eq('id', app.id).then(({ error }) => {
+        if (error && error.code !== 'PGRST205') console.warn('Supabase resubmit sync notice:', error.message);
+      }).catch(() => {});
+    }
+
+    // Build fresh sanitized timeline for client
+    const allActions = Array.from(embeddedStore.approval_actions.values())
+      .filter(a => a.application_id === app.id || a.application_id === cleanId)
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+    const timeline = allActions.map(a => ({
+      step: a.official_role,
+      action: a.action,
+      status: a.new_status,
+      remarks: a.remarks,
+      timestamp: a.created_at
+    }));
+
     return res.json({
       success: true,
-      message: 'Corrections submitted successfully. Application returned to review queue.',
-      application: app
+      message: 'Corrections submitted successfully. Application returned to officer review queue.',
+      application: {
+        applicationId: app.id,
+        id: app.id,
+        sainikId: app.sainik_id || null,
+        applicantName: app.full_name,
+        fullName: app.full_name,
+        phone: app.mobile || '',
+        mobile: app.mobile || '',
+        address: app.address || '',
+        specialSkills: app.special_skills || '',
+        photoUrl: app.photo_url || null,
+        wing: app.wing_name,
+        state: app.state_name,
+        district: app.district_name,
+        currentStatus: 'UNDER_REVIEW',
+        status: 'UNDER_REVIEW',
+        currentStage: app.assigned_role || 'district_official',
+        correctionRemarks: null,
+        submittedAt: app.created_at,
+        timeline: timeline
+      }
     });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
