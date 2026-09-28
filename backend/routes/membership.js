@@ -9,6 +9,7 @@ import { authenticate, optionalAuth } from '../middleware/auth.js';
 import { requireRole, enforceJurisdiction, canAccessRecord } from '../middleware/rbac.js';
 import { upload } from '../middleware/upload.js';
 import { applicationRateLimiter } from '../middleware/rateLimiter.js';
+import { sendEnlistmentApprovalEmail } from '../utils/mailer.js';
 
 const router = express.Router();
 
@@ -999,11 +1000,23 @@ router.post('/applications/:id/approve', authenticate, requireRole('super_admin'
       }).catch(() => {});
     }
 
+    // Automatically send official approval & digital ID commission email to cadet
+    let emailDispatched = false;
+    if (newMember.email) {
+      try {
+        const mailResult = await sendEnlistmentApprovalEmail(newMember);
+        emailDispatched = !!mailResult?.success;
+      } catch (emailErr) {
+        console.warn('Enlistment approval email dispatch notice:', emailErr.message);
+      }
+    }
+
     return res.json({
       success: true,
-      message: `Cadet enlistment officially approved. Sainik ID ${sainikId} created.`,
+      message: `Cadet enlistment officially approved. Sainik ID ${sainikId} created.${emailDispatched ? ' Official commission email dispatched.' : ''}`,
       sainikId: sainikId,
-      member: newMember
+      member: newMember,
+      emailDispatched: emailDispatched
     });
 
   } catch (err) {

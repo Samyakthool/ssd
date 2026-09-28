@@ -28,6 +28,7 @@ import eventRoutes from './backend/routes/events.js';
 import newsRoutes from './backend/routes/news.js';
 import mediaRoutes from './backend/routes/media.js';
 import adminRoutes from './backend/routes/admin.js';
+import { sendEmailHandler } from './backend/utils/mailer.js';
 
 dotenv.config();
 
@@ -118,6 +119,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/admin', adminRoutes);
+app.all('/api/send-email', sendEmailHandler);
 
 // Universal High-Resolution QR Code Endpoint
 app.get('/api/qr', async (req, res) => {

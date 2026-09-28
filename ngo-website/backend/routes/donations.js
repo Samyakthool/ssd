@@ -8,6 +8,7 @@ import Razorpay from 'razorpay';
 import { query, embeddedStore, saveEmbeddedStore } from '../db/index.js';
 import { authenticate } from '../middleware/auth.js';
 import { requireRole } from '../middleware/rbac.js';
+import { sendDonationReceiptEmail } from '../utils/mailer.js';
 
 const router = express.Router();
 
@@ -211,11 +212,24 @@ router.post('/verify', async (req, res) => {
 
     saveEmbeddedStore();
 
+    // Automatically send 80G Contribution Receipt email to donor
+    let emailDispatched = false;
+    const targetEmail = (receiptRecord.email || donation.email || '').trim();
+    if (targetEmail) {
+      try {
+        const mailResult = await sendDonationReceiptEmail(receiptRecord, donation);
+        emailDispatched = !!mailResult?.success;
+      } catch (mailErr) {
+        console.warn('Donation receipt email dispatch notice:', mailErr.message);
+      }
+    }
+
     return res.json({
       success: true,
-      message: 'Payment verified and official receipt generated.',
+      message: `Payment verified and official receipt generated.${emailDispatched ? ' 80G Receipt email dispatched to ' + targetEmail + '.' : ''}`,
       receipt: receiptRecord,
-      donation: donation
+      donation: donation,
+      emailDispatched: emailDispatched
     });
 
   } catch (err) {
