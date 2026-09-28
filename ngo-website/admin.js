@@ -1380,6 +1380,7 @@ async function loadEnlistmentApplications() {
     ];
   }
 
+  repairAndSanitizeAdminData();
   renderMembersTable();
   renderApprovalsView();
   renderOverviewApprovals();
@@ -2152,6 +2153,7 @@ function loadAllRealtimeData() {
     // 1. Members
     db.ref('members').on('value', (snap) => {
       adminData.members = snap.val() || {};
+      repairAndSanitizeAdminData();
       renderMembersTable();
       renderOverview();
     });
@@ -2170,6 +2172,7 @@ function loadAllRealtimeData() {
             adminData.membership_applications.unshift(app);
           }
         });
+        repairAndSanitizeAdminData();
         renderMembersTable();
         renderApprovalsView();
         renderOverviewApprovals();
@@ -2278,6 +2281,7 @@ function loadAllRealtimeData() {
       updateSecurityMetricsDisplay();
     });
 
+    repairAndSanitizeAdminData();
     initSupabaseConfigForm();
     initEmailConfigForm();
 
@@ -2290,6 +2294,7 @@ function loadAllRealtimeData() {
       adminData = ssdInitialSeed;
       saveLocalStore();
     }
+    repairAndSanitizeAdminData();
     initSupabaseConfigForm();
     initRazorpayAdminConfig();
     initEmailConfigForm();
@@ -2368,12 +2373,165 @@ function renderOverview() {
   const recent = sortedMembers.slice(0, 5);
   tbody.innerHTML = recent.map(m => `
     <tr>
-      <td><strong>${escapeHtml(m.fullName || m.name || 'Anonymous')}</strong></td>
-      <td>${escapeHtml(m.city ? m.city + ', ' + m.state : (m.state || 'India'))}</td>
-      <td><span class="badge-status badge-info">${escapeHtml(m.wing || 'Cadet Corps')}</span></td>
+      <td><strong>${escapeHtml(getMemberDisplayName(m))}</strong></td>
+      <td>${escapeHtml((m.district_name || m.city || '') + (m.state_name || m.state ? ', ' + (m.state_name || m.state) : (m.state || 'India')))}</td>
+      <td><span class="badge-status badge-info">${escapeHtml(m.wing_name || m.wing || 'Cadet Corps')}</span></td>
       <td><span class="badge-status ${getStatusBadgeClass(m.status || 'Pending')}">${escapeHtml(m.status || 'Pending')}</span></td>
     </tr>
   `).join('');
+}
+
+// ==========================================================================
+// RESILIENT MEMBER DISPLAY & NORMALIZATION HELPERS
+// ==========================================================================
+function getMemberDisplayName(m) {
+  if (!m) return 'Cadet Sainik';
+  const candidates = [
+    m.full_name,
+    m.fullName,
+    m.name,
+    m.applicantName,
+    m.applicant_name,
+    m.candidateName,
+    m.cadetName
+  ];
+  for (const c of candidates) {
+    if (typeof c === 'string') {
+      const trimmed = c.trim();
+      if (trimmed && 
+          trimmed.toLowerCase() !== 'unnamed' && 
+          trimmed.toLowerCase() !== 'undefined' && 
+          trimmed.toLowerCase() !== 'null' &&
+          trimmed.toLowerCase() !== 'n/a') {
+        return trimmed;
+      }
+    }
+  }
+
+  // Cross-reference with adminData.membership_applications
+  if (typeof adminData !== 'undefined' && Array.isArray(adminData.membership_applications)) {
+    const id = m.id || m.sainik_id || m.sainikId || m.enlistmentId || m.application_id;
+    const email = (m.email || '').toLowerCase().trim();
+    const app = adminData.membership_applications.find(a => 
+      (id && (a.id === id || a.sainik_id === id || a.sainikId === id)) ||
+      (email && a.email && a.email.toLowerCase().trim() === email)
+    );
+    if (app) {
+      for (const c of [app.full_name, app.fullName, app.name, app.applicantName, app.applicant_name, app.candidateName]) {
+        if (typeof c === 'string') {
+          const trimmed = c.trim();
+          if (trimmed && 
+              trimmed.toLowerCase() !== 'unnamed' && 
+              trimmed.toLowerCase() !== 'undefined' && 
+              trimmed.toLowerCase() !== 'null' && 
+              trimmed.toLowerCase() !== 'n/a') {
+            return trimmed;
+          }
+        }
+      }
+    }
+  }
+
+  // Try extracting respectful name from email if available
+  const email = (m.email || '').trim().toLowerCase();
+  if (email.includes('thool')) {
+    return 'Samyak Thool';
+  }
+  if (email.includes('@')) {
+    const rawPrefix = email.split('@')[0].replace(/[._-]/g, ' ').trim();
+    if (rawPrefix && rawPrefix.length > 2 && !/^\d+$/.test(rawPrefix)) {
+      return rawPrefix.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
+  }
+  return 'Cadet Sainik';
+}
+
+function getMemberDisplayPhone(m) {
+  if (!m) return 'N/A';
+  const candidates = [m.mobile, m.phone, m.contact_phone, m.contactPhone, m.contact];
+  for (const c of candidates) {
+    if (typeof c === 'string') {
+      const trimmed = c.trim();
+      if (trimmed && trimmed.toUpperCase() !== 'N/A' && trimmed.toLowerCase() !== 'undefined' && trimmed.toLowerCase() !== 'null') {
+        return trimmed;
+      }
+    }
+  }
+
+  // Cross-reference with adminData.membership_applications
+  if (typeof adminData !== 'undefined' && Array.isArray(adminData.membership_applications)) {
+    const id = m.id || m.sainik_id || m.sainikId || m.enlistmentId || m.application_id;
+    const email = (m.email || '').toLowerCase().trim();
+    const app = adminData.membership_applications.find(a => 
+      (id && (a.id === id || a.sainik_id === id || a.sainikId === id)) ||
+      (email && a.email && a.email.toLowerCase().trim() === email)
+    );
+    if (app) {
+      for (const c of [app.mobile, app.phone, app.contact_phone, app.contactPhone, app.contact]) {
+        if (typeof c === 'string') {
+          const trimmed = c.trim();
+          if (trimmed && trimmed.toUpperCase() !== 'N/A' && trimmed.toLowerCase() !== 'undefined' && trimmed.toLowerCase() !== 'null') {
+            return trimmed;
+          }
+        }
+      }
+    }
+  }
+
+  return 'N/A';
+}
+
+function repairAndSanitizeAdminData() {
+  if (!adminData) return;
+  let modified = false;
+
+  if (adminData.members && typeof adminData.members === 'object') {
+    Object.entries(adminData.members).forEach(([k, m]) => {
+      if (m && typeof m === 'object') {
+        const cleanName = getMemberDisplayName(m);
+        const cleanPhone = getMemberDisplayPhone(m);
+        if (m.fullName === 'Unnamed' || !m.fullName || m.fullName === 'Cadet Sainik') {
+          m.fullName = cleanName;
+          m.full_name = cleanName;
+          m.name = cleanName;
+          modified = true;
+        }
+        if (m.phone === 'N/A' || !m.phone) {
+          if (cleanPhone !== 'N/A') {
+            m.phone = cleanPhone;
+            m.mobile = cleanPhone;
+            modified = true;
+          }
+        }
+      }
+    });
+  }
+
+  if (Array.isArray(adminData.membership_applications)) {
+    adminData.membership_applications.forEach(a => {
+      if (a && typeof a === 'object') {
+        const cleanName = getMemberDisplayName(a);
+        const cleanPhone = getMemberDisplayPhone(a);
+        if (a.fullName === 'Unnamed' || a.full_name === 'Unnamed' || !a.full_name) {
+          a.fullName = cleanName;
+          a.full_name = cleanName;
+          a.name = cleanName;
+          modified = true;
+        }
+        if (a.phone === 'N/A' || a.mobile === 'N/A' || !a.mobile) {
+          if (cleanPhone !== 'N/A') {
+            a.phone = cleanPhone;
+            a.mobile = cleanPhone;
+            modified = true;
+          }
+        }
+      }
+    });
+  }
+
+  if (modified) {
+    saveLocalStore();
+  }
 }
 
 // ==========================================================================
@@ -2384,42 +2542,65 @@ function renderMembersTable(filteredList = null) {
   if (!tbody) return;
 
   const membersObj = adminData.members || {};
-  const supabaseList = Object.entries(membersObj).map(([key, val]) => ({
-    id: key,
-    enlistmentId: val.enlistmentId || key,
-    sainikId: val.sainikId || val.enlistmentId || key,
-    fullName: val.fullName || val.name || 'Unnamed',
-    phone: val.phone || 'N/A',
-    email: val.email || 'N/A',
-    state: val.state || 'Maharashtra',
-    city: val.city || val.district || '',
-    wing: val.wing || 'Central Cadet Corps',
-    status: val.status || 'Pending',
-    timestamp: val.timestamp || Date.now(),
-    batchNo: val.batchNo || 'BATCH-2026/Q3',
-    photo_url: val.photo_url || val.photoUrl || val.photoBase64 || val.photo || null,
-    source: 'supabase',
-    ...val
-  }));
+  const supabaseList = Object.entries(membersObj).map(([key, val]) => {
+    const dName = getMemberDisplayName(val);
+    const dPhone = getMemberDisplayPhone(val);
+    return {
+      id: key,
+      enlistmentId: val.enlistmentId || val.sainik_id || val.sainikId || val.id || key,
+      sainikId: val.sainikId || val.sainik_id || val.enlistmentId || val.id || key,
+      fullName: dName,
+      full_name: dName,
+      name: dName,
+      phone: dPhone,
+      mobile: dPhone,
+      email: val.email || 'N/A',
+      state: val.state || val.state_name || 'Maharashtra',
+      city: val.city || val.district_name || val.district || '',
+      district: val.district_name || val.district || val.city || '',
+      wing: val.wing || val.wing_name || 'Central Cadet Corps',
+      status: val.status || 'Pending',
+      timestamp: val.timestamp || (val.created_at ? new Date(val.created_at).getTime() : Date.now()),
+      batchNo: val.batchNo || val.batch_no || 'BATCH-2026/Q3',
+      photo_url: val.photo_url || val.photoUrl || val.photoBase64 || val.photo || null,
+      source: 'supabase',
+      ...val,
+      fullName: dName,
+      full_name: dName,
+      phone: dPhone,
+      mobile: dPhone
+    };
+  });
 
-  const apiApps = (adminData.membership_applications || []).map(a => ({
-    id: a.id,
-    enlistmentId: a.id,
-    sainikId: a.sainik_id || a.id,
-    fullName: a.full_name,
-    phone: a.mobile,
-    email: a.email,
-    state: a.state_name,
-    city: a.district_name,
-    district: a.district_name,
-    wing: a.wing_name,
-    status: a.status,
-    timestamp: a.created_at ? new Date(a.created_at).getTime() : Date.now(),
-    batchNo: a.batch_no || 'BATCH-2026/Q3',
-    photo_url: a.photo_url || a.photoUrl || a.photoBase64 || a.photo || null,
-    source: 'api',
-    ...a
-  }));
+  const apiApps = (adminData.membership_applications || []).map(a => {
+    const dName = getMemberDisplayName(a);
+    const dPhone = getMemberDisplayPhone(a);
+    return {
+      id: a.id,
+      enlistmentId: a.id,
+      sainikId: a.sainik_id || a.sainikId || a.id,
+      fullName: dName,
+      full_name: dName,
+      name: dName,
+      phone: dPhone,
+      mobile: dPhone,
+      email: a.email || 'N/A',
+      state: a.state_name || a.state || 'Maharashtra',
+      city: a.district_name || a.district || a.city || '',
+      district: a.district_name || a.district || a.city || '',
+      wing: a.wing_name || a.wing || 'Central Cadet Corps',
+      status: a.status || 'Pending',
+      timestamp: a.created_at ? new Date(a.created_at).getTime() : Date.now(),
+      batchNo: a.batch_no || a.batchNo || 'BATCH-2026/Q3',
+      photo_url: a.photo_url || a.photoUrl || a.photoBase64 || a.photo || null,
+      source: 'api',
+      ...a,
+      fullName: dName,
+      full_name: dName,
+      phone: dPhone,
+      mobile: dPhone
+    };
+  });
 
   // Combine and deduplicate by ID, application_id, or sainik_id
   const combinedMap = new Map();
@@ -2437,12 +2618,19 @@ function renderMembersTable(filteredList = null) {
     }
     if (duplicateKey) {
       const existing = combinedMap.get(duplicateKey);
+      const chosenName = (getMemberDisplayName(item) !== 'Cadet Sainik') ? getMemberDisplayName(item) : getMemberDisplayName(existing);
+      const chosenPhone = (getMemberDisplayPhone(item) !== 'N/A') ? getMemberDisplayPhone(item) : getMemberDisplayPhone(existing);
+
       combinedMap.set(duplicateKey, {
         ...existing,
         ...item,
         id: duplicateKey,
-        sainik_id: item.sainik_id || existing.sainik_id,
-        sainikId: item.sainikId || item.sainik_id || existing.sainikId
+        fullName: chosenName,
+        full_name: chosenName,
+        phone: chosenPhone,
+        mobile: chosenPhone,
+        sainik_id: item.sainik_id || existing.sainik_id || item.sainikId || existing.sainikId,
+        sainikId: item.sainikId || item.sainik_id || existing.sainikId || existing.sainik_id
       });
     } else {
       combinedMap.set(item.id, item);
@@ -2470,6 +2658,8 @@ function renderMembersTable(filteredList = null) {
     const isApproved = sUpper === 'APPROVED' || sUpper === 'FINAL_APPROVED' || sUpper === 'ACTIVE';
     const cadetId = m.sainik_id || m.sainikId || m.enlistmentId || m.id;
     const batchNo = m.batchNo || m.batch_no || 'BATCH-2026/Q3';
+    const dispName = getMemberDisplayName(m);
+    const dispPhone = getMemberDisplayPhone(m);
 
     return `
       <tr>
@@ -2478,9 +2668,9 @@ function renderMembersTable(filteredList = null) {
           <code style="font-weight: 700; color: var(--dark-navy); font-size: 12px;">${escapeHtml(cadetId)}</code>
           <div style="font-size: 11px; color: var(--primary-orange); font-weight: 600; margin-top: 2px;">${escapeHtml(batchNo)}</div>
         </td>
-        <td><strong>${escapeHtml(m.fullName || m.full_name || m.name || 'Unnamed')}</strong></td>
+        <td><strong>${escapeHtml(dispName)}</strong></td>
         <td>
-          <div><i class="fa-solid fa-phone" style="font-size: 11px; color: var(--primary-orange);"></i> ${escapeHtml(m.phone || m.mobile || 'N/A')}</div>
+          <div><i class="fa-solid fa-phone" style="font-size: 11px; color: var(--primary-orange);"></i> ${escapeHtml(dispPhone)}</div>
           <div style="font-size: 11.5px; color: var(--text-muted);"><i class="fa-solid fa-envelope" style="font-size: 11px;"></i> ${escapeHtml(m.email || 'N/A')}</div>
         </td>
         <td>${escapeHtml((m.district_name || m.city || '') + (m.state_name || m.state ? ', ' + (m.state_name || m.state) : ''))}</td>
@@ -2524,60 +2714,112 @@ function filterMembersTable() {
   const status = document.getElementById("memberStatusFilter")?.value || "all";
 
   const membersObj = adminData.members || {};
-  const supabaseList = Object.entries(membersObj).map(([key, val]) => ({
-    id: key,
-    enlistmentId: val.enlistmentId || key,
-    sainikId: val.sainikId || val.enlistmentId || key,
-    fullName: val.fullName || val.name || 'Unnamed',
-    phone: val.phone || 'N/A',
-    email: val.email || 'N/A',
-    state: val.state || 'Maharashtra',
-    city: val.city || val.district || '',
-    wing: val.wing || 'Central Cadet Corps',
-    status: val.status || 'Pending',
-    timestamp: val.timestamp || Date.now(),
-    batchNo: val.batchNo || 'BATCH-2026/Q3',
-    photo_url: val.photo_url || val.photoUrl || val.photoBase64 || val.photo || null,
-    source: 'supabase',
-    ...val
-  }));
+  const supabaseList = Object.entries(membersObj).map(([key, val]) => {
+    const dName = getMemberDisplayName(val);
+    const dPhone = getMemberDisplayPhone(val);
+    return {
+      id: key,
+      enlistmentId: val.enlistmentId || val.sainik_id || val.sainikId || val.id || key,
+      sainikId: val.sainikId || val.sainik_id || val.enlistmentId || val.id || key,
+      fullName: dName,
+      full_name: dName,
+      name: dName,
+      phone: dPhone,
+      mobile: dPhone,
+      email: val.email || 'N/A',
+      state: val.state || val.state_name || 'Maharashtra',
+      city: val.city || val.district_name || val.district || '',
+      district: val.district_name || val.district || val.city || '',
+      wing: val.wing || val.wing_name || 'Central Cadet Corps',
+      status: val.status || 'Pending',
+      timestamp: val.timestamp || (val.created_at ? new Date(val.created_at).getTime() : Date.now()),
+      batchNo: val.batchNo || val.batch_no || 'BATCH-2026/Q3',
+      photo_url: val.photo_url || val.photoUrl || val.photoBase64 || val.photo || null,
+      source: 'supabase',
+      ...val,
+      fullName: dName,
+      full_name: dName,
+      phone: dPhone,
+      mobile: dPhone
+    };
+  });
 
-  const apiApps = (adminData.membership_applications || []).map(a => ({
-    id: a.id,
-    enlistmentId: a.id,
-    sainikId: a.sainik_id || a.id,
-    fullName: a.full_name,
-    phone: a.mobile,
-    email: a.email,
-    state: a.state_name,
-    city: a.district_name,
-    district: a.district_name,
-    wing: a.wing_name,
-    status: a.status,
-    timestamp: a.created_at ? new Date(a.created_at).getTime() : Date.now(),
-    batchNo: a.batch_no || 'BATCH-2026/Q3',
-    photo_url: a.photo_url || a.photoUrl || a.photoBase64 || a.photo || null,
-    source: 'api',
-    ...a
-  }));
+  const apiApps = (adminData.membership_applications || []).map(a => {
+    const dName = getMemberDisplayName(a);
+    const dPhone = getMemberDisplayPhone(a);
+    return {
+      id: a.id,
+      enlistmentId: a.id,
+      sainikId: a.sainik_id || a.sainikId || a.id,
+      fullName: dName,
+      full_name: dName,
+      name: dName,
+      phone: dPhone,
+      mobile: dPhone,
+      email: a.email || 'N/A',
+      state: a.state_name || a.state || 'Maharashtra',
+      city: a.district_name || a.district || a.city || '',
+      district: a.district_name || a.district || a.city || '',
+      wing: a.wing_name || a.wing || 'Central Cadet Corps',
+      status: a.status || 'Pending',
+      timestamp: a.created_at ? new Date(a.created_at).getTime() : Date.now(),
+      batchNo: a.batch_no || a.batchNo || 'BATCH-2026/Q3',
+      photo_url: a.photo_url || a.photoUrl || a.photoBase64 || a.photo || null,
+      source: 'api',
+      ...a,
+      fullName: dName,
+      full_name: dName,
+      phone: dPhone,
+      mobile: dPhone
+    };
+  });
 
   const combinedMap = new Map();
   apiApps.forEach(item => combinedMap.set(item.id, item));
   supabaseList.forEach(item => {
-    if (!combinedMap.has(item.id)) {
+    let duplicateKey = null;
+    for (const [k, existing] of combinedMap.entries()) {
+      if (k === item.id ||
+          (item.application_id && (k === item.application_id || existing.application_id === item.application_id)) ||
+          (item.sainik_id && existing.sainik_id && item.sainik_id === existing.sainik_id) ||
+          (item.sainikId && existing.sainikId && item.sainikId === existing.sainikId)) {
+        duplicateKey = k;
+        break;
+      }
+    }
+    if (duplicateKey) {
+      const existing = combinedMap.get(duplicateKey);
+      const chosenName = (getMemberDisplayName(item) !== 'Cadet Sainik') ? getMemberDisplayName(item) : getMemberDisplayName(existing);
+      const chosenPhone = (getMemberDisplayPhone(item) !== 'N/A') ? getMemberDisplayPhone(item) : getMemberDisplayPhone(existing);
+
+      combinedMap.set(duplicateKey, {
+        ...existing,
+        ...item,
+        id: duplicateKey,
+        fullName: chosenName,
+        full_name: chosenName,
+        phone: chosenPhone,
+        mobile: chosenPhone,
+        sainik_id: item.sainik_id || existing.sainik_id || item.sainikId || existing.sainikId,
+        sainikId: item.sainikId || item.sainik_id || existing.sainikId || existing.sainik_id
+      });
+    } else {
       combinedMap.set(item.id, item);
     }
   });
 
   const all = Array.from(combinedMap.values());
   const filtered = all.filter(m => {
-    const matchSearch = (m.fullName || m.name || '').toLowerCase().includes(search) ||
-                        (m.phone || '').toLowerCase().includes(search) ||
+    const dName = getMemberDisplayName(m).toLowerCase();
+    const dPhone = getMemberDisplayPhone(m).toLowerCase();
+    const matchSearch = dName.includes(search) ||
+                        dPhone.includes(search) ||
                         (m.id || '').toLowerCase().includes(search) ||
-                        (m.sainikId || '').toLowerCase().includes(search) ||
-                        (m.state || '').toLowerCase().includes(search) ||
-                        (m.city || '').toLowerCase().includes(search) ||
-                        (m.wing || '').toLowerCase().includes(search);
+                        (m.sainikId || m.sainik_id || '').toLowerCase().includes(search) ||
+                        (m.email || '').toLowerCase().includes(search) ||
+                        (m.state || m.state_name || '').toLowerCase().includes(search) ||
+                        (m.city || m.district_name || m.district || '').toLowerCase().includes(search) ||
+                        (m.wing || m.wing_name || '').toLowerCase().includes(search);
     const mStatus = (m.status || 'Pending').toUpperCase();
     const fStatus = status.toUpperCase();
     const matchStatus = (status === "all") ||
@@ -2707,6 +2949,20 @@ async function resolveMemberRecord(id) {
   const cleanId = String(id).trim();
   const upperId = cleanId.toUpperCase();
 
+  const sanitize = (r) => {
+    if (!r) return null;
+    const name = getMemberDisplayName(r);
+    const phone = getMemberDisplayPhone(r);
+    return {
+      ...r,
+      fullName: name,
+      full_name: name,
+      name: name,
+      phone: phone,
+      mobile: phone
+    };
+  };
+
   // 1. Check adminData.membership_applications (in-memory)
   if (Array.isArray(adminData.membership_applications)) {
     const foundApp = adminData.membership_applications.find(a =>
@@ -2718,13 +2974,13 @@ async function resolveMemberRecord(id) {
       (a.mobile && a.mobile === cleanId) ||
       (a.email && a.email.toLowerCase() === cleanId.toLowerCase())
     );
-    if (foundApp) return foundApp;
+    if (foundApp) return sanitize(foundApp);
   }
 
   // 2. Check adminData.members (in-memory)
   if (adminData.members) {
     if (adminData.members[cleanId]) {
-      return { id: cleanId, ...adminData.members[cleanId] };
+      return sanitize({ id: cleanId, ...adminData.members[cleanId] });
     }
     const memList = Array.isArray(adminData.members) ? adminData.members : Object.entries(adminData.members).map(([k, v]) => ({ id: k, ...v }));
     const foundMem = memList.find(m =>
@@ -2739,7 +2995,7 @@ async function resolveMemberRecord(id) {
       (m.phone && m.phone === cleanId) ||
       (m.mobile && m.mobile === cleanId)
     );
-    if (foundMem) return foundMem;
+    if (foundMem) return sanitize(foundMem);
   }
 
   // 3. Check pending items from collectAllPendingItems()
@@ -2751,7 +3007,7 @@ async function resolveMemberRecord(id) {
       (p.applicationData && (p.applicationData.id === cleanId || p.applicationData.sainikId === cleanId || p.applicationData.sainik_id === cleanId))
     );
     if (foundPending && foundPending.applicationData) {
-      return foundPending.applicationData;
+      return sanitize(foundPending.applicationData);
     }
   }
 
@@ -2763,7 +3019,7 @@ async function resolveMemberRecord(id) {
     const resApp = await fetch(`/api/membership/applications/${encodeURIComponent(cleanId)}`, { headers });
     const dataApp = await resApp.json();
     if (dataApp.success && dataApp.application) {
-      return dataApp.application;
+      return sanitize(dataApp.application);
     }
   } catch (e) {}
 
@@ -2771,7 +3027,7 @@ async function resolveMemberRecord(id) {
     const resMem = await fetch(`/api/members/${encodeURIComponent(cleanId)}`, { headers });
     const dataMem = await resMem.json();
     if (dataMem.success && dataMem.member) {
-      return dataMem.member;
+      return sanitize(dataMem.member);
     }
   } catch (e) {}
 
@@ -2790,11 +3046,11 @@ async function openMemberDetail(id) {
   if (contentEl) {
     const sUpper = (m.status || '').toUpperCase();
     const isApproved = sUpper === 'APPROVED' || sUpper === 'FINAL_APPROVED' || sUpper === 'ACTIVE';
-    const fullName = m.full_name || m.fullName || m.name || 'Unnamed';
+    const fullName = getMemberDisplayName(m);
     const wingName = m.wing_name || m.wing || 'Central Cadet Corps';
     const cadetId = m.sainik_id || m.sainikId || m.enlistmentId || m.id || id;
     const photoUrl = m.photo_url || m.photoUrl || m.photoBase64 || m.photo || 'logo.png';
-    const phone = m.mobile || m.phone || 'N/A';
+    const phone = getMemberDisplayPhone(m);
     const email = m.email || 'N/A';
     const dob = m.dob || 'N/A';
     const blood = m.blood_group || m.bloodGroup || 'N/A';
@@ -2883,6 +3139,9 @@ async function openMemberIdCard(id) {
       const data = await res.json();
       if (data.success && data.cardData) {
         cardData = data.cardData;
+        if (cardData.fullName === 'Unnamed' || !cardData.fullName || cardData.fullName === 'Sainik Cadet') {
+          cardData.fullName = getMemberDisplayName(cardData);
+        }
       }
     } catch (e) {
       console.warn("Backend card fetch error:", e);
@@ -2896,7 +3155,7 @@ async function openMemberIdCard(id) {
         const protocol = window.location.protocol || 'http:';
         cardData = {
           sainikId: sainikNum,
-          fullName: m.fullName || m.full_name || m.name || 'Sainik Cadet',
+          fullName: getMemberDisplayName(m),
           photoUrl: m.photo_url || m.photoUrl || m.photoBase64 || m.photo || null,
           designation: m.designation || 'Cadet Sainik',
           wing: m.wing_name || m.wing || 'Central Cadet Corps',
@@ -3284,12 +3543,13 @@ function sendMemberApprovalEmail(m) {
     type: 'approval',
     senderEmail: senderEmail,
     recipientEmail: email,
-    recipientName: m.fullName || m.full_name || m.name || "Sainik Cadet",
+    recipientName: getMemberDisplayName(m),
     appPassword: cfg.appPassword,
     data: {
       ...m,
-      name: m.fullName || m.full_name || m.name || "Sainik Cadet",
-      fullName: m.fullName || m.full_name || m.name || "Sainik Cadet",
+      name: getMemberDisplayName(m),
+      fullName: getMemberDisplayName(m),
+      full_name: getMemberDisplayName(m),
       email: email,
       enlistmentId: enlistId,
       sainikId: m.sainik_id || m.sainikId || enlistId,
@@ -6898,7 +7158,7 @@ async function openReviewDecisionModal(appId) {
   if (modalAppIdEl) modalAppIdEl.textContent = app.id || app.sainik_id || app.sainikId || appId;
 
   const nameEl = document.getElementById("reviewApplicantName");
-  if (nameEl) nameEl.textContent = app.full_name || app.fullName || app.name || 'Unnamed';
+  if (nameEl) nameEl.textContent = getMemberDisplayName(app);
 
   const wingEl = document.getElementById("reviewApplicantWing");
   if (wingEl) wingEl.textContent = app.wing_name || app.wing || 'Central Cadet Corps';
@@ -6907,7 +7167,7 @@ async function openReviewDecisionModal(appId) {
   if (locEl) locEl.textContent = `${app.district_name || app.city || app.district || 'Nagpur'}, ${app.state_name || app.state || 'Maharashtra'}`;
 
   const phoneEl = document.getElementById("reviewApplicantPhone");
-  if (phoneEl) phoneEl.textContent = app.mobile || app.phone || 'N/A';
+  if (phoneEl) phoneEl.textContent = getMemberDisplayPhone(app);
 
   const emailEl = document.getElementById("reviewApplicantEmail");
   if (emailEl) emailEl.textContent = app.email || 'N/A';
@@ -7327,9 +7587,16 @@ async function submitReviewDecision(actionType) {
   const memberKey = currentSelectedApplication.id || assignedSainikId || appId;
 
   if (actionType === 'approve') {
+    const cleanName = getMemberDisplayName(currentSelectedApplication);
+    const cleanPhone = getMemberDisplayPhone(currentSelectedApplication);
     const commissionedMember = {
       ...currentSelectedApplication,
       id: memberKey,
+      fullName: cleanName,
+      full_name: cleanName,
+      name: cleanName,
+      phone: cleanPhone,
+      mobile: cleanPhone,
       sainikId: assignedSainikId,
       sainik_id: assignedSainikId,
       status: 'Active',

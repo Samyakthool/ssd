@@ -244,6 +244,7 @@ export async function sendEmailHandler(req, res) {
 // --------------------------------------------------------------------------
 
 function generateApprovalEmailHtml(data) {
+  const host = data?.host || process.env.APP_URL || 'https://samatasainikdal.org';
   const cadetName = data?.fullName || data?.name || 'Cadet Sainik';
   const enlistId = data?.sainikId || data?.enlistmentId || 'SSD-CADET-2026';
   const batchNo = data?.batchNo || 'BATCH-2026/Q3';
