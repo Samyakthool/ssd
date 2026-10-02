@@ -6,6 +6,7 @@ import express from 'express';
 import { query, embeddedStore, saveEmbeddedStore } from '../db/index.js';
 import { authenticate } from '../middleware/auth.js';
 import { requireRole } from '../middleware/rbac.js';
+import { upload } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -55,6 +56,28 @@ router.post('/', authenticate, requireRole('super_admin', 'central_admin', 'medi
     saveEmbeddedStore();
 
     return res.status(201).json({ success: true, message: 'Media added to photo archives.', media: newMedia });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 3. FILE & DOSSIER PDF UPLOAD ENDPOINT
+router.post('/upload', upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'No file uploaded.' });
+    }
+    const isDoc = req.file.mimetype === 'application/pdf' || req.file.originalname.toLowerCase().endsWith('.pdf');
+    const folder = isDoc ? 'documents' : 'photos';
+    const relativeUrl = `/uploads/${folder}/${req.file.filename}`;
+    return res.json({
+      success: true,
+      url: relativeUrl,
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype
+    });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }

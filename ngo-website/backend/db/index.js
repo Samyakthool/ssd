@@ -9,6 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import { defaultSeedData } from './defaultSeed.js';
 
 dotenv.config();
 
@@ -79,6 +80,7 @@ const embeddedStore = {
   events: new Map(),
   event_registrations: new Map(),
   news: new Map(),
+  campaigns: new Map(),
   gallery: new Map(),
   leadership: new Map(),
   contact_messages: new Map(),
@@ -125,6 +127,50 @@ function loadEmbeddedStore() {
           embeddedStore[table] = new Map(entries);
         }
       }
+    }
+
+    // Auto-populate default seeds if empty to ensure instant rich data delivery
+    let seeded = false;
+    if (embeddedStore.leadership.size === 0 && defaultSeedData.leadership) {
+      for (const [k, v] of Object.entries(defaultSeedData.leadership)) {
+        embeddedStore.leadership.set(k, v);
+      }
+      seeded = true;
+    }
+    if (embeddedStore.campaigns.size === 0 && defaultSeedData.campaigns) {
+      for (const [k, v] of Object.entries(defaultSeedData.campaigns)) {
+        embeddedStore.campaigns.set(k, v);
+      }
+      seeded = true;
+    }
+    if (embeddedStore.gallery.size === 0 && defaultSeedData.gallery) {
+      for (const [k, v] of Object.entries(defaultSeedData.gallery)) {
+        embeddedStore.gallery.set(k, v);
+      }
+      seeded = true;
+    }
+    if (embeddedStore.news.size === 0 && defaultSeedData.news) {
+      for (const [k, v] of Object.entries(defaultSeedData.news)) {
+        embeddedStore.news.set(k, v);
+      }
+      seeded = true;
+    }
+    if (embeddedStore.events.size === 0 && defaultSeedData.events) {
+      for (const [k, v] of Object.entries(defaultSeedData.events)) {
+        embeddedStore.events.set(k, v);
+      }
+      seeded = true;
+    }
+    if (!embeddedStore.system_settings.has('platform_stats') && defaultSeedData.stats) {
+      embeddedStore.system_settings.set('platform_stats', {
+        key: 'platform_stats',
+        value: defaultSeedData.stats,
+        updated_at: new Date().toISOString()
+      });
+      seeded = true;
+    }
+    if (seeded) {
+      saveEmbeddedStore();
     }
   } catch (err) {
     console.warn('Could not read existing local embedded database, starting fresh:', err.message);

@@ -9,6 +9,7 @@ import { query, embeddedStore, saveEmbeddedStore } from '../db/index.js';
 import { authenticate } from '../middleware/auth.js';
 import { requireRole } from '../middleware/rbac.js';
 import { sendDonationReceiptEmail } from '../utils/mailer.js';
+import { broadcastRealtimeEvent } from '../utils/realtime.js';
 
 const router = express.Router();
 
@@ -211,6 +212,9 @@ router.post('/verify', async (req, res) => {
     });
 
     saveEmbeddedStore();
+
+    // Broadcast real-time donation event to admin panel
+    broadcastRealtimeEvent('donation:new', donation);
 
     // Automatically send 80G Contribution Receipt email to donor
     let emailDispatched = false;

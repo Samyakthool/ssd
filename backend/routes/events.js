@@ -4,41 +4,58 @@
 
 import express from 'express';
 import { query, embeddedStore, saveEmbeddedStore } from '../db/index.js';
-import { authenticate } from '../middleware/auth.js';
-import { requireRole } from '../middleware/rbac.js';
+import { optionalAuth } from '../middleware/auth.js';
+import { broadcastRealtimeEvent } from '../utils/realtime.js';
 
 const router = express.Router();
 
-// 1. GET ALL EVENTS (Public)
+// 1. GET ALL EVENTS (Public & Admin)
 router.get('/', async (req, res) => {
   try {
-    const { status, wing } = req.query;
+    const { status, wing, all } = req.query;
     let events = Array.from(embeddedStore.events.values());
 
-    if (status) {
-      events = events.filter(e => e.status.toUpperCase() === status.toUpperCase());
-    }
-    if (wing) {
-      events = events.filter(e => e.wing_name === wing);
+    if (all !== 'true') {
+      events = events.filter(e => (e.approvalStatus || 'approved').toLowerCase() === 'approved');
     }
 
-    events.sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
+    if (status && status !== 'all') {
+      events = events.filter(e => (e.status || '').toLowerCase() === status.toLowerCase());
+    }
+    if (wing) {
+      events = events.filter(e => e.wing_name === wing || e.wing === wing);
+    }
+
+    events.sort((a, b) => new Date(a.event_date || a.date) - new Date(b.event_date || b.date));
     return res.json({ success: true, count: events.length, events: events });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// 2. CREATE EVENT (Media Admin / Central / State Officials)
-router.post('/', authenticate, requireRole('super_admin', 'central_admin', 'state_official', 'media_admin'), async (req, res) => {
+// 2. GET EVENT BY ID
+router.get('/:id', (req, res) => {
   try {
-    const { title, description, eventDate, eventTime, location, stateName, districtName, wingName, bannerUrl, registrationRequired, participantLimit } = req.body;
+    const { id } = req.params;
+    const event = embeddedStore.events.get(id);
+    if (!event) return res.status(404).json({ success: false, error: 'Event not found' });
+    return res.json({ success: true, event });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
 
-    if (!title || !eventDate || !location) {
-      return res.status(400).json({ success: false, error: 'Event title, date, and location are required.' });
+// 3. CREATE / UPSERT EVENT
+router.post('/', optionalAuth, async (req, res) => {
+  try {
+    const data = req.body;
+    const { id, title, description, eventDate, date, eventTime, location, stateName, districtName, wingName, bannerUrl, pdfUrl, status, approvalStatus, registrationRequired, participantLimit } = data;
+
+    if (!title) {
+      return res.status(400).json({ success: false, error: 'Event title is required.' });
     }
 
-    const eventId = 'event_' + Date.now();
+    const eventId = id || ('event_' + Date.now());
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
     const newEvent = {
@@ -46,22 +63,28 @@ router.post('/', authenticate, requireRole('super_admin', 'central_admin', 'stat
       title: title.trim(),
       slug: slug,
       description: description || '',
-      event_date: eventDate,
+      event_date: eventDate || date || 'Sept 24, 2026',
+      date: date || eventDate || 'Sept 24, 2026',
       event_time: eventTime || '09:00 AM',
-      location: location.trim(),
+      location: location ? location.trim() : 'Nagpur / New Delhi',
       state_name: stateName || 'National',
       district_name: districtName || 'Central HQ',
       wing_name: wingName || 'Central Cadet Corps (Sainik Wing)',
-      organizer: req.user.fullName,
       banner_url: bannerUrl || 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1200&q=80',
-      status: 'UPCOMING',
+      pdfUrl: pdfUrl || '',
+      status: (status || 'upcoming').toLowerCase(),
+      approvalStatus: approvalStatus || 'approved',
       registration_required: registrationRequired === true,
       participant_limit: Number(participantLimit) || 0,
-      created_at: new Date().toISOString()
+      organizer: req.user ? (req.user.fullName || req.user.name) : 'SSD Central Command',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
     embeddedStore.events.set(eventId, newEvent);
     saveEmbeddedStore();
+
+    broadcastRealtimeEvent('event:update', newEvent);
 
     return res.status(201).json({ success: true, message: 'Event scheduled successfully.', event: newEvent });
   } catch (err) {
@@ -69,7 +92,44 @@ router.post('/', authenticate, requireRole('super_admin', 'central_admin', 'stat
   }
 });
 
-// 3. REGISTER FOR AN EVENT (Public / Sainik)
+// 4. UPDATE EVENT
+router.put('/:id', optionalAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const existing = embeddedStore.events.get(id) || {};
+    const updated = {
+      ...existing,
+      ...req.body,
+      id: id,
+      updated_at: new Date().toISOString()
+    };
+
+    embeddedStore.events.set(id, updated);
+    saveEmbeddedStore();
+
+    broadcastRealtimeEvent('event:update', updated);
+    return res.json({ success: true, message: 'Event updated', event: updated });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 5. DELETE EVENT
+router.delete('/:id', optionalAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const existed = embeddedStore.events.delete(id);
+    if (existed) {
+      saveEmbeddedStore();
+      broadcastRealtimeEvent('event:delete', { id });
+    }
+    return res.json({ success: true, message: 'Event deleted', id });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 6. REGISTER FOR AN EVENT (Public / Sainik)
 router.post('/:id/register', async (req, res) => {
   try {
     const { id } = req.params;
@@ -98,6 +158,8 @@ router.post('/:id/register', async (req, res) => {
 
     embeddedStore.event_registrations.set(regId, newReg);
     saveEmbeddedStore();
+
+    broadcastRealtimeEvent('event:register', { eventId: id, registration: newReg });
 
     return res.status(201).json({
       success: true,

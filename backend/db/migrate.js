@@ -737,7 +737,7 @@ export async function runMigration() {
 }
 
 // Auto-run if called directly
-if (process.argv[1].endsWith('migrate.js')) {
+if (process.argv[1] && process.argv[1].endsWith('migrate.js')) {
   runMigration().then(() => process.exit(0)).catch(err => {
     console.error('Migration failed:', err);
     process.exit(1);

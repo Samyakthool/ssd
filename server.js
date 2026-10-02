@@ -28,6 +28,12 @@ import eventRoutes from './backend/routes/events.js';
 import newsRoutes from './backend/routes/news.js';
 import mediaRoutes from './backend/routes/media.js';
 import adminRoutes from './backend/routes/admin.js';
+import leadershipRoutes from './backend/routes/leadership.js';
+import campaignRoutes from './backend/routes/campaigns.js';
+import galleryRoutes from './backend/routes/gallery.js';
+import statsRoutes from './backend/routes/stats.js';
+import syncRoutes from './backend/routes/sync.js';
+import { initRealtimeRoutes } from './backend/utils/realtime.js';
 import { sendEmailHandler } from './backend/utils/mailer.js';
 
 dotenv.config();
@@ -119,7 +125,15 @@ app.use('/api/events', eventRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/leadership', leadershipRoutes);
+app.use('/api/campaigns', campaignRoutes);
+app.use('/api/gallery', galleryRoutes);
+app.use('/api/stats', statsRoutes);
+app.use('/api/sync', syncRoutes);
 app.all('/api/send-email', sendEmailHandler);
+
+// Initialize Real-Time SSE Event Stream & Broadcast Engine
+initRealtimeRoutes(app);
 
 // Universal High-Resolution QR Code Endpoint
 app.get('/api/qr', async (req, res) => {

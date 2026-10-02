@@ -26,11 +26,198 @@ let firebaseApp = null;
 let db = null;
 let isFirebaseLive = false;
 
+// ==========================================================================
+// CLIENT-SIDE REAL-TIME EVENT HUB PROVIDER (DUAL CHANNEL: BROADCAST + SSE)
+// ==========================================================================
+if (typeof window.SSDRealtime === 'undefined') {
+  (function(global) {
+    const listeners = new Map();
+    let broadcastChannel = null;
+    let eventSource = null;
+    let reconnectAttempts = 0;
+    let reconnectTimer = null;
+    let isConnected = false;
+
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        broadcastChannel = new BroadcastChannel('ssd_realtime_pipeline');
+        broadcastChannel.onmessage = (event) => {
+          if (event && event.data && event.data.type) {
+            triggerHandlers(event.data.type, event.data.payload, 'broadcast_channel');
+          }
+        };
+      }
+    } catch (e) {}
+
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'ssd_admin_local_data') {
+        triggerHandlers('storage:sync', { key: e.key }, 'local_storage');
+      }
+    });
+
+    function triggerHandlers(eventType, payload, origin) {
+      const list = listeners.get(eventType) || [];
+      list.forEach(fn => {
+        try { fn(payload, origin); } catch (err) { console.error(`[SSD Realtime] Listener error for ${eventType}:`, err); }
+      });
+      const anyList = listeners.get('*') || [];
+      anyList.forEach(fn => {
+        try { fn(eventType, payload, origin); } catch (err) { console.error(`[SSD Realtime] Wildcard error:`, err); }
+      });
+    }
+
+    function connectSSE() {
+      if (typeof EventSource === 'undefined') return;
+      if (eventSource) { try { eventSource.close(); } catch (e) {} }
+      try {
+        eventSource = new EventSource('/api/realtime/stream');
+        eventSource.onopen = () => {
+          isConnected = true;
+          reconnectAttempts = 0;
+          triggerHandlers('realtime:connected', { status: 'ONLINE' }, 'sse');
+        };
+        eventSource.onerror = () => {
+          isConnected = false;
+          try { eventSource.close(); } catch (e) {}
+          eventSource = null;
+          const delay = Math.min(1000 * Math.pow(1.5, reconnectAttempts), 15000);
+          reconnectAttempts++;
+          if (reconnectTimer) clearTimeout(reconnectTimer);
+          reconnectTimer = setTimeout(connectSSE, delay);
+        };
+        const events = ['connected', 'leadership:update', 'leadership:delete', 'news:update', 'news:delete', 'event:update', 'event:delete', 'event:register', 'campaign:update', 'campaign:delete', 'gallery:update', 'gallery:delete', 'membership:apply', 'membership:approve', 'membership:reject', 'membership:workflow', 'donation:new', 'stats:update', 'chapter:update', 'sync:all'];
+        events.forEach(evt => {
+          eventSource.addEventListener(evt, (e) => {
+            let data = null;
+            try { data = JSON.parse(e.data); } catch (err) { data = e.data; }
+            triggerHandlers(evt, data, 'sse');
+          });
+        });
+      } catch (err) {}
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', connectSSE);
+    } else {
+      connectSSE();
+    }
+
+    global.SSDRealtime = {
+      on(eventType, callback) {
+        if (!listeners.has(eventType)) listeners.set(eventType, []);
+        listeners.get(eventType).push(callback);
+        return () => this.off(eventType, callback);
+      },
+      off(eventType, callback) {
+        if (!listeners.has(eventType)) return;
+        listeners.set(eventType, listeners.get(eventType).filter(fn => fn !== callback));
+      },
+      emit(eventType, payload, syncToServer = true) {
+        triggerHandlers(eventType, payload, 'local');
+        if (broadcastChannel) {
+          try { broadcastChannel.postMessage({ type: eventType, payload }); } catch (e) {}
+        }
+        if (syncToServer) {
+          fetch('/api/realtime/broadcast', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event: eventType, data: payload })
+          }).catch(() => {});
+        }
+      },
+      isConnected() { return isConnected; }
+    };
+  })(window);
+}
+
+
 // Master Key for demo / initial access
 const MASTER_PASSCODE = "SSD1927";
 
 // Local in-memory store
 let adminData;
+
+// Reliable Large Asset & Dossier File Storage (IndexedDB)
+const ssdFileStorage = {
+  dbPromise: null,
+  getDb() {
+    if (this.dbPromise) return this.dbPromise;
+    this.dbPromise = new Promise((resolve) => {
+      try {
+        if (typeof indexedDB === 'undefined') return resolve(null);
+        const req = indexedDB.open('ssd_assets_db', 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('assets')) {
+            db.createObjectStore('assets');
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      } catch (e) {
+        resolve(null);
+      }
+    });
+    return this.dbPromise;
+  },
+  async get(key) {
+    const db = await this.getDb();
+    if (!db) return null;
+    return new Promise((resolve) => {
+      try {
+        const tx = db.transaction('assets', 'readonly');
+        const store = tx.objectStore('assets');
+        const req = store.get(key);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  },
+  async set(key, value) {
+    const db = await this.getDb();
+    if (!db) return false;
+    return new Promise((resolve) => {
+      try {
+        const tx = db.transaction('assets', 'readwrite');
+        const store = tx.objectStore('assets');
+        const req = store.put(value, key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => resolve(false);
+      } catch (e) {
+        resolve(false);
+      }
+    });
+  },
+  async remove(key) {
+    const db = await this.getDb();
+    if (!db) return false;
+    return new Promise((resolve) => {
+      try {
+        const tx = db.transaction('assets', 'readwrite');
+        const store = tx.objectStore('assets');
+        const req = store.delete(key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => resolve(false);
+      } catch (e) {
+        resolve(false);
+      }
+    });
+  }
+};
+window.ssdFileStorage = ssdFileStorage;
+
+async function resolvePdfUrl(url) {
+  if (!url) return "";
+  if (url.startsWith("idb://") && window.ssdFileStorage) {
+    const key = url.replace("idb://", "");
+    const stored = await window.ssdFileStorage.get(key);
+    if (stored) return stored;
+  }
+  return url;
+}
+window.resolvePdfUrl = resolvePdfUrl;
 
 // Seed dataset for demo/fallback
 const ssdInitialSeed = {
@@ -859,7 +1046,107 @@ document.addEventListener("DOMContentLoaded", () => {
   initFirebase();
   checkLoginLockout();
   checkAuthSession();
+  initAdminRealtimePipeline();
 });
+
+// Real-Time Event Pipeline for Admin Command Portal
+function initAdminRealtimePipeline() {
+  if (typeof window.SSDRealtime === 'undefined') return;
+
+  // 1. Live Membership Applications from Website
+  window.SSDRealtime.on('membership:apply', (app) => {
+    if (app && app.id) {
+      if (!Array.isArray(adminData.membership_applications)) adminData.membership_applications = [];
+      const idx = adminData.membership_applications.findIndex(a => a.id === app.id);
+      if (idx !== -1) {
+        adminData.membership_applications[idx] = { ...adminData.membership_applications[idx], ...app };
+      } else {
+        adminData.membership_applications.unshift(app);
+      }
+      saveLocalStore();
+      renderMembersTable();
+      renderApprovalsView();
+      renderOverviewApprovals();
+      renderOverview();
+      showToast(`⚡ Real-Time Enlistment Alert: New application received from ${app.full_name || 'Cadet'} (${app.district_name || 'Unit'})!`, "info");
+    }
+  });
+
+  // 2. Real-Time Donations
+  window.SSDRealtime.on('donation:new', (don) => {
+    if (don && don.id) {
+      if (!adminData.donations) adminData.donations = {};
+      adminData.donations[don.id] = don;
+      saveLocalStore();
+      renderDonationsTable();
+      renderOverview();
+      showToast(`⚡ Real-Time Contribution: ₹${don.amount || '0'} received from ${don.donor_name || 'Supporter'}!`, "success");
+    }
+  });
+
+  // 3. Event Registrations
+  window.SSDRealtime.on('event:register', (reg) => {
+    showToast(`⚡ Real-Time: New attendee registered for event!`, "info");
+  });
+
+  // 4. Remote Real-Time Updates from other admin sessions
+  window.SSDRealtime.on('leadership:update', (leader) => {
+    if (leader && leader.id) {
+      if (!adminData.leadership) adminData.leadership = {};
+      adminData.leadership[leader.id] = leader;
+      saveLocalStore();
+      renderLeadershipTable();
+      renderOverview();
+    }
+  });
+
+  window.SSDRealtime.on('leadership:delete', ({ id }) => {
+    if (id && adminData.leadership && adminData.leadership[id]) {
+      delete adminData.leadership[id];
+      saveLocalStore();
+      renderLeadershipTable();
+      renderOverview();
+    }
+  });
+
+  window.SSDRealtime.on('news:update', (news) => {
+    if (news && news.id) {
+      if (!adminData.news) adminData.news = {};
+      adminData.news[news.id] = news;
+      saveLocalStore();
+      renderNewsTable();
+      renderOverview();
+    }
+  });
+
+  window.SSDRealtime.on('news:delete', ({ id }) => {
+    if (id && adminData.news && adminData.news[id]) {
+      delete adminData.news[id];
+      saveLocalStore();
+      renderNewsTable();
+      renderOverview();
+    }
+  });
+
+  window.SSDRealtime.on('event:update', (ev) => {
+    if (ev && ev.id) {
+      if (!adminData.events) adminData.events = {};
+      adminData.events[ev.id] = ev;
+      saveLocalStore();
+      renderEventsTable();
+      renderOverview();
+    }
+  });
+
+  window.SSDRealtime.on('event:delete', ({ id }) => {
+    if (id && adminData.events && adminData.events[id]) {
+      delete adminData.events[id];
+      saveLocalStore();
+      renderEventsTable();
+      renderOverview();
+    }
+  });
+}
 
 function initFirebase() {
   try {
@@ -2320,7 +2607,23 @@ function saveLocalStore() {
   try {
     localStorage.setItem("ssd_admin_local_data", JSON.stringify(adminData));
   } catch (e) {
-    console.warn("LocalStorage save warning:", e);
+    console.warn("LocalStorage save warning (offloading large dossier files to IndexedDB):", e);
+    try {
+      if (adminData && adminData.leadership && window.ssdFileStorage) {
+        const sanitized = JSON.parse(JSON.stringify(adminData));
+        for (const [k, lead] of Object.entries(sanitized.leadership || {})) {
+          if (lead.pdfUrl && lead.pdfUrl.startsWith("data:")) {
+            const assetKey = `dossier_pdf_${k}`;
+            window.ssdFileStorage.set(assetKey, lead.pdfUrl);
+            lead.pdfUrl = `idb://${assetKey}`;
+          }
+        }
+        localStorage.setItem("ssd_admin_local_data", JSON.stringify(sanitized));
+        console.log("adminData successfully persisted to localStorage using IndexedDB asset pointers.");
+      }
+    } catch (e2) {
+      console.error("Critical storage quota failure:", e2);
+    }
   }
 }
 
@@ -4121,17 +4424,30 @@ function handleSaveLeadership(e) {
     refreshAllViewsAfterApproval();
   };
 
+  if (!adminData.leadership) adminData.leadership = { ...ssdInitialSeed.leadership };
+  const newKey = key || ("lead_" + Date.now());
+  memberData.id = newKey;
+  adminData.leadership[newKey] = memberData;
+  saveLocalStore();
+
+  // Push to server REST API & broadcast realtime update
+  fetch('/api/leadership', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(memberData)
+  }).catch(() => {});
+
+  if (window.SSDRealtime) {
+    window.SSDRealtime.emit('leadership:update', memberData);
+  }
+
   if (db) {
-    if (key) {
-      db.ref(`leadership/${key}`).update(memberData).then(onSuccess).catch(err => showToast(err.message, "error"));
-    } else {
-      db.ref("leadership").push(memberData).then(onSuccess).catch(err => showToast(err.message, "error"));
-    }
+    const targetRef = key ? db.ref(`leadership/${key}`) : db.ref("leadership").push();
+    targetRef.set(memberData).then(onSuccess).catch(err => {
+      console.warn("Realtime DB notice:", err);
+      onSuccess();
+    });
   } else {
-    if (!adminData.leadership) adminData.leadership = { ...ssdInitialSeed.leadership };
-    const newKey = key || ("lead_" + Date.now());
-    adminData.leadership[newKey] = memberData;
-    saveLocalStore();
     onSuccess();
   }
 }
@@ -4145,6 +4461,11 @@ function deleteLeadershipMember(id) {
   const onSuccess = () => {
     showToast("Council member removed.", "info");
   };
+
+  fetch('/api/leadership/' + encodeURIComponent(id), { method: 'DELETE' }).catch(() => {});
+  if (window.SSDRealtime) {
+    window.SSDRealtime.emit('leadership:delete', { id });
+  }
 
   if (db) {
     db.ref(`leadership/${id}`).remove().then(onSuccess).catch(err => showToast(err.message, "error"));
@@ -5930,22 +6251,39 @@ function handleSaveNews(e) {
     refreshAllViewsAfterApproval();
   };
 
+  const key = id || ("news_" + Date.now());
+  payload.id = key;
+  if (!adminData.news) adminData.news = {};
+  adminData.news[key] = payload;
+  saveLocalStore();
+
+  fetch('/api/news', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(() => {});
+
+  if (window.SSDRealtime) {
+    window.SSDRealtime.emit('news:update', payload);
+  }
+
   if (db) {
     const targetRef = id ? db.ref('news/' + id) : db.ref('news').push();
     targetRef.set(payload)
       .then(onSuccess)
       .catch(err => showToast("Save error: " + err.message, "error"));
   } else {
-    const key = id || ("news_" + Date.now());
-    if (!adminData.news) adminData.news = {};
-    adminData.news[key] = payload;
-    saveLocalStore();
     onSuccess();
   }
 }
 
 function deleteNews(id) {
   if (!confirm("Are you sure you want to delete this gazette dispatch?")) return;
+  fetch('/api/news/' + encodeURIComponent(id), { method: 'DELETE' }).catch(() => {});
+  if (window.SSDRealtime) {
+    window.SSDRealtime.emit('news:delete', { id });
+  }
+
   if (db) {
     db.ref('news/' + id).remove()
       .then(() => {
@@ -6057,22 +6395,39 @@ function handleSaveEvent(e) {
     refreshAllViewsAfterApproval();
   };
 
+  const key = id || ("event_" + Date.now());
+  payload.id = key;
+  if (!adminData.events) adminData.events = {};
+  adminData.events[key] = payload;
+  saveLocalStore();
+
+  fetch('/api/events', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(() => {});
+
+  if (window.SSDRealtime) {
+    window.SSDRealtime.emit('event:update', payload);
+  }
+
   if (db) {
     const targetRef = id ? db.ref('events/' + id) : db.ref('events').push();
     targetRef.set(payload)
       .then(onSuccess)
       .catch(err => showToast("Error: " + err.message, "error"));
   } else {
-    const key = id || ("event_" + Date.now());
-    if (!adminData.events) adminData.events = {};
-    adminData.events[key] = payload;
-    saveLocalStore();
     onSuccess();
   }
 }
 
 function deleteEvent(id) {
   if (!confirm("Delete this scheduled event?")) return;
+  fetch('/api/events/' + encodeURIComponent(id), { method: 'DELETE' }).catch(() => {});
+  if (window.SSDRealtime) {
+    window.SSDRealtime.emit('event:delete', { id });
+  }
+
   if (db) {
     db.ref('events/' + id).remove()
       .then(() => {
@@ -6200,22 +6555,39 @@ function handleSaveCampaign(e) {
     refreshAllViewsAfterApproval();
   };
 
+  const key = id || ("camp_" + Date.now());
+  payload.id = key;
+  if (!adminData.campaigns) adminData.campaigns = {};
+  adminData.campaigns[key] = payload;
+  saveLocalStore();
+
+  fetch('/api/campaigns', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(() => {});
+
+  if (window.SSDRealtime) {
+    window.SSDRealtime.emit('campaign:update', payload);
+  }
+
   if (db) {
     const targetRef = id ? db.ref('campaigns/' + id) : db.ref('campaigns').push();
     targetRef.set(payload)
       .then(onSuccess)
       .catch(err => showToast("Error: " + err.message, "error"));
   } else {
-    const key = id || ("camp_" + Date.now());
-    if (!adminData.campaigns) adminData.campaigns = {};
-    adminData.campaigns[key] = payload;
-    saveLocalStore();
     onSuccess();
   }
 }
 
 function deleteCampaign(id) {
   if (!confirm("Are you sure you want to delete this campaign?")) return;
+  fetch('/api/campaigns/' + encodeURIComponent(id), { method: 'DELETE' }).catch(() => {});
+  if (window.SSDRealtime) {
+    window.SSDRealtime.emit('campaign:delete', { id });
+  }
+
   if (db) {
     db.ref('campaigns/' + id).remove()
       .then(() => {
@@ -6308,21 +6680,38 @@ function handleSaveGallery(e) {
     refreshAllViewsAfterApproval();
   };
 
+  const key = "gal_" + Date.now();
+  payload.id = key;
+  if (!adminData.gallery) adminData.gallery = {};
+  adminData.gallery[key] = payload;
+  saveLocalStore();
+
+  fetch('/api/gallery', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(() => {});
+
+  if (window.SSDRealtime) {
+    window.SSDRealtime.emit('gallery:update', payload);
+  }
+
   if (db) {
     db.ref('gallery').push(payload)
       .then(onSuccess)
       .catch(err => showToast("Error: " + err.message, "error"));
   } else {
-    const key = "gal_" + Date.now();
-    if (!adminData.gallery) adminData.gallery = {};
-    adminData.gallery[key] = payload;
-    saveLocalStore();
     onSuccess();
   }
 }
 
 function deleteGalleryItem(id) {
   if (!confirm("Delete this photo from public archives?")) return;
+  fetch('/api/gallery/' + encodeURIComponent(id), { method: 'DELETE' }).catch(() => {});
+  if (window.SSDRealtime) {
+    window.SSDRealtime.emit('gallery:delete', { id });
+  }
+
   if (db) {
     db.ref('gallery/' + id).remove()
       .then(() => showToast("Photo removed.", "info"))
@@ -6434,13 +6823,24 @@ function saveStatsForm(e) {
     yearsActive: Number(document.getElementById("statYearsInput").value)
   };
 
+  adminData.stats = payload;
+  saveLocalStore();
+
+  fetch('/api/stats', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(() => {});
+
+  if (window.SSDRealtime) {
+    window.SSDRealtime.emit('stats:update', payload);
+  }
+
   if (db) {
     db.ref('stats').set(payload)
       .then(() => showToast("Homepage Live Counters updated successfully in Supabase Cloud!", "success"))
       .catch(err => showToast("Error: " + err.message, "error"));
   } else {
-    adminData.stats = payload;
-    saveLocalStore();
     showToast("Homepage Live Counters updated!", "success");
   }
 }
@@ -6683,15 +7083,41 @@ function handleLocalPdfUpload(inputElement, targetUrlInputId, previewContainerId
     showToast("PDF file is large (" + sizeMb + " MB). For best performance, please use PDFs under 8MB.", "warning");
   }
 
+  // 1. If backend server is available, attempt direct multipart upload for a clean lightweight URL
+  const formData = new FormData();
+  formData.append('file', file);
+  fetch('/api/media/upload', {
+    method: 'POST',
+    body: formData
+  }).then(r => r.json()).then(data => {
+    if (data && data.success && data.url) {
+      const targetInput = document.getElementById(targetUrlInputId);
+      if (targetInput) {
+        targetInput.value = data.url;
+        targetInput.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+      updatePdfPreview(previewContainerId, data.url);
+      showToast(`PDF document "${file.name}" uploaded to server!`, "success");
+    }
+  }).catch(() => {
+    // Offline / client-side fallback continues below
+  });
+
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = async function(e) {
     const dataUrl = e.target.result;
     
-    // Set target URL input
+    // Set target URL input if not already replaced by server upload
     const targetInput = document.getElementById(targetUrlInputId);
-    if (targetInput) {
+    if (targetInput && (!targetInput.value || targetInput.value.startsWith('data:'))) {
       targetInput.value = dataUrl;
       targetInput.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    // Persist in IndexedDB as reliable offline asset
+    if (window.ssdFileStorage) {
+      const assetKey = `dossier_pdf_${Date.now()}`;
+      await window.ssdFileStorage.set(assetKey, dataUrl);
     }
 
     // Update preview container
@@ -6734,19 +7160,20 @@ function clearPdfUpload(targetUrlInputId, previewContainerId, fileInputId) {
   }
 }
 
-function updatePdfPreview(containerId, url) {
+async function updatePdfPreview(containerId, url) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  if (url && (url.startsWith("http") || url.startsWith("data:application/pdf") || url.includes(".pdf"))) {
-    const isData = url.startsWith("data:application/pdf");
+  const resolved = await resolvePdfUrl(url);
+  if (resolved && (resolved.startsWith("http") || resolved.startsWith("data:application/pdf") || resolved.includes(".pdf") || resolved.startsWith("/uploads/"))) {
+    const isData = resolved.startsWith("data:application/pdf");
     container.innerHTML = `
       <div class="admin-pdf-preview-chip">
         <i class="fa-solid fa-file-pdf pdf-chip-icon"></i>
         <div class="pdf-chip-info">
-          <strong>${isData ? 'Attached PDF Document' : (url.split('/').pop().split('?')[0] || 'Official Document.pdf')}</strong>
-          <span>${isData ? 'Local PDF File' : 'External PDF Link'}</span>
+          <strong>${isData ? 'Attached PDF Dossier' : (resolved.split('/').pop().split('?')[0] || 'Official Document.pdf')}</strong>
+          <span>${isData ? 'Local Attached PDF' : 'Document Link'}</span>
         </div>
-        <a href="${url}" target="_blank" class="btn-pdf-chip-action view" title="Open PDF in new tab"><i class="fa-solid fa-eye"></i> View</a>
+        <a href="${resolved}" target="_blank" class="btn-pdf-chip-action view" title="Open PDF in new tab"><i class="fa-solid fa-eye"></i> View</a>
         <button type="button" class="btn-pdf-chip-action remove" onclick="clearPdfUpload('${containerId.replace('Preview', 'Url')}', '${containerId}', '')" title="Remove PDF"><i class="fa-solid fa-xmark"></i></button>
       </div>
     `;
@@ -6815,7 +7242,22 @@ function escapeHtml(str) {
 // ==========================================================================
 function ensureOfficerPortfolioModalInDom() {
   let modal = document.getElementById("officerPortfolioModal");
-  if (modal) return modal;
+  if (modal) {
+    // Self-healing: ensure portfolioOfficerPdfBtn exists inside the footer
+    const footer = modal.querySelector(".officer-portfolio-footer");
+    if (footer && !modal.querySelector("#portfolioOfficerPdfBtn")) {
+      const pdfBtn = document.createElement("a");
+      pdfBtn.id = "portfolioOfficerPdfBtn";
+      pdfBtn.className = "btn btn-outline-orange btn-sm";
+      pdfBtn.target = "_blank";
+      pdfBtn.download = "";
+      pdfBtn.style.display = "none";
+      pdfBtn.style.marginRight = "auto";
+      pdfBtn.innerHTML = `<i class="fa-solid fa-file-pdf" style="color: #DC2626;"></i> Download Dossier PDF`;
+      footer.insertBefore(pdfBtn, footer.firstChild);
+    }
+    return modal;
+  }
 
   modal = document.createElement("div");
   modal.className = "officer-portfolio-modal";
@@ -6887,6 +7329,9 @@ function ensureOfficerPortfolioModalInDom() {
       </div>
 
       <div class="officer-portfolio-footer">
+        <a id="portfolioOfficerPdfBtn" href="" target="_blank" download class="btn btn-outline-orange btn-sm" style="display: none; margin-right: auto;">
+          <i class="fa-solid fa-file-pdf" style="color: #DC2626;"></i> Download Dossier PDF
+        </a>
         <a href="contact.html" class="btn btn-outline-navy btn-sm"><i class="fa-solid fa-envelope"></i> Contact Secretariat</a>
         <button type="button" class="btn btn-navy btn-sm" onclick="closeOfficerPortfolioModal()"><i class="fa-solid fa-check"></i> Close Dossier</button>
       </div>
@@ -6940,6 +7385,7 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
   const bioEl = modal.querySelector("#portfolioOfficerBio");
   const focusAreasEl = modal.querySelector("#portfolioOfficerFocusAreas");
   const wingEl = modal.querySelector("#portfolioOfficerWing");
+  const pdfBtn = modal.querySelector("#portfolioOfficerPdfBtn");
 
   const isAdv = leader.category === "Advisory Board" || (leader.designation && leader.designation.includes("Advisory")) || (leader.rankBadge && leader.rankBadge.includes("Advisory")) || isAdvisory;
   const isDistrict = (leader.level === 'district');
@@ -6986,8 +7432,8 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
   }
 
   if (bioEl) {
-    let bioText = leader.bio || "";
-    if (!bioText || bioText.length < 50) {
+    let bioText = (leader.bio || "").trim();
+    if (!bioText) {
       if (isAdv) {
         bioText = `${leader.name} serves on the Senior Advisory & Elders Council (मार्गदर्शक मंडल) of Samata Sainik Dal, providing veteran ideological direction, historical research guidance, and policy oversight for nationwide movement expansion in accordance with Bodhisattva Dr. B.R. Ambedkar's foundational 1927 charter.`;
       } else {
@@ -7013,6 +7459,21 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
       tags = ["National Command Coordination", "State Chapter Administration", "Democratic Governance", "Sainik Enlistment", "Centenary 2027 Vision"];
     }
     focusAreasEl.innerHTML = tags.map(t => `<span class="portfolio-tag"><i class="fa-solid fa-check"></i> ${escapeHtml(t)}</span>`).join('');
+  }
+
+  if (pdfBtn) {
+    if (leader.pdfUrl) {
+      resolvePdfUrl(leader.pdfUrl).then(url => {
+        if (pdfBtn) {
+          pdfBtn.href = url;
+          pdfBtn.setAttribute("download", `${(leader.name || 'Officer').replace(/[^a-zA-Z0-9]/g, '_')}_Dossier.pdf`);
+          pdfBtn.style.display = "inline-flex";
+        }
+      });
+    } else {
+      pdfBtn.style.display = "none";
+      pdfBtn.removeAttribute("href");
+    }
   }
 
   modal.style.display = "flex";

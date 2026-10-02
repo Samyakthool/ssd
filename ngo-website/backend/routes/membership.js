@@ -10,6 +10,7 @@ import { requireRole, enforceJurisdiction, canAccessRecord } from '../middleware
 import { upload } from '../middleware/upload.js';
 import { applicationRateLimiter } from '../middleware/rateLimiter.js';
 import { sendEnlistmentApprovalEmail } from '../utils/mailer.js';
+import { broadcastRealtimeEvent } from '../utils/realtime.js';
 
 const router = express.Router();
 
@@ -307,6 +308,9 @@ router.post('/apply', applicationRateLimiter, upload.single('photo'), async (req
     });
 
     saveEmbeddedStore();
+
+    // Broadcast real-time event to all active admins and clients
+    broadcastRealtimeEvent('membership:apply', newApp);
 
     // Async attempt to persist to Supabase Cloud if configured
     if (supabase) {
@@ -839,6 +843,7 @@ router.post('/applications/:id/reject', authenticate, async (req, res) => {
     });
 
     saveEmbeddedStore();
+    broadcastRealtimeEvent('membership:reject', { id: app.id, status: 'REJECTED', reason: reasonText });
     return res.json({ success: true, message: 'Application marked as REJECTED.', application: app });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
@@ -996,6 +1001,15 @@ router.post('/applications/:id/approve', authenticate, requireRole('super_admin'
     });
 
     saveEmbeddedStore();
+
+    // Broadcast real-time approval event
+    broadcastRealtimeEvent('membership:approve', {
+      id: app.id,
+      applicationId: app.id,
+      sainikId: sainikId,
+      status: 'FINAL_APPROVED',
+      member: newMember
+    });
 
     // Async attempt to sync commissioned member & updated application to Supabase Cloud
     if (supabase) {

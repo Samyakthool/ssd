@@ -17,6 +17,112 @@ let firebaseApp = null;
 let db = null;
 let isFirebaseLive = false;
 
+// ==========================================================================
+// CLIENT-SIDE REAL-TIME EVENT HUB PROVIDER (DUAL CHANNEL: BROADCAST + SSE)
+// ==========================================================================
+if (typeof window.SSDRealtime === 'undefined') {
+  (function(global) {
+    const listeners = new Map();
+    let broadcastChannel = null;
+    let eventSource = null;
+    let reconnectAttempts = 0;
+    let reconnectTimer = null;
+    let isConnected = false;
+
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        broadcastChannel = new BroadcastChannel('ssd_realtime_pipeline');
+        broadcastChannel.onmessage = (event) => {
+          if (event && event.data && event.data.type) {
+            triggerHandlers(event.data.type, event.data.payload, 'broadcast_channel');
+          }
+        };
+      }
+    } catch (e) {}
+
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'ssd_admin_local_data') {
+        triggerHandlers('storage:sync', { key: e.key }, 'local_storage');
+      }
+    });
+
+    function triggerHandlers(eventType, payload, origin) {
+      const list = listeners.get(eventType) || [];
+      list.forEach(fn => {
+        try { fn(payload, origin); } catch (err) { console.error(`[SSD Realtime] Listener error for ${eventType}:`, err); }
+      });
+      const anyList = listeners.get('*') || [];
+      anyList.forEach(fn => {
+        try { fn(eventType, payload, origin); } catch (err) { console.error(`[SSD Realtime] Wildcard error:`, err); }
+      });
+    }
+
+    function connectSSE() {
+      if (typeof EventSource === 'undefined') return;
+      if (eventSource) { try { eventSource.close(); } catch (e) {} }
+      try {
+        eventSource = new EventSource('/api/realtime/stream');
+        eventSource.onopen = () => {
+          isConnected = true;
+          reconnectAttempts = 0;
+          triggerHandlers('realtime:connected', { status: 'ONLINE' }, 'sse');
+        };
+        eventSource.onerror = () => {
+          isConnected = false;
+          try { eventSource.close(); } catch (e) {}
+          eventSource = null;
+          const delay = Math.min(1000 * Math.pow(1.5, reconnectAttempts), 15000);
+          reconnectAttempts++;
+          if (reconnectTimer) clearTimeout(reconnectTimer);
+          reconnectTimer = setTimeout(connectSSE, delay);
+        };
+        const events = ['connected', 'leadership:update', 'leadership:delete', 'news:update', 'news:delete', 'event:update', 'event:delete', 'event:register', 'campaign:update', 'campaign:delete', 'gallery:update', 'gallery:delete', 'membership:apply', 'membership:approve', 'membership:reject', 'membership:workflow', 'donation:new', 'stats:update', 'chapter:update', 'sync:all'];
+        events.forEach(evt => {
+          eventSource.addEventListener(evt, (e) => {
+            let data = null;
+            try { data = JSON.parse(e.data); } catch (err) { data = e.data; }
+            triggerHandlers(evt, data, 'sse');
+          });
+        });
+      } catch (err) {}
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', connectSSE);
+    } else {
+      connectSSE();
+    }
+
+    global.SSDRealtime = {
+      on(eventType, callback) {
+        if (!listeners.has(eventType)) listeners.set(eventType, []);
+        listeners.get(eventType).push(callback);
+        return () => this.off(eventType, callback);
+      },
+      off(eventType, callback) {
+        if (!listeners.has(eventType)) return;
+        listeners.set(eventType, listeners.get(eventType).filter(fn => fn !== callback));
+      },
+      emit(eventType, payload, syncToServer = true) {
+        triggerHandlers(eventType, payload, 'local');
+        if (broadcastChannel) {
+          try { broadcastChannel.postMessage({ type: eventType, payload }); } catch (e) {}
+        }
+        if (syncToServer) {
+          fetch('/api/realtime/broadcast', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event: eventType, data: payload })
+          }).catch(() => {});
+        }
+      },
+      isConnected() { return isConnected; }
+    };
+  })(window);
+}
+
+
+
 // Global HTML sanitization helper
 function escapeHtml(str) {
   if (str === null || str === undefined) return '';
@@ -28,6 +134,73 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 window.escapeHtml = escapeHtml;
+
+// Reliable Large Asset & Dossier File Storage (IndexedDB)
+const ssdFileStorage = {
+  dbPromise: null,
+  getDb() {
+    if (this.dbPromise) return this.dbPromise;
+    this.dbPromise = new Promise((resolve) => {
+      try {
+        if (typeof indexedDB === 'undefined') return resolve(null);
+        const req = indexedDB.open('ssd_assets_db', 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('assets')) {
+            db.createObjectStore('assets');
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      } catch (e) {
+        resolve(null);
+      }
+    });
+    return this.dbPromise;
+  },
+  async get(key) {
+    const db = await this.getDb();
+    if (!db) return null;
+    return new Promise((resolve) => {
+      try {
+        const tx = db.transaction('assets', 'readonly');
+        const store = tx.objectStore('assets');
+        const req = store.get(key);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  },
+  async set(key, value) {
+    const db = await this.getDb();
+    if (!db) return false;
+    return new Promise((resolve) => {
+      try {
+        const tx = db.transaction('assets', 'readwrite');
+        const store = tx.objectStore('assets');
+        const req = store.put(value, key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => resolve(false);
+      } catch (e) {
+        resolve(false);
+      }
+    });
+  }
+};
+window.ssdFileStorage = ssdFileStorage;
+
+async function resolvePdfUrl(url) {
+  if (!url) return "";
+  if (url.startsWith("idb://") && window.ssdFileStorage) {
+    const key = url.replace("idb://", "");
+    const stored = await window.ssdFileStorage.get(key);
+    if (stored) return stored;
+  }
+  return url;
+}
+window.resolvePdfUrl = resolvePdfUrl;
 
 // Authentic SSD Seed/Fallback Dataset
 const ssdSampleData = {
@@ -609,22 +782,120 @@ document.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById("eventsContainer")) loadEvents();
   if (document.getElementById("galleryContainer")) loadGallery();
   if (document.getElementById("homeGalleryContainer")) loadHomeGallery();
-  if (document.getElementById("governingContainer")) loadGoverningBody();
+  if (document.getElementById("governingContainer") || document.getElementById("advisoryContainer")) loadGoverningBody();
   if (document.getElementById("testimonialContainer")) loadTestimonials();
+});
+
+// ==========================================================================
+// UNIFIED REAL-TIME DATA PIPELINE & LIVE SYNCHRONIZATION
+// ==========================================================================
+function getLiveDataset(key, fallback) {
+  try {
+    const localStore = localStorage.getItem("ssd_admin_local_data");
+    if (localStore) {
+      const parsed = JSON.parse(localStore);
+      if (parsed && parsed[key]) {
+        const val = parsed[key];
+        if (Array.isArray(val) && val.length > 0) return val;
+        if (typeof val === 'object' && Object.keys(val).length > 0) {
+          return Object.entries(val).map(([k, v]) => ({ id: k, ...v }));
+        }
+      }
+    }
+  } catch (e) {}
+  return Object.values(fallback || {});
+}
+
+// Attach real-time listeners to instantly update DOM when data changes
+function initRealtimeDomSync() {
+  if (typeof window.SSDRealtime === 'undefined') return;
+
+  window.SSDRealtime.on('news:update', () => { if (document.getElementById("newsContainer")) loadNews(); });
+  window.SSDRealtime.on('news:delete', () => { if (document.getElementById("newsContainer")) loadNews(); });
+  window.SSDRealtime.on('event:update', () => { if (document.getElementById("eventsContainer")) loadEvents(); });
+  window.SSDRealtime.on('event:delete', () => { if (document.getElementById("eventsContainer")) loadEvents(); });
+  window.SSDRealtime.on('leadership:update', () => {
+    if (document.getElementById("governingContainer") || document.getElementById("advisoryContainer")) loadGoverningBody();
+  });
+  window.SSDRealtime.on('leadership:delete', () => {
+    if (document.getElementById("governingContainer") || document.getElementById("advisoryContainer")) loadGoverningBody();
+  });
+  window.SSDRealtime.on('campaign:update', () => { if (document.getElementById("campaignsContainer")) loadCampaigns(); });
+  window.SSDRealtime.on('campaign:delete', () => { if (document.getElementById("campaignsContainer")) loadCampaigns(); });
+  window.SSDRealtime.on('gallery:update', () => {
+    if (document.getElementById("galleryContainer")) loadGallery();
+    if (document.getElementById("homeGalleryContainer")) loadHomeGallery();
+  });
+  window.SSDRealtime.on('gallery:delete', () => {
+    if (document.getElementById("galleryContainer")) loadGallery();
+    if (document.getElementById("homeGalleryContainer")) loadHomeGallery();
+  });
+  window.SSDRealtime.on('stats:update', (newStats) => {
+    if (document.getElementById("statMembers")) {
+      if (newStats) renderStats(newStats);
+      else loadStats();
+    }
+  });
+  window.SSDRealtime.on('sync:all', () => {
+    if (document.getElementById("newsContainer")) loadNews();
+    if (document.getElementById("eventsContainer")) loadEvents();
+    if (document.getElementById("governingContainer") || document.getElementById("advisoryContainer")) loadGoverningBody();
+    if (document.getElementById("campaignsContainer")) loadCampaigns();
+    if (document.getElementById("galleryContainer")) loadGallery();
+    if (document.getElementById("homeGalleryContainer")) loadHomeGallery();
+    if (document.getElementById("statMembers")) loadStats();
+  });
+  window.SSDRealtime.on('storage:sync', () => {
+    if (document.getElementById("newsContainer")) loadNews();
+    if (document.getElementById("eventsContainer")) loadEvents();
+    if (document.getElementById("governingContainer") || document.getElementById("advisoryContainer")) loadGoverningBody();
+    if (document.getElementById("campaignsContainer")) loadCampaigns();
+    if (document.getElementById("galleryContainer")) loadGallery();
+    if (document.getElementById("homeGalleryContainer")) loadHomeGallery();
+    if (document.getElementById("statMembers")) loadStats();
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initRealtimeDomSync);
+} else {
+  initRealtimeDomSync();
+}
+
+// Live Cross-Tab Sync Fallback
+window.addEventListener("storage", (e) => {
+  if (e.key === "ssd_admin_local_data") {
+    if (typeof loadGoverningBody === "function") loadGoverningBody();
+    if (typeof loadNews === "function" && document.getElementById("newsContainer")) loadNews();
+    if (typeof loadEvents === "function" && document.getElementById("eventsContainer")) loadEvents();
+    if (typeof loadCampaigns === "function" && document.getElementById("campaignsContainer")) loadCampaigns();
+    if (typeof loadGallery === "function" && document.getElementById("galleryContainer")) loadGallery();
+    if (typeof loadHomeGallery === "function" && document.getElementById("homeGalleryContainer")) loadHomeGallery();
+    if (typeof loadStats === "function" && document.getElementById("statMembers")) loadStats();
+  }
 });
 
 // Load Stats
 function loadStats() {
-  if (db) {
-    db.ref('stats').on('value', (snapshot) => {
-      const stats = snapshot.val() || ssdSampleData.stats;
-      renderStats(stats);
-    }, (error) => {
-      renderStats(ssdSampleData.stats);
-    });
-  } else {
-    renderStats(ssdSampleData.stats);
-  }
+  let stats = ssdSampleData.stats;
+  try {
+    const localStore = localStorage.getItem("ssd_admin_local_data");
+    if (localStore) {
+      const parsed = JSON.parse(localStore);
+      if (parsed && parsed.stats) stats = { ...stats, ...parsed.stats };
+    }
+  } catch (e) {}
+
+  renderStats(stats);
+
+  fetch('/api/stats')
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.success && data.stats) {
+        renderStats(data.stats);
+      }
+    })
+    .catch(() => {});
 }
 
 function renderStats(stats) {
@@ -675,19 +946,24 @@ function loadNews(limit = 6) {
   const container = document.getElementById("newsContainer");
   if (!container) return;
 
-  if (db) {
-    db.ref('news').limitToLast(limit * 2).on('value', (snapshot) => {
-      const data = snapshot.val();
-      const rawList = data ? Object.values(data) : Object.values(ssdSampleData.news);
-      const approvedList = rawList.filter(isContentApproved).slice(-limit);
-      renderNews(approvedList);
-    }, (err) => {
-      renderNews(Object.values(ssdSampleData.news).filter(isContentApproved));
-    });
-  } else {
-    const rawList = Object.values(ssdSampleData.news);
-    renderNews(rawList.filter(isContentApproved));
-  }
+  const renderCurrent = (newsList) => {
+    const rawList = newsList || getLiveDataset("news", ssdSampleData.news);
+    const approvedList = rawList.filter(isContentApproved).slice(-limit);
+    renderNews(approvedList);
+  };
+
+  // 1. Immediate local render
+  renderCurrent();
+
+  // 2. Fresh fetch from backend REST API
+  fetch('/api/news')
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.success && Array.isArray(data.news) && data.news.length > 0) {
+        renderCurrent(data.news);
+      }
+    })
+    .catch(() => {});
 }
 
 function renderNews(newsArray) {
@@ -729,18 +1005,22 @@ function loadEvents() {
   const container = document.getElementById("eventsContainer");
   if (!container) return;
 
-  if (db) {
-    db.ref('events').orderByChild('status').equalTo('upcoming').limitToLast(8).on('value', (snapshot) => {
-      const data = snapshot.val();
-      const rawList = data ? Object.values(data) : Object.values(ssdSampleData.events);
-      const approvedList = rawList.filter(e => e.status === 'upcoming' && isContentApproved(e)).slice(-4);
-      renderEvents(approvedList);
-    }, (err) => {
-      renderEvents(Object.values(ssdSampleData.events).filter(e => e.status === 'upcoming' && isContentApproved(e)));
-    });
-  } else {
-    renderEvents(Object.values(ssdSampleData.events).filter(e => e.status === 'upcoming' && isContentApproved(e)));
-  }
+  const renderCurrent = (eventsList) => {
+    const rawList = eventsList || getLiveDataset("events", ssdSampleData.events);
+    const approvedList = rawList.filter(e => ((e.status || '').toLowerCase() === 'upcoming') && isContentApproved(e)).slice(-4);
+    renderEvents(approvedList);
+  };
+
+  renderCurrent();
+
+  fetch('/api/events?status=upcoming')
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.success && Array.isArray(data.events) && data.events.length > 0) {
+        renderCurrent(data.events);
+      }
+    })
+    .catch(() => {});
 }
 
 function renderEvents(eventsArray) {
@@ -788,17 +1068,21 @@ function loadGallery() {
   const container = document.getElementById("galleryContainer");
   if (!container) return;
 
-  if (db) {
-    db.ref('gallery').on('value', (snapshot) => {
-      const data = snapshot.val();
-      const rawList = data ? Object.values(data) : Object.values(ssdSampleData.gallery);
-      renderGallery(rawList.filter(isContentApproved));
-    }, (err) => {
-      renderGallery(Object.values(ssdSampleData.gallery).filter(isContentApproved));
-    });
-  } else {
-    renderGallery(Object.values(ssdSampleData.gallery).filter(isContentApproved));
-  }
+  const renderCurrent = (galleryList) => {
+    const rawList = galleryList || getLiveDataset("gallery", ssdSampleData.gallery);
+    renderGallery(rawList.filter(isContentApproved));
+  };
+
+  renderCurrent();
+
+  fetch('/api/gallery')
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.success && Array.isArray(data.gallery) && data.gallery.length > 0) {
+        renderCurrent(data.gallery);
+      }
+    })
+    .catch(() => {});
 }
 
 function renderGallery(galleryArray) {
@@ -1576,17 +1860,21 @@ function loadCampaigns() {
   const container = document.getElementById("campaignsContainer");
   if (!container) return;
 
-  if (db) {
-    db.ref('campaigns').on('value', (snapshot) => {
-      const data = snapshot.val();
-      const rawList = data ? Object.values(data) : Object.values(ssdSampleData.campaigns);
-      renderCampaigns(rawList.filter(isContentApproved));
-    }, (err) => {
-      renderCampaigns(Object.values(ssdSampleData.campaigns).filter(isContentApproved));
-    });
-  } else {
-    renderCampaigns(Object.values(ssdSampleData.campaigns).filter(isContentApproved));
-  }
+  const renderCurrent = (campList) => {
+    const rawList = campList || getLiveDataset("campaigns", ssdSampleData.campaigns);
+    renderCampaigns(rawList.filter(isContentApproved));
+  };
+
+  renderCurrent();
+
+  fetch('/api/campaigns')
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.success && Array.isArray(data.campaigns) && data.campaigns.length > 0) {
+        renderCurrent(data.campaigns);
+      }
+    })
+    .catch(() => {});
 }
 
 function renderCampaigns(campaignsArray) {
@@ -1713,9 +2001,11 @@ let currentGoverningSearch = '';
 function renderGoverningCards(leadersList) {
   const councilContainer = document.getElementById("governingContainer");
   const advisoryContainer = document.getElementById("advisoryContainer");
-  if (!councilContainer) return;
+  if (!councilContainer && !advisoryContainer) return;
 
   window._allGoverningLeaders = leadersList || Object.values(ssdSampleData.governingBody);
+
+  if (councilContainer) {
 
   let filtered = window._allGoverningLeaders.filter(lead => {
     if (lead.category === "Advisory Board") return false;
@@ -1835,6 +2125,7 @@ function renderGoverningCards(leadersList) {
         </div>
       `;
     }).join('');
+    }
   }
 
   if (advisoryContainer) {
@@ -1961,43 +2252,36 @@ window.filterGoverningSearch = filterGoverningSearch;
 
 function loadGoverningBody() {
   const councilContainer = document.getElementById("governingContainer");
-  if (!councilContainer) return;
+  const advisoryContainer = document.getElementById("advisoryContainer");
+  if (!councilContainer && !advisoryContainer) return;
 
-  if (db) {
-    db.ref('state_chapters').on('value', snapshot => {
-      const val = snapshot.val();
-      renderStatePills(val || ssdSampleData.stateChapters);
-    });
+  const renderCurrent = (leadersList, chaptersObj) => {
+    if (councilContainer) renderStatePills(chaptersObj || ssdSampleData.stateChapters);
+    let list = (leadersList || []).filter(isContentApproved);
+    list.sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
+    renderGoverningCards(list);
+  };
 
-    db.ref('leadership').on('value', snapshot => {
-      const val = snapshot.val();
-      if (val) {
-        let list = Object.entries(val).map(([k, v]) => ({ id: k, ...v })).filter(isContentApproved);
-        list.sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
-        renderGoverningCards(list);
-      } else {
-        renderGoverningCards(Object.values(ssdSampleData.governingBody).filter(isContentApproved));
-      }
-    });
-  } else {
+  let localChapters = ssdSampleData.stateChapters;
+  let localLeaders = getLiveDataset("leadership", ssdSampleData.governingBody);
+  try {
     const localStore = localStorage.getItem("ssd_admin_local_data");
     if (localStore) {
-      try {
-        const parsed = JSON.parse(localStore);
-        if (parsed) {
-          renderStatePills(parsed.state_chapters || ssdSampleData.stateChapters);
-          if (parsed.leadership) {
-            let list = Object.entries(parsed.leadership).map(([k, v]) => ({ id: k, ...v })).filter(isContentApproved);
-            list.sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
-            renderGoverningCards(list);
-            return;
-          }
-        }
-      } catch (e) {}
+      const parsed = JSON.parse(localStore);
+      if (parsed && parsed.state_chapters) localChapters = parsed.state_chapters;
     }
-    renderStatePills(ssdSampleData.stateChapters);
-    renderGoverningCards(Object.values(ssdSampleData.governingBody).filter(isContentApproved));
-  }
+  } catch (e) {}
+
+  renderCurrent(localLeaders, localChapters);
+
+  fetch('/api/leadership')
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.success && Array.isArray(data.leadership) && data.leadership.length > 0) {
+        renderCurrent(data.leadership, localChapters);
+      }
+    })
+    .catch(() => {});
 }
 
 // ==========================================================================
@@ -2005,7 +2289,22 @@ function loadGoverningBody() {
 // ==========================================================================
 function ensureOfficerPortfolioModalInDom() {
   let modal = document.getElementById("officerPortfolioModal");
-  if (modal) return modal;
+  if (modal) {
+    // Self-healing: ensure portfolioOfficerPdfBtn exists inside the footer
+    const footer = modal.querySelector(".officer-portfolio-footer");
+    if (footer && !modal.querySelector("#portfolioOfficerPdfBtn")) {
+      const pdfBtn = document.createElement("a");
+      pdfBtn.id = "portfolioOfficerPdfBtn";
+      pdfBtn.className = "btn btn-outline-orange btn-sm";
+      pdfBtn.target = "_blank";
+      pdfBtn.download = "";
+      pdfBtn.style.display = "none";
+      pdfBtn.style.marginRight = "auto";
+      pdfBtn.innerHTML = `<i class="fa-solid fa-file-pdf" style="color: #DC2626;"></i> Download Dossier PDF`;
+      footer.insertBefore(pdfBtn, footer.firstChild);
+    }
+    return modal;
+  }
 
   modal = document.createElement("div");
   modal.className = "officer-portfolio-modal";
@@ -2091,12 +2390,12 @@ function ensureOfficerPortfolioModalInDom() {
 
 function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
   let leader = null;
+  const dynamicLeaders = window._allGoverningLeaders || [];
   const allGoverning = Object.values(ssdSampleData.governingBody || {});
   const allAdvisory = ssdSampleData.advisoryBoard || [];
-  const dynamicLeaders = window._allGoverningLeaders || [];
   
-  // Combine all sources
-  const masterList = [...allAdvisory, ...dynamicLeaders, ...allGoverning];
+  // Dynamic leaders must take precedence over static seed data
+  const masterList = [...dynamicLeaders, ...allAdvisory, ...allGoverning];
 
   if (typeof leaderOrId === 'object' && leaderOrId !== null) {
     leader = leaderOrId;
@@ -2106,39 +2405,55 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
     // 1. If numeric index provided and isAdvisory is true
     if (!isNaN(leaderOrId) && leaderOrId !== '') {
       const idx = Number(leaderOrId);
-      if (isAdvisory && allAdvisory[idx]) {
+      const dynamicAdvisory = dynamicLeaders.filter(l => l.category === "Advisory Board");
+      if (isAdvisory && dynamicAdvisory[idx]) {
+        leader = dynamicAdvisory[idx];
+      } else if (isAdvisory && allAdvisory[idx]) {
         leader = allAdvisory[idx];
       } else if (masterList[idx]) {
         leader = masterList[idx];
       }
     }
 
-    // 2. Search Advisory Board specifically if isAdvisory is true
+    // 2. Search Advisory Board specifically if isAdvisory is true (dynamic first)
     if (!leader && isAdvisory) {
-      leader = allAdvisory.find(a => (a.id && String(a.id).toLowerCase() === raw) || (a.name && (a.name.toLowerCase().includes(raw) || raw.includes(a.name.toLowerCase()))));
+      const dynamicAdvisory = dynamicLeaders.filter(l => l.category === "Advisory Board");
+      leader = dynamicAdvisory.find(a => (a.id && String(a.id).toLowerCase() === raw) || (a.name && (a.name.toLowerCase().trim() === raw || a.name.toLowerCase().includes(raw) || raw.includes(a.name.toLowerCase()))));
+      if (!leader) {
+        leader = allAdvisory.find(a => (a.id && String(a.id).toLowerCase() === raw) || (a.name && (a.name.toLowerCase().trim() === raw || a.name.toLowerCase().includes(raw) || raw.includes(a.name.toLowerCase()))));
+      }
     }
 
-    // 3. Search by ID across master list
+    // 3. Search by ID across dynamic leaders first, then master list
+    if (!leader) {
+      leader = dynamicLeaders.find(m => m && m.id && String(m.id).toLowerCase() === raw);
+    }
     if (!leader) {
       leader = masterList.find(m => m && m.id && String(m.id).toLowerCase() === raw);
     }
 
-    // 4. Search by exact or partial Name
+    // 4. Search by exact or partial Name in dynamic leaders first, then master list
+    if (!leader) {
+      leader = dynamicLeaders.find(m => m && m.name && (m.name.toLowerCase().trim() === raw || m.name.toLowerCase().includes(raw) || raw.includes(m.name.toLowerCase())));
+    }
     if (!leader) {
       leader = masterList.find(m => m && m.name && (m.name.toLowerCase().trim() === raw || m.name.toLowerCase().includes(raw) || raw.includes(m.name.toLowerCase())));
     }
 
-    // 5. Check hardcoded advisory fallback by name tokens
+    // 5. Check hardcoded advisory fallback by name tokens (dynamic first)
     if (!leader) {
-      if (raw.includes("yashwant") || raw.includes("more")) leader = allAdvisory[0];
-      else if (raw.includes("rekha") || raw.includes("gaikwad")) leader = allAdvisory[1];
-      else if (raw.includes("suresh") || raw.includes("jadhav")) leader = allAdvisory[2];
+      const matchAdvisor = (list) => {
+        if (raw.includes("yashwant") || raw.includes("more")) return list.find(m => m.name && m.name.includes("Yashwantrao"));
+        if (raw.includes("rekha") || raw.includes("gaikwad")) return list.find(m => m.name && m.name.includes("Rekha"));
+        if (raw.includes("suresh") || raw.includes("jadhav")) return list.find(m => m.name && m.name.includes("Suresh"));
+        return null;
+      };
+      leader = matchAdvisor(dynamicLeaders) || matchAdvisor(allAdvisory);
     }
   }
 
   if (!leader) {
     console.warn("Officer portfolio not found for identifier:", leaderOrId);
-    // Fallback to first advisory member if isAdvisory was requested
     if (isAdvisory && allAdvisory.length > 0) {
       leader = allAdvisory[0];
     } else {
@@ -2206,8 +2521,8 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
   }
 
   if (bioEl) {
-    let bioText = leader.bio || "";
-    if (!bioText || bioText.length < 50) {
+    let bioText = (leader.bio || "").trim();
+    if (!bioText) {
       if (isAdv) {
         bioText = `${leader.name} serves on the Senior Advisory & Elders Council (मार्गदर्शक मंडल) of Samata Sainik Dal, providing veteran ideological direction, historical research guidance, and policy oversight for nationwide movement expansion in accordance with Bodhisattva Dr. B.R. Ambedkar's foundational 1927 charter.`;
       } else {
@@ -2237,10 +2552,16 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
 
   if (pdfBtn) {
     if (leader.pdfUrl) {
-      pdfBtn.href = leader.pdfUrl;
-      pdfBtn.style.display = "inline-flex";
+      resolvePdfUrl(leader.pdfUrl).then(url => {
+        if (pdfBtn) {
+          pdfBtn.href = url;
+          pdfBtn.setAttribute("download", `${(leader.name || 'Officer').replace(/[^a-zA-Z0-9]/g, '_')}_Dossier.pdf`);
+          pdfBtn.style.display = "inline-flex";
+        }
+      });
     } else {
       pdfBtn.style.display = "none";
+      pdfBtn.removeAttribute("href");
     }
   }
 

@@ -335,6 +335,23 @@ button, input, select, textarea {
   color: var(--white);
 }
 
+.btn-outline-orange {
+  background-color: transparent;
+  color: var(--primary-orange);
+  border: 1.5px solid var(--primary-orange);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+.btn-outline-orange:hover {
+  background-color: var(--primary-orange);
+  color: var(--white);
+}
+
 .btn-sm {
   padding: 7px 16px;
   font-size: 13px;
