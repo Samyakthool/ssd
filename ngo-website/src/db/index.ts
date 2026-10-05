@@ -1,6 +1,6 @@
 import crypto from 'crypto';
-import { query, withTransaction, checkDatabaseHealth } from './postgres.js';
-import { getSupabaseAdmin } from './supabase.js';
+import { query, withTransaction, checkDatabaseHealth } from '@/db/postgres';
+import { getSupabaseAdmin } from '@/db/supabase';
 import {
   MembershipApplication,
   Member,
@@ -11,8 +11,8 @@ import {
   ApprovalActionType,
   JurisdictionScope,
   SystemRole,
-} from '../types/index.js';
-import { AppError } from '../lib/errors.js';
+} from '@/types';
+import { AppError } from '@/lib/errors';
 
 export { query, withTransaction, checkDatabaseHealth, getSupabaseAdmin };
 

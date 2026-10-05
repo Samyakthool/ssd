@@ -14,7 +14,8 @@
     "test:api": "node backend/tests/run-tests.js",
     "test:security": "tsx src/tests/security.test.ts",
     "test:db": "tsx src/tests/database.test.ts",
-    "test:all": "node backend/tests/run-tests.js && tsx src/tests/security.test.ts && tsx src/tests/database.test.ts"
+    "test:auth": "tsx src/tests/auth.test.ts",
+    "test:all": "node backend/tests/run-tests.js && tsx src/tests/security.test.ts && tsx src/tests/database.test.ts && tsx src/tests/auth.test.ts"
   },
   "dependencies": {
     "@supabase/server": "^1.8.0",
@@ -43,6 +44,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/pg": "^8.23.1",
     "tsx": "^4.23.15",
     "typescript": "7.0.2"
