@@ -576,121 +576,57 @@
         </div>
 
         <div class="join-grid-layout">
-          <!-- Left: 4-Step Enlistment Guide -->
+          <!-- Centered 4-Step Enlistment Guide -->
           <div class="join-workflow-box">
-            <h3 style="font-size: 20px; color: var(--dark-navy); margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
-              <i class="fa-solid fa-clipboard-check" style="color: var(--primary-orange);"></i> 4-Step Enlistment Process
-            </h3>
-
-            <div class="workflow-step">
-              <div class="step-num-badge">1</div>
-              <div class="step-content">
-                <h4>Select Your Operational Wing</h4>
-                <p>Choose from Cadet Corps (Drill & Discipline), Mahila Dal (Women's Leadership), Legal Cell (Advocacy), Youth Front, or Sewa Relief.</p>
-              </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 10px;">
+              <h3 style="font-size: 20px; color: var(--dark-navy); margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-clipboard-check" style="color: var(--primary-orange);"></i> 4-Step Official Enlistment Process
+              </h3>
+              <span class="badge" style="background: rgba(224, 90, 0, 0.1); color: var(--primary-orange); border: 1px solid rgba(224, 90, 0, 0.3); font-weight: 700; padding: 4px 12px; border-radius: 20px; font-size: 12px;">Official Cadre Induction</span>
             </div>
 
-            <div class="workflow-step">
-              <div class="step-num-badge">2</div>
-              <div class="step-content">
-                <h4>Submit District & Contact Details</h4>
-                <p>Provide your local address to be connected directly with your District Commander and local State Chapter.</p>
-              </div>
-            </div>
-
-            <div class="workflow-step">
-              <div class="step-num-badge">3</div>
-              <div class="step-content">
-                <h4>Take the Solemn Volunteer Pledge</h4>
-                <p>Commit to the principles of self-respect, moral character, non-violence, and total dedication to liberty, equality, and fraternity.</p>
-              </div>
-            </div>
-
-            <div class="workflow-step">
-              <div class="step-num-badge">4</div>
-              <div class="step-content">
-                <h4>Receive SSD Digital ID & Unit Assignment</h4>
-                <p>Central Command verifies your application, registers you in the national roll, and invites you to the next drill camp.</p>
-              </div>
-            </div>
-
-            <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-color); text-align: center;">
-              <a href="membership.html" class="btn btn-outline-navy btn-sm" style="width: 100%;">View Complete Enlistment Criteria & Rules &rarr;</a>
-            </div>
-          </div>
-
-          <!-- Right: Quick Enlistment Form -->
-          <div class="join-form-card">
-            <h3 style="font-size: 20px; color: var(--dark-navy); margin-bottom: 18px; display: flex; align-items: center; gap: 8px;">
-              <i class="fa-solid fa-id-card" style="color: var(--primary-orange);"></i> Quick Sainik Enlistment Form
-            </h3>
-
-            <form id="quickJoinForm" onsubmit="handleQuickJoinSubmit(event)">
-              <div class="form-group" style="margin-bottom: 14px;">
-                <label class="form-label" for="quickName">Full Name *</label>
-                <input type="text" id="quickName" class="form-control" placeholder="e.g., Rajesh Gaikwad" required>
-              </div>
-
-              <div class="form-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
-                <div class="form-group">
-                  <label class="form-label" for="quickEmail">Email ID *</label>
-                  <input type="email" id="quickEmail" class="form-control" placeholder="name@domain.com" required>
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="quickPhone">Mobile Number *</label>
-                  <input type="tel" id="quickPhone" class="form-control" placeholder="10-digit number" required>
+            <div class="workflow-steps-grid">
+              <div class="workflow-step">
+                <div class="step-num-badge">1</div>
+                <div class="step-content">
+                  <h4>Select Your Operational Wing</h4>
+                  <p>Choose from Cadet Corps (Drill & Discipline), Mahila Dal (Women's Leadership), Legal Cell (Advocacy), Youth Front, or Sewa Relief.</p>
                 </div>
               </div>
 
-              <div class="form-group" style="margin-bottom: 14px;">
-                <label class="form-label" for="quickWing">Preferred Wing / Department *</label>
-                <select id="quickWing" class="form-control" required>
-                  <option value="Central Cadet Corps (Sainik Wing)">Central Cadet Corps (Sainik Wing)</option>
-                  <option value="Mahila Samata Sainik Dal">Mahila Samata Sainik Dal</option>
-                  <option value="Constitutional & Legal Cell">Constitutional & Legal Cell</option>
-                  <option value="Youth & Student Front">Youth & Student Front</option>
-                  <option value="Community Sewa & Relief Taskforce">Community Sewa & Relief Taskforce</option>
-                </select>
-              </div>
-
-              <div class="form-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
-                <div class="form-group">
-                  <label class="form-label" for="quickState">State / UT *</label>
-                  <select id="quickState" class="form-control" required>
-                    <option value="">Select State</option>
-                    <option value="Maharashtra">Maharashtra</option>
-                    <option value="Delhi NCR">Delhi NCR</option>
-                    <option value="Uttar Pradesh">Uttar Pradesh</option>
-                    <option value="Madhya Pradesh">Madhya Pradesh</option>
-                    <option value="Karnataka">Karnataka</option>
-                    <option value="Punjab">Punjab</option>
-                    <option value="Telangana">Telangana</option>
-                    <option value="Tamil Nadu">Tamil Nadu</option>
-                    <option value="Bihar">Bihar</option>
-                    <option value="Rajasthan">Rajasthan</option>
-                    <option value="Gujarat">Gujarat</option>
-                    <option value="West Bengal">West Bengal</option>
-                    <option value="Other">Other State/UT</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="quickCity">District / City *</label>
-                  <input type="text" id="quickCity" class="form-control" placeholder="e.g., Nagpur" required>
+              <div class="workflow-step">
+                <div class="step-num-badge">2</div>
+                <div class="step-content">
+                  <h4>Submit District & Contact Details</h4>
+                  <p>Provide your local address to be connected directly with your District Commander and local State Chapter.</p>
                 </div>
               </div>
 
-              <div class="form-group" style="margin-bottom: 20px;">
-                <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 12.5px; color: #444; cursor: pointer;">
-                  <input type="checkbox" id="quickPledge" required style="margin-top: 3px;">
-                  <span>I solemnly pledge to uphold the Constitution of India, follow the teachings of Dr. B.R. Ambedkar, and serve Samata Sainik Dal with discipline and moral integrity.</span>
-                </label>
+              <div class="workflow-step">
+                <div class="step-num-badge">3</div>
+                <div class="step-content">
+                  <h4>Take the Solemn Volunteer Pledge</h4>
+                  <p>Commit to the principles of self-respect, moral character, non-violence, and total dedication to liberty, equality, and fraternity.</p>
+                </div>
               </div>
 
-              <button type="submit" id="quickJoinSubmitBtn" class="btn btn-primary" style="width: 100%;">
-                <span class="btn-text"><i class="fa-solid fa-user-shield"></i> Submit Enlistment Application</span>
-                <span class="btn-spinner" style="display: none;"><div class="spinner" style="width: 18px; height: 18px; border-width: 2px;"></div> Enlisting...</span>
-              </button>
-            </form>
+              <div class="workflow-step">
+                <div class="step-num-badge">4</div>
+                <div class="step-content">
+                  <h4>Receive SSD Digital ID & Unit Assignment</h4>
+                  <p>Central Command verifies your application, registers you in the national roll, and invites you to the next drill camp.</p>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 25px; padding-top: 22px; border-top: 1px solid var(--border-color); text-align: center; display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; align-items: center;">
+              <a href="membership.html" class="btn btn-primary" style="padding: 12px 28px; font-weight: 700; font-size: 15px;">
+                <i class="fa-solid fa-user-shield"></i> Open Full Online Enlistment Portal &rarr;
+              </a>
+              <a href="membership.html#track-status" class="btn btn-outline-navy btn-sm" style="padding: 11px 20px; font-weight: 600;">
+                <i class="fa-solid fa-magnifying-glass"></i> Track Application Status
+              </a>
+            </div>
           </div>
         </div>
       </div>

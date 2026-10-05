@@ -2861,9 +2861,10 @@ function handleDonationSubmit(e) {
 // HOMEPAGE QUICK ENLISTMENT HANDLER
 // ==========================================================================
 function handleQuickJoinSubmit(e) {
-  e.preventDefault();
+  if (e && e.preventDefault) e.preventDefault();
   const form = document.getElementById("quickJoinForm");
   const submitBtn = document.getElementById("quickJoinSubmitBtn");
+  if (!form || !submitBtn) return;
   const btnText = submitBtn.querySelector(".btn-text");
   const btnSpinner = submitBtn.querySelector(".btn-spinner");
 

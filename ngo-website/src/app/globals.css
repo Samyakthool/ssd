@@ -1,0 +1,6 @@
+@import "../../styles.css";
+
+/* Next.js Framework & Enterprise Layout Utility Overrides */
+html, body {
+  min-height: 100vh;
+}

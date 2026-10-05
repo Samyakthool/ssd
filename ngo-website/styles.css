@@ -2171,19 +2171,36 @@ textarea.form-control {
 }
 
 .join-grid-layout {
-  display: grid;
-  grid-template-columns: 1fr 1.1fr;
-  gap: 36px;
+  display: flex;
+  justify-content: center;
   margin-top: 35px;
-  align-items: center;
 }
 
 .join-workflow-box {
   background: var(--white);
-  padding: 30px;
+  padding: 36px 40px;
   border-radius: 8px;
   border: 1px solid var(--border-color);
   box-shadow: var(--card-shadow);
+  max-width: 880px;
+  width: 100%;
+}
+
+.workflow-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin: 25px 0;
+}
+
+@media (max-width: 768px) {
+  .workflow-steps-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .join-workflow-box {
+    padding: 24px 20px;
+  }
 }
 
 .workflow-step {
@@ -2962,7 +2979,7 @@ body.nav-open .header-wrapper {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 16px;
   }
-  .donation-grid, .join-grid-layout {
+  .donation-grid {
     grid-template-columns: 1fr 1fr !important;
     gap: 20px;
   }
@@ -2980,7 +2997,7 @@ body.nav-open .header-wrapper {
   .governing-card .governing-header {
     height: 220px;
   }
-  .donation-grid, .join-grid-layout {
+  .donation-grid {
     grid-template-columns: 1fr !important;
     gap: 20px;
   }
@@ -3222,7 +3239,7 @@ body.nav-open .header-wrapper {
   .news-grid { grid-template-columns: repeat(2, 1fr); }
   .gallery-grid-compact { grid-template-columns: repeat(2, 1fr); }
   .advisory-grid { grid-template-columns: repeat(2, 1fr); }
-  .donation-grid, .join-grid-layout { grid-template-columns: 1fr; max-width: 720px; margin: 0 auto; }
+  .donation-grid { grid-template-columns: 1fr; max-width: 720px; margin: 0 auto; }
   .footer-grid { grid-template-columns: repeat(2, 1fr); }
   .lightbox-btn-prev { left: 10px; }
   .lightbox-btn-next { right: 10px; }
@@ -3458,7 +3475,6 @@ body.nav-open .header-wrapper {
   .news-events-container, 
   .news-grid,
   .donation-grid,
-  .join-grid-layout,
   .campaigns-grid {
     grid-template-columns: 1fr !important;
     gap: 18px;
