@@ -40,6 +40,75 @@ export function generateQrToken(sainikId: string): string {
   return crypto.createHmac('sha256', secret).update(`${sainikId}_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`).digest('hex');
 }
 
+export function mapApplication(row: any): MembershipApplication {
+  if (!row) return row;
+  return {
+    ...row,
+    id: row.id,
+    applicationNo: row.application_no || row.applicationNo || row.id,
+    fullName: row.full_name || row.fullName,
+    dob: row.dob,
+    gender: row.gender,
+    mobile: row.mobile,
+    email: row.email,
+    address: row.address,
+    stateId: row.state_id || row.stateId,
+    stateName: row.state_name || row.stateName,
+    regionId: row.region_id || row.regionId,
+    regionName: row.region_name || row.regionName,
+    districtId: row.district_id || row.districtId,
+    districtName: row.district_name || row.districtName,
+    talukaId: row.taluka_id || row.talukaId,
+    talukaName: row.taluka_name || row.talukaName,
+    villageCity: row.village_city || row.villageCity,
+    education: row.education,
+    occupation: row.occupation,
+    bloodGroup: row.blood_group || row.bloodGroup,
+    wingId: row.wing_id || row.wingId,
+    wingName: row.wing_name || row.wingName,
+    photoUrl: row.photo_url || row.photoUrl,
+    documents: typeof row.documents === 'string' ? JSON.parse(row.documents || '[]') : (row.documents || []),
+    specialSkills: row.special_skills || row.specialSkills,
+    solemnPledgeAccepted: row.solemn_pledge_accepted ?? row.solemnPledgeAccepted ?? true,
+    status: row.status,
+    currentStepOrder: Number(row.current_step_order || row.currentStepOrder || 1),
+    assignedRole: row.assigned_role || row.assignedRole,
+    createdAt: row.created_at || row.createdAt,
+    updatedAt: row.updated_at || row.updatedAt,
+  };
+}
+
+export function mapMember(row: any): Member {
+  if (!row) return row;
+  return {
+    ...row,
+    id: row.id,
+    sainikId: row.sainik_id || row.sainikId,
+    applicationId: row.application_id || row.applicationId,
+    fullName: row.full_name || row.fullName,
+    email: row.email,
+    mobile: row.mobile,
+    dob: row.dob,
+    gender: row.gender,
+    bloodGroup: row.blood_group || row.bloodGroup,
+    photoUrl: row.photo_url || row.photoUrl,
+    stateName: row.state_name || row.stateName,
+    regionName: row.region_name || row.regionName,
+    districtName: row.district_name || row.districtName,
+    talukaName: row.taluka_name || row.talukaName,
+    chapterName: row.chapter_name || row.chapterName,
+    wingName: row.wing_name || row.wingName,
+    designation: row.designation,
+    batchNo: row.batch_no || row.batchNo,
+    status: row.status,
+    qrToken: row.qr_token || row.qrToken,
+    approvedBy: row.approved_by || row.approvedBy,
+    approvedAt: row.approved_at || row.approvedAt,
+    createdAt: row.created_at || row.createdAt,
+    updatedAt: row.updated_at || row.updatedAt,
+  };
+}
+
 // ==========================================================================
 // MEMBERSHIP APPLICATION REPOSITORY
 // ==========================================================================
@@ -93,7 +162,7 @@ export const applicationsRepo = {
     ];
 
     const res = await query<MembershipApplication>(sql, params);
-    return res.rows[0];
+    return mapApplication(res.rows[0]);
   },
 
   async findByApplicationNo(applicationNo: string): Promise<MembershipApplication | null> {
@@ -101,7 +170,7 @@ export const applicationsRepo = {
       'SELECT * FROM membership_applications WHERE application_no = $1 LIMIT 1',
       [applicationNo]
     );
-    return res.rows[0] || null;
+    return res.rows[0] ? mapApplication(res.rows[0]) : null;
   },
 
   async findById(id: string): Promise<MembershipApplication | null> {
@@ -109,7 +178,7 @@ export const applicationsRepo = {
       'SELECT * FROM membership_applications WHERE id = $1 LIMIT 1',
       [id]
     );
-    return res.rows[0] || null;
+    return res.rows[0] ? mapApplication(res.rows[0]) : null;
   },
 
   /**
@@ -182,7 +251,7 @@ export const applicationsRepo = {
           applicationId,
         ]
       );
-      const updatedApp: MembershipApplication = updateRes.rows[0];
+      const updatedApp = mapApplication(updateRes.rows[0]);
 
       // 4. Insert immutable approval history entry
       await client.query(
@@ -206,7 +275,9 @@ export const applicationsRepo = {
       // 5. If Final Approval, commission Member inside the same transaction
       let createdMember: Member | undefined;
       if (action === 'FINAL_APPROVE') {
-        const sainikId = generateSainikId(updatedApp.stateId, updatedApp.districtId, Math.floor(1000 + Math.random() * 9000));
+        const stateCode = (updatedApp.stateId || 'MH').replace('state_', '').toUpperCase().substring(0, 2);
+        const districtCode = (updatedApp.districtId || 'NGP').replace(/dist_[a-z]+_/i, '').toUpperCase().substring(0, 3);
+        const sainikId = generateSainikId(stateCode, districtCode, Math.floor(1000 + Math.random() * 9000));
         const qrToken = generateQrToken(sainikId);
 
         const memberRes = await client.query(
@@ -237,7 +308,7 @@ export const applicationsRepo = {
             official.id,
           ]
         );
-        createdMember = memberRes.rows[0];
+        createdMember = mapMember(memberRes.rows[0]);
       }
 
       // 6. Record immutable audit event
@@ -260,7 +331,7 @@ export const applicationsRepo = {
         ]
       );
 
-      return { application: updatedApp, member: createdMember };
+      return { application: mapApplication(updatedApp), member: createdMember ? mapMember(createdMember) : undefined };
     });
   },
 };

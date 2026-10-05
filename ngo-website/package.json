@@ -15,7 +15,8 @@
     "test:security": "tsx src/tests/security.test.ts",
     "test:db": "tsx src/tests/database.test.ts",
     "test:auth": "tsx src/tests/auth.test.ts",
-    "test:all": "node backend/tests/run-tests.js && tsx src/tests/security.test.ts && tsx src/tests/database.test.ts && tsx src/tests/auth.test.ts"
+    "test:pipeline": "tsx src/tests/pipeline.test.ts",
+    "test:all": "node backend/tests/run-tests.js && tsx src/tests/security.test.ts && tsx src/tests/database.test.ts && tsx src/tests/auth.test.ts && tsx src/tests/pipeline.test.ts"
   },
   "dependencies": {
     "@supabase/server": "^1.8.0",

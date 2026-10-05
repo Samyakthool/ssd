@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.github
+.agents
+.gemini
+*.log
+.env
+.env.local
+.env.production
+ngo-website

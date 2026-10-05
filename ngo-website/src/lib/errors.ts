@@ -34,10 +34,11 @@ export interface ErrorResponseBody {
 export function formatErrorResponse(
   error: unknown,
   requestId: string = generateRequestId()
-): { statusCode: number; body: ErrorResponseBody } {
+): { statusCode: number; status: number; body: ErrorResponseBody } {
   if (error instanceof AppError) {
     return {
       statusCode: error.statusCode,
+      status: error.statusCode,
       body: {
         success: false,
         error: {
@@ -55,6 +56,7 @@ export function formatErrorResponse(
 
   return {
     statusCode: 500,
+    status: 500,
     body: {
       success: false,
       error: {
