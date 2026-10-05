@@ -13,7 +13,8 @@
     "migrate:supabase": "node backend/db/supabase-migrate.js",
     "test:api": "node backend/tests/run-tests.js",
     "test:security": "tsx src/tests/security.test.ts",
-    "test:all": "node backend/tests/run-tests.js && tsx src/tests/security.test.ts"
+    "test:db": "tsx src/tests/database.test.ts",
+    "test:all": "node backend/tests/run-tests.js && tsx src/tests/security.test.ts && tsx src/tests/database.test.ts"
   },
   "dependencies": {
     "@supabase/server": "^1.8.0",
@@ -42,6 +43,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@types/pg": "^8.23.1",
     "tsx": "^4.23.15",
     "typescript": "7.0.2"
   }
