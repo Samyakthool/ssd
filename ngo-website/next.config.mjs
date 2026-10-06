@@ -43,6 +43,26 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: '/verify/:sainikId*',
+        destination: '/verify.html',
+      },
+      {
+        source: '/verify',
+        destination: '/verify.html',
+      },
+      {
+        source: '/portal',
+        destination: '/member-portal.html',
+      },
+      {
+        source: '/admin',
+        destination: '/admin.html',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

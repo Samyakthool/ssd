@@ -770,10 +770,12 @@ function renderIdCardCanvas(card, back = false) {
     // Draw Scannable QR Matrix
     const qrSize = 96;
     const qrX = w / 2 - qrSize / 2;
-    const qrY = 100;
-    const host = window.location.host || 'localhost:3000';
-    const proto = window.location.protocol || 'http:';
-    const qrPayload = card.verifyUrl || `${proto}//${host}/verify/${card.sainikId}`;
+    const host = window.location.host && !window.location.host.includes('localhost') ? window.location.host : (window.location.host || 'ssdind.vercel.app');
+    const proto = window.location.protocol && window.location.protocol.startsWith('http') ? window.location.protocol : 'https:';
+    let qrPayload = card.verifyUrl || `${proto}//${host}/verify/${card.sainikId}`;
+    if (qrPayload.includes('localhost') && !window.location.host.includes('localhost')) {
+      qrPayload = `https://ssdind.vercel.app/verify/${card.sainikId}`;
+    }
     
     // 1. Synchronously render authentic ISO standard QR matrix
     drawAuthenticQR(ctx, qrX, qrY, qrSize, qrPayload, '#001f3f');

@@ -372,8 +372,8 @@ router.get('/card/:sainikId', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Active Sainik ID not found or not yet approved.' });
     }
 
-    const host = req.get('host') || 'localhost:3000';
-    const protocol = req.protocol || 'http';
+    const host = req.get('x-forwarded-host') || req.get('host') || 'ssdind.vercel.app';
+    const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
     const sainikCode = member.sainik_id || member.id;
     const verifyUrl = `${protocol}://${host}/verify/${sainikCode}`;
     const s = (member.status || '').toUpperCase();

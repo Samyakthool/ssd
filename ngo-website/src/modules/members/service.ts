@@ -137,7 +137,7 @@ export class MemberService {
           photo_url: app.photo_url || 'logo.png',
           batch_no: 'BATCH-2026/Q1',
           qr_token: `token_${clean}`,
-          verified_url: `http://localhost:3000/verify/${app.application_no}`,
+          verified_url: `https://ssdind.vercel.app/verify/${app.application_no}`,
         };
       }
       throw new AppError(`Member card '${sainikId}' not found`, 'MEMBER_NOT_FOUND', 404);
@@ -160,7 +160,7 @@ export class MemberService {
       photo_url: m.photo_url || 'logo.png',
       batch_no: m.batch_no || 'BATCH-2026/Q1',
       qr_token: m.qr_token,
-      verified_url: `http://localhost:3000/verify/${m.sainik_id}`,
+      verified_url: `https://ssdind.vercel.app/verify/${m.sainik_id}`,
     };
   }
 

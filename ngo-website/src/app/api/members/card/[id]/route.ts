@@ -9,7 +9,7 @@ export async function GET(
   try {
     const params = await Promise.resolve(context.params);
     const cardData = await MemberService.getMemberCardData(params.id);
-    return NextResponse.json({ success: true, card: cardData });
+    return NextResponse.json({ success: true, card: cardData, cardData });
   } catch (error) {
     const { status, body } = formatErrorResponse(error);
     return NextResponse.json(body, { status });

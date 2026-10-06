@@ -11,9 +11,9 @@
   async function initSupabaseClient() {
     if (supabaseInstance) return supabaseInstance;
 
-    // 1. Fetch public Supabase configuration from server if not set on window
-    const supabaseUrl = window.SUPABASE_URL || (window.ENV && window.ENV.SUPABASE_URL);
-    const supabaseAnonKey = window.SUPABASE_ANON_KEY || (window.ENV && window.ENV.SUPABASE_ANON_KEY);
+    // 1. Fetch public Supabase configuration from server or default official credentials
+    const supabaseUrl = window.SUPABASE_URL || (window.ENV && window.ENV.SUPABASE_URL) || 'https://agkcwwujangfrpbpwehw.supabase.co';
+    const supabaseAnonKey = window.SUPABASE_ANON_KEY || (window.ENV && window.ENV.SUPABASE_ANON_KEY) || 'sb_publishable_OOuRM6ihRwmw3ERK-Oh4hw_bdNzgQIL';
 
     if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
       return null;

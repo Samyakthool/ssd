@@ -9,7 +9,11 @@
       "destination": "/api"
     },
     {
-      "source": "/verify/:sainikId",
+      "source": "/verify",
+      "destination": "/verify.html"
+    },
+    {
+      "source": "/verify/:sainikId*",
       "destination": "/verify.html"
     },
     {

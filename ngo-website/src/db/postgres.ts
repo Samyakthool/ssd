@@ -29,26 +29,39 @@ export interface QueryResult<T> {
   rowCount: number;
 }
 
+function matchSingleCondition(row: Record<string, any>, cond: string, params: unknown[]): boolean {
+  const cleanCond = cond.trim().replace(/^\(|\)$/g, '');
+  const eqMatch = cleanCond.match(/([a-zA-Z0-9_]+)\s*=\s*(\$[0-9]+|'[^']*'|[0-9]+)/i);
+  if (eqMatch) {
+    const field = eqMatch[1].toLowerCase();
+    let targetVal: any = eqMatch[2];
+    if (targetVal.startsWith('$')) {
+      const paramIdx = parseInt(targetVal.substring(1), 10) - 1;
+      targetVal = params[paramIdx];
+    } else {
+      targetVal = targetVal.replace(/'/g, '');
+    }
+    const rowVal = row[field];
+    return String(rowVal ?? '').toLowerCase() === String(targetVal ?? '').toLowerCase();
+  }
+  return true;
+}
+
 function evaluateWhere(row: Record<string, any>, whereClause: string, params: unknown[]): boolean {
   if (!whereClause) return true;
-  const conditions = whereClause.split(/\s+and\s+/i);
-  for (const cond of conditions) {
-    const cleanCond = cond.trim().replace(/^\(|\)$/g, '');
-    const eqMatch = cleanCond.match(/([a-zA-Z0-9_]+)\s*=\s*(\$[0-9]+|'[^']*'|[0-9]+)/i);
-    if (eqMatch) {
-      const field = eqMatch[1].toLowerCase();
-      let targetVal: any = eqMatch[2];
-      if (targetVal.startsWith('$')) {
-        const paramIdx = parseInt(targetVal.substring(1), 10) - 1;
-        targetVal = params[paramIdx];
-      } else {
-        targetVal = targetVal.replace(/'/g, '');
-      }
-      const rowVal = row[field];
-      if (String(rowVal ?? '').toLowerCase() !== String(targetVal ?? '').toLowerCase()) {
+  if (/\s+or\s+/i.test(whereClause) && !/\s+and\s+/i.test(whereClause)) {
+    const orConditions = whereClause.split(/\s+or\s+/i);
+    return orConditions.some(cond => matchSingleCondition(row, cond, params));
+  }
+  const andConditions = whereClause.split(/\s+and\s+/i);
+  for (const cond of andConditions) {
+    if (/\s+or\s+/i.test(cond)) {
+      const orParts = cond.split(/\s+or\s+/i);
+      if (!orParts.some(part => matchSingleCondition(row, part, params))) {
         return false;
       }
-      continue;
+    } else if (!matchSingleCondition(row, cond, params)) {
+      return false;
     }
   }
   return true;
