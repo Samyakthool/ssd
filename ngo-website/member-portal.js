@@ -804,15 +804,14 @@ function renderIdCardCanvas(card, back = false) {
     const qrY = 100;
     const host = window.location.host && !window.location.host.includes('localhost') ? window.location.host : (window.location.host || 'ssdind.vercel.app');
     const proto = window.location.protocol && window.location.protocol.startsWith('http') ? window.location.protocol : 'https:';
-    let qrPayload = card.verifyUrl || `${proto}//${host}/verify?id=${encodeURIComponent(card.sainikId)}`;
-    if (qrPayload.includes('/verify/') && !qrPayload.includes('/verify?id=')) {
-      const parts = qrPayload.split('/verify/');
-      const sid = parts[1]?.split('?')[0]?.split('/')[0] || card.sainikId;
-      qrPayload = `${parts[0]}/verify?id=${encodeURIComponent(sid)}`;
-    }
-    if (qrPayload.includes('localhost') && !window.location.host.includes('localhost')) {
-      qrPayload = `https://ssdind.vercel.app/verify?id=${encodeURIComponent(card.sainikId)}`;
-    }
+    let cleanSid = String(card.sainikId || '').trim();
+    if (cleanSid.includes('/verify/')) cleanSid = cleanSid.split('/verify/').pop().split('/')[0].split('?')[0];
+    if (cleanSid.includes('?id=')) cleanSid = cleanSid.split('?id=').pop().split('&')[0];
+    const ssdM = cleanSid.match(/\b(SSD-[A-Za-z0-9_-]{4,30})\b/i);
+    if (ssdM && ssdM[1]) cleanSid = ssdM[1].toUpperCase();
+    cleanSid = cleanSid.replace(/[?#].*$/, '').replace(/\/+$/, '').trim() || (card.sainikId || 'SSD-CADET-2026');
+
+    let qrPayload = `https://ssdind.vercel.app/verify?id=${encodeURIComponent(cleanSid)}`;
     
     // 1. Synchronously render authentic ISO standard QR matrix
     drawAuthenticQR(ctx, qrX, qrY, qrSize, qrPayload, '#001f3f');

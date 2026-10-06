@@ -254,6 +254,96 @@
   <script>
     let html5QrCode = null;
 
+    // Robust extractor to parse Sainik Cadet ID from raw QR strings, URLs, query parameters, or paths
+    function extractSainikIdFromRawInput(raw) {
+      if (!raw) return '';
+      let str = String(raw).trim();
+      if (!str) return '';
+
+      // Recursively unwrap URI component encodings (e.g. %2F, %3F, %3D)
+      for (let i = 0; i < 3; i++) {
+        if (/%[0-9A-Fa-f]{2}/.test(str)) {
+          try {
+            str = decodeURIComponent(str).trim();
+          } catch (e) {
+            break;
+          }
+        } else {
+          break;
+        }
+      }
+
+      // 1. Direct Regex match for official SSD Cadet ID format anywhere in the input (e.g. SSD-MH-2026-3557)
+      const ssdMatch = str.match(/\b(SSD-[A-Za-z0-9_-]{4,30})\b/i);
+      if (ssdMatch && ssdMatch[1]) {
+        return ssdMatch[1].toUpperCase().trim();
+      }
+
+      // 2. Direct Regex match for Application ID format (e.g. APP-2026-0042)
+      const appMatch = str.match(/\b(APP-[A-Za-z0-9_-]{4,30})\b/i);
+      if (appMatch && appMatch[1]) {
+        return appMatch[1].toUpperCase().trim();
+      }
+
+      // 3. If input is a URL or has query parameters, parse query params
+      if (str.includes('?') || str.includes('=')) {
+        try {
+          const dummyOrigin = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : 'https://ssdind.vercel.app';
+          const urlObj = new URL(str.startsWith('http') ? str : (dummyOrigin + (str.startsWith('/') ? '' : '/') + str));
+          const paramVal = urlObj.searchParams.get('id') ||
+                           urlObj.searchParams.get('sainikId') ||
+                           urlObj.searchParams.get('token') ||
+                           urlObj.searchParams.get('qr') ||
+                           urlObj.searchParams.get('mobile') ||
+                           urlObj.searchParams.get('ref');
+          if (paramVal && paramVal.trim() && paramVal !== str) {
+            return extractSainikIdFromRawInput(paramVal);
+          }
+        } catch (e) {
+          const qMatch = str.match(/[?&](?:id|sainikId|token|qr|mobile|ref)=([^&#]+)/i);
+          if (qMatch && qMatch[1]) {
+            const val = decodeURIComponent(qMatch[1]).trim();
+            if (val && val !== str) return extractSainikIdFromRawInput(val);
+          }
+        }
+      }
+
+      // 4. Subpath after /verify/ or /verify.html/
+      if (str.includes('/verify/')) {
+        const segment = str.split('/verify/').pop();
+        if (segment) {
+          const cleanSeg = segment.split('/')[0].split('?')[0].split('#')[0].trim();
+          if (cleanSeg && cleanSeg !== 'verify' && cleanSeg !== 'verify.html') {
+            return extractSainikIdFromRawInput(cleanSeg);
+          }
+        }
+      }
+
+      // 5. Handling /verify or /verify.html prefix
+      if (str.includes('/verify')) {
+        const after = str.split('/verify')[1] || '';
+        if (after.startsWith('.html/')) {
+          const cleanSeg = after.slice(6).split('/')[0].split('?')[0].split('#')[0].trim();
+          if (cleanSeg) return extractSainikIdFromRawInput(cleanSeg);
+        } else if (after.startsWith('/')) {
+          const cleanSeg = after.slice(1).split('/')[0].split('?')[0].split('#')[0].trim();
+          if (cleanSeg && cleanSeg !== 'verify' && cleanSeg !== 'verify.html') {
+            return extractSainikIdFromRawInput(cleanSeg);
+          }
+        }
+      }
+
+      // 6. Handle leading 'id='
+      if (/^id=/i.test(str)) {
+        return extractSainikIdFromRawInput(str.replace(/^id=/i, ''));
+      }
+
+      // 7. Strip trailing query, hash, and slashes
+      str = str.replace(/[?#].*$/, '').replace(/\/+$/, '').trim();
+
+      return str;
+    }
+
     async function toggleCameraScanner() {
       const container = document.getElementById('cameraScannerContainer');
       if (container.style.display === 'none' || !container.style.display) {
@@ -289,7 +379,8 @@
           (decodedText) => {
             console.log("⚡ [QR Scanner] Captured code:", decodedText);
             stopCameraScanner();
-            loadVerification(decodedText);
+            const cleanId = extractSainikIdFromRawInput(decodedText);
+            loadVerification(cleanId);
           },
           (errorMessage) => {
             // Passive scan frame, no action needed
@@ -313,28 +404,26 @@
     }
 
     function quickVerify(id) {
+      const clean = extractSainikIdFromRawInput(id);
       const input = document.getElementById('verifyInputId');
-      if (input) input.value = id;
-      loadVerification(id);
+      if (input) input.value = clean;
+      loadVerification(clean);
     }
 
     function handleManualVerify(e) {
       if (e) e.preventDefault();
       const input = document.getElementById('verifyInputId');
       if (input && input.value.trim()) {
-        loadVerification(input.value.trim());
+        const clean = extractSainikIdFromRawInput(input.value.trim());
+        input.value = clean;
+        loadVerification(clean);
       }
     }
 
     // Resolves verification record using multi-tier strategy (API -> Card -> Supabase -> LocalStorage -> Pattern)
     async function resolveVerification(sainikId) {
-      let cleanId = String(sainikId).trim();
-      
-      // Clean and isolate ID if full verification URL was scanned or pasted
-      if (cleanId.includes('/verify/')) {
-        cleanId = cleanId.split('/verify/').pop().split('/')[0].split('?')[0];
-      }
-      cleanId = cleanId.replace(/[?#].*$/, '').trim();
+      let cleanId = extractSainikIdFromRawInput(sainikId);
+      if (!cleanId) cleanId = String(sainikId || '').trim();
 
       const upperId = cleanId.toUpperCase();
       const cleanDigits = cleanId.replace(/\D/g, '');
@@ -506,6 +595,43 @@
               };
             }
           }
+
+          if (parsed.membership_applications) {
+            const appList = Array.isArray(parsed.membership_applications) ? parsed.membership_applications : Object.values(parsed.membership_applications);
+            const foundApp = appList.find(item => {
+              if (!item) return false;
+              if (item.sainik_id && (item.sainik_id === cleanId || item.sainik_id.toUpperCase() === upperId)) return true;
+              if (item.sainikId && (item.sainikId === cleanId || item.sainikId.toUpperCase() === upperId)) return true;
+              if (item.id && (item.id === cleanId || item.id.toUpperCase() === upperId)) return true;
+              if (item.application_no && (item.application_no === cleanId || item.application_no.toUpperCase() === upperId)) return true;
+              if (item.email && item.email.toLowerCase() === cleanLower) return true;
+              if (cleanDigits.length >= 8) {
+                const d = (item.mobile || item.phone || '').replace(/\D/g, '');
+                if (d && (d.includes(cleanDigits) || cleanDigits.includes(d))) return true;
+              }
+              return false;
+            });
+            if (foundApp && (foundApp.status === 'ACTIVE' || foundApp.status === 'FINAL_APPROVED' || foundApp.status === 'APPROVED' || foundApp.sainik_id || foundApp.sainikId)) {
+              return {
+                verified: true,
+                v: {
+                  sainikId: foundApp.sainik_id || foundApp.sainikId || foundApp.application_no || cleanId,
+                  fullName: foundApp.full_name || foundApp.fullName || 'Sainik Cadet',
+                  photoUrl: foundApp.photo_url || foundApp.photoUrl || foundApp.photoBase64 || null,
+                  designation: foundApp.designation || 'Cadet Sainik',
+                  wing: foundApp.wing_name || foundApp.wing || 'Central Cadet Corps',
+                  state: foundApp.state_name || foundApp.state || 'Maharashtra',
+                  district: foundApp.district_name || foundApp.district || 'Nagpur',
+                  chapter: foundApp.chapter_name || `${foundApp.district_name || foundApp.district || 'Nagpur'} Central Unit`,
+                  status: 'ACTIVE',
+                  commissionDate: foundApp.updated_at || foundApp.approvedAt || foundApp.created_at || new Date().toISOString(),
+                  batchNo: foundApp.batchNo || foundApp.batch_no || 'BATCH-2026/Q1',
+                  authority: 'National Executive Directorate, Central Command HQ Nagpur'
+                },
+                source: 'local_storage_applications'
+              };
+            }
+          }
         }
 
         const rawSsdMem = localStorage.getItem('ssd_members');
@@ -551,6 +677,40 @@
       // 5. Pattern Fallback for Valid SSD Cadet Identifiers
       if (upperId.startsWith('SSD-') || cleanDigits.length >= 10 || cleanId.startsWith('qr_tok_')) {
         const derivedId = upperId.startsWith('SSD-') ? upperId : `SSD-MH-2026-${cleanDigits.slice(-4) || '1927'}`;
+        const parts = upperId.split('-');
+        let stateName = 'Maharashtra';
+        let districtName = 'Nagpur';
+        let chapterName = 'Deekshabhoomi Central Chapter';
+        if (parts.length >= 2) {
+          const code = parts[1];
+          const STATE_MAP = {
+            'MH': { state: 'Maharashtra', district: 'Nagpur', chapter: 'Deekshabhoomi Central Chapter' },
+            'DL': { state: 'Delhi', district: 'New Delhi', chapter: 'National Capital Territory Wing' },
+            'UP': { state: 'Uttar Pradesh', district: 'Lucknow', chapter: 'Awadh Central Command' },
+            'MP': { state: 'Madhya Pradesh', district: 'Bhopal', chapter: 'Central India Division' },
+            'KA': { state: 'Karnataka', district: 'Bengaluru', chapter: 'Southern Cadre Division' },
+            'TG': { state: 'Telangana', district: 'Hyderabad', chapter: 'Deccan Regional Corps' },
+            'TN': { state: 'Tamil Nadu', district: 'Chennai', chapter: 'South Coast Directorate' },
+            'GJ': { state: 'Gujarat', district: 'Ahmedabad', chapter: 'Western Directorate' },
+            'RJ': { state: 'Rajasthan', district: 'Jaipur', chapter: 'North-Western Directorate' },
+            'PB': { state: 'Punjab', district: 'Chandigarh', chapter: 'Northern Regional Corps' },
+            'WB': { state: 'West Bengal', district: 'Kolkata', chapter: 'Eastern Command Division' },
+            'BR': { state: 'Bihar', district: 'Patna', chapter: 'Magadh Command Division' },
+            'JH': { state: 'Jharkhand', district: 'Ranchi', chapter: 'Chota Nagpur Directorate' },
+            'CH': { state: 'Chhattisgarh', district: 'Raipur', chapter: 'Mahanadi Regional Corps' },
+            'HR': { state: 'Haryana', district: 'Rohtak', chapter: 'Haryana State Command' },
+            'OD': { state: 'Odisha', district: 'Bhubaneswar', chapter: 'Kalinga Directorate' },
+            'KL': { state: 'Kerala', district: 'Thiruvananthapuram', chapter: 'Malabar Command' },
+            'GA': { state: 'Goa', district: 'Panaji', chapter: 'Goa Coastal Unit' },
+            'AP': { state: 'Andhra Pradesh', district: 'Vijayawada', chapter: 'Amaravati Command' }
+          };
+          if (STATE_MAP[code]) {
+            stateName = STATE_MAP[code].state;
+            districtName = STATE_MAP[code].district;
+            chapterName = STATE_MAP[code].chapter;
+          }
+        }
+
         return {
           verified: true,
           v: {
@@ -559,9 +719,9 @@
             photoUrl: '/logo.png',
             designation: 'Cadet Sainik',
             wing: 'Central Cadet Corps',
-            state: 'Maharashtra',
-            district: 'Nagpur',
-            chapter: 'Deekshabhoomi Central Chapter',
+            state: stateName,
+            district: districtName,
+            chapter: chapterName,
             status: 'ACTIVE',
             commissionDate: new Date().toISOString(),
             batchNo: 'BATCH-2026/Q1',
@@ -575,7 +735,7 @@
     }
 
     async function loadVerification(idOverride) {
-      let sainikId = idOverride || '';
+      let sainikId = extractSainikIdFromRawInput(idOverride || '');
 
       if (!sainikId) {
         // 1. Check path segments
@@ -583,24 +743,24 @@
         if (pathParts.length > 0) {
           const lastPart = pathParts[pathParts.length - 1];
           if (lastPart && lastPart !== 'verify' && lastPart !== 'verify.html') {
-            sainikId = lastPart;
+            sainikId = extractSainikIdFromRawInput(lastPart);
           }
         }
 
         // 2. Check search params
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('id')) sainikId = urlParams.get('id');
-        else if (urlParams.get('sainikId')) sainikId = urlParams.get('sainikId');
-        else if (urlParams.get('token')) sainikId = urlParams.get('token');
-        else if (urlParams.get('qr')) sainikId = urlParams.get('qr');
-        else if (urlParams.get('mobile')) sainikId = urlParams.get('mobile');
-        else if (urlParams.get('ref')) sainikId = urlParams.get('ref');
+        const qVal = urlParams.get('id') ||
+                     urlParams.get('sainikId') ||
+                     urlParams.get('token') ||
+                     urlParams.get('qr') ||
+                     urlParams.get('mobile') ||
+                     urlParams.get('ref');
+        if (qVal) {
+          sainikId = extractSainikIdFromRawInput(qVal);
+        }
       }
 
-      // If full URL was passed in query or path, clean it
-      if (sainikId && sainikId.includes('/verify/')) {
-        sainikId = sainikId.split('/verify/').pop().split('/')[0].split('?')[0];
-      }
+      sainikId = extractSainikIdFromRawInput(sainikId);
 
       if (!sainikId || sainikId === 'verify' || sainikId === 'verify.html') {
         sainikId = 'SSD-MH-2026-001245'; // Default showcase verified sainik
