@@ -5123,39 +5123,13 @@ function handleAdminRoleChange(role) {
   }
 }
 
-async function renderAdminsTable() {
-  const tbody = document.getElementById("adminsTableBody");
+function updateBadgeCount(badgeId, count) {
+  setText(badgeId, count);
+}
+window.updateBadgeCount = updateBadgeCount;
+
+function populateAdminsTableHtml(tbody, officersList) {
   if (!tbody) return;
-
-  tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 25px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading authorized officers...</td></tr>';
-
-  let officersList = [];
-  const token = localStorage.getItem("ssd_auth_token") || localStorage.getItem("ssd_token");
-
-  if (token) {
-    try {
-      const res = await fetch("/api/auth/officers", {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.success && Array.isArray(data.officers) && data.officers.length > 0) {
-          officersList = data.officers;
-        }
-      }
-    } catch (err) {
-      console.warn("Backend /api/auth/officers unreachable, using fallback:", err);
-    }
-  }
-
-  if (!officersList || officersList.length === 0) {
-    const adminsObj = (adminData && adminData.admin_users) ? adminData.admin_users : (ssdInitialSeed.admin_users || {});
-    officersList = Object.entries(adminsObj).map(([key, val]) => ({ id: key, ...val }));
-  }
-
-  window._currentOfficersList = officersList;
-  updateBadgeCount("badgeAdminsCount", officersList.length);
-
   if (!officersList || officersList.length === 0) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: var(--text-muted);">No authorized officers found.</td></tr>';
     return;
@@ -5250,7 +5224,7 @@ async function renderAdminsTable() {
       `;
     }).join('');
   } catch (renderErr) {
-    console.error("renderAdminsTable render error:", renderErr);
+    console.error("populateAdminsTableHtml render error:", renderErr);
     tbody.innerHTML = officersList.map(u => `
       <tr>
         <td><code>${escapeHtml(String(u.officerId || u.id || 'OFFICER'))}</code></td>
@@ -5265,6 +5239,60 @@ async function renderAdminsTable() {
         </td>
       </tr>
     `).join('');
+  }
+}
+
+async function renderAdminsTable() {
+  const tbody = document.getElementById("adminsTableBody");
+  if (!tbody) return;
+
+  // 1. Initial immediate render from memory / local store (zero loading delay)
+  let officersList = [];
+  const adminsObj = (adminData && adminData.admin_users) ? adminData.admin_users : (ssdInitialSeed.admin_users || {});
+  if (Array.isArray(adminsObj)) {
+    officersList = adminsObj;
+  } else if (typeof adminsObj === 'object' && adminsObj !== null) {
+    officersList = Object.entries(adminsObj).map(([key, val]) => ({ id: val.id || key, ...val }));
+  }
+
+  window._currentOfficersList = officersList;
+  setText("badgeAdminsCount", officersList.length);
+
+  if (officersList && officersList.length > 0) {
+    populateAdminsTableHtml(tbody, officersList);
+  } else {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 25px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading authorized officers...</td></tr>';
+  }
+
+  // 2. Fetch fresh list from server in background with 3-second abort timeout
+  const token = localStorage.getItem("ssd_auth_token") || localStorage.getItem("ssd_token");
+  if (token) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const res = await fetch("/api/auth/officers", {
+        headers: { "Authorization": `Bearer ${token}` },
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.officers) && data.officers.length > 0) {
+          officersList = data.officers;
+          window._currentOfficersList = officersList;
+          setText("badgeAdminsCount", officersList.length);
+          populateAdminsTableHtml(tbody, officersList);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn("Backend /api/auth/officers unreachable, using fallback:", err);
+    }
+  }
+
+  // Ensure table is populated if it was showing placeholder
+  if (!tbody.innerHTML || tbody.innerHTML.includes('Loading authorized officers...')) {
+    populateAdminsTableHtml(tbody, officersList);
   }
 }
 
