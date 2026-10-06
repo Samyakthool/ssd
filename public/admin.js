@@ -3719,9 +3719,9 @@ function renderAdminIdCardCanvas(card, back = false) {
     const qrX = w / 2 - qrSize / 2;
     const host = window.location.host && !window.location.host.includes('localhost') ? window.location.host : (window.location.host || 'ssdind.vercel.app');
     const proto = window.location.protocol && window.location.protocol.startsWith('http') ? window.location.protocol : 'https:';
-    let qrPayload = card.verifyUrl || `${proto}//${host}/verify/${card.sainikId}`;
+    let qrPayload = card.verifyUrl || `${proto}//${host}/verify?id=${encodeURIComponent(card.sainikId)}`;
     if (qrPayload.includes('localhost') && !window.location.host.includes('localhost')) {
-      qrPayload = `https://ssdind.vercel.app/verify/${card.sainikId}`;
+      qrPayload = `https://ssdind.vercel.app/verify?id=${encodeURIComponent(card.sainikId)}`;
     }
     
     // 1. Synchronously render authentic ISO standard QR matrix

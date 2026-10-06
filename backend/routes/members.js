@@ -375,7 +375,7 @@ router.get('/card/:sainikId', async (req, res) => {
     const host = req.get('x-forwarded-host') || req.get('host') || 'ssdind.vercel.app';
     const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
     const sainikCode = member.sainik_id || member.id;
-    const verifyUrl = `${protocol}://${host}/verify/${sainikCode}`;
+    const verifyUrl = `${protocol}://${host}/verify?id=${encodeURIComponent(sainikCode)}`;
     const s = (member.status || '').toUpperCase();
     const isApproved = (s === 'FINAL_APPROVED' || s === 'APPROVED' || s === 'ACTIVE');
 
