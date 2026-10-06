@@ -2,6 +2,7 @@ import { query } from '@/db/postgres';
 import { AppError } from '@/lib/errors';
 import { Member, MembershipApplication } from '@/types';
 import jwt from 'jsonwebtoken';
+import QRCode from 'qrcode';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'ssd_prod_secret_key_change_in_production_1927_2027';
 
@@ -123,6 +124,16 @@ export class MemberService {
       );
       if (appRes.rows.length > 0 && appRes.rows[0].status === 'FINAL_APPROVED') {
         const app = appRes.rows[0];
+        const verified_url = `https://ssdind.vercel.app/verify?id=${encodeURIComponent(app.application_no)}`;
+        let qrCodeDataUrl = null;
+        try {
+          qrCodeDataUrl = await QRCode.toDataURL(verified_url, {
+            width: 250,
+            margin: 2,
+            color: { dark: '#001f3f', light: '#ffffff' },
+            errorCorrectionLevel: 'M',
+          });
+        } catch (e) {}
         return {
           sainik_id: app.application_no,
           full_name: app.full_name,
@@ -137,13 +148,25 @@ export class MemberService {
           photo_url: app.photo_url || 'logo.png',
           batch_no: 'BATCH-2026/Q1',
           qr_token: `token_${clean}`,
-          verified_url: `https://ssdind.vercel.app/verify?id=${encodeURIComponent(app.application_no)}`,
+          verified_url,
+          verifyUrl: verified_url,
+          qrCodeDataUrl,
         };
       }
       throw new AppError(`Member card '${sainikId}' not found`, 'MEMBER_NOT_FOUND', 404);
     }
 
     const m = res.rows[0];
+    const verified_url = `https://ssdind.vercel.app/verify?id=${encodeURIComponent(m.sainik_id)}`;
+    let qrCodeDataUrl = null;
+    try {
+      qrCodeDataUrl = await QRCode.toDataURL(verified_url, {
+        width: 250,
+        margin: 2,
+        color: { dark: '#001f3f', light: '#ffffff' },
+        errorCorrectionLevel: 'M',
+      });
+    } catch (e) {}
     return {
       sainik_id: m.sainik_id,
       full_name: m.full_name,
@@ -160,7 +183,9 @@ export class MemberService {
       photo_url: m.photo_url || 'logo.png',
       batch_no: m.batch_no || 'BATCH-2026/Q1',
       qr_token: m.qr_token,
-      verified_url: `https://ssdind.vercel.app/verify?id=${encodeURIComponent(m.sainik_id)}`,
+      verified_url,
+      verifyUrl: verified_url,
+      qrCodeDataUrl,
     };
   }
 

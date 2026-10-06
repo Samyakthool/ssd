@@ -582,12 +582,14 @@ function drawCardBackground(ctx, w, h, isBack) {
     bgGrad.addColorStop(1, '#001f3f');
   }
   ctx.fillStyle = bgGrad;
+  ctx.beginPath();
   ctx.roundRect(0, 0, w, h, 16);
   ctx.fill();
 
   // Outer Gold Trim
   ctx.strokeStyle = '#c5a059';
   ctx.lineWidth = 3.5;
+  ctx.beginPath();
   ctx.roundRect(4, 4, w - 8, h - 8, 14);
   ctx.stroke();
 
@@ -603,54 +605,80 @@ function drawCardBackground(ctx, w, h, isBack) {
 }
 
 function drawAuthenticQR(ctx, x, y, size, text, darkColor = '#001f3f') {
+  ctx.save();
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(x, y, size, size);
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(x, y, size, size, 6);
+    ctx.fill();
+  } else {
+    ctx.fillRect(x, y, size, size);
+  }
+
+  let drawn = false;
 
   if (typeof QRCode !== 'undefined' && QRCode.create) {
     try {
       const qr = QRCode.create(text, { errorCorrectionLevel: 'M' });
       const modCount = qr.modules.size;
-      const cellSize = size / modCount;
+      const margin = 2; // ISO quiet zone padding inside white card backing
+      const totalModules = modCount + margin * 2;
+      const cellSize = size / totalModules;
 
       ctx.fillStyle = darkColor;
       for (let r = 0; r < modCount; r++) {
         for (let c = 0; c < modCount; c++) {
           if (qr.modules.get(r, c)) {
             ctx.fillRect(
-              Math.floor(x + c * cellSize),
-              Math.floor(y + r * cellSize),
+              Math.floor(x + (c + margin) * cellSize),
+              Math.floor(y + (r + margin) * cellSize),
               Math.ceil(cellSize),
               Math.ceil(cellSize)
             );
           }
         }
       }
-      return true;
+      drawn = true;
     } catch (e) {
       console.warn('QRCode.create drawing error:', e);
     }
   }
 
-  // Backup corner squares if library is still initializing
-  ctx.strokeStyle = darkColor;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(x, y, size, size);
+  if (!drawn) {
+    // High-contrast ISO standard corner finder patterns backup
+    ctx.strokeStyle = darkColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.strokeRect(x + 2, y + 2, size - 4, size - 4);
 
-  const drawCornerSquare = (cx, cy, s) => {
+    const drawCornerSquare = (cx, cy, s) => {
+      ctx.fillStyle = darkColor;
+      ctx.fillRect(cx, cy, s, s);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(cx + 4, cy + 4, s - 8, s - 8);
+      ctx.fillStyle = darkColor;
+      ctx.fillRect(cx + 7, cy + 7, s - 14, s - 14);
+    };
+
+    const cornerSize = 22;
+    drawCornerSquare(x + 6, y + 6, cornerSize);
+    drawCornerSquare(x + size - cornerSize - 6, y + 6, cornerSize);
+    drawCornerSquare(x + 6, y + size - cornerSize - 6, cornerSize);
+
+    // Data dots matrix
     ctx.fillStyle = darkColor;
-    ctx.fillRect(cx, cy, s, s);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(cx + 4, cy + 4, s - 8, s - 8);
-    ctx.fillStyle = darkColor;
-    ctx.fillRect(cx + 8, cy + 8, s - 16, s - 16);
-  };
+    for (let i = 0; i < text.length && i < 24; i++) {
+      const charCode = text.charCodeAt(i);
+      const modX = x + 34 + (i % 6) * 5;
+      const modY = y + 34 + Math.floor(i / 6) * 5;
+      if (charCode % 2 === 0) {
+        ctx.fillRect(modX, modY, 3.5, 3.5);
+      }
+    }
+  }
 
-  const cornerSize = 24;
-  drawCornerSquare(x + 4, y + 4, cornerSize);
-  drawCornerSquare(x + size - cornerSize - 4, y + 4, cornerSize);
-  drawCornerSquare(x + 4, y + size - cornerSize - 4, cornerSize);
-
-  return false;
+  ctx.restore();
+  return true;
 }
 
 const drawSimulatedQR = drawAuthenticQR;
@@ -663,6 +691,7 @@ function renderIdCardCanvas(card, back = false) {
   const h = canvas.height;
 
   ctx.clearRect(0, 0, w, h);
+  ctx.beginPath();
   drawCardBackground(ctx, w, h, back);
 
   if (!back) {
@@ -718,6 +747,7 @@ function renderIdCardCanvas(card, back = false) {
       img.crossOrigin = 'anonymous';
       img.onload = () => {
         try {
+          if (isBackView) return; // Guard: do not draw photo over back side
           ctx.drawImage(img, photoX + 2, photoY + 2, photoW - 4, photoH - 4);
         } catch (e) {}
       };
@@ -769,7 +799,8 @@ function renderIdCardCanvas(card, back = false) {
 
     // Draw Scannable QR Matrix
     const qrSize = 96;
-    const qrX = w / 2 - qrSize / 2;
+    const qrX = Math.round(w / 2 - qrSize / 2);
+    const qrY = 100;
     const host = window.location.host && !window.location.host.includes('localhost') ? window.location.host : (window.location.host || 'ssdind.vercel.app');
     const proto = window.location.protocol && window.location.protocol.startsWith('http') ? window.location.protocol : 'https:';
     let qrPayload = card.verifyUrl || `${proto}//${host}/verify?id=${encodeURIComponent(card.sainikId)}`;
@@ -780,17 +811,19 @@ function renderIdCardCanvas(card, back = false) {
     // 1. Synchronously render authentic ISO standard QR matrix
     drawAuthenticQR(ctx, qrX, qrY, qrSize, qrPayload, '#001f3f');
 
-    // 2. High-res local raster overlay (same-origin, no CORS or canvas taint issues)
-    const qrSrc = card.qrCodeDataUrl || `/api/qr?text=${encodeURIComponent(qrPayload)}`;
-    const qrImg = new Image();
-    qrImg.onload = () => {
-      try {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(qrX, qrY, qrSize, qrSize);
-        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
-      } catch (e) {}
-    };
-    qrImg.src = qrSrc;
+    // 2. High-res raster overlay if available in card data
+    if (card.qrCodeDataUrl) {
+      const qrImg = new Image();
+      qrImg.onload = () => {
+        try {
+          if (!isBackView) return;
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(qrX, qrY, qrSize, qrSize);
+          ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+        } catch (e) {}
+      };
+      qrImg.src = card.qrCodeDataUrl;
+    }
 
     ctx.fillStyle = '#FF6B00';
     ctx.font = 'bold 11px monospace';
@@ -799,7 +832,7 @@ function renderIdCardCanvas(card, back = false) {
 
     ctx.fillStyle = '#94a3b8';
     ctx.font = '10.5px monospace';
-    ctx.fillText(`Verify: ${card.verifyUrl || ('/verify/' + card.sainikId)}`, w / 2, qrY + qrSize + 38);
+    ctx.fillText(`Verify: ${card.verifyUrl || (`https://${host}/verify?id=` + encodeURIComponent(card.sainikId))}`, w / 2, qrY + qrSize + 38);
 
     // Signatures & Emergency Helpline Footer
     ctx.fillStyle = '#ffffff';
