@@ -426,7 +426,7 @@ router.get('/qr/:sainikId', async (req, res) => {
     const { sainikId } = req.params;
     const host = req.get('host') || 'localhost:3000';
     const protocol = req.protocol || 'http';
-    const verifyUrl = `${protocol}://${host}/verify/${sainikId}`;
+    const verifyUrl = `${protocol}://${host}/verify?id=${encodeURIComponent(sainikId)}`;
 
     if (req.query.format === 'json') {
       const dataUrl = await QRCode.toDataURL(verifyUrl, {

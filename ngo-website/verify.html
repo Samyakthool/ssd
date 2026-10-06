@@ -614,7 +614,7 @@
       // Update URL without reloading page
       try {
         if (window.history && window.history.replaceState) {
-          window.history.replaceState(null, '', `/verify/${encodeURIComponent(sainikId)}`);
+          window.history.replaceState(null, '', `/verify?id=${encodeURIComponent(sainikId)}`);
         }
       } catch (e) {}
 

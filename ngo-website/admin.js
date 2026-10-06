@@ -3480,7 +3480,7 @@ async function openMemberIdCard(id) {
           batchNo: m.batchNo || m.batch_no || 'BATCH-2026/Q3',
           status: (m.status || 'ACTIVE').toUpperCase(),
           qrToken: 'qr_' + sainikNum.toLowerCase().replace(/[^a-z0-9]/g, '_'),
-          verifyUrl: `${protocol}//${host}/verify/${sainikNum}`
+          verifyUrl: `${protocol}//${host}/verify?id=${encodeURIComponent(sainikNum)}`
         };
       }
     }
@@ -3751,6 +3751,11 @@ function renderAdminIdCardCanvas(card, back = false) {
     const host = window.location.host && !window.location.host.includes('localhost') ? window.location.host : (window.location.host || 'ssdind.vercel.app');
     const proto = window.location.protocol && window.location.protocol.startsWith('http') ? window.location.protocol : 'https:';
     let qrPayload = card.verifyUrl || `${proto}//${host}/verify?id=${encodeURIComponent(card.sainikId)}`;
+    if (qrPayload.includes('/verify/') && !qrPayload.includes('/verify?id=')) {
+      const parts = qrPayload.split('/verify/');
+      const sid = parts[1]?.split('?')[0]?.split('/')[0] || card.sainikId;
+      qrPayload = `${parts[0]}/verify?id=${encodeURIComponent(sid)}`;
+    }
     if (qrPayload.includes('localhost') && !window.location.host.includes('localhost')) {
       qrPayload = `https://ssdind.vercel.app/verify?id=${encodeURIComponent(card.sainikId)}`;
     }
@@ -3779,7 +3784,7 @@ function renderAdminIdCardCanvas(card, back = false) {
 
     ctx.fillStyle = '#94a3b8';
     ctx.font = '10.5px monospace';
-    ctx.fillText(`Verify: ${card.verifyUrl || (`https://${host}/verify?id=` + encodeURIComponent(card.sainikId))}`, w / 2, qrY + qrSize + 38);
+    ctx.fillText(`Verify: ${qrPayload}`, w / 2, qrY + qrSize + 38);
 
     ctx.fillStyle = '#ffffff';
     ctx.font = '11px sans-serif';

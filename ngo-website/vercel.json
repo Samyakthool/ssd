@@ -9,11 +9,15 @@
       "destination": "/api"
     },
     {
-      "source": "/verify",
-      "destination": "/verify.html"
+      "source": "/verify/(.*)",
+      "destination": "/verify.html?id=$1"
     },
     {
-      "source": "/verify/:sainikId*",
+      "source": "/verify/:path*",
+      "destination": "/verify.html?id=:path*"
+    },
+    {
+      "source": "/verify",
       "destination": "/verify.html"
     },
     {

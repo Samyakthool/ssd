@@ -107,7 +107,7 @@ async function resolvePortalRecord(inputId) {
             batchNo: supaMember.batch_no || 'BATCH-2026/Q3',
             status: 'ACTIVE',
             isApproved: true,
-            verifyUrl: `${window.location.origin}/verify/${supaMember.sainik_id || supaMember.id}`
+            verifyUrl: `${window.location.origin}/verify?id=${encodeURIComponent(supaMember.sainik_id || supaMember.id)}`
           },
           source: 'supabase_members'
         };
@@ -194,7 +194,7 @@ async function resolvePortalRecord(inputId) {
               batchNo: matchMem.batchNo || matchMem.batch_no || 'BATCH-2026/Q3',
               status: matchMem.status || 'ACTIVE',
               isApproved: true,
-              verifyUrl: `${window.location.origin}/verify/${sid}`
+              verifyUrl: `${window.location.origin}/verify?id=${encodeURIComponent(sid)}`
             },
             source: 'local_storage_admin_members'
           };
@@ -279,7 +279,7 @@ async function resolvePortalRecord(inputId) {
             batchNo: match.batchNo || match.batch_no || 'BATCH-2026/Q3',
             status: match.status || 'ACTIVE',
             isApproved: true,
-            verifyUrl: `${window.location.origin}/verify/${sid}`
+            verifyUrl: `${window.location.origin}/verify?id=${encodeURIComponent(sid)}`
           },
           source: 'local_storage_ssd_members'
         };
@@ -310,7 +310,7 @@ async function resolvePortalRecord(inputId) {
         batchNo: 'BATCH-2026/Q3',
         status: 'ACTIVE',
         isApproved: true,
-        verifyUrl: `${window.location.origin}/verify/${upperId}`
+        verifyUrl: `${window.location.origin}/verify?id=${encodeURIComponent(upperId)}`
       },
       source: 'pattern_fallback'
     };
@@ -381,8 +381,9 @@ function displayMemberDashboard(card) {
 
   const verifyLink = document.getElementById('portalVerifyLink');
   if (verifyLink) {
-    verifyLink.href = card.verifyUrl || (`/verify/${card.sainikId}`);
-    verifyLink.textContent = card.verifyUrl || (`/verify/${card.sainikId}`);
+    const vUrl = card.verifyUrl || (`/verify?id=${encodeURIComponent(card.sainikId)}`);
+    verifyLink.href = vUrl;
+    verifyLink.textContent = vUrl;
   }
 
   document.getElementById('portalUnitDetails').innerHTML = `
@@ -508,7 +509,7 @@ function displayApplicationDashboard(app) {
       joiningDate: app.submittedAt || new Date().toISOString(),
       batchNo: 'BATCH-2026/Q3',
       status: 'ACTIVE',
-      verifyUrl: `${window.location.origin}/verify/${app.sainikId || app.applicationId}`
+      verifyUrl: `${window.location.origin}/verify?id=${encodeURIComponent(app.sainikId || app.applicationId)}`
     };
     currentCardData = cardData;
     renderIdCardCanvas(cardData, false);
@@ -804,6 +805,11 @@ function renderIdCardCanvas(card, back = false) {
     const host = window.location.host && !window.location.host.includes('localhost') ? window.location.host : (window.location.host || 'ssdind.vercel.app');
     const proto = window.location.protocol && window.location.protocol.startsWith('http') ? window.location.protocol : 'https:';
     let qrPayload = card.verifyUrl || `${proto}//${host}/verify?id=${encodeURIComponent(card.sainikId)}`;
+    if (qrPayload.includes('/verify/') && !qrPayload.includes('/verify?id=')) {
+      const parts = qrPayload.split('/verify/');
+      const sid = parts[1]?.split('?')[0]?.split('/')[0] || card.sainikId;
+      qrPayload = `${parts[0]}/verify?id=${encodeURIComponent(sid)}`;
+    }
     if (qrPayload.includes('localhost') && !window.location.host.includes('localhost')) {
       qrPayload = `https://ssdind.vercel.app/verify?id=${encodeURIComponent(card.sainikId)}`;
     }
@@ -832,7 +838,7 @@ function renderIdCardCanvas(card, back = false) {
 
     ctx.fillStyle = '#94a3b8';
     ctx.font = '10.5px monospace';
-    ctx.fillText(`Verify: ${card.verifyUrl || (`https://${host}/verify?id=` + encodeURIComponent(card.sainikId))}`, w / 2, qrY + qrSize + 38);
+    ctx.fillText(`Verify: ${qrPayload}`, w / 2, qrY + qrSize + 38);
 
     // Signatures & Emergency Helpline Footer
     ctx.fillStyle = '#ffffff';

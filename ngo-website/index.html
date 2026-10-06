@@ -2,6 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <script>
+    if (window.location.pathname.startsWith('/verify/') && window.location.pathname.length > 8) {
+      var _vId = window.location.pathname.replace(/^\/verify\//, '').split('?')[0].split('/')[0];
+      if (_vId && _vId !== 'verify' && _vId !== 'verify.html') {
+        window.location.replace('/verify?id=' + encodeURIComponent(_vId));
+      }
+    }
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Samata Sainik Dal (SSD) | Official National Portal | Founded by Dr. B.R. Ambedkar (1927)</title>
   <meta name="description" content="Official National Portal of Samata Sainik Dal (SSD), founded by Bodhisattva Dr. B.R. Ambedkar on 24 September 1927. Dedicated to liberty, equality, fraternity, and constitutional morality.">

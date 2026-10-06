@@ -46,8 +46,12 @@ const nextConfig = {
   async rewrites() {
     return [
       {
+        source: '/verify/(.*)',
+        destination: '/verify.html?id=$1',
+      },
+      {
         source: '/verify/:sainikId*',
-        destination: '/verify.html',
+        destination: '/verify.html?id=:sainikId*',
       },
       {
         source: '/verify',
