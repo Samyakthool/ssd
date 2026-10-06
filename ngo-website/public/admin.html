@@ -1,0 +1,2486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Central Command Management Portal | Samata Sainik Dal (SSD)</title>
+  <meta name="description" content="Central Command Executive Admin & Realtime Database Governance Portal for Samata Sainik Dal (SSD).">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Supabase JS Client & Cloud Connector -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <!-- Standard Client-Side Scannable QR Engine -->
+  <script src="js/qrcode.min.js"></script>
+  <!-- EmailJS Automated Email SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <!-- Admin Stylesheet -->
+  <link rel="stylesheet" href="admin.css?v=5.0">
+</head>
+<body>
+
+  <!-- ==========================================================================
+       AUTHENTICATION GATE (LOGIN MODAL)
+       ========================================================================== -->
+  <div id="authGate" class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <img src="logo.png" alt="SSD Emblem" class="auth-logo">
+        <h1 class="auth-title">SAMATA SAINIK DAL</h1>
+        <p class="auth-subtitle">Central Command Admin Access</p>
+      </div>
+      <div class="auth-body">
+        <div class="auth-hint">
+          <i class="fa-solid fa-shield-halved"></i>
+          <div>Multi-User Officer Login & Master Passcode Access</div>
+        </div>
+        <div id="loginLockoutBanner" class="login-lockout-banner" style="display: none;"></div>
+        <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+          <div class="form-group-modal" style="margin-bottom: 14px;">
+            <label for="adminUsername">Officer Username / Email</label>
+            <input type="text" id="adminUsername" placeholder="e.g. admin@ssd.org" required autocomplete="username" autofocus>
+          </div>
+          <div class="form-group-modal" style="margin-bottom: 18px;" id="passcodeGroup">
+            <label for="adminPasscode">Officer Passcode / Password</label>
+            <div class="password-input-wrap">
+              <input type="password" id="adminPasscode" placeholder="••••••••" autocomplete="current-password">
+              <button type="button" class="btn-toggle-pass" onclick="togglePasswordVisibility('adminPasscode', this)" aria-label="Toggle Password Visibility">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <button type="submit" id="loginBtn" class="btn-admin btn-admin-primary" style="width: 100%; justify-content: center; padding: 12px;">
+            <i class="fa-solid fa-key"></i> Authenticate & Enter Portal
+          </button>
+        </form>
+        <div style="text-align: center; margin-top: 16px; display: flex; justify-content: center; align-items: center; gap: 14px;">
+          <a href="member-portal.html" style="font-size: 12.5px; color: #c5a059; text-decoration: none; font-weight: 600;">
+            <i class="fa-solid fa-id-card"></i> Sainik Member Portal
+          </a>
+          <span style="color: #64748b;">|</span>
+          <a href="index.html" style="font-size: 12.5px; color: var(--text-muted); text-decoration: none;">
+            <i class="fa-solid fa-arrow-left"></i> Public Portal
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MAIN ADMIN DASHBOARD LAYOUT
+       ========================================================================== -->
+  <div id="adminApp" class="admin-layout" style="display: none;">
+    
+    <!-- Mobile & Tablet Sidebar Backdrop Overlay -->
+    <div class="admin-sidebar-overlay" id="adminSidebarOverlay" onclick="toggleSidebarDrawer()"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-brand">
+        <img src="logo.png" alt="SSD Logo" class="sidebar-logo">
+        <div class="sidebar-brand-text">
+          <h2>SAMATA SAINIK DAL</h2>
+          <span>Central Command HQ</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-menu">
+        <div class="menu-category-label">Core Dashboard</div>
+        <a class="sidebar-item active" onclick="switchView('overview')" id="nav-overview">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-gauge-high"></i>
+            <span>Overview & KPIs</span>
+          </div>
+        </a>
+
+        <a class="sidebar-item" onclick="switchView('approvals')" id="nav-approvals" style="display: none;">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-stamp" style="color: var(--primary-orange);"></i>
+            <span>Approvals Queue</span>
+          </div>
+          <span class="sidebar-badge badge-pending" id="badgeApprovalsCount" style="display: none;">0</span>
+        </a>
+
+        <div class="menu-category-label">Movement & Governance</div>
+        <a class="sidebar-item" onclick="switchView('members')" id="nav-members">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-user-shield"></i>
+            <span>Enlisted Sainiks</span>
+          </div>
+          <span class="sidebar-badge" id="badgeMembersCount">0</span>
+        </a>
+
+        <a class="sidebar-item" onclick="switchView('donations')" id="nav-donations">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-hand-holding-dollar"></i>
+            <span>Centenary Fund</span>
+          </div>
+          <span class="sidebar-badge" id="badgeDonationsCount">0</span>
+        </a>
+
+        <a class="sidebar-item" onclick="switchView('leadership')" id="nav-leadership">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-users-gear"></i>
+            <span>Governing Body & Council</span>
+          </div>
+          <span class="sidebar-badge" id="badgeLeadershipCount">0</span>
+        </a>
+
+        <a class="sidebar-item" onclick="switchView('chapters')" id="nav-chapters">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <span>State & District Chapters</span>
+          </div>
+          <span class="sidebar-badge" id="badgeChaptersCount">1</span>
+        </a>
+
+        <div class="menu-category-label">Public Communications</div>
+        <a class="sidebar-item" onclick="switchView('news')" id="nav-news">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-newspaper"></i>
+            <span>Gazette Dispatches</span>
+          </div>
+          <span class="sidebar-badge" id="badgeNewsCount">0</span>
+        </a>
+
+        <a class="sidebar-item" onclick="switchView('events')" id="nav-events">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-calendar-days"></i>
+            <span>Drills & Conclaves</span>
+          </div>
+          <span class="sidebar-badge" id="badgeEventsCount">0</span>
+        </a>
+
+        <a class="sidebar-item" onclick="switchView('campaigns')" id="nav-campaigns">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-bullhorn"></i>
+            <span>Ongoing Missions</span>
+          </div>
+          <span class="sidebar-badge" id="badgeCampaignsCount">0</span>
+        </a>
+
+        <a class="sidebar-item" onclick="switchView('gallery')" id="nav-gallery">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-images"></i>
+            <span>Photo Archives</span>
+          </div>
+          <span class="sidebar-badge" id="badgeGalleryCount">0</span>
+        </a>
+
+        <div class="menu-category-label">System & Access Control</div>
+        <a class="sidebar-item" onclick="switchView('admins')" id="nav-admins">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-user-lock"></i>
+            <span>Authorized Admin Users</span>
+          </div>
+          <span class="sidebar-badge" id="badgeAdminsCount">0</span>
+        </a>
+
+        <a class="sidebar-item" onclick="switchView('auditlogs')" id="nav-auditlogs">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-list-check"></i>
+            <span>System Audit Logs</span>
+          </div>
+        </a>
+
+        <a class="sidebar-item" onclick="switchView('contacts')" id="nav-contacts">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-inbox"></i>
+            <span>Grievance Desk</span>
+          </div>
+          <span class="sidebar-badge" id="badgeContactsCount">0</span>
+        </a>
+
+        <a class="sidebar-item" onclick="switchView('stats')" id="nav-stats">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Live Portal Counters</span>
+          </div>
+        </a>
+
+        <a class="sidebar-item" onclick="switchView('settings')" id="nav-settings">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-database"></i>
+            <span>Database & Backups</span>
+          </div>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="admin-profile-pill">
+          <div class="admin-avatar-icon"><i class="fa-solid fa-shield"></i></div>
+          <div class="admin-user-info">
+            <div class="name" id="sidebarUserName">Command Desk</div>
+            <div class="role" id="sidebarUserRole">Supreme Council Level</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 6px; align-items: center;">
+          <button type="button" class="btn-change-pass-quick" onclick="openChangePasswordModal()" title="Change Your Officer Password">
+            <i class="fa-solid fa-key"></i> Key
+          </button>
+          <button type="button" class="btn-logout" onclick="handleAdminLogout()" title="Lock & Logout">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT VIEWPORT -->
+    <main class="admin-main">
+      
+      <!-- Top Navigation Bar -->
+      <header class="admin-topbar">
+        <div class="topbar-left">
+          <button type="button" class="btn-sidebar-toggle" onclick="toggleSidebarDrawer()" aria-label="Toggle Sidebar Menu">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div class="topbar-title">
+            <h1 id="pageHeadingTitle">Central Command Dashboard</h1>
+            <p id="pageHeadingSubtitle">Real-time governance and member synchronization</p>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="db-status-pill" id="dbStatusPill" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 700; color: #047857; display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 11.5px;">
+            <i class="fa-solid fa-cloud-bolt" style="color: #10b981;"></i>
+            <span id="dbStatusText">Supabase Cloud Active</span>
+          </div>
+
+          <div class="db-status-pill" id="officerJurisdictionPill" style="background: rgba(0, 31, 63, 0.08); border-color: rgba(0, 31, 63, 0.2); font-weight: 700;">
+            <i class="fa-solid fa-location-dot" style="color: var(--primary-orange);"></i>
+            <span id="officerJurisdictionText">National Command HQ</span>
+          </div>
+
+          <button type="button" class="btn-admin btn-admin-outline" onclick="switchView('approvals')" id="topbarApprovalsBtn" title="Pending Approvals" style="display: none; align-items: center; gap: 6px; padding: 6px 14px; font-size: 12px; font-weight: 700; color: #D95D00; background: rgba(255, 107, 0, 0.08); border-color: rgba(255, 107, 0, 0.3);">
+            <i class="fa-solid fa-stamp"></i> <span id="topbarApprovalsCount">0</span> <span class="topbar-btn-text">Pending Approvals</span>
+          </button>
+
+          <a href="member-portal.html" class="topbar-view-site" style="color: #c5a059; border-color: rgba(197, 160, 89, 0.4); background: rgba(197, 160, 89, 0.08);" title="View Sainik Member Portal">
+            <i class="fa-solid fa-id-card"></i> <span class="topbar-btn-text">Member Portal</span>
+          </a>
+
+          <a href="index.html" target="_blank" class="topbar-view-site" title="View Live Public Portal">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> <span class="topbar-btn-text">Live Portal</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- VIEW PANELS -->
+      <div class="admin-content">
+
+        <!-- ==========================================
+             VIEW 1: OVERVIEW & KPIS
+             ========================================== -->
+        <section id="viewOverview" class="view-panel active">
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span class="label">Enlisted Sainiks</span>
+                <h3 id="kpiMembersTotal">0</h3>
+                <p class="sub"><i class="fa-solid fa-users"></i> Nationwide Cadets</p>
+              </div>
+              <div class="kpi-icon-wrap"><i class="fa-solid fa-user-shield"></i></div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span class="label">Centenary Fund</span>
+                <h3 id="kpiDonationsTotal">₹0</h3>
+                <p class="sub" style="color: var(--primary-orange);"><i class="fa-solid fa-arrow-trend-up"></i> Movement Support</p>
+              </div>
+              <div class="kpi-icon-wrap green"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span class="label">Dispatches</span>
+                <h3 id="kpiNewsTotal">0</h3>
+                <p class="sub"><i class="fa-solid fa-bullhorn"></i> Official Gazette</p>
+              </div>
+              <div class="kpi-icon-wrap navy"><i class="fa-solid fa-newspaper"></i></div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span class="label">Drills & Events</span>
+                <h3 id="kpiEventsTotal">0</h3>
+                <p class="sub"><i class="fa-solid fa-calendar-check"></i> Scheduled Rallies</p>
+              </div>
+              <div class="kpi-icon-wrap blue"><i class="fa-solid fa-calendar-days"></i></div>
+            </div>
+          </div>
+
+          <!-- SuperAdmin Approvals Alert Banner & Quick Queue -->
+          <div class="card-panel" id="overviewApprovalsPanel" style="border-left: 4px solid var(--primary-orange); margin-bottom: 24px; display: none;">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-stamp" style="color: var(--primary-orange);"></i>
+                <div>
+                  <h3 style="font-size: 16px;" id="overviewApprovalsTitle">Pending Authorization & Enlistment Queue</h3>
+                  <p style="font-size: 12.5px; color: var(--text-muted); margin: 2px 0 0;">Submissions and cadet applications awaiting official command review and authorization.</p>
+                </div>
+              </div>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn-admin btn-admin-primary" id="btnOverviewBulkApprove" onclick="bulkApproveAllPending()">
+                  <i class="fa-solid fa-check-double"></i> 1-Click Approve All
+                </button>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="switchView('approvals')">
+                  View Approvals Desk
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Type & Category</th>
+                    <th>Item Title / Officer</th>
+                    <th>Submitted By</th>
+                    <th>Date</th>
+                    <th style="text-align: right;">Decision</th>
+                  </tr>
+                </thead>
+                <tbody id="overviewApprovalsTableBody">
+                  <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No pending submissions. All items authorized.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px; margin-bottom: 28px;">
+            <!-- Recent Enlistments Quick Table -->
+            <div class="card-panel" style="margin-bottom: 0;">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-user-clock" style="color: var(--primary-orange);"></i>
+                  <h3>Recent Sainik Enlistments</h3>
+                </div>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="switchView('members')">View All</button>
+              </div>
+              <div class="table-responsive">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>State / City</th>
+                      <th>Wing</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="overviewMembersTableBody">
+                    <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Loading recent enlistments...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Quick Actions Panel -->
+            <div class="card-panel" style="margin-bottom: 0;">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-bolt" style="color: var(--primary-orange);"></i>
+                  <h3>Quick Action Tools</h3>
+                </div>
+              </div>
+              <div style="padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openCreateNewsModal()">
+                  <i class="fa-solid fa-plus"></i> Publish Gazette Dispatch
+                </button>
+                <button type="button" class="btn-admin btn-admin-navy" onclick="openCreateEventModal()">
+                  <i class="fa-solid fa-calendar-plus"></i> Schedule Drill / Parade
+                </button>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="openAddMemberModal()">
+                  <i class="fa-solid fa-user-plus"></i> Enlist Member Manually
+                </button>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="exportMembersToCSV()">
+                  <i class="fa-solid fa-file-csv"></i> Download Enlistment Ledger
+                </button>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="exportFullDatabaseJSON()">
+                  <i class="fa-solid fa-download"></i> Backup Entire Database (JSON)
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 1.5: SUPERADMIN APPROVALS DESK
+             ========================================== -->
+        <section id="viewApprovals" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-stamp" style="color: var(--primary-orange);"></i>
+                <div>
+                  <h3 id="viewApprovalsHeading">Supreme Command Authorization & Approvals Desk (/approvals)</h3>
+                  <p id="viewApprovalsSubtext" style="font-size: 12.5px; color: var(--text-muted); margin: 2px 0 0;">All admin posts, news dispatches, events, campaigns, gallery photos, and leadership appointees require official authorization before going live on the public portal.</p>
+                </div>
+              </div>
+              <div class="card-panel-actions">
+                <select id="approvalTypeFilter" class="filter-select" onchange="renderApprovalsView()">
+                  <option value="all">All Submission Types</option>
+                  <option value="enlistment">Cadet Enlistments (/membership)</option>
+                  <option value="news">Gazette Dispatches (/news)</option>
+                  <option value="events">Events & Drills (/events)</option>
+                  <option value="campaigns">Ongoing Campaigns (/campaigns)</option>
+                  <option value="gallery">Photo Archives (/gallery)</option>
+                  <option value="leadership">Governing Body (/leadership)</option>
+                </select>
+                <button type="button" class="btn-admin btn-admin-primary" id="btnDeskBulkApprove" onclick="bulkApproveAllPending()">
+                  <i class="fa-solid fa-check-double"></i> 1-Click Approve All Pending
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Content Type</th>
+                    <th>Title / Officer Name</th>
+                    <th>Submitted By Admin</th>
+                    <th>Date Submitted</th>
+                    <th>Summary / Details</th>
+                    <th>Approval Status</th>
+                    <th style="text-align: right;" id="approvalsActionColHeader">Approval Action</th>
+                  </tr>
+                </thead>
+                <tbody id="approvalsTableBody">
+                  <tr><td colspan="7" style="text-align: center; padding: 30px;">Loading submissions for authorization...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 2: MEMBERS MANAGEMENT
+             ========================================== -->
+        <section id="viewMembers" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-user-shield" style="color: var(--primary-orange);"></i>
+                <h3>Enlisted Sainiks Registry (/members)</h3>
+              </div>
+              <div class="card-panel-actions">
+                <div class="search-input-group">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="memberSearchInput" placeholder="Search by name, phone, state..." oninput="filterMembersTable()">
+                </div>
+                <select id="memberStatusFilter" class="filter-select" onchange="filterMembersTable()">
+                  <option value="all">All Statuses</option>
+                  <option value="Pending">Pending Review / Submitted</option>
+                  <option value="UNDER_REVIEW">Under Review</option>
+                  <option value="RECOMMENDED">Recommended to Next Level</option>
+                  <option value="FINAL_APPROVED">Final Approved & Commissioned</option>
+                  <option value="CORRECTION_REQUIRED">Correction Required</option>
+                  <option value="REJECTED">Rejected</option>
+                </select>
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openAddMemberModal()">
+                  <i class="fa-solid fa-user-plus"></i> Add Sainik
+                </button>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="exportMembersToCSV()">
+                  <i class="fa-solid fa-file-csv"></i> Export CSV
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Registration Date</th>
+                    <th>Cadet ID & Batch</th>
+                    <th>Full Name</th>
+                    <th>Contact Info</th>
+                    <th>State / City</th>
+                    <th>Wing Assigned</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="membersTableBody">
+                  <tr><td colspan="8" style="text-align: center; padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading members from Supabase Cloud...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 3: DONATIONS LEDGER
+             ========================================== -->
+        <section id="viewDonations" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-hand-holding-dollar" style="color: var(--primary-orange);"></i>
+                <h3>Centenary Movement Fund Ledger (/donations)</h3>
+              </div>
+              <div class="card-panel-actions">
+                <div class="search-input-group">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="donationSearchInput" placeholder="Search donor, PAN, receipt..." oninput="filterDonationsTable()">
+                </div>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="exportDonationsToCSV()">
+                  <i class="fa-solid fa-file-csv"></i> Export Donations CSV
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Receipt No.</th>
+                      <th>Payment ID (Razorpay)</th>
+                      <th>Date</th>
+                      <th>Donor Name</th>
+                      <th>Amount (₹)</th>
+                      <th>Cause / Allocation</th>
+                      <th>PAN / Tax ID</th>
+                      <th>Status</th>
+                      <th style="text-align: right;">Actions</th>
+                    </tr>
+                  </thead>
+                <tbody id="donationsTableBody">
+                  <tr><td colspan="9" style="text-align: center; padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading donations from Supabase Cloud...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW: GOVERNING BODY & LEADERSHIP COUNCIL
+             ========================================== -->
+        <section id="viewLeadership" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-users-gear" style="color: var(--primary-orange);"></i>
+                <h3>Governing Body & National Leadership Council (/leadership)</h3>
+              </div>
+              <div class="card-panel-actions">
+                <select id="leadershipTierFilter" class="filter-select" onchange="filterLeadershipTable()">
+                  <option value="all">All Command Tiers (3 Tiers)</option>
+                  <option value="national">Tier 1: National Supreme Command</option>
+                  <option value="state">Tier 2: State Governing Bodies</option>
+                  <option value="district">Tier 3: District Governing Bodies</option>
+                </select>
+                <select id="leadershipStateFilter" class="filter-select" onchange="onAdminStateFilterChange()">
+                  <option value="all">All States</option>
+                  <option value="National HQ">National HQ</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Uttar Pradesh">Uttar Pradesh</option>
+                  <option value="Madhya Pradesh">Madhya Pradesh</option>
+                  <option value="Delhi NCR">Delhi NCR</option>
+                  <option value="Karnataka">Karnataka</option>
+                  <option value="Rajasthan">Rajasthan</option>
+                  <option value="Punjab">Punjab</option>
+                  <option value="Bihar">Bihar</option>
+                </select>
+                <select id="leadershipDistrictFilter" class="filter-select" onchange="filterLeadershipTable()">
+                  <option value="all">All Districts</option>
+                </select>
+                <select id="leadershipFilter" class="filter-select" onchange="filterLeadershipTable()">
+                  <option value="all">All Wings & Boards</option>
+                  <option value="Supreme Council">Supreme Council</option>
+                  <option value="Executive Council">Executive Council</option>
+                  <option value="Cadet Directorate">Cadet Directorate</option>
+                  <option value="IT & Digital Media Cell">IT & Digital Media Cell (आईटी प्रकोष्ठ)</option>
+                  <option value="Mahila Dal">Mahila Dal</option>
+                  <option value="Legal Cell">Legal Cell</option>
+                  <option value="Finance & Audit">Finance & Audit</option>
+                  <option value="Advisory Board">Advisory Board</option>
+                </select>
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openAddLeadershipModal()">
+                  <i class="fa-solid fa-user-plus"></i> Appoint Council Officer
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">Photo</th>
+                    <th>Officer Name</th>
+                    <th>Tier & State</th>
+                    <th>Designation & Rank</th>
+                    <th>Council Wing</th>
+                    <th>Approval Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="leadershipTableBody">
+                  <tr><td colspan="7" style="text-align: center; padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading governing body members from Supabase Cloud...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 3.5: STATE & DISTRICT CHAPTERS
+             ========================================== -->
+        <section id="viewChapters" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-map-location-dot" style="color: var(--primary-orange);"></i>
+                <h3>State Chapters & District Organization Directory (/state_chapters)</h3>
+              </div>
+              <div class="card-panel-actions">
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openAddStateModal()">
+                  <i class="fa-solid fa-plus"></i> Add New State Chapter
+                </button>
+              </div>
+            </div>
+            <p style="color: var(--text-muted); font-size: 13px; margin: 0 0 16px;">
+              Manage regional State Governing Chapters and assign district volunteer divisions. Newly added states and districts automatically appear in the public portal state filter and appointment forms.
+            </p>
+            <div id="stateChaptersContainer" style="display: grid; gap: 20px;">
+              <!-- Dynamic state chapter cards rendered by renderChaptersView() -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 4: GAZETTE & DISPATCHES
+             ========================================== -->
+        <section id="viewNews" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-newspaper" style="color: var(--primary-orange);"></i>
+                <h3>Central Command Gazette Bulletins (/news)</h3>
+              </div>
+              <button type="button" class="btn-admin btn-admin-primary" onclick="openCreateNewsModal()">
+                <i class="fa-solid fa-plus"></i> New Gazette Notice
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Preview</th>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Approval Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="newsTableBody">
+                  <tr><td colspan="6" style="text-align: center; padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading news from Supabase Cloud...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 5: EVENTS & DRILLS
+             ========================================== -->
+        <section id="viewEvents" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-calendar-days" style="color: var(--primary-orange);"></i>
+                <h3>Drills, Conventions & Conclaves (/events)</h3>
+              </div>
+              <button type="button" class="btn-admin btn-admin-primary" onclick="openCreateEventModal()">
+                <i class="fa-solid fa-calendar-plus"></i> Schedule New Event
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Event Date</th>
+                    <th>Title & Description</th>
+                    <th>Location / Ground</th>
+                    <th>Event Status</th>
+                    <th>Approval Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="eventsTableBody">
+                  <tr><td colspan="6" style="text-align: center; padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading events from Supabase Cloud...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 6: CAMPAIGNS & MISSIONS
+             ========================================== -->
+        <section id="viewCampaigns" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-bullhorn" style="color: var(--primary-orange);"></i>
+                <h3>Ongoing Campaigns & Missions (/campaigns)</h3>
+              </div>
+              <button type="button" class="btn-admin btn-admin-primary" onclick="openCreateCampaignModal()">
+                <i class="fa-solid fa-plus"></i> Add Campaign
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Campaign Title</th>
+                    <th>Category</th>
+                    <th>Target & Raised</th>
+                    <th>Volunteers</th>
+                    <th>Approval Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="campaignsTableBody">
+                  <tr><td colspan="6" style="text-align: center; padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading campaigns from Supabase Cloud...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 7: GALLERY ARCHIVES
+             ========================================== -->
+        <section id="viewGallery" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-images" style="color: var(--primary-orange);"></i>
+                <h3>Historical & Event Photo Archives (/gallery)</h3>
+              </div>
+              <button type="button" class="btn-admin btn-admin-primary" onclick="openCreateGalleryModal()">
+                <i class="fa-solid fa-upload"></i> Add Photo
+              </button>
+            </div>
+            <div style="padding: 20px;">
+              <div id="galleryAdminGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px;">
+                <!-- Dynamically loaded -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 8: GRIEVANCE DESK / CONTACT MESSAGES
+             ========================================== -->
+        <section id="viewContacts" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-inbox" style="color: var(--primary-orange);"></i>
+                <h3>Grievance Desk & Public Messages (/contact_messages)</h3>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Sender Name</th>
+                    <th>Subject & Message</th>
+                    <th>State</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="contactsTableBody">
+                  <tr><td colspan="6" style="text-align: center; padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading messages from Supabase Cloud...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW: AUTHORIZED ADMIN USERS & ROLES
+             ========================================== -->
+        <section id="viewAdmins" class="view-panel">
+          <!-- Command Security Overview Card -->
+          <div class="card-panel" style="margin-bottom: 24px; border-left: 4px solid var(--primary-orange);">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <div class="security-card-header-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <div>
+                  <h3 style="font-size: 16px;">Command Access Security & Credential Management</h3>
+                  <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Multi-layer authentication protection, brute-force defense, and self-service password changing</p>
+                </div>
+              </div>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openChangePasswordModal()">
+                  <i class="fa-solid fa-key"></i> Change My Password
+                </button>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="openAddAdminUserModal()">
+                  <i class="fa-solid fa-user-plus"></i> Authorize New Officer
+                </button>
+              </div>
+            </div>
+            <div class="security-session-info" style="padding: 0 24px 20px;">
+              <div class="security-metric-box">
+                <div class="sec-label"><i class="fa-solid fa-user-check"></i> Authenticated As</div>
+                <div class="sec-value" id="secCurrentOfficerName">Commander-in-Chief</div>
+              </div>
+              <div class="security-metric-box">
+                <div class="sec-label"><i class="fa-solid fa-shield-virus"></i> Brute-Force Protection</div>
+                <div class="sec-value" style="color: var(--success);"><i class="fa-solid fa-circle-check"></i> Active (5-Attempt Lockout)</div>
+              </div>
+              <div class="security-metric-box">
+                <div class="sec-label"><i class="fa-solid fa-clock-rotate-left"></i> Inactivity Auto-Lock</div>
+                <div class="sec-value"><i class="fa-solid fa-hourglass-half"></i> 30-Minute Timeout</div>
+              </div>
+              <div class="security-metric-box">
+                <div class="sec-label"><i class="fa-solid fa-calendar-check"></i> Password Last Changed</div>
+                <div class="sec-value" id="secPasswordLastChanged">Default Provisioned</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-user-lock" style="color: var(--primary-orange);"></i>
+                <h3>Authorized Command Officers & Role Access (/admin_users)</h3>
+              </div>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn-admin btn-admin-outline" onclick="openBulkOfficersModal()">
+                  <i class="fa-solid fa-file-excel" style="color: #107C41;"></i> Bulk Import Excel / CSV
+                </button>
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openAddAdminUserModal()">
+                  <i class="fa-solid fa-user-shield"></i> Authorize New Officer
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Officer ID & Batch</th>
+                    <th>Officer Name</th>
+                    <th>Official SSD Email</th>
+                    <th>Assigned Role & Level</th>
+                    <th>Territorial Jurisdiction</th>
+                    <th>Department / Unit</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="adminsTableBody">
+                  <tr><td colspan="8" style="text-align: center; padding: 30px;">Loading authorized officers...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 9: LIVE METRICS & STATS
+             ========================================== -->
+        <section id="viewStats" class="view-panel">
+          <div class="card-panel" style="max-width: 700px;">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-chart-pie" style="color: var(--primary-orange);"></i>
+                <h3>Live Public Homepage Counters (/stats)</h3>
+              </div>
+            </div>
+            <div style="padding: 24px;">
+              <form id="statsEditorForm" onsubmit="saveStatsForm(event)">
+                <div class="form-grid-modal">
+                  <div class="form-group-modal">
+                    <label for="statMembersInput">Active Enlisted Sainiks Counter</label>
+                    <input type="number" id="statMembersInput" required min="1">
+                  </div>
+                  <div class="form-group-modal">
+                    <label for="statStatesInput">Active States Covered</label>
+                    <input type="number" id="statStatesInput" required min="1" max="36">
+                  </div>
+                </div>
+                <div class="form-grid-modal">
+                  <div class="form-group-modal">
+                    <label for="statEventsInput">Conclaves & Drills Completed</label>
+                    <input type="number" id="statEventsInput" required min="1">
+                  </div>
+                  <div class="form-group-modal">
+                    <label for="statYearsInput">Years of Heritage (1927–2026)</label>
+                    <input type="number" id="statYearsInput" required min="99">
+                  </div>
+                </div>
+                <button type="submit" class="btn-admin btn-admin-primary">
+                  <i class="fa-solid fa-floppy-disk"></i> Update Public Live Counters
+                </button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 10: DATABASE TOOLS & BACKUPS
+             ========================================== -->
+        <section id="viewSettings" class="view-panel">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+            <!-- Supabase Cloud Database & Storage Manager -->
+            <div class="card-panel" style="grid-column: 1 / -1; border-left: 4px solid #10b981;">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-bolt" style="color: #10b981;"></i>
+                  <h3>Supabase Cloud Database & Storage Manager</h3>
+                </div>
+                <div id="supabaseConnectionBadge" class="badge-status badge-approved" style="background: rgba(16, 185, 129, 0.1); color: #047857; border-color: rgba(16, 185, 129, 0.3);">
+                  <i class="fa-solid fa-circle-check"></i> Supabase Cloud Active
+                </div>
+              </div>
+              <div style="padding: 24px;">
+                <p style="color: var(--text-muted); font-size: 13.5px; margin-bottom: 18px; line-height: 1.5;">
+                  Connected to official SSD Supabase Cloud infrastructure for real-time relational PostgreSQL queries, member dossiers, automated audit trails, and multi-bucket cloud asset storage.
+                </p>
+
+                <!-- Active Supabase Configuration Status Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 22px;">
+                  <div style="background: var(--bg-body, #f8f9fb); border: 1px solid rgba(0,0,0,0.06); padding: 14px; border-radius: 8px;">
+                    <div style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Cloud Database Engine</div>
+                    <div style="font-size: 14px; font-weight: 700; color: #001f3f; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
+                      <i class="fa-solid fa-database" style="color: #10b981;"></i> PostgreSQL 15+ (Supabase)
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">SSL Encrypted Connection Pooler</div>
+                  </div>
+
+                  <div style="background: var(--bg-body, #f8f9fb); border: 1px solid rgba(0,0,0,0.06); padding: 14px; border-radius: 8px;">
+                    <div style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Cloud Storage Buckets</div>
+                    <div style="font-size: 14px; font-weight: 700; color: #001f3f; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
+                      <i class="fa-solid fa-box-archive" style="color: #2563eb;"></i> 3 Buckets Active
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">photos, documents, receipts</div>
+                  </div>
+
+                  <div style="background: var(--bg-body, #f8f9fb); border: 1px solid rgba(0,0,0,0.06); padding: 14px; border-radius: 8px;">
+                    <div style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Authentication & JWKS</div>
+                    <div style="font-size: 14px; font-weight: 700; color: #001f3f; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
+                      <i class="fa-solid fa-shield-halved" style="color: #ff6b00;"></i> RBAC & JWKS Token Auth
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">7-Tier Clearance System</div>
+                  </div>
+                </div>
+
+                <form id="supabaseConfigForm" onsubmit="saveSupabaseConfig(event)">
+                  <div class="form-grid-modal">
+                    <div class="form-group-modal">
+                      <label for="adminSupabaseUrl">Supabase Project URL</label>
+                      <input type="url" id="adminSupabaseUrl" value="https://agkcwwujangfrpbpwehw.supabase.co" required style="font-family: monospace; font-size: 12.5px;">
+                    </div>
+                    <div class="form-group-modal">
+                      <label for="adminSupabasePubKey">Supabase Publishable / Anon Key</label>
+                      <input type="text" id="adminSupabasePubKey" value="sb_publishable_OOuRM6ihRwmw3ERK-Oh4hw_bdNzgQIL" required style="font-family: monospace; font-size: 12.5px;">
+                    </div>
+                  </div>
+                  <div class="form-grid-modal">
+                    <div class="form-group-modal">
+                      <label for="adminSupabaseSecretKey">Supabase Secret Key (Service Role)</label>
+                      <input type="password" id="adminSupabaseSecretKey" placeholder="Configured securely in Backend .env" style="font-family: monospace; font-size: 12.5px;">
+                    </div>
+                    <div class="form-group-modal">
+                      <label for="adminSupabaseJwksUrl">Supabase JWKS URL</label>
+                      <input type="url" id="adminSupabaseJwksUrl" value="https://agkcwwujangfrpbpwehw.supabase.co/auth/v1/.well-known/jwks.json" style="font-family: monospace; font-size: 12.5px;">
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 8px;">
+                    <button type="submit" class="btn-admin btn-admin-primary">
+                      <i class="fa-solid fa-floppy-disk"></i> Save & Reconnect Supabase
+                    </button>
+                    <button type="button" class="btn-admin btn-admin-outline" onclick="testSupabasePing()">
+                      <i class="fa-solid fa-signal"></i> Verify Cloud Connection
+                    </button>
+                    <a href="https://supabase.com/dashboard/project/agkcwwujangfrpbpwehw/sql/new" target="_blank" class="btn-admin btn-admin-outline" style="color: #2563eb; text-decoration: none;">
+                      <i class="fa-solid fa-code"></i> Open Supabase SQL Editor
+                    </a>
+                    <a href="https://supabase.com/dashboard/project/agkcwwujangfrpbpwehw" target="_blank" class="btn-admin btn-admin-outline" style="text-decoration: none;">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Supabase Dashboard
+                    </a>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- JSON Backup -->
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-download" style="color: var(--primary-orange);"></i>
+                  <h3>Full Database Backup</h3>
+                </div>
+              </div>
+              <div style="padding: 24px;">
+                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 18px;">
+                  Export a snapshot of all members, donations, news, campaigns, events, and grievance records as a single JSON file.
+                </p>
+                <button type="button" class="btn-admin btn-admin-navy" onclick="exportFullDatabaseJSON()">
+                  <i class="fa-solid fa-file-code"></i> Download JSON Snapshot
+                </button>
+              </div>
+            </div>
+
+            <!-- Razorpay Payment Gateway Settings -->
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-credit-card" style="color: var(--primary-orange);"></i>
+                  <h3>Razorpay Payment Gateway API</h3>
+                </div>
+              </div>
+              <div style="padding: 24px;">
+                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">
+                  Configure the active Razorpay Key ID used across all online donation checkout dialogs (UPI, Google Pay, Cards, NetBanking).
+                </p>
+                <form id="razorpayConfigForm" onsubmit="saveRazorpayConfig(event)">
+                  <div class="form-group-modal" style="margin-bottom: 14px;">
+                    <label for="adminRazorpayKeyId">Razorpay Key ID</label>
+                    <input type="text" id="adminRazorpayKeyId" placeholder="rzp_test_... or rzp_live_..." required style="font-family: monospace; font-size: 13px;">
+                  </div>
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; font-size: 12.5px;">
+                    <span id="razorpayModeBadge" class="badge-status badge-approved"><i class="fa-solid fa-shield-check"></i> Gateway Active</span>
+                    <button type="button" class="btn-admin btn-admin-outline" style="padding: 6px 12px; font-size: 11.5px;" onclick="testRazorpayPing()">
+                      <i class="fa-solid fa-bolt"></i> Verify Gateway
+                    </button>
+                  </div>
+                  <button type="submit" class="btn-admin btn-admin-primary">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Gateway Key
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Automated Email Dispatch System (EmailJS & API) -->
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-envelope-circle-check" style="color: var(--primary-orange);"></i>
+                  <h3>Automated Email Dispatch System (EmailJS & API)</h3>
+                </div>
+                <div id="emailSetupBadge" class="badge-status badge-approved">
+                  <i class="fa-solid fa-circle-check"></i> Automated Triggers Active
+                </div>
+              </div>
+              <div style="padding: 24px;">
+                <p style="color: var(--text-muted); font-size: 13.5px; margin-bottom: 18px; line-height: 1.5;">
+                  Configure automated dispatch of <strong>80G Tax Donation Receipts</strong> and <strong>Cadet Enlistment Welcome Letters</strong> directly to donors and applicants via EmailJS or Serverless dispatch API.
+                </p>
+                <form id="emailConfigForm" onsubmit="saveEmailConfig(event)">
+                  <div class="form-grid-modal">
+                    <div class="form-group-modal">
+                      <label for="adminSenderEmail">Official Sender Email Address</label>
+                      <input type="email" id="adminSenderEmail" value="samyak.ssd@gmail.com" required style="font-family: monospace; font-size: 12.5px; font-weight: bold; color: var(--primary-orange);">
+                    </div>
+                    <div class="form-group-modal">
+                      <label for="adminSenderName">Sender Display Name</label>
+                      <input type="text" id="adminSenderName" value="Samata Sainik Dal (SSD)" placeholder="e.g. Samata Sainik Dal (SSD)" style="font-size: 12.5px;">
+                    </div>
+                  </div>
+                  <div class="form-grid-modal">
+                    <div class="form-group-modal">
+                      <label for="adminEmailServiceId">EmailJS Service ID</label>
+                      <input type="text" id="adminEmailServiceId" placeholder="e.g. service_ssd_official" style="font-family: monospace; font-size: 12.5px;">
+                    </div>
+                    <div class="form-group-modal">
+                      <label for="adminEmailPublicKey">EmailJS Public Key</label>
+                      <input type="text" id="adminEmailPublicKey" placeholder="e.g. pk_..." style="font-family: monospace; font-size: 12.5px;">
+                    </div>
+                  </div>
+                  <div class="form-grid-modal">
+                    <div class="form-group-modal">
+                      <label for="adminEmailDonationTpl">80G Donation Receipt Template ID (Optional)</label>
+                      <input type="text" id="adminEmailDonationTpl" placeholder="e.g. template_donation_80g" style="font-family: monospace; font-size: 12.5px;">
+                    </div>
+                    <div class="form-group-modal">
+                      <label for="adminEmailEnrollmentTpl">Cadet Enlistment Welcome Template ID (Optional)</label>
+                      <input type="text" id="adminEmailEnrollmentTpl" placeholder="e.g. template_cadet_welcome" style="font-family: monospace; font-size: 12.5px;">
+                    </div>
+                  </div>
+                  <div class="form-group-modal" style="margin-top: 10px; background: rgba(255, 107, 0, 0.05); padding: 14px; border-radius: 6px; border: 1px dashed var(--primary-orange);">
+                    <label for="adminGmailAppPassword" style="color: var(--primary-orange); font-weight: 700;">
+                      <i class="fa-brands fa-google"></i> Gmail 16-Digit App Password (for Direct samyak.ssd@gmail.com Sending)
+                    </label>
+                    <input type="password" id="adminGmailAppPassword" placeholder="e.g. abcd efgh ijkl mnop" style="font-family: monospace; font-size: 13px;">
+                    <p style="font-size: 11.5px; color: var(--text-muted); margin: 6px 0 0; line-height: 1.4;">
+                      To send emails directly from <strong>samyak.ssd@gmail.com</strong>: Enable 2-Step Verification in Google ➔ Open <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color: var(--primary-orange); text-decoration: underline;">Google App Passwords</a> ➔ Generate a password for 'Mail' ➔ Paste the 16 characters here.
+                    </p>
+                  </div>
+                  <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 14px;">
+                    <button type="submit" class="btn-admin btn-admin-primary">
+                      <i class="fa-solid fa-floppy-disk"></i> Save Email Settings
+                    </button>
+                    <button type="button" class="btn-admin btn-admin-outline" onclick="testSendDonationEmail()">
+                      <i class="fa-solid fa-receipt"></i> Send Sample 80G Email
+                    </button>
+                    <button type="button" class="btn-admin btn-admin-outline" onclick="testSendEnrollmentEmail()">
+                      <i class="fa-solid fa-user-check"></i> Send Sample Enlistment Email
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Email Dispatches Ledger -->
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-paper-plane" style="color: var(--primary-orange);"></i>
+                  <h3>Live Automated Email Dispatch Log (/email_dispatches)</h3>
+                </div>
+                <span id="badgeEmailsCount" class="badge-status badge-info">0 Dispatches</span>
+              </div>
+              <div class="table-responsive">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Date & Time</th>
+                      <th>Recipient</th>
+                      <th>Email Type</th>
+                      <th>Reference ID</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="emailDispatchesTableBody">
+                    <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No email dispatches recorded yet.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Seed / Reset Sample Data -->
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-arrows-rotate" style="color: var(--primary-orange);"></i>
+                  <h3>Seed Official Dataset</h3>
+                </div>
+              </div>
+              <div style="padding: 24px;">
+                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 18px;">
+                  Seed or refresh the official 1927–2026 verified sample dataset (Dispatches, Campaigns, Historical Gallery, and Leadership Council) to Supabase Cloud Database.
+                </p>
+                <button type="button" class="btn-admin btn-admin-primary" onclick="seedDatabaseFromAdmin()">
+                  <i class="fa-solid fa-cloud-arrow-up"></i> Seed Official SSD Data
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 11: SYSTEM AUDIT LOGS (IMMUTABLE)
+             ========================================== -->
+        <section id="viewAuditlogs" class="view-panel">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-list-check" style="color: var(--primary-orange);"></i>
+                <div>
+                  <h3>Immutable System Audit Trail (/audit-logs)</h3>
+                  <p style="font-size: 12.5px; color: var(--text-muted); margin: 2px 0 0;">Cryptographically recorded administrative actions, approval decisions, recommendations, payment events, and security logs.</p>
+                </div>
+              </div>
+              <div class="card-panel-actions">
+                <button type="button" class="btn-admin btn-admin-outline" onclick="loadAuditLogsView()">
+                  <i class="fa-solid fa-arrows-rotate"></i> Refresh Logs
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Officer / Actor</th>
+                    <th>Action</th>
+                    <th>Entity Type & ID</th>
+                    <th>Jurisdiction</th>
+                    <th>IP Address</th>
+                  </tr>
+                </thead>
+                <tbody id="auditLogsTableBody">
+                  <tr><td colspan="6" style="text-align: center; padding: 30px;">Loading immutable audit records...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ==========================================================================
+       CREATE / EDIT MODALS
+       ========================================================================== -->
+
+  <!-- News Dispatch Modal -->
+  <div id="modalNews" class="admin-modal">
+    <div class="admin-modal-card">
+      <div class="admin-modal-header">
+        <h3 id="modalNewsHeading">Publish New Gazette Notice</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalNews')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formNews" onsubmit="handleSaveNews(event)">
+        <div class="admin-modal-body">
+          <input type="hidden" id="newsItemKey">
+          <div class="form-group-modal">
+            <label for="newsTitle">Notice Headline / Title</label>
+            <input type="text" id="newsTitle" required placeholder="e.g. Centenary Parade Drill Announced">
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="newsCategory">Gazette Category</label>
+              <select id="newsCategory" required>
+                <option value="Central Command">Central Command</option>
+                <option value="Cadet Training">Cadet Training</option>
+                <option value="Centenary">Centenary 2027</option>
+                <option value="Mahila Dal">Mahila Dal</option>
+                <option value="Legal Cell">Legal Cell</option>
+                <option value="History & Memorial">History & Memorial</option>
+              </select>
+            </div>
+            <div class="form-group-modal">
+              <label for="newsDate">Notice Date</label>
+              <input type="text" id="newsDate" required placeholder="e.g. October 14, 2026">
+            </div>
+          </div>
+          <div class="form-group-modal">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+              <span>Featured Image Banner</span>
+              <small style="color: var(--text-muted); font-weight: normal;">Upload from Device or paste URL</small>
+            </label>
+            <div class="admin-image-upload-box">
+              <div class="admin-file-picker-wrapper">
+                <label class="btn-admin-file-upload">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                  <span>Upload Image from Device</span>
+                  <input type="file" id="newsImageFileInput" accept="image/*" style="display: none;" onchange="handleLocalImageUpload(this, 'newsImageUrl', 'newsImagePreview')">
+                </label>
+                <span class="upload-or-divider">OR</span>
+              </div>
+              <input type="text" id="newsImageUrl" required placeholder="Paste direct image URL (https://...) or choose file above" oninput="updateImagePreview('newsImagePreview', this.value)">
+              <div class="image-preview-wrapper" style="margin-top: 10px; display: flex; align-items: center; gap: 14px;">
+                <img id="newsImagePreview" src="" alt="Preview" style="max-height: 100px; max-width: 140px; object-fit: cover; border-radius: 8px; border: 2px solid var(--primary-orange); display: none;">
+                <div id="newsImagePreviewInfo" style="font-size: 12px; line-height: 1.4; display: none;"></div>
+                <button type="button" class="btn-clear-img" onclick="clearImageUpload('newsImageUrl', 'newsImagePreview', 'newsImageFileInput')" style="margin-left: auto; border: 1px solid #CBD5E1; background: #FFF; color: #DC2626; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; display: none;" id="newsImageClearBtn">
+                  <i class="fa-solid fa-trash-can"></i> Remove
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group-modal">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+              <span><i class="fa-solid fa-file-pdf" style="color: #DC2626;"></i> Official PDF Circular / Gazette Document (Optional)</span>
+              <small style="color: var(--text-muted); font-weight: normal;">Upload PDF from Device or paste URL</small>
+            </label>
+            <div class="admin-pdf-upload-box">
+              <div class="admin-file-picker-wrapper">
+                <label class="btn-admin-pdf-upload">
+                  <i class="fa-solid fa-file-arrow-up"></i>
+                  <span>Upload PDF from Device</span>
+                  <input type="file" id="newsPdfFileInput" accept="application/pdf" style="display: none;" onchange="handleLocalPdfUpload(this, 'newsPdfUrl', 'newsPdfPreview')">
+                </label>
+                <span class="upload-or-divider">OR</span>
+              </div>
+              <input type="text" id="newsPdfUrl" placeholder="Paste direct PDF document URL (https://.../circular.pdf) or upload above" oninput="updatePdfPreview('newsPdfPreview', this.value)">
+              <div id="newsPdfPreview" style="display: none;"></div>
+            </div>
+          </div>
+          <div class="form-group-modal">
+            <label for="newsExcerpt">Executive Summary / Excerpt</label>
+            <textarea id="newsExcerpt" rows="3" required placeholder="Brief summary of the official announcement..."></textarea>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalNews')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-floppy-disk"></i> Save Dispatch</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Event Modal -->
+  <div id="modalEvent" class="admin-modal">
+    <div class="admin-modal-card">
+      <div class="admin-modal-header">
+        <h3 id="modalEventHeading">Schedule New Event</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalEvent')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formEvent" onsubmit="handleSaveEvent(event)">
+        <div class="admin-modal-body">
+          <input type="hidden" id="eventItemKey">
+          <div class="form-group-modal">
+            <label for="eventTitle">Event Title</label>
+            <input type="text" id="eventTitle" required placeholder="e.g. 99th SSD Foundation Day National Parade">
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="eventDate">Date & Time</label>
+              <input type="text" id="eventDate" required placeholder="e.g. Sept 24, 2026">
+            </div>
+            <div class="form-group-modal">
+              <label for="eventStatus">Status</label>
+              <select id="eventStatus">
+                <option value="upcoming">Upcoming</option>
+                <option value="completed">Completed</option>
+                <option value="postponed">Postponed</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group-modal">
+            <label for="eventLocation">Venue / Ground / City</label>
+            <input type="text" id="eventLocation" required placeholder="e.g. Deekshabhoomi Ground, Nagpur">
+          </div>
+          <div class="form-group-modal">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+              <span><i class="fa-solid fa-file-pdf" style="color: #DC2626;"></i> Event Itinerary / Circular PDF (Optional)</span>
+              <small style="color: var(--text-muted); font-weight: normal;">Upload PDF from Device or paste URL</small>
+            </label>
+            <div class="admin-pdf-upload-box">
+              <div class="admin-file-picker-wrapper">
+                <label class="btn-admin-pdf-upload">
+                  <i class="fa-solid fa-file-arrow-up"></i>
+                  <span>Upload PDF from Device</span>
+                  <input type="file" id="eventPdfFileInput" accept="application/pdf" style="display: none;" onchange="handleLocalPdfUpload(this, 'eventPdfUrl', 'eventPdfPreview')">
+                </label>
+                <span class="upload-or-divider">OR</span>
+              </div>
+              <input type="text" id="eventPdfUrl" placeholder="Paste direct PDF document URL (https://.../schedule.pdf) or upload above" oninput="updatePdfPreview('eventPdfPreview', this.value)">
+              <div id="eventPdfPreview" style="display: none;"></div>
+            </div>
+          </div>
+          <div class="form-group-modal">
+            <label for="eventDescription">Event Details & Schedule</label>
+            <textarea id="eventDescription" rows="3" required placeholder="Ceremonial parade itinerary, flag protocol..."></textarea>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalEvent')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-floppy-disk"></i> Save Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Campaign Modal -->
+  <div id="modalCampaign" class="admin-modal">
+    <div class="admin-modal-card">
+      <div class="admin-modal-header">
+        <h3 id="modalCampaignHeading">Create Ongoing Campaign</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalCampaign')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formCampaign" onsubmit="handleSaveCampaign(event)">
+        <div class="admin-modal-body">
+          <input type="hidden" id="campaignItemKey">
+          <div class="form-group-modal">
+            <label for="campaignTitle">Mission / Campaign Title</label>
+            <input type="text" id="campaignTitle" required placeholder="e.g. Nationwide Constitutional Literacy Yatra">
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="campaignCategory">Division Category</label>
+              <input type="text" id="campaignCategory" required placeholder="e.g. Education & Legal">
+            </div>
+            <div class="form-group-modal">
+              <label for="campaignCauseKey">Cause Key (for donations)</label>
+              <input type="text" id="campaignCauseKey" required placeholder="e.g. Centenary 2027 Fund">
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="campaignTarget">Target Goal (₹)</label>
+              <input type="number" id="campaignTarget" required min="1000" placeholder="5000000">
+            </div>
+            <div class="form-group-modal">
+              <label for="campaignRaised">Funds Raised So Far (₹)</label>
+              <input type="number" id="campaignRaised" required min="0" placeholder="3850000">
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="campaignVolunteers">Volunteers Count</label>
+              <input type="text" id="campaignVolunteers" required placeholder="10,000+">
+            </div>
+            <div class="form-group-modal">
+              <label for="campaignDistricts">Districts Reach</label>
+              <input type="text" id="campaignDistricts" required placeholder="150+">
+            </div>
+          </div>
+          <div class="form-group-modal">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+              <span>Campaign Banner Image</span>
+              <small style="color: var(--text-muted); font-weight: normal;">Upload from Device or paste URL</small>
+            </label>
+            <div class="admin-image-upload-box">
+              <div class="admin-file-picker-wrapper">
+                <label class="btn-admin-file-upload">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                  <span>Upload Image from Device</span>
+                  <input type="file" id="campaignImageFileInput" accept="image/*" style="display: none;" onchange="handleLocalImageUpload(this, 'campaignImageUrl', 'campaignImagePreview')">
+                </label>
+                <span class="upload-or-divider">OR</span>
+              </div>
+              <input type="text" id="campaignImageUrl" required placeholder="Paste direct image URL (https://...) or choose file above" oninput="updateImagePreview('campaignImagePreview', this.value)">
+              <div class="image-preview-wrapper" style="margin-top: 10px; display: flex; align-items: center; gap: 14px;">
+                <img id="campaignImagePreview" src="" alt="Preview" style="max-height: 100px; max-width: 140px; object-fit: cover; border-radius: 8px; border: 2px solid var(--primary-orange); display: none;">
+                <div id="campaignImagePreviewInfo" style="font-size: 12px; line-height: 1.4; display: none;"></div>
+                <button type="button" class="btn-clear-img" onclick="clearImageUpload('campaignImageUrl', 'campaignImagePreview', 'campaignImageFileInput')" style="margin-left: auto; border: 1px solid #CBD5E1; background: #FFF; color: #DC2626; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; display: none;" id="campaignImageClearBtn">
+                  <i class="fa-solid fa-trash-can"></i> Remove
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group-modal">
+            <label for="campaignDescription">Campaign Purpose</label>
+            <textarea id="campaignDescription" rows="2" required placeholder="Brief description of the initiative..."></textarea>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalCampaign')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-floppy-disk"></i> Save Campaign</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Gallery Photo Modal -->
+  <div id="modalGallery" class="admin-modal">
+    <div class="admin-modal-card">
+      <div class="admin-modal-header">
+        <h3>Add Photo to Archives</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalGallery')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formGallery" onsubmit="handleSaveGallery(event)">
+        <div class="admin-modal-body">
+          <div class="form-group-modal">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+              <span>Archive Photograph</span>
+              <small style="color: var(--text-muted); font-weight: normal;">Upload from Device or paste URL</small>
+            </label>
+            <div class="admin-image-upload-box">
+              <div class="admin-file-picker-wrapper">
+                <label class="btn-admin-file-upload">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                  <span>Upload Photo from Device</span>
+                  <input type="file" id="galleryImageFileInput" accept="image/*" style="display: none;" onchange="handleLocalImageUpload(this, 'galleryImageUrl', 'galleryImagePreview')">
+                </label>
+                <span class="upload-or-divider">OR</span>
+              </div>
+              <input type="text" id="galleryImageUrl" required placeholder="Paste direct image URL (https://...) or choose file above" oninput="updateImagePreview('galleryImagePreview', this.value)">
+              <div class="image-preview-wrapper" style="margin-top: 10px; display: flex; align-items: center; gap: 14px;">
+                <img id="galleryImagePreview" src="" alt="Preview" style="max-height: 100px; max-width: 140px; object-fit: cover; border-radius: 8px; border: 2px solid var(--primary-orange); display: none;">
+                <div id="galleryImagePreviewInfo" style="font-size: 12px; line-height: 1.4; display: none;"></div>
+                <button type="button" class="btn-clear-img" onclick="clearImageUpload('galleryImageUrl', 'galleryImagePreview', 'galleryImageFileInput')" style="margin-left: auto; border: 1px solid #CBD5E1; background: #FFF; color: #DC2626; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; display: none;" id="galleryImageClearBtn">
+                  <i class="fa-solid fa-trash-can"></i> Remove
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group-modal">
+            <label for="galleryCaption">Photo Caption</label>
+            <input type="text" id="galleryCaption" required placeholder="e.g. SSD Uniform Cadet Corps Ceremonial March Past">
+          </div>
+          <div class="form-group-modal">
+            <label for="galleryCategory">Category</label>
+            <select id="galleryCategory" required>
+              <option value="Cadet Drills">Cadet Drills</option>
+              <option value="Mahila Dal">Mahila Dal</option>
+              <option value="Historical">Historical</option>
+              <option value="Constitution">Constitution</option>
+              <option value="Youth Front">Youth Front</option>
+              <option value="Community Sewa">Community Sewa</option>
+              <option value="Leadership">Leadership</option>
+            </select>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalGallery')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-upload"></i> Add to Archives</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Member Details & Verification Modal -->
+  <div id="modalMemberDetail" class="admin-modal">
+    <div class="admin-modal-card">
+      <div class="admin-modal-header">
+        <h3>Sainik Enlistment Record</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalMemberDetail')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="admin-modal-body" id="memberDetailContent">
+        <!-- Injected dynamically -->
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalMemberDetail')">Close</button>
+        <button type="button" id="btnMemberIdCardModal" class="btn-admin btn-admin-outline" style="color: var(--primary-orange); border-color: var(--primary-orange);"><i class="fa-solid fa-id-card"></i> Digital ID Card</button>
+        <button type="button" id="btnApproveMemberModal" class="btn-admin btn-admin-primary"><i class="fa-solid fa-check"></i> Approve Enlistment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Digital ID Card Modal -->
+  <div id="modalDigitalIdCard" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 580px;">
+      <div class="admin-modal-header" style="background: var(--navy-dark); color: white;">
+        <h3 style="display: flex; align-items: center; gap: 8px; font-size: 16px; color: white;">
+          <i class="fa-solid fa-id-card" style="color: var(--primary-orange);"></i> Official Sainik Digital ID Card
+        </h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalDigitalIdCard')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="admin-modal-body" style="padding: 24px; text-align: center; background: #0b1526;">
+        <div style="display: flex; justify-content: center; margin-bottom: 16px;">
+          <canvas id="adminIdCardCanvas" width="500" height="315" style="width: 100%; max-width: 480px; height: auto; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);"></canvas>
+        </div>
+        <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 12px;">
+          <button type="button" class="btn-admin btn-admin-outline" style="color: #cbd5e1; border-color: #475569;" onclick="flipAdminIdCard()">
+            <i class="fa-solid fa-arrows-rotate"></i> Flip View
+          </button>
+          <button type="button" class="btn-admin btn-admin-primary" onclick="downloadAdminIdCard()">
+            <i class="fa-solid fa-download"></i> Download PNG
+          </button>
+          <button type="button" class="btn-admin btn-admin-outline" style="color: #cbd5e1; border-color: #475569;" onclick="printAdminIdCard()">
+            <i class="fa-solid fa-print"></i> Print Card
+          </button>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalDigitalIdCard')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual Add Member Modal -->
+  <div id="modalAddMember" class="admin-modal">
+    <div class="admin-modal-card">
+      <div class="admin-modal-header">
+        <h3>Enlist New Sainik Manually</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalAddMember')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formAddMember" onsubmit="handleManualAddMember(event)">
+        <div class="admin-modal-body">
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="manualMemberName">Full Name</label>
+              <input type="text" id="manualMemberName" required placeholder="e.g. Siddharth Meshram">
+            </div>
+            <div class="form-group-modal">
+              <label for="manualMemberPhone">Phone Number</label>
+              <input type="tel" id="manualMemberPhone" required placeholder="9876543210">
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="manualMemberEmail">Email Address</label>
+              <input type="email" id="manualMemberEmail" required placeholder="siddharth@example.com">
+            </div>
+            <div class="form-group-modal">
+              <label for="manualMemberState">State</label>
+              <input type="text" id="manualMemberState" required placeholder="Maharashtra">
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="manualMemberCity">City / District</label>
+              <input type="text" id="manualMemberCity" required placeholder="Nagpur">
+            </div>
+            <div class="form-group-modal">
+              <label for="manualMemberWing">Primary Wing</label>
+              <select id="manualMemberWing">
+                <option value="Central Cadet Corps (Sainik Wing)">Central Cadet Corps (Sainik Wing)</option>
+                <option value="Mahila Samata Sainik Dal">Mahila Samata Sainik Dal</option>
+                <option value="Constitutional & Legal Cell">Constitutional & Legal Cell</option>
+                <option value="Youth & Student Front">Youth & Student Front</option>
+                <option value="Community Sewa & Relief Force">Community Sewa & Relief Force</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalAddMember')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-user-check"></i> Register Sainik</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- GOVERNING BODY APPOINTMENT / EDIT MODAL -->
+  <div id="modalLeadership" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 740px;">
+      <div class="admin-modal-header">
+        <h3 id="modalLeadershipHeading">Appoint Council Member</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalLeadership')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formLeadership" onsubmit="handleSaveLeadership(event)">
+        <div class="admin-modal-body">
+          <input type="hidden" id="leadItemKey">
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="leadName">Full Name</label>
+              <input type="text" id="leadName" required placeholder="e.g. Dr. Siddharth M. Meshram">
+            </div>
+            <div class="form-group-modal">
+              <label for="leadDesignation">Designation / Title (English & Hindi)</label>
+              <input type="text" id="leadDesignation" required placeholder="e.g. National President (राष्ट्रीय अध्यक्ष)">
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="leadLevel">Command Tier / Level</label>
+              <select id="leadLevel" onchange="onLeadTierChange()">
+                <option value="national">Tier 1: National Supreme Command (राष्ट्रीय सर्वोच्च कमान)</option>
+                <option value="state">Tier 2: State Governing Body (प्रदेश कार्यकारिणी)</option>
+                <option value="district">Tier 3: District Governing Body (जिल्हा कार्यकारिणी)</option>
+              </select>
+            </div>
+            <div class="form-group-modal">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label for="leadState">State / Chapter</label>
+                <button type="button" onclick="openAddStateModal()" style="border: none; background: none; color: var(--primary-orange); font-size: 11px; font-weight: 700; cursor: pointer;">
+                  <i class="fa-solid fa-plus"></i> Add State
+                </button>
+              </div>
+              <select id="leadState" onchange="onLeadStateChange()">
+                <option value="National HQ">National HQ (All-India)</option>
+                <option value="Maharashtra">Maharashtra (महाराष्ट्र)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label for="leadDistrict">District Division / Command Area</label>
+                <button type="button" onclick="openAddDistrictModal(document.getElementById('leadState').value)" style="border: none; background: none; color: var(--primary-orange); font-size: 11px; font-weight: 700; cursor: pointer;">
+                  <i class="fa-solid fa-plus"></i> Add District
+                </button>
+              </div>
+              <input type="text" id="leadDistrict" list="districtDataList" placeholder="e.g. Nagpur / Mumbai State Directorate" oninput="onLeadDistrictInputChange(this.value)">
+              <datalist id="districtDataList">
+                <option value="Nagpur">
+                <option value="Mumbai City">
+                <option value="Mumbai Suburban">
+                <option value="Pune">
+                <option value="Amravati">
+                <option value="Nashik">
+                <option value="Chhatrapati Sambhaji Nagar">
+                <option value="Kolhapur">
+              </datalist>
+            </div>
+            <div class="form-group-modal">
+              <label for="leadRankBadge">Rank Badge Label</label>
+              <input type="text" id="leadRankBadge" required placeholder="e.g. Maharashtra State Command">
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="leadCategory">Council Wing / Category</label>
+              <select id="leadCategory" required>
+                <option value="Supreme Council">Supreme Council (सर्वोच्च परिषद)</option>
+                <option value="Executive Council">Executive Council (कार्यकारिणी)</option>
+                <option value="Cadet Directorate">Cadet Directorate (दल संचलनालय)</option>
+                <option value="IT & Digital Media Cell">IT & Digital Media Cell (आईटी एवं डिजिटल मीडिया प्रकोष्ठ)</option>
+                <option value="Mahila Dal">Mahila Dal (महिला दल)</option>
+                <option value="Legal Cell">Legal Cell (विधिक प्रकोष्ठ)</option>
+                <option value="Finance & Audit">Finance & Audit (कोषागार)</option>
+                <option value="Advisory Board">Advisory Board (सल्लागार मंडळ)</option>
+              </select>
+            </div>
+            <div class="form-group-modal">
+              <label for="leadOrder">Display Order Priority (1 = Top)</label>
+              <input type="number" id="leadOrder" value="1" min="1" max="100">
+            </div>
+          </div>
+          <div class="form-group-modal">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+              <span>Officer Photograph</span>
+              <small style="color: var(--text-muted); font-weight: normal;">Upload from Device or paste URL</small>
+            </label>
+            <div class="admin-image-upload-box">
+              <div class="admin-file-picker-wrapper">
+                <label class="btn-admin-file-upload">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                  <span>Upload Photo from Device</span>
+                  <input type="file" id="leadPhotoFileInput" accept="image/*" style="display: none;" onchange="handleLocalImageUpload(this, 'leadPhotoUrl', 'leadPhotoPreview', 600, 0.88)">
+                </label>
+                <span class="upload-or-divider">OR</span>
+              </div>
+              <input type="text" id="leadPhotoUrl" required placeholder="Paste direct image URL (https://...) or choose photo above" oninput="updateImagePreview('leadPhotoPreview', this.value)">
+              <div class="image-preview-wrapper" style="margin-top: 10px; display: flex; align-items: center; gap: 14px;">
+                <img id="leadPhotoPreview" src="" alt="Officer Photo Preview" style="display: none; width: 68px; height: 68px; object-fit: cover; border-radius: 50%; border: 3px solid var(--primary-orange); box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+                <div id="leadPhotoPreviewInfo" style="font-size: 12px; line-height: 1.4; display: none;"></div>
+                <button type="button" class="btn-clear-img" onclick="clearImageUpload('leadPhotoUrl', 'leadPhotoPreview', 'leadPhotoFileInput')" style="margin-left: auto; border: 1px solid #CBD5E1; background: #FFF; color: #DC2626; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; display: none;" id="leadPhotoClearBtn">
+                  <i class="fa-solid fa-trash-can"></i> Remove
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group-modal">
+            <label for="leadCredentials">Official Credentials & Location</label>
+            <input type="text" id="leadCredentials" required placeholder="e.g. M.A. Social Work | Mumbai & Nagpur State HQ">
+          </div>
+          <div class="form-group-modal">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+              <span><i class="fa-solid fa-file-pdf" style="color: #DC2626;"></i> Officer Dossier / Appointment Order PDF (Optional)</span>
+              <small style="color: var(--text-muted); font-weight: normal;">Upload PDF from Device or paste URL</small>
+            </label>
+            <div class="admin-pdf-upload-box">
+              <div class="admin-file-picker-wrapper">
+                <label class="btn-admin-pdf-upload">
+                  <i class="fa-solid fa-file-arrow-up"></i>
+                  <span>Upload Dossier PDF</span>
+                  <input type="file" id="leadPdfFileInput" accept="application/pdf" style="display: none;" onchange="handleLocalPdfUpload(this, 'leadPdfUrl', 'leadPdfPreview')">
+                </label>
+                <span class="upload-or-divider">OR</span>
+              </div>
+              <input type="text" id="leadPdfUrl" placeholder="Paste direct PDF URL or upload .pdf above" oninput="updatePdfPreview('leadPdfPreview', this.value)">
+              <div id="leadPdfPreview" style="display: none;"></div>
+            </div>
+          </div>
+          <div class="form-group-modal">
+            <label for="leadBio">Biographical Summary & Key Contributions</label>
+            <textarea id="leadBio" rows="3" required placeholder="Outline tenure, leadership achievements, and movement contributions..."></textarea>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalLeadership')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-floppy-disk"></i> Save Council Member</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD NEW STATE CHAPTER MODAL -->
+  <div id="modalAddState" class="admin-modal">
+    <div class="admin-modal-card">
+      <div class="admin-modal-header">
+        <h3 id="modalAddStateHeading"><i class="fa-solid fa-map-location-dot" style="color: var(--primary-orange);"></i> Add New State Chapter</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalAddState')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formAddState" onsubmit="handleSaveState(event)">
+        <div class="admin-modal-body">
+          <input type="hidden" id="stateChapterKey">
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="stateName">State Name (English)</label>
+              <input type="text" id="stateName" required placeholder="e.g. Gujarat, Uttar Pradesh, Karnataka">
+            </div>
+            <div class="form-group-modal">
+              <label for="stateHindiName">State Name (Hindi / Regional)</label>
+              <input type="text" id="stateHindiName" placeholder="e.g. गुजरात, उत्तर प्रदेश">
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="stateCode">State Short Code</label>
+              <input type="text" id="stateCode" required placeholder="e.g. GJ, UP, KA, MP" style="text-transform: uppercase;">
+            </div>
+            <div class="form-group-modal">
+              <label for="stateHeadquarters">State Headquarters / Command Office</label>
+              <input type="text" id="stateHeadquarters" required placeholder="e.g. Ahmedabad State Directorate">
+            </div>
+          </div>
+          <div class="form-group-modal">
+            <label for="stateInitialDistricts">Initial Districts (Comma-separated)</label>
+            <textarea id="stateInitialDistricts" rows="3" placeholder="e.g. Ahmedabad, Surat, Vadodara, Rajkot, Bhavnagar..."></textarea>
+            <small style="color: var(--text-muted); font-size: 11px;">You can also add or remove districts one-by-one anytime after creating the state.</small>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalAddState')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-floppy-disk"></i> Save State Chapter</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD DISTRICT TO STATE MODAL -->
+  <div id="modalAddDistrict" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 480px;">
+      <div class="admin-modal-header">
+        <h3><i class="fa-solid fa-location-dot" style="color: var(--primary-orange);"></i> Add District Division</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalAddDistrict')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formAddDistrict" onsubmit="handleSaveDistrict(event)">
+        <div class="admin-modal-body">
+          <div class="form-group-modal">
+            <label for="districtTargetState">Select State Chapter</label>
+            <select id="districtTargetState" required>
+              <!-- Filled dynamically with available states -->
+            </select>
+          </div>
+          <div class="form-group-modal">
+            <label for="newDistrictName">District / City Division Name</label>
+            <input type="text" id="newDistrictName" required placeholder="e.g. Nagpur Central Command, Pune, Amravati">
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalAddDistrict')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-plus"></i> Add District</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADMIN USER AUTHORIZATION MODAL -->
+  <div id="modalAdminUser" class="admin-modal">
+    <div class="admin-modal-card">
+      <div class="admin-modal-header">
+        <h3 id="modalAdminUserHeading">Authorize New Command Officer</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalAdminUser')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formAdminUser" onsubmit="handleSaveAdminUser(event)">
+        <div class="admin-modal-body">
+          <input type="hidden" id="adminUserKey">
+          
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="newAdminOfficerId">Officer ID / Reg No</label>
+              <input type="text" id="newAdminOfficerId" required placeholder="e.g. SSD-OFF-2026-101" style="font-family: monospace; font-weight: 700; color: var(--navy-dark);">
+            </div>
+            <div class="form-group-modal">
+              <label for="newAdminBatchNo">Batch Identifier</label>
+              <input type="text" id="newAdminBatchNo" required placeholder="e.g. BATCH-2026/EXEC" style="font-family: monospace; font-weight: 600; color: var(--primary-orange);">
+            </div>
+          </div>
+
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="newAdminName">Officer Full Name</label>
+              <input type="text" id="newAdminName" required placeholder="e.g. Rahul Shinde" oninput="autoGenerateOfficerEmail(this.value)">
+              <small style="color: var(--text-muted); font-size: 11px;">Typing full name automatically crafts <code>name.surname@ssd.org</code></small>
+            </div>
+            <div class="form-group-modal">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label for="newAdminEmail" style="margin-bottom: 0;">Official Email (name.surname@ssd.org)</label>
+                <button type="button" onclick="forceGenerateOfficerEmail()" class="btn-link-action" style="font-size: 11px; color: var(--primary-orange); background: none; border: none; cursor: pointer; text-decoration: underline; font-weight: 600;">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i> Regenerate
+                </button>
+              </div>
+              <input type="text" id="newAdminEmail" required placeholder="e.g. rahul.shinde@ssd.org" style="font-family: monospace; font-weight: 600;">
+            </div>
+          </div>
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="newAdminPhone">Official Contact Phone</label>
+              <input type="text" id="newAdminPhone" placeholder="+91 98223 00000">
+            </div>
+            <div class="form-group-modal">
+              <label for="newAdminPasscode">Access Passcode / Password</label>
+              <div class="password-input-wrap">
+                <input type="password" id="newAdminPasscode" required placeholder="e.g. SSD2026!" style="font-family: monospace;">
+                <button type="button" class="btn-toggle-pass" onclick="togglePasswordVisibility('newAdminPasscode', this)" aria-label="Toggle Password Visibility">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="newAdminRole">Assigned Access Role</label>
+              <select id="newAdminRole" required onchange="handleAdminRoleChange(this.value)">
+                <option value="super_admin">Supreme Commander (Full National Super Admin Access - L7)</option>
+                <option value="central_admin">National Executive Secretariat (Central Authority - L6)</option>
+                <option value="enlistment_officer">Enlistment Scrutiny Board (Commissioning Officer - L6)</option>
+                <option value="state_official">State Directorate Officer (State Command - L5)</option>
+                <option value="regional_official">Regional Command Officer (Regional Directorate - L4)</option>
+                <option value="district_official">District Command Officer / Dalpati (District Scrutiny - L3)</option>
+                <option value="taluka_official">Taluka Executive Officer (Sub-District Ground Verification - L2)</option>
+                <option value="chapter_official">Chapter Unit Official (Local Unit - L1)</option>
+                <option value="finance_admin">National Treasury Officer (Centenary Fund & 80G Audit)</option>
+                <option value="media_admin">Chief Media & IT Cell Officer (Gazette & Media)</option>
+              </select>
+            </div>
+            <div class="form-group-modal">
+              <label for="newAdminDept">Department / Directorate Unit</label>
+              <input type="text" id="newAdminDept" placeholder="e.g. Central Cadet Directorate" required>
+            </div>
+          </div>
+
+          <!-- DYNAMIC TERRITORIAL JURISDICTION ASSIGNMENT -->
+          <div id="jurisdictionFieldsContainer" style="display: none; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;">
+            <div style="font-weight: 700; font-size: 13px; color: var(--navy-dark); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-map-location-dot" style="color: var(--primary-orange);"></i> Assigned Territorial Jurisdiction
+            </div>
+            <div class="form-grid-modal" style="margin-bottom: 0;">
+              <div class="form-group-modal" id="groupAdminState">
+                <label for="newAdminState">Assigned State</label>
+                <select id="newAdminState">
+                  <option value="">-- Select State --</option>
+                  <option value="state_mh">Maharashtra</option>
+                  <option value="state_dl">Delhi (NCT)</option>
+                  <option value="state_up">Uttar Pradesh</option>
+                  <option value="state_mp">Madhya Pradesh</option>
+                  <option value="state_br">Bihar</option>
+                  <option value="state_ka">Karnataka</option>
+                  <option value="state_rj">Rajasthan</option>
+                  <option value="state_pb">Punjab</option>
+                  <option value="state_gj">Gujarat</option>
+                  <option value="state_tg">Telangana</option>
+                  <option value="state_ap">Andhra Pradesh</option>
+                  <option value="state_tn">Tamil Nadu</option>
+                  <option value="state_wb">West Bengal</option>
+                </select>
+              </div>
+              <div class="form-group-modal" id="groupAdminRegion" style="display: none;">
+                <label for="newAdminRegion">Assigned Region</label>
+                <select id="newAdminRegion">
+                  <option value="">-- Select Region --</option>
+                  <option value="reg_mh_vidarbha">Vidarbha (Nagpur HQ)</option>
+                  <option value="reg_mh_western">Western Maharashtra (Pune Command)</option>
+                  <option value="reg_mh_konkan">Konkan & Mumbai Metropolitan</option>
+                  <option value="reg_mh_marathwada">Marathwada</option>
+                  <option value="reg_mh_north">North Maharashtra (Khandesh)</option>
+                </select>
+              </div>
+              <div class="form-group-modal" id="groupAdminDistrict" style="display: none;">
+                <label for="newAdminDistrict">Assigned District</label>
+                <select id="newAdminDistrict">
+                  <option value="">-- Select District --</option>
+                  <option value="dist_mh_nagpur">Nagpur</option>
+                  <option value="dist_mh_pune">Pune</option>
+                  <option value="dist_mh_mumbai">Mumbai City</option>
+                  <option value="dist_mh_amravati">Amravati</option>
+                  <option value="dist_mh_thane">Thane</option>
+                  <option value="dist_mh_nashik">Nashik</option>
+                  <option value="dist_dl_central">Central Delhi</option>
+                  <option value="dist_up_lucknow">Lucknow</option>
+                </select>
+              </div>
+              <div class="form-group-modal" id="groupAdminTaluka" style="display: none;">
+                <label for="newAdminTaluka">Assigned Taluka / Sub-District</label>
+                <select id="newAdminTaluka">
+                  <option value="">-- Select Taluka --</option>
+                  <option value="taluka_mh_nagpur_urban">Nagpur Urban</option>
+                  <option value="taluka_mh_nagpur_rural">Nagpur Rural</option>
+                  <option value="taluka_mh_haveli">Haveli (Pune)</option>
+                  <option value="taluka_mh_pune_city">Pune City</option>
+                </select>
+              </div>
+            </div>
+            <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 6px;">
+              <i class="fa-solid fa-shield-halved"></i> Backend Enforced: Officer will strictly be authorized within this designated territorial boundary.
+            </small>
+          </div>
+
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="newAdminStatus">Account Status</label>
+              <select id="newAdminStatus" required>
+                <option value="ACTIVE">Active (Permit Access)</option>
+                <option value="SUSPENDED">Suspended (Block Access)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalAdminUser')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-user-check"></i> Save Officer Authorization</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- BULK EXCEL / CSV OFFICER ENROLLMENT MODAL -->
+  <div id="modalBulkOfficers" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 860px;">
+      <div class="admin-modal-header" style="background: linear-gradient(135deg, #0A192F 0%, #172A45 100%); color: white;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="background: #107C41; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">
+            <i class="fa-solid fa-file-excel"></i>
+          </div>
+          <div>
+            <h3 style="margin: 0; font-size: 16px; color: white;">Bulk Officer Enrollment & Spreadsheet Synchronizer</h3>
+            <p style="margin: 2px 0 0; font-size: 12px; color: #94A3B8;">Auto-generate official <code>name.surname@ssd.org</code> emails, Officer IDs & Batch Nos</p>
+          </div>
+        </div>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalBulkOfficers')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="admin-modal-body">
+        <!-- Step 1: Download Template & Instructions -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px;">
+            <h4 style="font-size: 13px; font-weight: 700; color: var(--navy-dark); margin: 0 0 6px; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-cloud-arrow-down" style="color: var(--primary-orange);"></i> 1. Download Spreadsheet Template
+            </h4>
+            <p style="font-size: 12px; color: var(--text-muted); margin: 0 0 10px; line-height: 1.4;">
+              Get the pre-formatted Excel/CSV template with columns for Full Name, Designation, Department, Role, and Phone.
+            </p>
+            <button type="button" class="btn-admin btn-admin-outline" onclick="downloadOfficersCsvTemplate()" style="width: 100%; font-size: 12px; padding: 6px 12px;">
+              <i class="fa-solid fa-download"></i> Download Officers Template (.CSV)
+            </button>
+          </div>
+
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px;">
+            <h4 style="font-size: 13px; font-weight: 700; color: var(--navy-dark); margin: 0 0 6px; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-gears" style="color: var(--primary-orange);"></i> 2. Automated Smart Processing
+            </h4>
+            <ul style="font-size: 11.5px; color: var(--text-muted); margin: 0; padding-left: 16px; line-height: 1.5;">
+              <li>Cleans titles (e.g. <em>"Adv. Rahul Shinde"</em> &rarr; <code>rahul.shinde@ssd.org</code>)</li>
+              <li>Generates sequential IDs (e.g. <code>SSD-OFF-2026-101</code>)</li>
+              <li>Assigns active batch (e.g. <code>BATCH-2026/EXEC</code>)</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Step 2: Upload Dropzone -->
+        <div style="border: 2px dashed var(--primary-orange); background: rgba(255,107,0,0.02); border-radius: 8px; padding: 24px 16px; text-align: center; margin-bottom: 20px; cursor: pointer;" onclick="document.getElementById('bulkOfficersFileInput').click()">
+          <input type="file" id="bulkOfficersFileInput" accept=".csv, .txt, .xlsx, .xls" style="display: none;" onchange="handleBulkOfficersFileUpload(this)">
+          <i class="fa-solid fa-file-csv" style="font-size: 38px; color: var(--primary-orange); margin-bottom: 10px;"></i>
+          <h4 style="margin: 0 0 4px; font-size: 14px; color: var(--navy-dark);">Click to Select or Drag & Drop Excel / CSV Spreadsheet</h4>
+          <p style="margin: 0; font-size: 12px; color: var(--text-muted);">Supports .csv and text exports with names, designations, and units</p>
+        </div>
+
+        <!-- Step 3: Live Preview Table (Initially hidden) -->
+        <div id="bulkOfficersPreviewWrap" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h4 style="margin: 0; font-size: 13px; font-weight: 700; color: var(--navy-dark);">
+              <i class="fa-solid fa-table-list" style="color: var(--primary-orange);"></i> Parsed Records & Credentials Preview (<span id="bulkOfficersParsedCount">0</span> Officers)
+            </h4>
+            <button type="button" class="btn-admin btn-admin-outline" onclick="exportParsedCredentialsRoster()" style="font-size: 11px; padding: 4px 8px;">
+              <i class="fa-solid fa-file-export"></i> Export Credentials Roster
+            </button>
+          </div>
+          <div class="table-responsive" style="max-height: 260px; overflow-y: auto; border: 1px solid #E2E8F0; border-radius: 6px;">
+            <table class="admin-table" style="font-size: 12px;">
+              <thead>
+                <tr>
+                  <th>Officer ID</th>
+                  <th>Batch</th>
+                  <th>Officer Name</th>
+                  <th>Generated SSD Email</th>
+                  <th>Dept / Role</th>
+                  <th>Default Passcode</th>
+                </tr>
+              </thead>
+              <tbody id="bulkOfficersPreviewTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalBulkOfficers')">Cancel</button>
+        <button type="button" id="btnExecuteBulkOfficers" class="btn-admin btn-admin-primary" onclick="executeBulkOfficerEnrollment()" disabled>
+          <i class="fa-solid fa-user-plus"></i> Enroll & Provision All Officers
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHANGE PASSWORD & SECURITY MODAL -->
+  <div id="modalChangePassword" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 520px;">
+      <div class="admin-modal-header" style="background: var(--navy-dark); color: white;">
+        <h3 style="display: flex; align-items: center; gap: 8px; font-size: 16px; color: white;">
+          <i class="fa-solid fa-lock" style="color: var(--primary-orange);"></i> Change Officer Access Password
+        </h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalChangePassword')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formChangePassword" onsubmit="handleChangePassword(event)">
+        <div class="admin-modal-body">
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; font-size: 12.5px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span style="color: var(--text-muted);">Active Officer:</span>
+              <strong style="color: var(--dark-navy);" id="cpOfficerName">Commander-in-Chief</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Account Username:</span>
+              <strong style="color: var(--dark-navy);" id="cpOfficerEmail">admin@ssd.org</strong>
+            </div>
+          </div>
+
+          <div class="form-group-modal" style="margin-bottom: 14px;">
+            <label for="currentPassword">Current Passcode / Password <span style="color: var(--danger);">*</span></label>
+            <div class="password-input-wrap">
+              <input type="password" id="currentPassword" required placeholder="Enter current passcode" autocomplete="current-password">
+              <button type="button" class="btn-toggle-pass" onclick="togglePasswordVisibility('currentPassword', this)" aria-label="Toggle Password Visibility">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group-modal" style="margin-bottom: 14px;">
+            <label for="newPassword">New Password / Passcode <span style="color: var(--danger);">*</span></label>
+            <div class="password-input-wrap">
+              <input type="password" id="newPassword" required placeholder="Enter new strong password" minlength="6" autocomplete="new-password" oninput="checkPasswordStrength(this.value)">
+              <button type="button" class="btn-toggle-pass" onclick="togglePasswordVisibility('newPassword', this)" aria-label="Toggle Password Visibility">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+            <div class="password-strength-wrap">
+              <div class="password-strength-bar">
+                <div id="passwordStrengthFill" class="password-strength-fill"></div>
+              </div>
+              <div class="password-strength-text">
+                <span id="passwordStrengthLabel">Strength: Enter password (min 6 characters)</span>
+                <span id="passwordCriteria">Letters + Digits</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group-modal">
+            <label for="confirmNewPassword">Confirm New Password <span style="color: var(--danger);">*</span></label>
+            <div class="password-input-wrap">
+              <input type="password" id="confirmNewPassword" required placeholder="Re-type new password" minlength="6" autocomplete="new-password">
+              <button type="button" class="btn-toggle-pass" onclick="togglePasswordVisibility('confirmNewPassword', this)" aria-label="Toggle Password Visibility">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div id="changePasswordAlert" style="display: none; margin-top: 12px; font-size: 12.5px; padding: 8px 12px; border-radius: 6px;"></div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalChangePassword')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary">
+            <i class="fa-solid fa-shield-halved"></i> Update & Secure Password
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- OFFICIAL 80G TAX-EXEMPT DONATION RECEIPT MODAL (ADMIN) -->
+  <div id="modalAdminReceipt" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 600px;">
+      <div class="admin-modal-header" style="background: var(--navy-dark); color: white;">
+        <h3 style="display: flex; align-items: center; gap: 8px; font-size: 16px; color: white;">
+          <i class="fa-solid fa-receipt" style="color: var(--primary-orange);"></i> Official Donation Receipt (80G)
+        </h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalAdminReceipt')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="admin-modal-body" id="adminReceiptPrintArea" style="padding: 24px; background: #FFF;">
+        <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 20px; position: relative;">
+          <!-- Receipt Header -->
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--primary-orange); padding-bottom: 12px; margin-bottom: 15px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <img src="logo.png" alt="SSD Emblem" style="width: 50px; height: 50px; object-fit: contain;">
+              <div>
+                <h4 style="font-size: 15px; color: var(--navy-dark); margin: 0; font-weight: 800;">SAMATA SAINIK DAL</h4>
+                <p style="font-size: 10.5px; color: var(--text-muted); margin: 0;">Est. 24 Sept 1927 | Founder: Dr. B.R. Ambedkar</p>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <span style="background: var(--success); color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase;">80G Tax Exempt</span>
+            </div>
+          </div>
+
+          <!-- Receipt Details Grid -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; margin-bottom: 15px;">
+            <div>
+              <span style="color: var(--text-muted);">Receipt No:</span>
+              <div style="font-weight: 700; color: var(--navy-dark);" id="admReceiptNo">SSD-REC-2026-0001</div>
+            </div>
+            <div>
+              <span style="color: var(--text-muted);">Payment ID (Razorpay):</span>
+              <div style="font-weight: 700; color: var(--navy-dark); font-family: monospace;" id="admReceiptPayId">—</div>
+            </div>
+            <div>
+              <span style="color: var(--text-muted);">Date & Time:</span>
+              <div style="font-weight: 700; color: var(--navy-dark);" id="admReceiptDate">-</div>
+            </div>
+            <div>
+              <span style="color: var(--text-muted);">Payment Status:</span>
+              <div style="font-weight: 700; color: var(--success);">SUCCESS / CAPTURED</div>
+            </div>
+          </div>
+
+          <!-- Donor & Amount Block -->
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 12px; margin-bottom: 15px; font-size: 12.5px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <span style="color: var(--text-muted);">Donor Name:</span>
+              <strong style="color: var(--navy-dark);" id="admReceiptDonorName">-</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <span style="color: var(--text-muted);">PAN Number:</span>
+              <strong style="color: var(--navy-dark);" id="admReceiptDonorPan">N/A</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <span style="color: var(--text-muted);">Cause Allocated:</span>
+              <strong style="color: var(--primary-orange);" id="admReceiptCause">-</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding-top: 6px; border-top: 1px dashed #CBD5E1; font-size: 14px;">
+              <span style="font-weight: 700; color: var(--navy-dark);">Amount Contributed:</span>
+              <strong style="color: var(--success); font-size: 16px;" id="admReceiptAmount">₹1,000</strong>
+            </div>
+          </div>
+
+          <div style="font-size: 10.5px; color: #777; line-height: 1.4; text-align: center; border-top: 1px solid #E2E8F0; padding-top: 10px;">
+            This is an official computer-generated digital receipt under 80G provisions and does not require a physical signature.<br>
+            <em>Jai Bhim! In service of Liberty, Equality, and Fraternity.</em>
+          </div>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin btn-admin-primary" onclick="resendAdminReceiptEmail()"><i class="fa-solid fa-paper-plane"></i> Email Receipt to Donor</button>
+        <button type="button" class="btn-admin btn-admin-navy" onclick="printAdminReceiptArea()"><i class="fa-solid fa-print"></i> Print Official Receipt</button>
+        <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalAdminReceipt')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       HIERARCHICAL SAINIK APPLICATION REVIEW & DECISION MODAL
+       ========================================================================== -->
+  <div id="modalReviewDecision" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 820px;">
+      <div class="admin-modal-header">
+        <div class="admin-modal-title" style="display: flex; align-items: center; gap: 10px;">
+          <i class="fa-solid fa-file-shield" style="color: var(--primary-orange); font-size: 20px;"></i>
+          <div>
+            <h3 style="margin: 0; font-size: 16px;">Sainik Enlistment Review & Hierarchy Action</h3>
+            <span style="font-size: 12px; font-family: monospace; color: var(--text-muted);" id="reviewModalAppId">SSD-2026-XXXXXX</span>
+          </div>
+        </div>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalReviewDecision')" aria-label="Close Modal">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="admin-modal-body" style="max-height: 75vh; overflow-y: auto;">
+        
+        <!-- Applicant Top Card -->
+        <div style="display: flex; gap: 20px; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin-bottom: 20px;">
+          <img id="reviewApplicantPhoto" src="logo.png" onerror="this.onerror=null; this.src='logo.png';" alt="Applicant Photo" style="width: 80px; height: 95px; border-radius: 6px; object-fit: cover; border: 2px solid var(--navy-dark); background: #ffffff;">
+          <div style="flex: 1;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <h3 id="reviewApplicantName" style="margin: 0 0 4px; color: var(--navy-dark); font-size: 18px;">Applicant Name</h3>
+                <div id="reviewApplicantWing" style="font-size: 13px; font-weight: 700; color: var(--primary-orange);">Central Cadet Corps</div>
+              </div>
+              <span id="reviewApplicantStatusPill" class="badge-status badge-pending">SUBMITTED</span>
+            </div>
+            <div style="font-size: 12.5px; color: #64748b; margin-top: 6px;">
+              <span><i class="fa-solid fa-location-dot"></i> <span id="reviewApplicantLocation">Nagpur, Maharashtra</span></span> &bull; 
+              <span><i class="fa-solid fa-phone"></i> <span id="reviewApplicantPhone">+91 ...</span></span> &bull; 
+              <span><i class="fa-solid fa-envelope"></i> <span id="reviewApplicantEmail">email@...</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Details Grid -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; font-size: 13px;">
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px;">
+            <div style="font-size: 11px; color: #64748b; font-weight: 700;">DATE OF BIRTH</div>
+            <div id="reviewApplicantDob" style="font-weight: 600; color: #0f172a;">-</div>
+          </div>
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px;">
+            <div style="font-size: 11px; color: #64748b; font-weight: 700;">BLOOD GROUP</div>
+            <div id="reviewApplicantBlood" style="font-weight: 600; color: #0f172a;">-</div>
+          </div>
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px;">
+            <div style="font-size: 11px; color: #64748b; font-weight: 700;">GENDER</div>
+            <div id="reviewApplicantGender" style="font-weight: 600; color: #0f172a;">-</div>
+          </div>
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px;">
+            <div style="font-size: 11px; color: #64748b; font-weight: 700;">QUALIFICATION</div>
+            <div id="reviewApplicantEdu" style="font-weight: 600; color: #0f172a;">-</div>
+          </div>
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px;">
+            <div style="font-size: 11px; color: #64748b; font-weight: 700;">OCCUPATION</div>
+            <div id="reviewApplicantOcc" style="font-weight: 600; color: #0f172a;">-</div>
+          </div>
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px;">
+            <div style="font-size: 11px; color: #64748b; font-weight: 700;">TALUKA / ADDRESS</div>
+            <div id="reviewApplicantAddress" style="font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">-</div>
+          </div>
+        </div>
+
+        <!-- Special Skills & Remarks -->
+        <div style="background: #f1f5f9; padding: 12px 14px; border-radius: 6px; font-size: 12.5px; margin-bottom: 20px;">
+          <strong>Prior Service / Special Skills:</strong>
+          <span id="reviewApplicantSkills" style="color: #334155;">None mentioned</span>
+        </div>
+
+        <!-- Immutable Approval History Timeline -->
+        <h4 style="margin: 0 0 10px; font-size: 14px; color: var(--navy-dark);"><i class="fa-solid fa-clock-rotate-left"></i> Approval History & Audit Log</h4>
+        <div id="reviewHistoryTimeline" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px; max-height: 180px; overflow-y: auto; font-size: 12.5px; margin-bottom: 20px;">
+          <!-- Dynamically populated -->
+        </div>
+
+        <!-- Sainik Cadre Assessment & Evaluation Rubric (SSD-STD-1927) -->
+        <div style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 18px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h4 style="margin: 0 0 3px; font-size: 15px; color: var(--navy-dark); display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-list-check" style="color: var(--primary-orange);"></i>
+                Sainik Cadre Assessment & Evaluation Rubric
+              </h4>
+              <span style="font-size: 11.5px; color: #64748b; font-weight: 500;">Official 6-Point Enlistment Criteria Verification (SSD-STD-1927)</span>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span id="assessmentScoreBadge" style="background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 20px; font-weight: 700; font-size: 12px; border: 1px solid #cbd5e1;">
+                Score: <span id="assessmentScoreCount">0</span>/6 (<span id="assessmentScorePct">0</span>%)
+              </span>
+              <span id="assessmentTierBadge" class="badge-status badge-pending" style="font-size: 11px;">PENDING EVALUATION</span>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons for Rubric -->
+          <div style="display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;">
+            <button type="button" class="btn-admin" style="font-size: 11.5px; padding: 5px 10px; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;" onclick="quickSetAssessment('all_compliant')">
+              <i class="fa-solid fa-circle-check"></i> Mark All Compliant (6/6)
+            </button>
+            <button type="button" class="btn-admin" style="font-size: 11.5px; padding: 5px 10px; background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa;" onclick="quickSetAssessment('flag_discrepancy')">
+              <i class="fa-solid fa-triangle-exclamation"></i> Flag Discrepancies
+            </button>
+            <button type="button" class="btn-admin btn-admin-outline" style="font-size: 11.5px; padding: 5px 10px;" onclick="quickSetAssessment('reset')">
+              <i class="fa-solid fa-rotate-left"></i> Reset Rubric
+            </button>
+            <button type="button" class="btn-admin btn-admin-outline" style="font-size: 11.5px; padding: 5px 10px; margin-left: auto;" onclick="autoGenerateAssessmentRemarks()">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Generate Remarks
+            </button>
+          </div>
+
+          <!-- 6-Point Criteria Grid -->
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;" id="assessmentCriteriaGrid">
+            
+            <!-- Criterion 1: Age & Eligibility -->
+            <label class="assessment-criterion-card" for="crit_age" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; transition: all 0.2s ease;">
+              <input type="checkbox" id="crit_age" name="assessment_crit" value="crit_age" onchange="calculateAssessmentScore()" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 12.5px; color: #0f172a; display: flex; justify-content: space-between;">
+                  <span>1. Age & Minimum Eligibility</span>
+                  <span id="crit_age_status" style="font-size: 11px; color: #94a3b8;">Pending</span>
+                </div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Applicant is &ge; 18 years of age with verified Date of Birth.</div>
+              </div>
+            </label>
+
+            <!-- Criterion 2: Territorial Jurisdiction -->
+            <label class="assessment-criterion-card" for="crit_jurisdiction" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; transition: all 0.2s ease;">
+              <input type="checkbox" id="crit_jurisdiction" name="assessment_crit" value="crit_jurisdiction" onchange="calculateAssessmentScore()" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 12.5px; color: #0f172a; display: flex; justify-content: space-between;">
+                  <span>2. Territorial Jurisdiction</span>
+                  <span id="crit_jurisdiction_status" style="font-size: 11px; color: #94a3b8;">Pending</span>
+                </div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Resides within declared district/state boundary unit.</div>
+              </div>
+            </label>
+
+            <!-- Criterion 3: Photo ID & Document Legibility -->
+            <label class="assessment-criterion-card" for="crit_photo_id" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; transition: all 0.2s ease;">
+              <input type="checkbox" id="crit_photo_id" name="assessment_crit" value="crit_photo_id" onchange="calculateAssessmentScore()" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 12.5px; color: #0f172a; display: flex; justify-content: space-between;">
+                  <span>3. Photo & Document Legibility</span>
+                  <span id="crit_photo_id_status" style="font-size: 11px; color: #94a3b8;">Pending</span>
+                </div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Badge photo meets uniform standard; clear face & documents.</div>
+              </div>
+            </label>
+
+            <!-- Criterion 4: Cadre & Wing Alignment -->
+            <label class="assessment-criterion-card" for="crit_wing_qual" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; transition: all 0.2s ease;">
+              <input type="checkbox" id="crit_wing_qual" name="assessment_crit" value="crit_wing_qual" onchange="calculateAssessmentScore()" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 12.5px; color: #0f172a; display: flex; justify-content: space-between;">
+                  <span>4. Cadre & Wing Alignment</span>
+                  <span id="crit_wing_qual_status" style="font-size: 11px; color: #94a3b8;">Pending</span>
+                </div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Education & background align with selected Wing/Corps.</div>
+              </div>
+            </label>
+
+            <!-- Criterion 5: Ideological Undertaking -->
+            <label class="assessment-criterion-card" for="crit_ideology" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; transition: all 0.2s ease;">
+              <input type="checkbox" id="crit_ideology" name="assessment_crit" value="crit_ideology" onchange="calculateAssessmentScore()" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 12.5px; color: #0f172a; display: flex; justify-content: space-between;">
+                  <span>5. Ideological Undertaking</span>
+                  <span id="crit_ideology_status" style="font-size: 11px; color: #94a3b8;">Pending</span>
+                </div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Pledged adherence to Dr. Ambedkar's principles & Dal code.</div>
+              </div>
+            </label>
+
+            <!-- Criterion 6: Discipline & Drill Commitment -->
+            <label class="assessment-criterion-card" for="crit_discipline" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; transition: all 0.2s ease;">
+              <input type="checkbox" id="crit_discipline" name="assessment_crit" value="crit_discipline" onchange="calculateAssessmentScore()" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 12.5px; color: #0f172a; display: flex; justify-content: space-between;">
+                  <span>6. Discipline & Drill Commitment</span>
+                  <span id="crit_discipline_status" style="font-size: 11px; color: #94a3b8;">Pending</span>
+                </div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Commitment to weekend parades, drill camps & relief duty.</div>
+              </div>
+            </label>
+
+          </div>
+
+          <!-- Live Evaluation Progress Bar -->
+          <div style="margin-top: 14px;">
+            <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: #64748b; margin-bottom: 4px;">
+              <span>Evaluation Compliance Gauge:</span>
+              <span id="assessmentGaugeText" style="font-weight: 600;">0 of 6 criteria verified</span>
+            </div>
+            <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+              <div id="assessmentProgressBar" style="width: 0%; height: 100%; background: #dc2626; transition: width 0.3s ease, background-color 0.3s ease;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Review Decision Actions Box -->
+        <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 16px;">
+          <h4 style="margin: 0 0 10px; color: #9a3412; font-size: 14px;"><i class="fa-solid fa-gavel"></i> Officer Review Decision</h4>
+          
+          <div class="form-group-modal" style="margin-bottom: 14px;">
+            <label for="reviewActionRemarks">Decision Remarks / Instructions / Correction Reason</label>
+            <textarea id="reviewActionRemarks" style="width: 100%; min-height: 60px; font-size: 13px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px;" placeholder="Add remarks for this decision (required for Correction or Rejection)..."></textarea>
+          </div>
+
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;" id="reviewActionButtonsRow">
+            <button type="button" class="btn-admin btn-admin-primary" onclick="submitReviewDecision('recommend')">
+              <i class="fa-solid fa-arrow-up-right-dots"></i> Recommend to Next Level
+            </button>
+            <button type="button" class="btn-admin btn-admin-outline" onclick="submitReviewDecision('review')">
+              <i class="fa-solid fa-hourglass-half"></i> Mark Under Review
+            </button>
+            <button type="button" class="btn-admin" style="background: #d97706; color: #ffffff;" onclick="submitReviewDecision('correction')">
+              <i class="fa-solid fa-pen-to-square"></i> Request Correction
+            </button>
+            <button type="button" class="btn-admin" style="background: #dc2626; color: #ffffff;" onclick="submitReviewDecision('reject')">
+              <i class="fa-solid fa-ban"></i> Reject Application
+            </button>
+            <button type="button" class="btn-admin" style="background: #16a34a; color: #ffffff;" id="btnFinalApproveSainik" onclick="submitReviewDecision('approve')">
+              <i class="fa-solid fa-shield-halved"></i> Final Commission & Approve Sainik
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="admin-modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button type="button" class="btn-admin btn-admin-outline" style="border-color: #0284c7; color: #0284c7;" onclick="openMemberIdCard(currentSelectedApplication?.sainik_id || currentSelectedApplication?.sainikId || currentSelectedApplication?.id)" title="View / Generate Digital Sainik ID Card">
+          <i class="fa-solid fa-id-card"></i> Digital ID Card
+        </button>
+        <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalReviewDecision')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="adminToast" class="admin-toast">
+    <i class="fa-solid fa-circle-check" id="toastIcon"></i>
+    <span id="toastMsg">Operation successful</span>
+  </div>
+
+  <!-- Admin Application Script -->
+  <script src="admin.js?v=5.0"></script>
+</body>
+</html>

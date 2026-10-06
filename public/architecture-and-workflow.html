@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Samata Sainik Dal (SSD) — System Architecture & Workflow Blueprint</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    @page {
+      size: A4 portrait;
+      margin: 12mm 14mm 14mm 14mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #1e293b;
+      background: #ffffff;
+      line-height: 1.45;
+      font-size: 11pt;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    .page {
+      page-break-after: always;
+      position: relative;
+      min-height: 265mm;
+      padding-bottom: 12mm;
+    }
+
+    .page:last-child {
+      page-break-after: avoid;
+    }
+
+    .page-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8pt;
+      color: #64748b;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 4px;
+    }
+
+    /* HEADER & BRANDING */
+    .doc-header {
+      background: linear-gradient(135deg, #0a192f 0%, #1e3a5f 100%);
+      color: #ffffff;
+      padding: 20px 24px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 6px solid #d4af37;
+      box-shadow: 0 4px 12px rgba(10, 25, 47, 0.12);
+    }
+
+    .doc-title-group h1 {
+      font-size: 19pt;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .doc-title-group .subtitle {
+      font-size: 10pt;
+      color: #94a3b8;
+      font-weight: 400;
+    }
+
+    .badge-pill {
+      background: rgba(212, 175, 55, 0.15);
+      border: 1px solid #d4af37;
+      color: #f3e5ab;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      text-align: right;
+    }
+
+    /* SECTION TITLES */
+    .section-title {
+      font-size: 13pt;
+      font-weight: 700;
+      color: #0a192f;
+      margin: 14px 0 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 4px;
+    }
+
+    .section-title .num-badge {
+      background: #0a192f;
+      color: #d4af37;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9pt;
+      font-weight: 800;
+    }
+
+    /* CARDS & CONTAINERS */
+    .card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* ARCHITECTURE DIAGRAM BOXES */
+    .arch-layer {
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .arch-layer-header {
+      font-size: 9pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #0a192f;
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px dashed #cbd5e1;
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+    }
+
+    .arch-chip {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 6px 8px;
+      text-align: center;
+    }
+
+    .arch-chip .chip-title {
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .arch-chip .chip-sub {
+      font-size: 7pt;
+      color: #64748b;
+      margin-top: 2px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* STEP FLOWS */
+    .flow-step {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 10px;
+      align-items: flex-start;
+    }
+
+    .step-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #0a192f;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 9pt;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .step-circle.gold {
+      background: #d4af37;
+      color: #0a192f;
+    }
+
+    .step-circle.green {
+      background: #059669;
+      color: #ffffff;
+    }
+
+    .step-circle.red {
+      background: #8b0000;
+      color: #ffffff;
+    }
+
+    .step-content {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 8px 12px;
+      flex-grow: 1;
+    }
+
+    .step-title {
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .step-desc {
+      font-size: 8.5pt;
+      color: #334155;
+      margin-top: 3px;
+    }
+
+    /* TABLES */
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+      margin-top: 6px;
+      margin-bottom: 10px;
+    }
+
+    table.data-table th {
+      background: #0a192f;
+      color: #ffffff;
+      text-align: left;
+      padding: 6px 8px;
+      font-weight: 600;
+      border: 1px solid #0a192f;
+    }
+
+    table.data-table td {
+      padding: 6px 8px;
+      border: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+
+    table.data-table tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge-blue { background: #dbeafe; color: #1e40af; }
+    .badge-green { background: #d1fae5; color: #065f46; }
+    .badge-amber { background: #fef3c7; color: #92400e; }
+    .badge-purple { background: #f3e8ff; color: #6b21a8; }
+    .badge-red { background: #fee2e2; color: #991b1b; }
+
+    /* CALLOUT BOXES */
+    .callout {
+      border-left: 4px solid #0a192f;
+      background: #f1f5f9;
+      padding: 8px 12px;
+      border-radius: 0 6px 6px 0;
+      font-size: 8.5pt;
+      margin: 8px 0;
+    }
+
+    .callout.gold {
+      border-left-color: #d4af37;
+      background: #fffbeb;
+    }
+
+    .callout.green {
+      border-left-color: #059669;
+      background: #f0fdf4;
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8pt;
+      background: #e2e8f0;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    /* ARROWS IN SVG */
+    .flow-arrow-down {
+      text-align: center;
+      font-size: 14pt;
+      color: #94a3b8;
+      line-height: 1;
+      margin: -2px 0 2px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 1: EXECUTIVE COVER & SYSTEM TOPOLOGY -->
+  <!-- ========================================================================= -->
+  <div class="page">
+    <div class="doc-header">
+      <div class="doc-title-group">
+        <h1>Samata Sainik Dal (SSD)</h1>
+        <div class="subtitle">Digital Command, Cadre Enlistment & Public Credential Verification Platform</div>
+      </div>
+      <div class="badge-pill">
+        System Architecture<br/>&amp; Workflow Blueprint v2.0
+      </div>
+    </div>
+
+    <div class="card" style="background: #ffffff; border-left: 4px solid #0a192f;">
+      <div style="font-weight: 700; font-size: 10.5pt; color: #0a192f; margin-bottom: 4px;">Executive Summary</div>
+      <p style="font-size: 8.8pt; color: #334155; line-height: 1.45;">
+        Founded in 1927 by <strong>Dr. B. R. Ambedkar</strong>, Samata Sainik Dal (Army of Equality) is an organized social defense cadre dedicated to equality, constitutional rights, and community welfare. This digital platform modernizes national operations by interconnecting <strong>public citizen outreach</strong>, <strong>multi-tiered enlistment &amp; review workflows</strong>, <strong>active cadre command</strong>, <strong>fraud-proof QR verification</strong>, and <strong>statutory 80G treasury management</strong> on a resilient, high-availability architecture.
+      </p>
+    </div>
+
+    <div class="section-title">
+      <span class="num-badge">1</span> High-Level Architecture Topology
+    </div>
+
+    <!-- LAYER 1: CLIENTS -->
+    <div class="arch-layer">
+      <div class="arch-layer-header">
+        <span>Layer 1 — Client Presentation Layer (Responsive Web)</span>
+        <span style="color: #64748b; font-weight: 500;">Vanilla HTML5 / Modern CSS / ES6+</span>
+      </div>
+      <div class="grid-3">
+        <div class="arch-chip">
+          <div class="chip-title">Public Web Portal</div>
+          <div class="chip-sub">index, about, wings, contact</div>
+        </div>
+        <div class="arch-chip">
+          <div class="chip-title">Cadre Member Portal</div>
+          <div class="chip-sub">member-portal.html &amp; .js</div>
+        </div>
+        <div class="arch-chip">
+          <div class="chip-title">Central Command Admin</div>
+          <div class="chip-sub">admin.html &amp; admin.js</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-arrow-down">▼</div>
+
+    <!-- LAYER 2: GATEWAY & SECURITY -->
+    <div class="arch-layer">
+      <div class="arch-layer-header">
+        <span>Layer 2 — API Gateway &amp; Security Perimeter</span>
+        <span style="color: #64748b; font-weight: 500;">Express 4.21 / Helmet / CORS</span>
+      </div>
+      <div class="grid-4">
+        <div class="arch-chip">
+          <div class="chip-title">JWT &amp; JWKS Auth</div>
+          <div class="chip-sub">middleware/auth.js</div>
+        </div>
+        <div class="arch-chip">
+          <div class="chip-title">Hierarchical RBAC</div>
+          <div class="chip-sub">middleware/rbac.js</div>
+        </div>
+        <div class="arch-chip">
+          <div class="chip-title">Territorial Bounds</div>
+          <div class="chip-sub">enforceJurisdiction()</div>
+        </div>
+        <div class="arch-chip">
+          <div class="chip-title">Rate Limiter &amp; Upload</div>
+          <div class="chip-sub">Multer + Express Limit</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-arrow-down">▼</div>
+
+    <!-- LAYER 3: DOMAIN SERVICES -->
+    <div class="arch-layer">
+      <div class="arch-layer-header">
+        <span>Layer 3 — Core Business Domain Services (RESTful APIs)</span>
+        <span style="color: #64748b; font-weight: 500;">Modular Express Routers</span>
+      </div>
+      <div class="grid-3" style="margin-bottom: 6px;">
+        <div class="arch-chip">
+          <div class="chip-title">Enlistment &amp; Approvals</div>
+          <div class="chip-sub">/api/membership</div>
+        </div>
+        <div class="arch-chip">
+          <div class="chip-title">Active Cadre &amp; Cards</div>
+          <div class="chip-sub">/api/members</div>
+        </div>
+        <div class="arch-chip">
+          <div class="chip-title">QR Verification Engine</div>
+          <div class="chip-sub">/api/verify</div>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="arch-chip">
+          <div class="chip-title">Treasury &amp; 80G Receipts</div>
+          <div class="chip-sub">/api/donations</div>
+        </div>
+        <div class="arch-chip">
+          <div class="chip-title">Territory &amp; Chapters</div>
+          <div class="chip-sub">/api/chapters</div>
+        </div>
+        <div class="arch-chip">
+          <div class="chip-title">Gazette &amp; Events CMS</div>
+          <div class="chip-sub">/api/news, /api/events</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-arrow-down">▼</div>
+
+    <!-- LAYER 4: DATA ENGINE -->
+    <div class="arch-layer" style="border-color: #059669; background: #f0fdf4;">
+      <div class="arch-layer-header" style="color: #065f46; border-bottom-color: #a7f3d0;">
+        <span>Layer 4 — Resilient Dual-Engine Persistence Tier</span>
+        <span style="color: #059669; font-weight: 700;">Zero-Downtime Failover</span>
+      </div>
+      <div class="grid-2">
+        <div class="arch-chip" style="background: #ffffff; border-color: #a7f3d0;">
+          <div class="chip-title" style="color: #065f46;">Primary: Supabase Cloud Database</div>
+          <div class="chip-sub">PostgreSQL + Relations + @supabase/server SDK</div>
+        </div>
+        <div class="arch-chip" style="background: #ffffff; border-color: #a7f3d0;">
+          <div class="chip-title" style="color: #065f46;">Failover: Embedded Transactional Store</div>
+          <div class="chip-sub">In-Memory Maps + Auto-Sync data_store.json</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="page-footer">
+      <span>Samata Sainik Dal (SSD) — Central Command Management Platform</span>
+      <span>Confidential &amp; Proprietary • Page 1 of 6</span>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 2: ENLISTMENT & COMMISSIONING WORKFLOW -->
+  <!-- ========================================================================= -->
+  <div class="page">
+    <div class="section-title">
+      <span class="num-badge">2</span> End-to-End Enlistment &amp; Commissioning Workflow
+    </div>
+    <p style="font-size: 8.5pt; color: #475569; margin-bottom: 12px;">
+      This pipeline transitions a volunteer from initial digital application to a fully commissioned, uniformed Sainik with a unique alphanumeric ID and cryptographic QR credentials.
+    </p>
+
+    <!-- STEP 1 -->
+    <div class="flow-step">
+      <div class="step-circle">1</div>
+      <div class="step-content">
+        <div class="step-title">
+          <span>Candidate Enlistment Submission</span>
+          <span class="badge badge-blue">Public Web</span>
+        </div>
+        <div class="step-desc">
+          Volunteer accesses <span class="mono">membership.html</span> and completes a 5-step form: Personal Bio, Educational &amp; Professional Background, Residential Jurisdiction (State &rarr; District &rarr; Taluka &rarr; Chapter), Wing Allocation (Cadet Corps, Mahila Dal, Youth Wing, etc.), Photo/ID Document Upload, and acceptance of the Solemn Pledge.
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="flow-step">
+      <div class="step-circle">2</div>
+      <div class="step-content">
+        <div class="step-title">
+          <span>Automated Indexing &amp; Tracking ID Generation</span>
+          <span class="badge badge-purple">Server Engine</span>
+        </div>
+        <div class="step-desc">
+          Backend generates a cryptographically random, collision-resistant Application Tracking ID (<span class="mono">SSD-2026-XXXXXX</span>). The record is stored with status <span class="badge badge-blue">SUBMITTED</span> and assigned to the local district queue.
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="flow-step">
+      <div class="step-circle gold">3</div>
+      <div class="step-content">
+        <div class="step-title">
+          <span>District Officer Verification &amp; Assessment Rubric</span>
+          <span class="badge badge-amber">Territorial Command</span>
+        </div>
+        <div class="step-desc">
+          The assigned District Commander or Enlistment Officer accesses <span class="mono">admin.html</span>. Enforced by territorial RBAC, they only see candidates in their district. The officer performs background checks and completes the 4-point assessment rubric:
+          <ul style="margin: 4px 0 0 16px; font-size: 8pt; color: #334155;">
+            <li><strong>Identity Verification:</strong> Photo and Government ID authenticity.</li>
+            <li><strong>Background &amp; Integrity:</strong> Community standing and moral character.</li>
+            <li><strong>Physical Readiness:</strong> Suitability for drill, parade, and field mobilization.</li>
+            <li><strong>Wing Alignment:</strong> Aptitude for specific specialized directorates.</li>
+          </ul>
+          The record status advances to <span class="badge badge-amber">RECOMMENDED</span> with signed officer remarks.
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="flow-step">
+      <div class="step-circle green">4</div>
+      <div class="step-content">
+        <div class="step-title">
+          <span>Central Command Final Approval &amp; Commissioning</span>
+          <span class="badge badge-green">Central Directorate</span>
+        </div>
+        <div class="step-desc">
+          The National President, Central Admin, or Commissioning Board conducts the final review. Upon approval:
+          <ul style="margin: 4px 0 0 16px; font-size: 8pt; color: #334155;">
+            <li>System commissions an official <strong>Sainik ID</strong>: <span class="mono">SSD-[STATE]-2026-[NUMBER]</span> (e.g. <span class="mono">SSD-MH-2026-001245</span>).</li>
+            <li>Generates a secure, tamper-proof <strong>QR verification token</strong> (<span class="mono">qr_tok_...</span>).</li>
+            <li>Inserts the record into the permanent <span class="mono">members</span> active cadre registry.</li>
+            <li>Transitions application status to <span class="badge badge-green">FINAL_APPROVED</span>.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="flow-step">
+      <div class="step-circle green">5</div>
+      <div class="step-content">
+        <div class="step-title">
+          <span>Digital ID Card &amp; Member Portal Activation</span>
+          <span class="badge badge-green">Cadre Service</span>
+        </div>
+        <div class="step-desc">
+          The newly commissioned Sainik can log into <span class="mono">member-portal.html</span> to view their official Digital ID card, download print-ready credentials, view active unit assignments, and access national circulars.
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="page-footer">
+      <span>Samata Sainik Dal (SSD) — Central Command Management Platform</span>
+      <span>Confidential &amp; Proprietary • Page 2 of 6</span>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 3: PUBLIC QR CODE VERIFICATION & ANTI-FRAUD SHIELD -->
+  <!-- ========================================================================= -->
+  <div class="page">
+    <div class="section-title">
+      <span class="num-badge">3</span> Public QR Verification &amp; Anti-Fraud Shield
+    </div>
+    <p style="font-size: 8.5pt; color: #475569; margin-bottom: 12px;">
+      Designed for rapid verification by civil authorities, police, event organizers, and the public during rallies and disaster response operations.
+    </p>
+
+    <div class="grid-2">
+      <!-- LEFT COLUMN: RESOLUTION FLOW -->
+      <div>
+        <div class="card" style="border-top: 3px solid #0a192f;">
+          <div style="font-weight: 700; font-size: 9pt; color: #0a192f; margin-bottom: 6px;">5-Tier High-Availability Lookup Pipeline</div>
+          <div style="font-size: 8pt; color: #334155; line-height: 1.4;">
+            When a QR code is scanned or an identifier is submitted on <span class="mono">verify.html</span>:
+            <ol style="margin: 6px 0 0 14px;">
+              <li><strong>URL Normalization:</strong> Strips host and query parameters if a native mobile camera app returns the full browser link.</li>
+              <li><strong>Tier 1 — Backend API:</strong> Queries <span class="mono">GET /api/verify/:id</span>.</li>
+              <li><strong>Tier 2 — Card API Fallback:</strong> Calls <span class="mono">GET /api/members/card/:id</span> if primary endpoint is busy.</li>
+              <li><strong>Tier 3 — Direct Supabase Client:</strong> Direct browser-to-database query via Supabase JS SDK.</li>
+              <li><strong>Tier 4 — Local Storage Cache:</strong> Reads cached offline credential records.</li>
+              <li><strong>Tier 5 — Algorithmic Validation:</strong> Validates checksum patterns for emergency validation.</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="card" style="border-top: 3px solid #059669; margin-top: 8px;">
+          <div style="font-weight: 700; font-size: 9pt; color: #065f46; margin-bottom: 6px;">Supported Identification Tokens</div>
+          <div style="font-size: 8pt; color: #334155;">
+            The verification engine accepts any of the following parameters:
+            <ul style="margin: 4px 0 0 14px;">
+              <li><strong>Official Sainik ID:</strong> <span class="mono">SSD-MH-2026-001245</span></li>
+              <li><strong>Application Reference:</strong> <span class="mono">SSD-2026-8F42K7</span></li>
+              <li><strong>10-Digit Mobile Number:</strong> <span class="mono">9822341927</span></li>
+              <li><strong>Cryptographic QR Token:</strong> <span class="mono">qr_tok_...</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: PRIVACY SHIELD BADGE -->
+      <div>
+        <div class="card" style="background: #ffffff; border: 2px solid #0a192f;">
+          <div style="text-align: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 8px;">
+            <div style="font-size: 8pt; font-weight: 700; letter-spacing: 0.5px; color: #64748b;">PUBLIC VERIFICATION DISPLAY BADGE</div>
+            <div style="font-size: 11pt; font-weight: 800; color: #0a192f; margin-top: 2px;">SAMATA SAINIK DAL</div>
+            <div style="display: inline-block; background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 999px; font-size: 7.5pt; font-weight: 700; margin-top: 4px;">
+              ✓ OFFICIALLY VERIFIED ACTIVE CADRE
+            </div>
+          </div>
+
+          <table style="width: 100%; font-size: 8pt; color: #1e293b;">
+            <tr><td style="color: #64748b; padding: 2px 0;">Sainik ID:</td><td style="font-weight: 700; font-family: monospace;">SSD-MH-2026-001245</td></tr>
+            <tr><td style="color: #64748b; padding: 2px 0;">Full Name:</td><td style="font-weight: 700;">Subhash V. Meshram</td></tr>
+            <tr><td style="color: #64748b; padding: 2px 0;">Rank &amp; Role:</td><td>Cadet Sainik (Drill &amp; Guard)</td></tr>
+            <tr><td style="color: #64748b; padding: 2px 0;">Wing:</td><td>Central Cadet Corps</td></tr>
+            <tr><td style="color: #64748b; padding: 2px 0;">Jurisdiction:</td><td>Nagpur Central Unit, Maharashtra</td></tr>
+            <tr><td style="color: #64748b; padding: 2px 0;">Mobile:</td><td style="font-family: monospace;">+91 98223 ••••• [MASKED]</td></tr>
+            <tr><td style="color: #64748b; padding: 2px 0;">Date of Birth:</td><td>••/••/1992 [PRIVACY SHIELD]</td></tr>
+            <tr><td style="color: #64748b; padding: 2px 0;">Commission Date:</td><td>15 August 2026</td></tr>
+          </table>
+
+          <div style="background: #f1f5f9; padding: 6px; border-radius: 4px; font-size: 7pt; color: #475569; margin-top: 8px; text-align: center;">
+            Digitally certified by Central Command Cryptographic Authority.
+          </div>
+        </div>
+
+        <div class="callout gold" style="margin-top: 8px;">
+          <strong>Data Privacy Safeguard:</strong> Full government identification numbers, resident street addresses, and raw mobile numbers are masked to prevent identity theft.
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="page-footer">
+      <span>Samata Sainik Dal (SSD) — Central Command Management Platform</span>
+      <span>Confidential &amp; Proprietary • Page 3 of 6</span>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 4: TREASURY, RAZORPAY & 80G RECEIPTS -->
+  <!-- ========================================================================= -->
+  <div class="page">
+    <div class="section-title">
+      <span class="num-badge">4</span> Treasury, Razorpay &amp; 80G Tax Exemption Workflow
+    </div>
+    <p style="font-size: 8.5pt; color: #475569; margin-bottom: 12px;">
+      Processes voluntary public contributions with automated tax exemption receipts under Section 80G of the Indian Income Tax Act.
+    </p>
+
+    <!-- STEP 1 -->
+    <div class="flow-step">
+      <div class="step-circle">1</div>
+      <div class="step-content">
+        <div class="step-title">
+          <span>Donor Order Initiation</span>
+          <span class="badge badge-blue">Public Client &rarr; Server API</span>
+        </div>
+        <div class="step-desc">
+          Donor specifies amount, cause (General Welfare, Relief Fund, Training Academy), PAN number, and contact details. Server calls <span class="mono">razorpay.orders.create()</span> to register an immutable transaction order.
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="flow-step">
+      <div class="step-circle gold">2</div>
+      <div class="step-content">
+        <div class="step-title">
+          <span>Razorpay Universal Checkout</span>
+          <span class="badge badge-amber">Secure Payment Gateway</span>
+        </div>
+        <div class="step-desc">
+          Browser launches Razorpay's standard checkout dialog supporting UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards, NetBanking, and Wallets.
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="flow-step">
+      <div class="step-circle green">3</div>
+      <div class="step-content">
+        <div class="step-title">
+          <span>Cryptographic Signature Verification</span>
+          <span class="badge badge-green">Server Security</span>
+        </div>
+        <div class="step-desc">
+          Payment response is sent to <span class="mono">POST /api/donations/verify</span>. The backend generates an HMAC-SHA256 digest using the secret key and ensures the signature matches before registering the donation as completed.
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="flow-step">
+      <div class="step-circle green">4</div>
+      <div class="step-content">
+        <div class="step-title">
+          <span>Automated 80G Receipt Issuance</span>
+          <span class="badge badge-green">Treasury Ledger</span>
+        </div>
+        <div class="step-desc">
+          System generates an official sequential receipt number (<span class="mono">SSD-REC-2026-XXXXXX</span>). The donor instantly views and downloads a signed, printable donation certificate featuring SSD registration numbers and 80G tax exemption clauses.
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 14px; background: #ffffff; border: 1.5px dashed #cbd5e1;">
+      <div style="font-size: 8.5pt; font-weight: 700; color: #0a192f; margin-bottom: 4px;">Treasury Compliance Data Model</div>
+      <table class="data-table" style="margin-bottom: 0;">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Description &amp; Regulatory Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="mono">order_id</span></td>
+            <td>VARCHAR(100) UNIQUE</td>
+            <td>Razorpay Server-generated reference identifier.</td>
+          </tr>
+          <tr>
+            <td><span class="mono">payment_id</span></td>
+            <td>VARCHAR(100) UNIQUE</td>
+            <td>Bank confirmation token for anti-money laundering reconciliation.</td>
+          </tr>
+          <tr>
+            <td><span class="mono">pan</span></td>
+            <td>VARCHAR(20)</td>
+            <td>Permanent Account Number for statutory Form 10BD income tax filing.</td>
+          </tr>
+          <tr>
+            <td><span class="mono">receipt_number</span></td>
+            <td>VARCHAR(100) UNIQUE</td>
+            <td>Sequential audited receipt number (<span class="mono">SSD-REC-2026-000001</span>).</td>
+          </tr>
+          <tr>
+            <td><span class="mono">is_80g_eligible</span></td>
+            <td>BOOLEAN</td>
+            <td>Flags exemption status under Section 80G of the Income Tax Act.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="page-footer">
+      <span>Samata Sainik Dal (SSD) — Central Command Management Platform</span>
+      <span>Confidential &amp; Proprietary • Page 4 of 6</span>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 5: ROLE-BASED ACCESS CONTROL (RBAC) & GOVERNANCE -->
+  <!-- ========================================================================= -->
+  <div class="page">
+    <div class="section-title">
+      <span class="num-badge">5</span> Role-Based Access Control (RBAC) &amp; Territorial Scope
+    </div>
+    <p style="font-size: 8.5pt; color: #475569; margin-bottom: 12px;">
+      The platform enforces granular administrative separation between strategic central command and field operations.
+    </p>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Role Identifier</th>
+          <th>Administrative Scope</th>
+          <th>Permissions &amp; Capabilities</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong style="color: #0a192f;">super_admin</strong></td>
+          <td><span class="badge badge-purple">National Unlimited</span></td>
+          <td>Full platform control: System settings, user role provisioning, database migrations, audit trail access, and final approval override.</td>
+        </tr>
+        <tr>
+          <td><strong style="color: #0a192f;">central_admin</strong></td>
+          <td><span class="badge badge-purple">National Command</span></td>
+          <td>Central Executive authority: Commissioning recommended candidates, appointing state leadership, and publishing official gazettes.</td>
+        </tr>
+        <tr>
+          <td><strong style="color: #0a192f;">finance_admin</strong></td>
+          <td><span class="badge badge-blue">National Treasury</span></td>
+          <td>Financial ledger management: Reconciliation of Razorpay collections, 80G tax receipt audits, and expenditure reporting.</td>
+        </tr>
+        <tr>
+          <td><strong style="color: #0a192f;">state_official</strong></td>
+          <td><span class="badge badge-amber">Single State Boundary</span></td>
+          <td>State Directorate: Oversees district units within their assigned state (e.g. Maharashtra), manages state events, and reviews escalations.</td>
+        </tr>
+        <tr>
+          <td><strong style="color: #0a192f;">district_official</strong></td>
+          <td><span class="badge badge-amber">Single District Boundary</span></td>
+          <td>District Command: Inspects candidate documents, conducts assessment rubric reviews, and forwards applications with recommendation flags.</td>
+        </tr>
+        <tr>
+          <td><strong style="color: #0a192f;">enlistment_officer</strong></td>
+          <td><span class="badge badge-green">Enlistment Queue Only</span></td>
+          <td>Focused verification officer: Reviews pending submissions and verifies applicant ID credentials. Restricted from treasury and system admin.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-title" style="margin-top: 14px;">
+      <span class="num-badge">6</span> Immutable System Audit Trail
+    </div>
+
+    <div class="card" style="background: #ffffff; border-left: 4px solid #8b0000;">
+      <div style="font-weight: 700; font-size: 9pt; color: #8b0000; margin-bottom: 4px;">Zero-Tamper Activity Logging Architecture</div>
+      <p style="font-size: 8.2pt; color: #334155; line-height: 1.4;">
+        Every administrative state transition (application approval, status rejection, user role alteration, or payment verification) triggers an append-only log entry in <span class="mono">audit_logs</span> and <span class="mono">approval_actions</span>. Each record logs:
+      </p>
+      <div class="grid-3" style="margin-top: 6px;">
+        <div class="arch-chip">
+          <div class="chip-title">Actor Fingerprint</div>
+          <div class="chip-sub">User ID, Role, IP Address, User Agent</div>
+        </div>
+        <div class="arch-chip">
+          <div class="chip-title">State Transition</div>
+          <div class="chip-sub">Previous Status &rarr; New Status</div>
+        </div>
+        <div class="arch-chip">
+          <div class="chip-title">Timestamp &amp; Reason</div>
+          <div class="chip-sub">UTC Timestamp + Officer Remarks</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="page-footer">
+      <span>Samata Sainik Dal (SSD) — Central Command Management Platform</span>
+      <span>Confidential &amp; Proprietary • Page 5 of 6</span>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 6: DATABASE ENTITY-RELATIONSHIP MODEL & RELIABILITY -->
+  <!-- ========================================================================= -->
+  <div class="page">
+    <div class="section-title">
+      <span class="num-badge">7</span> Relational Data Model &amp; Core Schema
+    </div>
+    <p style="font-size: 8.5pt; color: #475569; margin-bottom: 12px;">
+      Normalized relational design connecting geographic hierarchies, workflow states, and financial transactions.
+    </p>
+
+    <div class="grid-2">
+      <!-- TABLE 1 -->
+      <div class="card" style="background: #ffffff;">
+        <div style="font-size: 8.5pt; font-weight: 700; color: #0a192f; margin-bottom: 4px;">membership_applications</div>
+        <table class="data-table" style="font-size: 7.5pt; margin-bottom: 0;">
+          <tr><td><span class="mono">id</span> (PK)</td><td>VARCHAR(64) &mdash; SSD-2026-8F42K7</td></tr>
+          <tr><td><span class="mono">full_name</span></td><td>VARCHAR(255) NOT NULL</td></tr>
+          <tr><td><span class="mono">mobile, email</span></td><td>VARCHAR(30), VARCHAR(255)</td></tr>
+          <tr><td><span class="mono">state_id, district_id</span></td><td>FK to states and districts</td></tr>
+          <tr><td><span class="mono">status</span></td><td>SUBMITTED, RECOMMENDED, FINAL_APPROVED</td></tr>
+          <tr><td><span class="mono">documents_json</span></td><td>JSONB &mdash; Photo &amp; Proof URLs</td></tr>
+        </table>
+      </div>
+
+      <!-- TABLE 2 -->
+      <div class="card" style="background: #ffffff;">
+        <div style="font-size: 8.5pt; font-weight: 700; color: #0a192f; margin-bottom: 4px;">members (Active Cadre)</div>
+        <table class="data-table" style="font-size: 7.5pt; margin-bottom: 0;">
+          <tr><td><span class="mono">id</span> (PK)</td><td>VARCHAR(64) &mdash; UUID</td></tr>
+          <tr><td><span class="mono">sainik_id</span> (UK)</td><td>VARCHAR(64) &mdash; SSD-MH-2026-001245</td></tr>
+          <tr><td><span class="mono">application_id</span></td><td>FK to membership_applications</td></tr>
+          <tr><td><span class="mono">qr_token</span> (UK)</td><td>VARCHAR(255) &mdash; Cryptographic token</td></tr>
+          <tr><td><span class="mono">designation</span></td><td>VARCHAR(150) &mdash; Cadet Sainik, etc.</td></tr>
+          <tr><td><span class="mono">status</span></td><td>ACTIVE, SUSPENDED, RETIRED</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top: 8px;">
+      <!-- TABLE 3 -->
+      <div class="card" style="background: #ffffff;">
+        <div style="font-size: 8.5pt; font-weight: 700; color: #0a192f; margin-bottom: 4px;">approval_actions (Audit Trail)</div>
+        <table class="data-table" style="font-size: 7.5pt; margin-bottom: 0;">
+          <tr><td><span class="mono">id</span> (PK)</td><td>VARCHAR(64)</td></tr>
+          <tr><td><span class="mono">application_id</span></td><td>FK to membership_applications</td></tr>
+          <tr><td><span class="mono">official_id, role</span></td><td>Actor identification &amp; scope</td></tr>
+          <tr><td><span class="mono">action</span></td><td>RECOMMEND, FINAL_APPROVE, REJECT</td></tr>
+          <tr><td><span class="mono">remarks</span></td><td>Assessment rubric notes &amp; findings</td></tr>
+        </table>
+      </div>
+
+      <!-- TABLE 4 -->
+      <div class="card" style="background: #ffffff;">
+        <div style="font-size: 8.5pt; font-weight: 700; color: #0a192f; margin-bottom: 4px;">donations &amp; receipts</div>
+        <table class="data-table" style="font-size: 7.5pt; margin-bottom: 0;">
+          <tr><td><span class="mono">order_id</span></td><td>Razorpay order reference token</td></tr>
+          <tr><td><span class="mono">payment_id</span></td><td>Gateway completion transaction ID</td></tr>
+          <tr><td><span class="mono">amount, pan</span></td><td>NUMERIC(12,2), Income tax PAN</td></tr>
+          <tr><td><span class="mono">receipt_number</span></td><td>SSD-REC-2026-XXXXXX</td></tr>
+          <tr><td><span class="mono">is_80g_eligible</span></td><td>Statutory deduction qualification</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top: 14px;">
+      <span class="num-badge">8</span> Resilience &amp; Reliability Guarantee
+    </div>
+
+    <div class="grid-3">
+      <div class="card" style="border-top: 3px solid #059669;">
+        <div style="font-weight: 700; font-size: 8.5pt; color: #065f46;">Dual-Layer Storage</div>
+        <div style="font-size: 7.5pt; color: #334155; margin-top: 2px;">
+          Cloud Supabase PostgreSQL synced with local in-memory transactional cache ensures 0% downtime during network blackouts.
+        </div>
+      </div>
+      <div class="card" style="border-top: 3px solid #d4af37;">
+        <div style="font-weight: 700; font-size: 8.5pt; color: #92400e;">Automated Tests</div>
+        <div style="font-size: 7.5pt; color: #334155; margin-top: 2px;">
+          17 end-to-end automated test suites validate RBAC, enlistment workflows, QR lookups, and Razorpay HMAC signature verification.
+        </div>
+      </div>
+      <div class="card" style="border-top: 3px solid #0a192f;">
+        <div style="font-weight: 700; font-size: 8.5pt; color: #0a192f;">Security Compliance</div>
+        <div style="font-size: 7.5pt; color: #334155; margin-top: 2px;">
+          Zero plain-text password storage, bcrypt hashing, rate limiting, and privacy masking of personal identification data.
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="page-footer">
+      <span>Samata Sainik Dal (SSD) — Central Command Management Platform</span>
+      <span>Confidential &amp; Proprietary • Page 6 of 6</span>
+    </div>
+  </div>
+
+</body>
+</html>
