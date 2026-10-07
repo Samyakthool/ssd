@@ -85,6 +85,7 @@ const embeddedStore = {
   leadership: new Map(),
   contact_messages: new Map(),
   audit_logs: new Map(),
+  testimonials: new Map(),
   system_settings: new Map()
 };
 
@@ -167,6 +168,12 @@ function loadEmbeddedStore() {
         value: defaultSeedData.stats,
         updated_at: new Date().toISOString()
       });
+      seeded = true;
+    }
+    if (embeddedStore.testimonials.size === 0 && defaultSeedData.testimonials) {
+      for (const [k, v] of Object.entries(defaultSeedData.testimonials)) {
+        embeddedStore.testimonials.set(k, v);
+      }
       seeded = true;
     }
     if (seeded) {

@@ -539,7 +539,7 @@ const ssdSampleData = {
       category: "Finance & Audit",
       state: "National HQ",
       rankBadge: "Finance & Audit",
-      photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80",
       bio: "Chartered Accountant and academician; ensures 100% organizational transparency, public audit compliance, 80G tax exemptions, and Centenary 2027 trust governance.",
       credentials: "FCA, M.Com | Central Audit Bureau",
       order: 6
@@ -547,11 +547,11 @@ const ssdSampleData = {
     "lead_it_1": {
       name: "Er. Aniket S. Meshram",
       designation: "National Head, IT & Digital Media Cell (राष्ट्रीय आईटी प्रमुख)",
-      level: "national",
+      level: "it_cell",
       category: "IT & Digital Media Cell",
       state: "National HQ",
       rankBadge: "IT & Cyber Directorate",
-      photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=400&q=80",
       bio: "Cloud & Cyber Systems Architect; oversees centralized portal databases, digital member IDs, automated enrollment systems, and nationwide digital infrastructure.",
       credentials: "B.Tech Computer Science | Nagpur Central IT Cell",
       order: 7
@@ -2307,6 +2307,20 @@ let currentGoverningState = 'all';
 let currentGoverningDistrict = 'all';
 let currentGoverningSearch = '';
 
+function isItCellLeader(lead) {
+  if (!lead) return false;
+  if (lead.level === 'it_cell') return true;
+  const cat = String(lead.category || '').trim();
+  if (cat.toLowerCase() === 'it & digital media cell' || cat.toLowerCase() === 'it cell') return true;
+  if (['Supreme Council', 'Executive Council', 'Cadet Directorate', 'Mahila Dal', 'Legal Cell', 'Finance & Audit', 'Advisory Board'].includes(cat)) {
+    return false;
+  }
+  const rank = String(lead.rankBadge || '');
+  const desig = String(lead.designation || '');
+  if (/audit/i.test(rank) || /audit/i.test(desig)) return false;
+  return /\b(IT|Cyber)\b/i.test(rank) || /\b(IT|Cyber)\b/i.test(desig);
+}
+
 function renderGoverningCards(leadersList) {
   const councilContainer = document.getElementById("governingContainer");
   const advisoryContainer = document.getElementById("advisoryContainer");
@@ -2319,10 +2333,10 @@ function renderGoverningCards(leadersList) {
   let filtered = window._allGoverningLeaders.filter(lead => {
     if (lead.category === "Advisory Board") return false;
 
-    const isItCell = (lead.category === "IT & Digital Media Cell" || lead.category === "IT Cell" || (lead.rankBadge && lead.rankBadge.toLowerCase().includes('it')) || (lead.designation && lead.designation.toLowerCase().includes('it')));
-    const isDistrict = (lead.level === 'district');
-    const isState = (lead.level === 'state') || (!isDistrict && lead.state && lead.state !== 'National HQ' && lead.state !== 'All-India');
-    const isNational = (lead.level === 'national') || (!lead.level && (!lead.state || lead.state === 'National HQ' || lead.state === 'All-India'));
+    const isItCell = isItCellLeader(lead);
+    const isDistrict = !isItCell && (lead.level === 'district');
+    const isState = !isItCell && ((lead.level === 'state') || (!isDistrict && lead.state && lead.state !== 'National HQ' && lead.state !== 'All-India'));
+    const isNational = !isItCell && ((lead.level === 'national') || (!lead.level && (!lead.state || lead.state === 'National HQ' || lead.state === 'All-India')));
 
     if (currentGoverningTier === 'it_cell' && !isItCell) return false;
     if (currentGoverningTier === 'national' && (!isNational || isItCell)) return false;
@@ -2357,10 +2371,10 @@ function renderGoverningCards(leadersList) {
   // Update counts
   const nonAdvisory = window._allGoverningLeaders.filter(l => l.category !== "Advisory Board");
   const totalCount = nonAdvisory.length;
-  const itCellCount = nonAdvisory.filter(l => l.category === "IT & Digital Media Cell" || l.category === "IT Cell" || (l.rankBadge && l.rankBadge.toLowerCase().includes('it')) || (l.designation && l.designation.toLowerCase().includes('it'))).length;
-  const nationalCount = nonAdvisory.filter(l => (l.level === 'national' || (!l.level && (!l.state || l.state === 'National HQ'))) && !(l.category === "IT & Digital Media Cell" || l.category === "IT Cell")).length;
-  const stateCount = nonAdvisory.filter(l => l.level === 'state' || (l.state && l.state !== 'National HQ' && l.level !== 'district')).length;
-  const districtCount = nonAdvisory.filter(l => l.level === 'district').length;
+  const itCellCount = nonAdvisory.filter(l => isItCellLeader(l)).length;
+  const nationalCount = nonAdvisory.filter(l => !isItCellLeader(l) && (l.level === 'national' || (!l.level && (!l.state || l.state === 'National HQ')))).length;
+  const stateCount = nonAdvisory.filter(l => !isItCellLeader(l) && (l.level === 'state' || (l.state && l.state !== 'National HQ' && l.level !== 'district'))).length;
+  const districtCount = nonAdvisory.filter(l => !isItCellLeader(l) && l.level === 'district').length;
 
   const countAllEl = document.getElementById("govCountAll");
   const countNatEl = document.getElementById("govCountNational");
@@ -2394,11 +2408,11 @@ function renderGoverningCards(leadersList) {
     `;
   } else {
     councilContainer.innerHTML = filtered.map(lead => {
-      const isItCell = (lead.level === 'it_cell') || (lead.category === "IT & Digital Media Cell" || lead.category === "IT Cell" || (lead.rankBadge && lead.rankBadge.toLowerCase().includes('it')) || (lead.designation && lead.designation.toLowerCase().includes('it')));
+      const isItCell = isItCellLeader(lead);
       const isDistrict = !isItCell && (lead.level === 'district');
       const isState = !isItCell && ((lead.level === 'state') || (!isDistrict && lead.state && lead.state !== 'National HQ'));
       const stateName = lead.state || (isDistrict || isState ? 'Maharashtra' : 'National HQ');
-      const badgeText = lead.rankBadge || (isItCell ? 'IT & Digital Cell' : (isDistrict ? `${lead.district || 'District'} Command` : (isState ? `${stateName} Command` : 'National Command')));
+      const badgeText = lead.rankBadge || (isItCell ? 'IT & Cyber Directorate' : (isDistrict ? `${lead.district || 'District'} Command` : (isState ? `${stateName} Command` : 'National Command')));
 
       let tierBadgeHtml = '';
       if (isItCell) {
@@ -2786,7 +2800,7 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
   const pdfBtn = modal.querySelector("#portfolioOfficerPdfBtn");
 
   const isAdv = leader.category === "Advisory Board" || (leader.designation && leader.designation.includes("Advisory")) || (leader.rankBadge && leader.rankBadge.includes("Advisory")) || (leader.id && String(leader.id).startsWith("adv_")) || isAdvisory;
-  const isItCell = !isAdv && ((leader.level === 'it_cell') || (leader.category === "IT & Digital Media Cell" || leader.category === "IT Cell" || (leader.rankBadge && leader.rankBadge.toLowerCase().includes('it')) || (leader.designation && leader.designation.toLowerCase().includes('it'))));
+  const isItCell = !isAdv && isItCellLeader(leader);
   const isDistrict = !isAdv && !isItCell && (leader.level === 'district');
   const isState = !isAdv && !isItCell && ((leader.level === 'state') || (!isDistrict && leader.state && leader.state !== 'National HQ' && leader.state !== 'All-India'));
   const stateName = leader.state || (isDistrict || isState ? 'Maharashtra' : 'National HQ');
