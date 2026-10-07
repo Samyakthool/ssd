@@ -329,6 +329,105 @@ async function runTests() {
     if (!data.success || data.logs.length === 0) throw new Error('Audit logs missing');
   });
 
+  // 12. VOICES FROM THE FRONTLINE & CADRE TESTIMONIES TESTS
+  let createdTestimonyId = '';
+  await assert('Public Testimonials Retrieval', async () => {
+    const res = await fetch('http://localhost:3000/api/testimonials');
+    const data = await res.json();
+    if (res.status !== 200 || !data.success || !Array.isArray(data.testimonials)) {
+      throw new Error('Failed to retrieve published testimonies');
+    }
+    if (data.testimonials.length === 0) throw new Error('Expected default seeded testimonies');
+  });
+
+  await assert('Cadre Testimony Creation & Upsert by SuperAdmin', async () => {
+    const testPayload = {
+      name: 'Subedar Major Ramesh Shinde',
+      designation: 'State Parade Commander, Maharashtra',
+      category: 'leadership',
+      cadetId: 'SSD-MH-2026-TEST',
+      state: 'Maharashtra',
+      tenure: '28 Years Active Cadre',
+      highlight: 'Discipline in khaki is our defense of the Constitution.',
+      quote: 'From grassroots taluka shakhas to state conclaves, our sainiks maintain unwavering constitutional vigilance.',
+      is_published: true
+    };
+    const res = await fetch('http://localhost:3000/api/testimonials', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: JSON.stringify(testPayload)
+    });
+    const data = await res.json();
+    if (res.status !== 200 || !data.success || !data.testimonial) {
+      throw new Error('Failed to create testimony: ' + JSON.stringify(data));
+    }
+    createdTestimonyId = data.testimonial.id;
+  });
+
+  await assert('Cadre Testimony Status Toggle (Publish/Draft)', async () => {
+    if (!createdTestimonyId) throw new Error('No testimony ID to toggle');
+    const res = await fetch(`http://localhost:3000/api/testimonials/${createdTestimonyId}/toggle`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const data = await res.json();
+    if (res.status !== 200 || !data.success || data.is_published !== false) {
+      throw new Error('Expected testimony to toggle to draft');
+    }
+  });
+
+  await assert('Cadre Testimony Deletion', async () => {
+    if (!createdTestimonyId) throw new Error('No testimony ID to delete');
+    const res = await fetch(`http://localhost:3000/api/testimonials/${createdTestimonyId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const data = await res.json();
+    if (res.status !== 200 || !data.success) {
+      throw new Error('Failed to delete testimony: ' + JSON.stringify(data));
+    }
+  });
+
+  // 13. GRANULAR OFFICER PERMISSION FOR TESTIMONIALS
+  await assert('Granular Desk Permission Authorization for Command Officer', async () => {
+    const newOfficer = {
+      email: `voices.editor.${Date.now()}@ssd.org`,
+      password: 'EditorPass2026!',
+      fullName: 'Sainik Jyoti Gaikwad',
+      phone: '+91 98220 99881',
+      roleId: 'district_official',
+      department: 'Central Media & Frontline Archives',
+      can_edit_testimonials: true,
+      stateId: 'state_mh',
+      districtId: 'dist_mh_nagpur'
+    };
+    const res = await fetch('http://localhost:3000/api/auth/officers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: JSON.stringify(newOfficer)
+    });
+    const data = await res.json();
+    if (res.status !== 200 || !data.success || !data.officerId) {
+      throw new Error('Failed to onboard officer with granular permission: ' + JSON.stringify(data));
+    }
+
+    // Verify officer listing contains can_edit_testimonials
+    const listRes = await fetch('http://localhost:3000/api/auth/officers', {
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const listData = await listRes.json();
+    const found = listData.officers.find(o => o.id === data.officerId);
+    if (!found || !found.can_edit_testimonials) {
+      throw new Error('Officer did not retain can_edit_testimonials permission');
+    }
+  });
+
   console.log(`\n==========================================================================`);
   console.log(` 🏁 TEST SUITE SUMMARY: ${passed} PASSED, ${failed} FAILED`);
   console.log(`==========================================================================\n`);

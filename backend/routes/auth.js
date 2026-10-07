@@ -90,8 +90,10 @@ router.post('/login', authRateLimiter, async (req, res) => {
         id: user.id,
         email: user.email,
         fullName: user.full_name,
+        name: user.full_name,
         role: user.role_id,
         department: user.department,
+        can_edit_testimonials: !!(user.can_edit_testimonials === true || user.can_edit_testimonials === 'true' || user.role_id === 'testimonials_editor' || user.role_id === 'media_admin' || user.role_id === 'super_admin'),
         jurisdiction: primaryJurisdiction,
         jurisdictions: jurisdictions
       }
@@ -149,13 +151,25 @@ router.post('/change-password', authenticate, async (req, res) => {
 // 4. LIST ALL OFFICERS (Super Admin & Central Admin)
 router.get('/officers', authenticate, requireRole('super_admin', 'central_admin'), async (req, res) => {
   try {
-    const usersRes = await query('SELECT id, email, full_name, phone, role_id, department, status, last_login, created_at FROM users ORDER BY created_at ASC');
+    const usersRes = await query('SELECT * FROM users ORDER BY created_at ASC');
     const jurRes = await query('SELECT * FROM user_jurisdictions');
 
     const officers = usersRes.rows.map(u => {
       const jur = jurRes.rows.filter(j => j.user_id === u.id);
       return {
-        ...u,
+        id: u.id,
+        email: u.email,
+        full_name: u.full_name,
+        name: u.full_name,
+        phone: u.phone,
+        role_id: u.role_id,
+        role: u.role_id,
+        department: u.department,
+        dept: u.department,
+        status: u.status,
+        can_edit_testimonials: !!(u.can_edit_testimonials === true || u.can_edit_testimonials === 'true' || u.role_id === 'testimonials_editor' || u.role_id === 'media_admin' || u.role_id === 'super_admin'),
+        last_login: u.last_login,
+        created_at: u.created_at,
         jurisdictions: jur,
         primaryJurisdiction: jur.find(j => j.is_primary) || jur[0] || null
       };
@@ -170,7 +184,7 @@ router.get('/officers', authenticate, requireRole('super_admin', 'central_admin'
 // 5. ONBOARD NEW OFFICER
 router.post('/officers', authenticate, requireRole('super_admin', 'central_admin'), async (req, res) => {
   try {
-    const { email, password, fullName, phone, roleId, department, stateId, regionId, districtId, talukaId, chapterId } = req.body;
+    const { email, password, fullName, phone, roleId, department, can_edit_testimonials, stateId, regionId, districtId, talukaId, chapterId } = req.body;
 
     if (!email || !password || !fullName || !roleId) {
       return res.status(400).json({ success: false, error: 'Email, password, full name, and role are required.' });
@@ -190,6 +204,13 @@ router.post('/officers', authenticate, requireRole('super_admin', 'central_admin
        VALUES ($1, $2, $3, $4, $5, $6, $7, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
       [userId, email.trim().toLowerCase(), passwordHash, fullName.trim(), phone, roleId, department || 'Organizational Directorate']
     );
+
+    // Save granular permissions if supported
+    const userObj = embeddedStore.users.get(userId);
+    if (userObj) {
+      userObj.can_edit_testimonials = !!(can_edit_testimonials === true || can_edit_testimonials === 'true' || roleId === 'testimonials_editor');
+      saveEmbeddedStore();
+    }
 
     // Insert Jurisdiction
     const jurId = 'jur_' + userId;
@@ -229,7 +250,7 @@ router.patch('/officers/:id/status', authenticate, requireRole('super_admin'), a
 router.put('/officers/:id', authenticate, requireRole('super_admin', 'central_admin'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { fullName, phone, roleId, department, status, password, stateId, regionId, districtId, talukaId, chapterId } = req.body;
+    const { fullName, phone, roleId, department, status, password, can_edit_testimonials, stateId, regionId, districtId, talukaId, chapterId } = req.body;
 
     const userRes = await query('SELECT * FROM users WHERE id = $1', [id]);
     if (userRes.rows.length === 0) {
@@ -247,6 +268,13 @@ router.put('/officers/:id', authenticate, requireRole('super_admin', 'central_ad
         'UPDATE users SET full_name = $1, phone = $2, role_id = $3, department = $4, status = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6',
         [fullName || userRes.rows[0].full_name, phone || userRes.rows[0].phone, roleId || userRes.rows[0].role_id, department || userRes.rows[0].department, status || userRes.rows[0].status, id]
       );
+    }
+
+    // Update granular permissions
+    const userObj = embeddedStore.users.get(id);
+    if (userObj && can_edit_testimonials !== undefined) {
+      userObj.can_edit_testimonials = !!(can_edit_testimonials === true || can_edit_testimonials === 'true' || (roleId || userRes.rows[0].role_id) === 'testimonials_editor');
+      saveEmbeddedStore();
     }
 
     // Update Jurisdiction

@@ -279,5 +279,106 @@ export const defaultSeedData = {
       order: 22,
       approvalStatus: "approved"
     }
+  },
+  testimonials: {
+    "test_1": {
+      id: "test_1",
+      name: "Commander Ashok R. Gaikwad",
+      designation: "State Commander, Maharashtra State SSD",
+      category: "leadership",
+      cadetId: "SSD-MH-1989-0042",
+      state: "Nagpur & Mumbai, Maharashtra",
+      tenure: "35 Years Active Service",
+      highlight: "Discipline in khaki is not militarism; it is moral readiness to protect the constitutional dignity of our people.",
+      quote: "Serving in Samata Sainik Dal for 35 years has taught me the true meaning of Babasaheb's mission. When we put on the uniform and march in unison, caste barriers dissolve. Whether conducting flood rescues in Kolhapur or guarding peaceful assembly at Chaityabhoomi, our cadres stand fearless in defense of constitutional brotherhood.",
+      photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=240&q=80",
+      approvalStatus: "approved",
+      is_published: true
+    },
+    "test_2": {
+      id: "test_2",
+      name: "Sunita Tai Kamble",
+      designation: "Chief Organizer, Mahila Samata Sainik Dal",
+      category: "mahila",
+      cadetId: "SSD-MSSD-2004-0118",
+      state: "Amravati, Vidarbha",
+      tenure: "20 Years Active Service",
+      highlight: "Babasaheb envisioned women leading the vanguard of social democracy, not standing behind.",
+      quote: "Through Mahila Samata Sainik Dal, we have trained more than 8,500 young women across rural Vidarbha in lathi drill, self-defense, and legal literacy. When rural women know their constitutional rights and have the courage to walk with head held high, entire communities transform.",
+      photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=240&q=80",
+      approvalStatus: "approved",
+      is_published: true
+    },
+    "test_3": {
+      id: "test_3",
+      name: "Adv. Rajesh V. Gautam",
+      designation: "National Convener, SSD Legal Defense Cell",
+      category: "legal",
+      cadetId: "SSD-LEG-2011-0089",
+      state: "Supreme Court Bar, New Delhi",
+      tenure: "13 Years Pro-Bono Counsel",
+      highlight: "We transform constitutional guarantees from ink on parchment into an impenetrable shield in courtrooms.",
+      quote: "Our pro-bono legal wing intervenes across district courts and high courts whenever marginalized citizens face institutional apathy or atrocities. We fight without charging a single rupee because Babasaheb gave us the Constitution as our supreme weapon. SSD ensures no citizen is left defenseless.",
+      photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80",
+      approvalStatus: "approved",
+      is_published: true
+    },
+    "test_4": {
+      id: "test_4",
+      name: "Dr. Siddharth M. Meshram",
+      designation: "Director of Field Medicine & Sewa Relief",
+      category: "relief",
+      cadetId: "SSD-MED-2015-0302",
+      state: "Wardha & Chandrapur, MH",
+      tenure: "9 Years Disaster Relief",
+      highlight: "In disaster zones and medical crises, an SSD volunteer arrives first and leaves last.",
+      quote: "During regional floods and epidemics, our volunteer doctors and trained youth cadets establish emergency medical outposts within hours. We run a 24/7 volunteer blood donor brigade that has answered over 12,000 emergency requests. For us, humanitarian relief is pure constitutional brotherhood in action.",
+      photoUrl: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=240&q=80",
+      approvalStatus: "approved",
+      is_published: true
+    },
+    "test_5": {
+      id: "test_5",
+      name: "Pradeep Kumar Boudh",
+      designation: "Regional Commander, Northern Zone",
+      category: "leadership",
+      cadetId: "SSD-UP-1998-0055",
+      state: "Lucknow, Uttar Pradesh",
+      tenure: "26 Years Active Service",
+      highlight: "The uniform gives our youth pride, discipline, and a collective purpose beyond caste divisions.",
+      quote: "Across Uttar Pradesh and North India, rural youth often lack positive mentorship. When they attend our drill parades, study Dr. Ambedkar's writings, and march in centenary rallies, their entire perspective transforms. They become vigilant protectors of peace, democracy, and community harmony.",
+      photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=240&q=80",
+      approvalStatus: "approved",
+      is_published: true
+    },
+    "test_6": {
+      id: "test_6",
+      name: "Priyanka B. Tayade",
+      designation: "Chief Drill Instructor & Bal Sainik Mentor",
+      category: "youth",
+      cadetId: "SSD-YW-2018-0412",
+      state: "Pune, Maharashtra",
+      tenure: "6 Years Youth Leadership",
+      highlight: "Teaching children the Preamble before dogma is how we build a casteless, democratic India.",
+      quote: "I enlisted as a Bal Sainik at age ten. Today, I train collegiate youth to lead weekly Constitution reading circles in schools, slums, and rural bastis. Watching a 12-year-old recite the Preamble with glowing pride and saluting the national flag gives me absolute conviction in our movement's future.",
+      photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80",
+      approvalStatus: "approved",
+      is_published: true
+    },
+    "test_7": {
+      id: "test_7",
+      name: "Bhimrao Jadhav",
+      designation: "Veteran Sainik & Centenary Task Force",
+      category: "leadership",
+      cadetId: "SSD-KA-1981-0007",
+      state: "Belagavi, Karnataka",
+      tenure: "43 Years Lifelong Service",
+      highlight: "For over four decades, our khaki uniform has stood as a guardian of Dr. Ambedkar's vision.",
+      quote: "I took my first pledge in 1981 under veteran leaders who stood side-by-side with Babasaheb. As we approach the historic Centenary of Samata Sainik Dal (1927–2027), seeing modern youth, software engineers, and scholars enlist with equal fervor proves that our movement is timeless and unbreakable.",
+      photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=240&q=80",
+      approvalStatus: "approved",
+      is_published: true
+    }
   }
 };
+

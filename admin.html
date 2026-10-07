@@ -175,6 +175,14 @@
           <span class="sidebar-badge" id="badgeGalleryCount">0</span>
         </a>
 
+        <a class="sidebar-item" onclick="switchView('testimonials')" id="nav-testimonials">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-quote-left"></i>
+            <span>Voices & Testimonies</span>
+          </div>
+          <span class="sidebar-badge" id="badgeTestimonialsCount">0</span>
+        </a>
+
         <div class="menu-category-label">System & Access Control</div>
         <a class="sidebar-item" onclick="switchView('admins')" id="nav-admins">
           <div class="sidebar-item-left">
@@ -776,6 +784,107 @@
         </section>
 
         <!-- ==========================================
+             VIEW: VOICES FROM THE FRONTLINE & TESTIMONIES
+             ========================================== -->
+        <section id="viewTestimonials" class="view-panel">
+          <!-- Summary Metrics Cards -->
+          <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px;">
+            <div class="metric-card">
+              <div class="metric-icon" style="background: rgba(255, 107, 0, 0.1); color: var(--primary-orange);">
+                <i class="fa-solid fa-quote-left"></i>
+              </div>
+              <div class="metric-data">
+                <span class="value" id="kpiTestimonialsTotal">0</span>
+                <span class="label">Total Testimonies</span>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                <i class="fa-solid fa-circle-check"></i>
+              </div>
+              <div class="metric-data">
+                <span class="value" id="kpiTestimonialsPublished">0</span>
+                <span class="label">Published & Live</span>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                <i class="fa-solid fa-file-pen"></i>
+              </div>
+              <div class="metric-data">
+                <span class="value" id="kpiTestimonialsDrafts">0</span>
+                <span class="label">Drafts / In Review</span>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                <i class="fa-solid fa-shield-halved"></i>
+              </div>
+              <div class="metric-data">
+                <span class="value" id="kpiTestimonialsWings">5</span>
+                <span class="label">Cadre Wings Covered</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-panel">
+            <div class="card-panel-header" style="flex-wrap: wrap; gap: 14px;">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-quote-left" style="color: var(--primary-orange);"></i>
+                <div>
+                  <h3 style="font-size: 16px;">Voices from the Frontline & Cadre Testimonies (/testimonials)</h3>
+                  <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Official repository of authentic testimonies from State Commanders, Mahila Dal, Legal Advisory Cell, and volunteer sainiks</p>
+                </div>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <div class="filter-group" style="display: flex; gap: 8px;">
+                  <select id="testimonialFilterWing" onchange="renderTestimonialsTable()" style="padding: 7px 12px; font-size: 12.5px; border-radius: 6px; border: 1px solid #CBD5E1;">
+                    <option value="all">All Cadre Wings</option>
+                    <option value="leadership">State & Central Command</option>
+                    <option value="mahila">Mahila Samata Sainik Dal</option>
+                    <option value="legal">Legal Advisory Cell</option>
+                    <option value="relief">Sewa & Disaster Relief</option>
+                    <option value="youth">Youth & Bal Sainik</option>
+                  </select>
+                  <select id="testimonialFilterStatus" onchange="renderTestimonialsTable()" style="padding: 7px 12px; font-size: 12.5px; border-radius: 6px; border: 1px solid #CBD5E1;">
+                    <option value="all">All Statuses</option>
+                    <option value="published">Published Only</option>
+                    <option value="draft">Drafts Only</option>
+                  </select>
+                </div>
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openCreateTestimonialModal()">
+                  <i class="fa-solid fa-plus"></i> New Cadre Testimony
+                </button>
+              </div>
+            </div>
+
+            <!-- Search input bar -->
+            <div style="padding: 12px 20px; background: #F8FAFC; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; gap: 10px;">
+              <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted); font-size: 13px;"></i>
+              <input type="text" id="testimonialSearchInput" placeholder="Filter by cadet name, rank, ID, jurisdiction, or keywords..." oninput="renderTestimonialsTable()" style="border: none; background: transparent; font-size: 13px; width: 100%; outline: none;">
+            </div>
+
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Cadet / Author</th>
+                    <th>Cadre ID & Wing</th>
+                    <th>Jurisdiction & Service</th>
+                    <th>Highlight & Testimony Excerpt</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="testimonialsTableBody">
+                  <tr><td colspan="6" style="text-align: center; padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading cadre testimonies...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
              VIEW 8: GRIEVANCE DESK / CONTACT MESSAGES
              ========================================== -->
         <section id="viewContacts" class="view-panel">
@@ -1225,6 +1334,104 @@
   <!-- ==========================================================================
        CREATE / EDIT MODALS
        ========================================================================== -->
+
+  <!-- Cadre Testimony Modal (Voices from the Frontline) -->
+  <div id="modalTestimonial" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 760px;">
+      <div class="admin-modal-header">
+        <h3 id="modalTestimonialHeading">Add New Cadre Testimony</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalTestimonial')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formTestimonial" onsubmit="handleSaveTestimonial(event)">
+        <div class="admin-modal-body">
+          <input type="hidden" id="testimonialKey">
+
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="testimonialCadetName">Cadet / Author Full Name *</label>
+              <input type="text" id="testimonialCadetName" required placeholder="e.g. Commander Ashok R. Gaikwad">
+            </div>
+            <div class="form-group-modal">
+              <label for="testimonialDesignation">Official Rank / Designation *</label>
+              <input type="text" id="testimonialDesignation" required placeholder="e.g. State Commander, Maharashtra SSD">
+            </div>
+          </div>
+
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="testimonialCategory">Cadre Wing / Category *</label>
+              <select id="testimonialCategory" required>
+                <option value="leadership">State & Central Command</option>
+                <option value="mahila">Mahila Samata Sainik Dal</option>
+                <option value="legal">SSD Legal Advisory Cell</option>
+                <option value="relief">Sewa & Disaster Relief Task Force</option>
+                <option value="youth">Youth Wing & Bal Sainik Cadres</option>
+              </select>
+            </div>
+            <div class="form-group-modal">
+              <label for="testimonialCadetId">Cadet Commission ID</label>
+              <input type="text" id="testimonialCadetId" placeholder="e.g. SSD-MH-1989-0042" style="font-family: monospace; font-weight: 700;">
+            </div>
+          </div>
+
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="testimonialState">Jurisdiction / Location *</label>
+              <input type="text" id="testimonialState" required placeholder="e.g. Nagpur & Mumbai, Maharashtra">
+            </div>
+            <div class="form-group-modal">
+              <label for="testimonialTenure">Years of Service / Tenure *</label>
+              <input type="text" id="testimonialTenure" required placeholder="e.g. 35 Years Active Service">
+            </div>
+          </div>
+
+          <div class="form-group-modal">
+            <label for="testimonialHighlight">Core Pull-Quote (Punchy Headline)</label>
+            <input type="text" id="testimonialHighlight" placeholder="e.g. Discipline in khaki is not militarism; it is moral readiness to protect equality.">
+            <small style="color: var(--text-muted); font-size: 11px;">A prominent sentence highlighting the essence of this cadet's testimony.</small>
+          </div>
+
+          <div class="form-group-modal">
+            <label for="testimonialQuote">Full Narrative Testimony *</label>
+            <textarea id="testimonialQuote" rows="4" required placeholder="Enter the complete reflection, historical experience, or field report from the cadet..." style="width: 100%; border-radius: 6px; border: 1px solid #CBD5E1; padding: 10px; font-family: inherit; font-size: 13.5px;"></textarea>
+          </div>
+
+          <div class="form-group-modal">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+              <span>Cadet Portrait Photo / Avatar</span>
+              <small style="color: var(--text-muted); font-weight: normal;">Upload image or paste URL</small>
+            </label>
+            <div class="admin-image-upload-box">
+              <div class="admin-file-picker-wrapper">
+                <label class="btn-admin-file-upload">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                  <span>Upload Photo from Device</span>
+                  <input type="file" id="testimonialImageFileInput" accept="image/*" style="display: none;" onchange="handleLocalImageUpload(this, 'testimonialPhotoUrl', 'testimonialPhotoPreview')">
+                </label>
+              </div>
+              <input type="url" id="testimonialPhotoUrl" placeholder="https://images.unsplash.com/... or paste image URL" oninput="updateImagePreview('testimonialPhotoPreview', this.value)" style="margin-top: 8px;">
+              <div id="testimonialPhotoPreview" class="admin-image-preview" style="margin-top: 8px;"></div>
+            </div>
+          </div>
+
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="testimonialStatus">Publication Status</label>
+              <select id="testimonialStatus">
+                <option value="published">Published (Live on Public Portal)</option>
+                <option value="draft">Draft (Restricted / In Review)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalTestimonial')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-floppy-disk"></i> Save & Publish Testimony</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- News Dispatch Modal -->
   <div id="modalNews" class="admin-modal">
@@ -1902,12 +2109,27 @@
                 <option value="chapter_official">Chapter Unit Official (Local Unit - L1)</option>
                 <option value="finance_admin">National Treasury Officer (Centenary Fund & 80G Audit)</option>
                 <option value="media_admin">Chief Media & IT Cell Officer (Gazette & Media)</option>
+                <option value="testimonials_editor">Voices & Testimonies Editor (Cadre Content - L4)</option>
               </select>
             </div>
             <div class="form-group-modal">
               <label for="newAdminDept">Department / Directorate Unit</label>
               <input type="text" id="newAdminDept" placeholder="e.g. Central Cadet Directorate" required>
             </div>
+          </div>
+
+          <!-- GRANULAR PERMISSION: TESTIMONIALS / VOICES FROM THE FRONTLINE -->
+          <div class="form-group-modal" style="background: #FFF8F0; border: 1px solid rgba(255, 107, 0, 0.25); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;">
+            <label style="font-weight: 700; color: var(--navy-dark); margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-key" style="color: var(--primary-orange);"></i> Granular Desk Authorizations
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--navy-dark); margin: 0;">
+              <input type="checkbox" id="newAdminPermTestimonials" style="width: 17px; height: 17px; accent-color: var(--primary-orange);">
+              <span>Grant Permission to Edit "Voices from the Frontline" (Cadre Testimonies Desk)</span>
+            </label>
+            <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">
+              Allows this specific officer to curate, edit, publish, and delete Cadre Testimonies in the Admin Panel.
+            </small>
           </div>
 
           <!-- DYNAMIC TERRITORIAL JURISDICTION ASSIGNMENT -->

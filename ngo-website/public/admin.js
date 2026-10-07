@@ -1156,6 +1156,23 @@ function initAdminRealtimePipeline() {
       renderOverview();
     }
   });
+
+  window.SSDRealtime.on('testimonials:update', (item) => {
+    if (item && item.id) {
+      if (!adminData.testimonials) adminData.testimonials = {};
+      adminData.testimonials[item.id] = item;
+      saveLocalStore();
+      renderTestimonialsTable();
+    }
+  });
+
+  window.SSDRealtime.on('testimonials:delete', ({ id }) => {
+    if (id && adminData.testimonials && adminData.testimonials[id]) {
+      delete adminData.testimonials[id];
+      saveLocalStore();
+      renderTestimonialsTable();
+    }
+  });
 }
 
 function initFirebase() {
@@ -1233,9 +1250,19 @@ function getRoleDisplayName(role) {
     case "finance_admin": return "National Treasurer";
     case "media":
     case "media_admin": return "Media & IT Officer";
+    case "testimonials_editor": return "Cadre Voices & Testimonials Editor";
     case "executive": return "Executive Officer";
     default: return (role ? role.replace(/_/g, " ").toUpperCase() : "Command Officer");
   }
+}
+
+function canEditTestimonials() {
+  if (isSuperAdmin()) return true;
+  const officer = getActiveOfficer();
+  if (officer.can_edit_testimonials === true || officer.can_edit_testimonials === 'true' || officer.canEditTestimonials === true) return true;
+  const r = officer.role || officer.role_id || '';
+  if (r === 'testimonials_editor' || r === 'media_admin' || r === 'media') return true;
+  return false;
 }
 
 function applyRolePermissions(role) {
@@ -1243,11 +1270,11 @@ function applyRolePermissions(role) {
   const isApprover = isSuper || role === "enlistment_officer" || role === "enlistment_admin" || role === "central_admin" || role === "state_official" || role === "regional_official" || role === "district_official" || role === "taluka_official" || role === "chapter_official";
 
   const permissions = {
-    super_admin: ["overview", "approvals", "members", "donations", "leadership", "chapters", "news", "events", "campaigns", "gallery", "admins", "contacts", "stats", "settings"],
+    super_admin: ["overview", "approvals", "members", "donations", "leadership", "chapters", "news", "events", "campaigns", "gallery", "testimonials", "admins", "contacts", "stats", "settings"],
     enlistment_officer: ["approvals", "members"],
     enlistment_admin: ["approvals", "members"],
     executive: ["overview", "members", "leadership", "chapters", "news", "events", "campaigns", "gallery", "contacts"],
-    central_admin: ["overview", "approvals", "members", "leadership", "chapters", "news", "events", "campaigns", "gallery", "contacts"],
+    central_admin: ["overview", "approvals", "members", "leadership", "chapters", "news", "events", "campaigns", "gallery", "testimonials", "contacts"],
     state_official: ["overview", "approvals", "members", "leadership", "chapters"],
     regional_official: ["overview", "approvals", "members", "leadership", "chapters"],
     district_official: ["overview", "approvals", "members"],
@@ -1255,11 +1282,16 @@ function applyRolePermissions(role) {
     chapter_official: ["overview", "approvals", "members"],
     treasurer: ["overview", "donations", "campaigns"],
     finance_admin: ["overview", "donations", "campaigns"],
-    media: ["overview", "news", "events", "gallery"],
-    media_admin: ["overview", "news", "events", "gallery"]
+    media: ["overview", "news", "events", "gallery", "testimonials"],
+    media_admin: ["overview", "news", "events", "gallery", "testimonials"],
+    testimonials_editor: ["overview", "testimonials"]
   };
 
-  const allowed = isSuper ? permissions.super_admin : (permissions[role] || permissions.executive);
+  const allowed = isSuper ? [...permissions.super_admin] : [...(permissions[role] || permissions.executive)];
+  if (canEditTestimonials() && !allowed.includes("testimonials")) {
+    allowed.push("testimonials");
+  }
+
   document.querySelectorAll(".sidebar-item").forEach(item => {
     const navId = item.id.replace("nav-", "");
     if (allowed.includes(navId)) {
@@ -2352,6 +2384,7 @@ const viewMetadata = {
   events: { title: "Drills, Seminars & Rallies", sub: "Schedule nationwide cadet training and conclaves" },
   campaigns: { title: "Ongoing Missions & Causes", sub: "Manage active fundraising goals & volunteer targets" },
   gallery: { title: "Historical & Event Photo Archives", sub: "Curate high-resolution public photo albums" },
+  testimonials: { title: "Voices from the Frontline & Cadre Testimonies", sub: "Curate and publish authentic testimonies from state commanders, legal cells, and grassroots cadets" },
   admins: { title: "Authorized Command Officers", sub: "Multi-user authentication, roles & access permissions" },
   contacts: { title: "Grievance Desk & Public Inquiries", sub: "Respond to incoming state command queries" },
   stats: { title: "Public Portal Live Counters", sub: "Update homepage live counters directly in Supabase Cloud" },
@@ -2376,6 +2409,9 @@ function switchView(viewKey) {
     viewKey = 'overview';
   } else if ((viewKey === 'admins' || viewKey === 'settings') && !isSuper) {
     showToast("Access Restricted: Master Command Access required for this desk.", "error");
+    viewKey = (userRole === 'enlistment_officer' || userRole === 'enlistment_admin') ? 'approvals' : 'overview';
+  } else if (viewKey === 'testimonials' && !canEditTestimonials()) {
+    showToast("Access Restricted: Voices from the Frontline editing clearance required.", "error");
     viewKey = (userRole === 'enlistment_officer' || userRole === 'enlistment_admin') ? 'approvals' : 'overview';
   }
 
@@ -2422,6 +2458,8 @@ function switchView(viewKey) {
     renderCampaignsTable();
   } else if (viewKey === 'gallery') {
     renderGalleryGrid();
+  } else if (viewKey === 'testimonials') {
+    renderTestimonialsTable();
   } else if (viewKey === 'contacts') {
     renderContactsTable();
   } else if (viewKey === 'stats') {
@@ -5194,6 +5232,13 @@ function populateAdminsTableHtml(tbody, officersList) {
             <span class="badge-status ${isSuper ? 'badge-approved' : 'badge-info'}" style="font-weight: 600;">
               ${escapeHtml(roleName)}
             </span>
+            ${(u.can_edit_testimonials || roleId === 'testimonials_editor') ? `
+              <div style="margin-top: 4px;">
+                <span class="badge-status" style="background: rgba(255, 107, 0, 0.1); color: var(--primary-orange); border: 1px solid rgba(255, 107, 0, 0.3); font-size: 10px; font-weight: 700; padding: 2px 6px; display: inline-flex; align-items: center; gap: 4px;" title="Authorized to Edit Voices from the Frontline">
+                  <i class="fa-solid fa-quote-left"></i> Voices Editor
+                </span>
+              </div>
+            ` : ''}
           </td>
           <td>
             <div style="font-size: 12px; font-weight: 600; color: var(--dark-navy); display: flex; align-items: center; gap: 5px;">
@@ -5313,6 +5358,8 @@ function openAddAdminUserModal() {
   setInputValue("newAdminDistrict", "dist_mh_nagpur");
   setInputValue("newAdminTaluka", "");
   handleAdminRoleChange("district_official");
+  const permTestimonials = document.getElementById("newAdminPermTestimonials");
+  if (permTestimonials) permTestimonials.checked = false;
   setText("modalAdminUserHeading", "Authorize New Command Officer");
   openAdminModal("modalAdminUser");
 }
@@ -5345,6 +5392,10 @@ function openEditAdminUserModal(id) {
   setInputValue("newAdminTaluka", jur.taluka_id || u.talukaId || "");
   
   handleAdminRoleChange(roleVal);
+  const permTestimonials = document.getElementById("newAdminPermTestimonials");
+  if (permTestimonials) {
+    permTestimonials.checked = !!(u.can_edit_testimonials === true || u.can_edit_testimonials === 'true' || roleVal === 'testimonials_editor' || roleVal === 'media_admin');
+  }
   setText("modalAdminUserHeading", `Edit Officer Authorization: ${u.full_name || u.name}`);
   openAdminModal("modalAdminUser");
 }
@@ -5365,6 +5416,8 @@ async function handleSaveAdminUser(e) {
   const dept = document.getElementById("newAdminDept").value.trim() || "Organizational Directorate";
   const status = document.getElementById("newAdminStatus").value || "ACTIVE";
   const passcode = document.getElementById("newAdminPasscode").value.trim();
+  const permTestimonials = document.getElementById("newAdminPermTestimonials");
+  const canEditTestimonialsVal = permTestimonials ? permTestimonials.checked : false;
   const stateId = document.getElementById("newAdminState") ? document.getElementById("newAdminState").value : null;
   const regionId = document.getElementById("newAdminRegion") ? document.getElementById("newAdminRegion").value : null;
   const districtId = document.getElementById("newAdminDistrict") ? document.getElementById("newAdminDistrict").value : null;
@@ -5396,6 +5449,7 @@ async function handleSaveAdminUser(e) {
         roleId: role,
         department: dept,
         status: status,
+        can_edit_testimonials: canEditTestimonialsVal,
         stateId: stateId,
         regionId: regionId,
         districtId: districtId,
@@ -5434,6 +5488,7 @@ async function handleSaveAdminUser(e) {
     dept: dept,
     department: dept,
     status: status,
+    can_edit_testimonials: canEditTestimonialsVal,
     stateId: stateId,
     regionId: regionId,
     districtId: districtId,
@@ -5446,6 +5501,13 @@ async function handleSaveAdminUser(e) {
   if (!adminData.admin_users) adminData.admin_users = { ...ssdInitialSeed.admin_users };
   adminData.admin_users[targetKey] = userData;
   saveLocalStore();
+
+  const currentOfficer = getActiveOfficer();
+  if (currentOfficer && (currentOfficer.id === targetKey || currentOfficer.email === userData.email)) {
+    const updatedOfficer = { ...currentOfficer, ...userData };
+    sessionStorage.setItem("ssd_admin_user", JSON.stringify(updatedOfficer));
+    applyRolePermissions(updatedOfficer.role);
+  }
 
   showToast(`Officer ${userData.name} (${userData.email}) authorized successfully!`, "success");
   closeAdminModal("modalAdminUser");
@@ -6846,6 +6908,370 @@ function deleteGalleryItem(id) {
     renderGalleryGrid();
     showToast("Photo removed.", "info");
   }
+}
+
+// ==========================================================================
+// RENDERERS & HANDLERS: VOICES FROM THE FRONTLINE & CADRE TESTIMONIES
+// ==========================================================================
+
+let _testimonialsCache = null;
+
+async function fetchTestimonialsList() {
+  try {
+    const res = await fetch('/api/testimonials?all=true');
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.testimonials)) {
+        _testimonialsCache = data.testimonials;
+        return data.testimonials;
+      }
+    }
+  } catch (err) {
+    console.warn("Backend /api/testimonials unreachable, checking fallback:", err);
+  }
+
+  // Fallback to memory / local store
+  if (adminData && adminData.testimonials) {
+    const tMap = adminData.testimonials;
+    if (Array.isArray(tMap)) return tMap;
+    return Object.entries(tMap).map(([id, val]) => ({ id: val.id || id, ...val }));
+  }
+  return [];
+}
+
+async function renderTestimonialsTable() {
+  const tbody = document.getElementById("testimonialsTableBody");
+  if (!tbody) return;
+
+  const filterWing = (document.getElementById("testimonialFilterWing") ? document.getElementById("testimonialFilterWing").value : "all").toLowerCase();
+  const filterStatus = (document.getElementById("testimonialFilterStatus") ? document.getElementById("testimonialFilterStatus").value : "all").toLowerCase();
+  const searchQuery = (document.getElementById("testimonialSearchInput") ? document.getElementById("testimonialSearchInput").value : "").trim().toLowerCase();
+
+  const list = await fetchTestimonialsList();
+
+  // Metrics update
+  const totalCount = list.length;
+  const publishedCount = list.filter(t => t.is_published !== false && t.published !== false).length;
+  const draftCount = totalCount - publishedCount;
+  const distinctWings = new Set(list.map(t => (t.category || '').toLowerCase()).filter(Boolean)).size;
+
+  setText("kpiTestimonialsTotal", totalCount);
+  setText("kpiTestimonialsPublished", publishedCount);
+  setText("kpiTestimonialsDrafts", draftCount);
+  setText("kpiTestimonialsWings", distinctWings || 5);
+  setText("badgeTestimonialsCount", totalCount);
+
+  // Filter list
+  let filtered = list.filter(t => {
+    if (filterWing !== 'all' && (t.category || '').toLowerCase() !== filterWing) {
+      return false;
+    }
+    const isPub = t.is_published !== false && t.published !== false;
+    if (filterStatus === 'published' && !isPub) return false;
+    if (filterStatus === 'draft' && isPub) return false;
+
+    if (searchQuery) {
+      const text = [
+        t.name,
+        t.designation,
+        t.cadetId,
+        t.state,
+        t.highlight,
+        t.quote,
+        t.tenure
+      ].filter(Boolean).join(' ').toLowerCase();
+      if (!text.includes(searchQuery)) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align: center; padding: 35px; color: var(--text-muted);">
+          <i class="fa-solid fa-folder-open" style="font-size: 24px; color: #CBD5E1; margin-bottom: 8px; display: block;"></i>
+          No testimonies match the selected criteria.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  const userCanEdit = canEditTestimonials();
+
+  tbody.innerHTML = filtered.map(t => {
+    const isPublished = t.is_published !== false && t.published !== false;
+    const photo = t.photoUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=240&q=80';
+    const categoryName = {
+      leadership: 'Command Cadre',
+      mahila: 'Mahila Dal',
+      legal: 'Legal Cell',
+      relief: 'Sewa & Relief',
+      youth: 'Youth Wing'
+    }[t.category] || (t.category ? t.category.toUpperCase() : 'General');
+
+    return `
+      <tr>
+        <td>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="${escapeHtml(photo)}" alt="${escapeHtml(t.name)}" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-orange); flex-shrink: 0;" onerror="this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=240&q=80'">
+            <div>
+              <strong style="font-size: 13.5px; color: var(--dark-navy);">${escapeHtml(t.name)}</strong>
+              <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">${escapeHtml(t.designation || 'Sainik Cadre')}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <code style="font-weight: 700; color: var(--dark-navy); font-size: 11.5px;">${escapeHtml(t.cadetId || 'SSD-CADRE')}</code>
+          <div style="margin-top: 3px;">
+            <span class="badge-status badge-info" style="font-size: 10px; font-weight: 600;">
+              ${escapeHtml(categoryName)}
+            </span>
+          </div>
+        </td>
+        <td>
+          <div style="font-size: 12.5px; font-weight: 600; color: var(--dark-navy); display: flex; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-map-pin" style="color: var(--primary-orange); font-size: 11px;"></i>
+            ${escapeHtml(t.state || 'National')}
+          </div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+            <i class="fa-solid fa-clock-rotate-left" style="font-size: 10px;"></i> ${escapeHtml(t.tenure || 'Active')}
+          </div>
+        </td>
+        <td style="max-width: 320px;">
+          ${t.highlight ? `<strong style="font-size: 12px; color: var(--dark-navy); display: block; margin-bottom: 2px;">"${escapeHtml(t.highlight)}"</strong>` : ''}
+          <div style="font-size: 11.5px; color: var(--text-muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+            ${escapeHtml(t.quote)}
+          </div>
+        </td>
+        <td>
+          <span class="badge-status ${isPublished ? 'badge-approved' : 'badge-pending'}" style="font-weight: 600;">
+            <i class="fa-solid ${isPublished ? 'fa-circle-check' : 'fa-clock'}"></i>
+            ${isPublished ? 'Published' : 'Draft'}
+          </span>
+        </td>
+        <td style="text-align: right;">
+          <div class="action-btn-group" style="justify-content: flex-end;">
+            ${userCanEdit ? `
+              <button type="button" class="action-icon-btn ${isPublished ? 'warning' : 'verify'}" onclick="toggleTestimonialPublish('${escapeHtml(t.id)}')" title="${isPublished ? 'Unpublish (Make Draft)' : 'Publish Live'}">
+                <i class="fa-solid ${isPublished ? 'fa-eye-slash' : 'fa-eye'}"></i>
+              </button>
+              <button type="button" class="action-icon-btn" onclick="openEditTestimonialModal('${escapeHtml(t.id)}')" title="Edit Testimony">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+              <button type="button" class="action-icon-btn delete" onclick="deleteTestimonial('${escapeHtml(t.id)}')" title="Delete Testimony">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            ` : `
+              <span style="font-size: 11px; color: var(--text-muted); font-style: italic;">View Only</span>
+            `}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function openCreateTestimonialModal() {
+  if (!canEditTestimonials()) {
+    showToast("Access Restricted: You lack authorization to edit Voices & Testimonies.", "error");
+    return;
+  }
+  setInputValue("testimonialKey", "");
+  setInputValue("testimonialCadetName", "");
+  setInputValue("testimonialDesignation", "");
+  setInputValue("testimonialCategory", "leadership");
+  setInputValue("testimonialCadetId", `SSD-CADRE-${new Date().getFullYear()}-${String(Math.floor(1000 + Math.random() * 9000))}`);
+  setInputValue("testimonialState", "Maharashtra");
+  setInputValue("testimonialTenure", "Active Cadre");
+  setInputValue("testimonialHighlight", "");
+  setInputValue("testimonialQuote", "");
+  setInputValue("testimonialPhotoUrl", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=240&q=80");
+  setInputValue("testimonialStatus", "published");
+  updateImagePreview("testimonialPhotoPreview", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=240&q=80");
+  setText("modalTestimonialHeading", "Add New Cadre Testimony");
+  openAdminModal("modalTestimonial");
+}
+
+function openEditTestimonialModal(id) {
+  if (!canEditTestimonials()) {
+    showToast("Access Restricted: You lack authorization to edit Voices & Testimonies.", "error");
+    return;
+  }
+  const item = (_testimonialsCache || []).find(t => t.id === id) || (adminData.testimonials ? adminData.testimonials[id] : null);
+  if (!item) {
+    showToast("Testimony record not found.", "error");
+    return;
+  }
+
+  setInputValue("testimonialKey", item.id);
+  setInputValue("testimonialCadetName", item.name || "");
+  setInputValue("testimonialDesignation", item.designation || "");
+  setInputValue("testimonialCategory", item.category || "leadership");
+  setInputValue("testimonialCadetId", item.cadetId || "");
+  setInputValue("testimonialState", item.state || "");
+  setInputValue("testimonialTenure", item.tenure || "");
+  setInputValue("testimonialHighlight", item.highlight || "");
+  setInputValue("testimonialQuote", item.quote || "");
+  setInputValue("testimonialPhotoUrl", item.photoUrl || "");
+  const isPub = item.is_published !== false && item.published !== false;
+  setInputValue("testimonialStatus", isPub ? "published" : "draft");
+  updateImagePreview("testimonialPhotoPreview", item.photoUrl || "");
+  setText("modalTestimonialHeading", `Edit Cadre Testimony: ${item.name}`);
+  openAdminModal("modalTestimonial");
+}
+
+async function handleSaveTestimonial(e) {
+  e.preventDefault();
+  if (!canEditTestimonials()) {
+    showToast("Access Restricted: You lack authorization to edit Voices & Testimonies.", "error");
+    return;
+  }
+
+  const key = document.getElementById("testimonialKey").value;
+  const name = document.getElementById("testimonialCadetName").value.trim();
+  const designation = document.getElementById("testimonialDesignation").value.trim();
+  const category = document.getElementById("testimonialCategory").value;
+  const cadetId = document.getElementById("testimonialCadetId").value.trim();
+  const state = document.getElementById("testimonialState").value.trim();
+  const tenure = document.getElementById("testimonialTenure").value.trim();
+  const highlight = document.getElementById("testimonialHighlight").value.trim();
+  const quote = document.getElementById("testimonialQuote").value.trim();
+  const photoUrl = document.getElementById("testimonialPhotoUrl").value.trim();
+  const status = document.getElementById("testimonialStatus").value;
+  const isPublished = status === "published";
+
+  if (!name || !quote) {
+    showToast("Cadet name and full testimony quote are required.", "error");
+    return;
+  }
+
+  const officer = getActiveOfficer();
+  const payload = {
+    id: key || ('test_' + Date.now()),
+    name: name,
+    designation: designation,
+    category: category,
+    cadetId: cadetId || `SSD-CADRE-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`,
+    state: state,
+    tenure: tenure,
+    highlight: highlight,
+    quote: quote,
+    photoUrl: photoUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=240&q=80',
+    approvalStatus: 'approved',
+    is_published: isPublished,
+    published: isPublished,
+    submittedBy: officer.name || officer.fullName || 'Command Officer',
+    updatedAt: Date.now()
+  };
+
+  const token = localStorage.getItem("ssd_token");
+  try {
+    const url = key ? `/api/testimonials/${encodeURIComponent(key)}` : `/api/testimonials`;
+    const method = key ? 'PUT' : 'POST';
+    const res = await fetch(url, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+    if (!result.success) {
+      showToast(result.error || "Failed to save testimony on server.", "warning");
+    } else {
+      showToast(`Cadre testimony of ${name} saved successfully!`, "success");
+    }
+  } catch (err) {
+    console.warn("Backend save failed, using local store:", err);
+    showToast(`Testimony saved locally for ${name}.`, "info");
+  }
+
+  // Update local memory and store
+  if (!adminData.testimonials) adminData.testimonials = {};
+  adminData.testimonials[payload.id] = payload;
+  saveLocalStore();
+
+  closeAdminModal("modalTestimonial");
+  await renderTestimonialsTable();
+}
+
+async function toggleTestimonialPublish(id) {
+  if (!canEditTestimonials()) {
+    showToast("Access Restricted: You lack authorization to edit Voices & Testimonies.", "error");
+    return;
+  }
+
+  const token = localStorage.getItem("ssd_token");
+  try {
+    const res = await fetch(`/api/testimonials/${encodeURIComponent(id)}/toggle`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
+    });
+    const result = await res.json();
+    if (result.success) {
+      showToast(result.message || "Testimony status toggled.", "success");
+    }
+  } catch (err) {
+    console.warn("Toggle status backend error:", err);
+  }
+
+  // Also toggle in cache / local store
+  if (_testimonialsCache) {
+    const target = _testimonialsCache.find(t => t.id === id);
+    if (target) {
+      const cur = target.is_published !== false && target.published !== false;
+      target.is_published = !cur;
+      target.published = !cur;
+    }
+  }
+  if (adminData.testimonials && adminData.testimonials[id]) {
+    const cur = adminData.testimonials[id].is_published !== false && adminData.testimonials[id].published !== false;
+    adminData.testimonials[id].is_published = !cur;
+    adminData.testimonials[id].published = !cur;
+    saveLocalStore();
+  }
+
+  await renderTestimonialsTable();
+}
+
+async function deleteTestimonial(id) {
+  if (!canEditTestimonials()) {
+    showToast("Access Restricted: You lack authorization to edit Voices & Testimonies.", "error");
+    return;
+  }
+
+  if (!confirm("Are you sure you want to remove this cadre testimony?")) return;
+
+  const token = localStorage.getItem("ssd_token");
+  try {
+    const res = await fetch(`/api/testimonials/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: {
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
+    });
+    const result = await res.json();
+    if (result.success) {
+      showToast("Cadre testimony removed.", "info");
+    }
+  } catch (err) {
+    console.warn("Delete testimony backend error:", err);
+  }
+
+  if (_testimonialsCache) {
+    _testimonialsCache = _testimonialsCache.filter(t => t.id !== id);
+  }
+  if (adminData.testimonials) {
+    delete adminData.testimonials[id];
+    saveLocalStore();
+  }
+
+  await renderTestimonialsTable();
 }
 
 // ==========================================================================
@@ -8277,3 +8703,11 @@ window.saveSupabaseConfig = saveSupabaseConfig;
 window.testSupabasePing = testSupabasePing;
 window.initSupabase = initSupabase;
 window.resetFirebaseConfigDefault = resetFirebaseConfigDefault;
+window.renderTestimonialsTable = renderTestimonialsTable;
+window.openCreateTestimonialModal = openCreateTestimonialModal;
+window.openEditTestimonialModal = openEditTestimonialModal;
+window.handleSaveTestimonial = handleSaveTestimonial;
+window.toggleTestimonialPublish = toggleTestimonialPublish;
+window.deleteTestimonial = deleteTestimonial;
+window.canEditTestimonials = canEditTestimonials;
+
