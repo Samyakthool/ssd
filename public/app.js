@@ -328,22 +328,102 @@ const ssdSampleData = {
   },
   testimonials: {
     "test_1": {
+      id: "test_1",
       name: "Commander Ashok R. Gaikwad",
       designation: "State Commander, Maharashtra State SSD",
-      quote: "Serving in Samata Sainik Dal for 35 years has taught me the true meaning of Babasaheb's mission. The discipline, the uniform, and our commitment to equality give us the moral strength to defend our people.",
-      photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80"
+      category: "leadership",
+      categoryLabel: "State Command",
+      categoryIcon: "fa-solid fa-star",
+      cadetId: "SSD-MH-1989-0042",
+      state: "Nagpur & Mumbai, Maharashtra",
+      tenure: "35 Years Active Service",
+      highlight: "Discipline in khaki is not militarism; it is moral readiness to protect the constitutional dignity of our people.",
+      quote: "Serving in Samata Sainik Dal for 35 years has taught me the true meaning of Babasaheb's mission. When we put on the uniform and march in unison, caste barriers dissolve. Whether conducting flood rescues in Kolhapur or guarding peaceful assembly at Chaityabhoomi, our cadres stand fearless in defense of constitutional brotherhood.",
+      photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=240&q=80"
     },
     "test_2": {
-      name: "Sunita Kamble",
-      designation: "Chief Organizer, Mahila Samata Sainik Dal, Vidarbha",
-      quote: "Babasaheb envisioned women at the forefront of social change. Through Mahila Samata Sainik Dal, thousands of young women have learned self-defense, legal rights, and community leadership.",
-      photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80"
+      id: "test_2",
+      name: "Sunita Tai Kamble",
+      designation: "Chief Organizer, Mahila Samata Sainik Dal",
+      category: "mahila",
+      categoryLabel: "Mahila Dal",
+      categoryIcon: "fa-solid fa-shield-halved",
+      cadetId: "SSD-MSSD-2004-0118",
+      state: "Amravati, Vidarbha",
+      tenure: "20 Years Active Service",
+      highlight: "Babasaheb envisioned women leading the vanguard of social democracy, not standing behind.",
+      quote: "Through Mahila Samata Sainik Dal, we have trained more than 8,500 young women across rural Vidarbha in lathi drill, self-defense, and legal literacy. When rural women know their constitutional rights and have the courage to walk with head held high, entire communities transform.",
+      photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=240&q=80"
     },
     "test_3": {
+      id: "test_3",
       name: "Adv. Rajesh V. Gautam",
-      designation: "Convener, SSD National Legal Advisory Cell",
-      quote: "SSD is not just an organization; it is the constitutional guard force of the marginalized. We work tirelessly across courts to ensure that the protective safeguards envisioned by Dr. Ambedkar are fully enforced.",
-      photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80"
+      designation: "National Convener, SSD Legal Defense Cell",
+      category: "legal",
+      categoryLabel: "Legal Advisory",
+      categoryIcon: "fa-solid fa-scale-balanced",
+      cadetId: "SSD-LEG-2011-0089",
+      state: "Supreme Court Bar, New Delhi",
+      tenure: "13 Years Pro-Bono Counsel",
+      highlight: "We transform constitutional guarantees from ink on parchment into an impenetrable shield in courtrooms.",
+      quote: "Our pro-bono legal wing intervenes across district courts and high courts whenever marginalized citizens face institutional apathy or atrocities. We fight without charging a single rupee because Babasaheb gave us the Constitution as our supreme weapon. SSD ensures no citizen is left defenseless.",
+      photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80"
+    },
+    "test_4": {
+      id: "test_4",
+      name: "Dr. Siddharth M. Meshram",
+      designation: "Director of Field Medicine & Sewa Relief",
+      category: "relief",
+      categoryLabel: "Sewa & Relief",
+      categoryIcon: "fa-solid fa-hand-holding-medical",
+      cadetId: "SSD-MED-2015-0302",
+      state: "Wardha & Chandrapur, MH",
+      tenure: "9 Years Disaster Relief",
+      highlight: "In disaster zones and medical crises, an SSD volunteer arrives first and leaves last.",
+      quote: "During regional floods and epidemics, our volunteer doctors and trained youth cadets establish emergency medical outposts within hours. We run a 24/7 volunteer blood donor brigade that has answered over 12,000 emergency requests. For us, humanitarian relief is pure constitutional brotherhood in action.",
+      photoUrl: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=240&q=80"
+    },
+    "test_5": {
+      id: "test_5",
+      name: "Pradeep Kumar Boudh",
+      designation: "Regional Commander, Northern Zone",
+      category: "leadership",
+      categoryLabel: "State Command",
+      categoryIcon: "fa-solid fa-star",
+      cadetId: "SSD-UP-1998-0055",
+      state: "Lucknow, Uttar Pradesh",
+      tenure: "26 Years Active Service",
+      highlight: "The uniform gives our youth pride, discipline, and a collective purpose beyond caste divisions.",
+      quote: "Across Uttar Pradesh and North India, rural youth often lack positive mentorship. When they attend our drill parades, study Dr. Ambedkar's writings, and march in centenary rallies, their entire perspective transforms. They become vigilant protectors of peace, democracy, and community harmony.",
+      photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=240&q=80"
+    },
+    "test_6": {
+      id: "test_6",
+      name: "Priyanka B. Tayade",
+      designation: "Chief Drill Instructor & Bal Sainik Mentor",
+      category: "youth",
+      categoryLabel: "Youth & Bal Sainik",
+      categoryIcon: "fa-solid fa-graduation-cap",
+      cadetId: "SSD-YW-2018-0412",
+      state: "Pune, Maharashtra",
+      tenure: "6 Years Youth Leadership",
+      highlight: "Teaching children the Preamble before dogma is how we build a casteless, democratic India.",
+      quote: "I enlisted as a Bal Sainik at age ten. Today, I train collegiate youth to lead weekly Constitution reading circles in schools, slums, and rural bastis. Watching a 12-year-old recite the Preamble with glowing pride and saluting the national flag gives me absolute conviction in our movement's future.",
+      photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80"
+    },
+    "test_7": {
+      id: "test_7",
+      name: "Bhimrao Jadhav",
+      designation: "Veteran Sainik & Centenary Task Force",
+      category: "leadership",
+      categoryLabel: "Veteran Cadre",
+      categoryIcon: "fa-solid fa-award",
+      cadetId: "SSD-KA-1981-0007",
+      state: "Belagavi, Karnataka",
+      tenure: "43 Years Lifelong Service",
+      highlight: "For over four decades, our khaki uniform has stood as a guardian of Dr. Ambedkar's vision.",
+      quote: "I took my first pledge in 1981 under veteran leaders who stood side-by-side with Babasaheb. As we approach the historic Centenary of Samata Sainik Dal (1927–2027), seeing modern youth, software engineers, and scholars enlist with equal fervor proves that our movement is timeless and unbreakable.",
+      photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=240&q=80"
     }
   },
   campaigns: {
@@ -1151,73 +1231,302 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
-// Testimonials
+// ==========================================================================
+// TESTIMONIALS & CADRE VOICES SLIDER ENGINE
+// ==========================================================================
+let allLoadedTestimonials = [];
 let currentTestimonials = [];
 let currentTestimonialIndex = 0;
+let activeTestimonialCategory = 'all';
 let testimonialAutoSlideTimer = null;
+let isTestimonialAutoSlidePaused = false;
 
 function loadTestimonials() {
   const container = document.getElementById("testimonialContainer");
   if (!container) return;
 
-  if (db) {
+  if (typeof db !== "undefined" && db) {
     db.ref('testimonials').on('value', (snapshot) => {
       const data = snapshot.val();
-      renderTestimonials(data ? Object.values(data) : Object.values(ssdSampleData.testimonials));
+      const list = data ? Object.values(data) : Object.values(ssdSampleData.testimonials);
+      setupTestimonialsData(list);
     }, (err) => {
-      renderTestimonials(Object.values(ssdSampleData.testimonials));
+      setupTestimonialsData(Object.values(ssdSampleData.testimonials));
     });
   } else {
-    renderTestimonials(Object.values(ssdSampleData.testimonials));
+    setupTestimonialsData(Object.values(ssdSampleData.testimonials));
   }
 }
 
-function renderTestimonials(testimonialsArray) {
+function setupTestimonialsData(list) {
+  allLoadedTestimonials = Array.isArray(list) && list.length ? list : Object.values(ssdSampleData.testimonials);
+  filterTestimonials(activeTestimonialCategory, false);
+}
+
+function filterTestimonials(category = 'all', resetTimer = true) {
+  activeTestimonialCategory = category;
+  currentTestimonialIndex = 0;
+
+  if (category === 'all') {
+    currentTestimonials = [...allLoadedTestimonials];
+  } else {
+    currentTestimonials = allLoadedTestimonials.filter(item => {
+      const cat = (item.category || '').toLowerCase();
+      if (category === 'leadership') return cat === 'leadership' || cat.includes('command') || cat.includes('veteran');
+      if (category === 'mahila') return cat === 'mahila' || cat.includes('women');
+      if (category === 'legal') return cat === 'legal' || cat.includes('law');
+      if (category === 'relief') return cat === 'relief' || cat.includes('sewa') || cat.includes('disaster') || cat.includes('medical');
+      if (category === 'youth') return cat === 'youth' || cat.includes('bal') || cat.includes('student');
+      return cat === category;
+    });
+    // Fallback if filter yielded 0 items
+    if (!currentTestimonials.length) {
+      currentTestimonials = [...allLoadedTestimonials];
+    }
+  }
+
+  // Update filter buttons UI
+  document.querySelectorAll('.testimonial-filter-btn').forEach(btn => {
+    const btnCat = btn.getAttribute('data-category');
+    btn.classList.toggle('active', btnCat === category);
+  });
+
+  // Update status count label
+  const countLabel = document.getElementById('testimonialCountLabel');
+  if (countLabel) {
+    const wingName = category === 'all' ? 'All Cadre' : (category.charAt(0).toUpperCase() + category.slice(1));
+    countLabel.textContent = `Displaying ${currentTestimonials.length} Verified ${wingName} Voices`;
+  }
+
+  renderTestimonialCards();
+
+  if (resetTimer) {
+    restartTestimonialAutoSlide();
+  }
+}
+
+function getCadrePillMarkup(category) {
+  const cat = (category || 'leadership').toLowerCase();
+  if (cat.includes('mahila') || cat.includes('women')) {
+    return `<span class="cadre-pill cadre-mahila"><i class="fa-solid fa-shield-halved"></i> Mahila Dal</span>`;
+  }
+  if (cat.includes('legal') || cat.includes('law')) {
+    return `<span class="cadre-pill cadre-legal"><i class="fa-solid fa-scale-balanced"></i> Legal Advisory</span>`;
+  }
+  if (cat.includes('relief') || cat.includes('sewa') || cat.includes('medical')) {
+    return `<span class="cadre-pill cadre-relief"><i class="fa-solid fa-hand-holding-medical"></i> Sewa & Relief</span>`;
+  }
+  if (cat.includes('youth') || cat.includes('bal')) {
+    return `<span class="cadre-pill cadre-youth"><i class="fa-solid fa-graduation-cap"></i> Youth & Bal Sainik</span>`;
+  }
+  return `<span class="cadre-pill cadre-leadership"><i class="fa-solid fa-star"></i> State Command</span>`;
+}
+
+function renderTestimonialCards() {
   const container = document.getElementById("testimonialContainer");
   const dotsContainer = document.getElementById("testimonialDots");
   if (!container) return;
 
-  currentTestimonials = testimonialsArray;
-  currentTestimonialIndex = 0;
+  if (!currentTestimonials.length) {
+    container.innerHTML = `
+      <div class="empty-testimonials" style="padding: 40px; text-align: center; width: 100%; color: #94A3B8;">
+        <i class="fa-solid fa-circle-info" style="font-size: 32px; margin-bottom: 12px; color: var(--primary-orange);"></i>
+        <p>No testimonies found for this wing. Select "All Cadre Wings" to view all records.</p>
+      </div>`;
+    if (dotsContainer) dotsContainer.innerHTML = '';
+    return;
+  }
 
-  container.innerHTML = testimonialsArray.map((item, idx) => `
-    <div class="testimonial-slide ${idx === 0 ? 'active' : ''}" id="testSlide_${idx}">
-      <div class="testimonial-quote-icon"><i class="fa-solid fa-quote-left"></i></div>
-      <p class="testimonial-quote-text">"${item.quote}"</p>
-      <div class="testimonial-author-box">
-        <img src="${item.photoUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'}" alt="${item.name}" class="testimonial-avatar" onerror="this.onerror=null; this.src='logo.png';">
-        <div class="testimonial-meta">
-          <div class="testimonial-author-name">${item.name}</div>
-          <div class="testimonial-designation">${item.designation || 'Sainik Commander'}</div>
+  container.innerHTML = currentTestimonials.map((item, idx) => {
+    const pill = getCadrePillMarkup(item.category);
+    const cadetId = item.cadetId || `SSD-CADRE-1927-${String(idx + 1).padStart(3, '0')}`;
+    const state = item.state || 'India';
+    const tenure = item.tenure || 'Active Cadre';
+    const highlight = item.highlight ? `<div class="testimonial-highlight">${item.highlight}</div>` : '';
+    const photo = item.photoUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=240&q=80';
+
+    return `
+      <article class="testimonial-card" id="testCard_${idx}" data-index="${idx}">
+        <div class="testimonial-card-header">
+          ${pill}
+          <div class="cadre-commission-chip" title="Verified Volunteer Commission">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>${cadetId}</span>
+          </div>
         </div>
-      </div>
-    </div>
-  `).join('');
 
+        <div class="testimonial-card-body">
+          <i class="fa-solid fa-quote-right quote-watermark" aria-hidden="true"></i>
+          ${highlight}
+          <p class="testimonial-quote-narrative">"${item.quote}"</p>
+        </div>
+
+        <div class="testimonial-card-footer">
+          <div class="testimonial-author-avatar-wrap">
+            <img src="${photo}" alt="${item.name}" class="testimonial-author-img" loading="lazy" onerror="this.onerror=null; this.src='logo.png';">
+            <div class="cadre-rank-pip" title="Active Duty Commission"></div>
+          </div>
+          <div class="testimonial-author-info">
+            <h4 class="testimonial-author-name">${item.name}</h4>
+            <div class="testimonial-author-title">${item.designation || 'Sainik Cadre'}</div>
+            <div class="testimonial-author-meta">
+              <span><i class="fa-solid fa-location-dot"></i> ${state}</span>
+              <span class="sep">•</span>
+              <span><i class="fa-solid fa-clock-rotate-left"></i> ${tenure}</span>
+            </div>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  // Render Dots
   if (dotsContainer) {
-    dotsContainer.innerHTML = testimonialsArray.map((_, idx) => `
-      <span class="testimonial-dot ${idx === 0 ? 'active' : ''}" onclick="goToTestimonial(${idx})"></span>
+    dotsContainer.innerHTML = currentTestimonials.map((_, idx) => `
+      <button type="button" class="testimonial-dot ${idx === 0 ? 'active' : ''}" onclick="goToTestimonial(${idx})" aria-label="Go to testimony ${idx + 1}" title="Slide ${idx + 1}"></button>
     `).join('');
   }
 
-  if (testimonialAutoSlideTimer) clearInterval(testimonialAutoSlideTimer);
-  testimonialAutoSlideTimer = setInterval(() => {
-    if (!currentTestimonials.length) return;
-    const nextIdx = (currentTestimonialIndex + 1) % currentTestimonials.length;
-    goToTestimonial(nextIdx);
-  }, 6000);
+  updateSliderPosition();
+  setupTouchSwipe();
+}
+
+function updateSliderPosition() {
+  const container = document.getElementById("testimonialContainer");
+  const viewport = document.getElementById("testimonialCarouselViewport");
+  if (!container || !viewport || !currentTestimonials.length) return;
+
+  const cards = container.children;
+  if (!cards.length) return;
+
+  // Clamp index
+  if (currentTestimonialIndex >= currentTestimonials.length) currentTestimonialIndex = 0;
+  if (currentTestimonialIndex < 0) currentTestimonialIndex = currentTestimonials.length - 1;
+
+  const targetCard = cards[currentTestimonialIndex];
+  if (targetCard) {
+    const maxScroll = Math.max(0, container.scrollWidth - viewport.clientWidth);
+    let targetOffset = targetCard.offsetLeft - container.offsetLeft;
+    if (targetOffset > maxScroll) targetOffset = maxScroll;
+    if (targetOffset < 0) targetOffset = 0;
+
+    container.style.transform = `translateX(-${targetOffset}px)`;
+  }
+
+  // Update dots
+  document.querySelectorAll(".testimonial-dot").forEach((dot, idx) => {
+    dot.classList.toggle("active", idx === currentTestimonialIndex);
+  });
+
+  // Update counter
+  const counter = document.getElementById("testimonialCounter");
+  if (counter) {
+    const cur = String(currentTestimonialIndex + 1).padStart(2, '0');
+    const tot = String(currentTestimonials.length).padStart(2, '0');
+    counter.textContent = `${cur} / ${tot}`;
+  }
 }
 
 function goToTestimonial(index) {
   if (!currentTestimonials.length) return;
   currentTestimonialIndex = index;
-  document.querySelectorAll(".testimonial-slide").forEach((slide, idx) => {
-    slide.classList.toggle("active", idx === index);
-  });
-  document.querySelectorAll(".testimonial-dot").forEach((dot, idx) => {
-    dot.classList.toggle("active", idx === index);
+  updateSliderPosition();
+  restartTestimonialAutoSlide();
+}
+
+function nextTestimonial() {
+  if (!currentTestimonials.length) return;
+  currentTestimonialIndex = (currentTestimonialIndex + 1) % currentTestimonials.length;
+  updateSliderPosition();
+  restartTestimonialAutoSlide();
+}
+
+function prevTestimonial() {
+  if (!currentTestimonials.length) return;
+  currentTestimonialIndex = (currentTestimonialIndex - 1 + currentTestimonials.length) % currentTestimonials.length;
+  updateSliderPosition();
+  restartTestimonialAutoSlide();
+}
+
+function toggleTestimonialAutoSlide() {
+  const icon = document.getElementById("toggleAutoSlideIcon");
+  isTestimonialAutoSlidePaused = !isTestimonialAutoSlidePaused;
+  if (isTestimonialAutoSlidePaused) {
+    if (testimonialAutoSlideTimer) clearInterval(testimonialAutoSlideTimer);
+    if (icon) icon.className = "fa-solid fa-play";
+    showToast("Testimonial rotation paused", "info");
+  } else {
+    restartTestimonialAutoSlide();
+    if (icon) icon.className = "fa-solid fa-pause";
+    showToast("Testimonial rotation resumed", "info");
+  }
+}
+
+function pauseTestimonialTimer() {
+  if (!isTestimonialAutoSlidePaused && testimonialAutoSlideTimer) {
+    clearInterval(testimonialAutoSlideTimer);
+  }
+}
+
+function resumeTestimonialTimer() {
+  if (!isTestimonialAutoSlidePaused) {
+    restartTestimonialAutoSlide();
+  }
+}
+
+function restartTestimonialAutoSlide() {
+  if (testimonialAutoSlideTimer) clearInterval(testimonialAutoSlideTimer);
+  if (isTestimonialAutoSlidePaused) return;
+
+  testimonialAutoSlideTimer = setInterval(() => {
+    if (!currentTestimonials.length) return;
+    currentTestimonialIndex = (currentTestimonialIndex + 1) % currentTestimonials.length;
+    updateSliderPosition();
+  }, 6500);
+}
+
+// Touch swipe support
+let touchStartX = 0;
+let touchEndX = 0;
+
+function setupTouchSwipe() {
+  const viewport = document.getElementById("testimonialCarouselViewport");
+  if (!viewport || viewport.dataset.swipeInitialized) return;
+  viewport.dataset.swipeInitialized = "true";
+
+  viewport.addEventListener("touchstart", (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+
+  viewport.addEventListener("touchend", (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  }, { passive: true });
+
+  window.addEventListener("resize", () => {
+    updateSliderPosition();
   });
 }
+
+function handleSwipe() {
+  const threshold = 45;
+  if (touchEndX < touchStartX - threshold) {
+    nextTestimonial();
+  } else if (touchEndX > touchStartX + threshold) {
+    prevTestimonial();
+  }
+}
+
+// Expose functions globally for inline HTML event handlers
+window.loadTestimonials = loadTestimonials;
+window.filterTestimonials = filterTestimonials;
+window.goToTestimonial = goToTestimonial;
+window.nextTestimonial = nextTestimonial;
+window.prevTestimonial = prevTestimonial;
+window.toggleTestimonialAutoSlide = toggleTestimonialAutoSlide;
+window.pauseTestimonialTimer = pauseTestimonialTimer;
+window.resumeTestimonialTimer = resumeTestimonialTimer;
+
 
 // ==========================================================================
 // AUTOMATED EMAIL DISPATCH ENGINE (EmailJS & Serverless API)
