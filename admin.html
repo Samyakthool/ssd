@@ -577,10 +577,11 @@
               </div>
               <div class="card-panel-actions">
                 <select id="leadershipTierFilter" class="filter-select" onchange="filterLeadershipTable()">
-                  <option value="all">All Command Tiers (3 Tiers)</option>
+                  <option value="all">All Command Tiers & Wings</option>
                   <option value="national">Tier 1: National Supreme Command</option>
                   <option value="state">Tier 2: State Governing Bodies</option>
                   <option value="district">Tier 3: District Governing Bodies</option>
+                  <option value="it_cell">Tier 4: IT & Digital Media Cell (आईटी प्रकोष्ठ)</option>
                 </select>
                 <select id="leadershipStateFilter" class="filter-select" onchange="onAdminStateFilterChange()">
                   <option value="all">All States</option>
@@ -608,10 +609,35 @@
                   <option value="Finance & Audit">Finance & Audit</option>
                   <option value="Advisory Board">Advisory Board</option>
                 </select>
+                <button type="button" class="btn-admin" id="btnOpenAddItCellDossier" onclick="openAddItCellDossierModal()" style="background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%); color: #fff; border: 1px solid #0284C7; display: inline-flex; align-items: center; gap: 7px; font-weight: 700; padding: 7px 14px; border-radius: 6px; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25); cursor: pointer;" title="Create or Upload Official Dossier for IT & Digital Media Cell">
+                  <i class="fa-solid fa-laptop-code"></i> Add IT Cell Dossier
+                </button>
                 <button type="button" class="btn-admin btn-admin-primary" onclick="openAddLeadershipModal()">
                   <i class="fa-solid fa-user-plus"></i> Appoint Council Officer
                 </button>
               </div>
+            </div>
+
+            <!-- Quick Tier Navigation Pills Bar -->
+            <div style="padding: 10px 20px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; background: #F8FAFC; border-bottom: 1px solid #E2E8F0;">
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px;">
+                <i class="fa-solid fa-filter"></i> Command Tier:
+              </span>
+              <button type="button" class="tier-pill-btn active" id="pillTierAll" onclick="setAdminLeadershipTier('all')" style="padding: 4px 12px; font-size: 12px; border-radius: 20px; border: 1px solid #CBD5E1; background: #fff; color: var(--navy-dark); font-weight: 600; cursor: pointer;">
+                All Officers (<span id="adminGovCountAll">0</span>)
+              </button>
+              <button type="button" class="tier-pill-btn" id="pillTierNational" onclick="setAdminLeadershipTier('national')" style="padding: 4px 12px; font-size: 12px; border-radius: 20px; border: 1px solid #CBD5E1; background: #fff; color: var(--navy-dark); font-weight: 600; cursor: pointer;">
+                <i class="fa-solid fa-landmark"></i> National Command (<span id="adminGovCountNational">0</span>)
+              </button>
+              <button type="button" class="tier-pill-btn" id="pillTierState" onclick="setAdminLeadershipTier('state')" style="padding: 4px 12px; font-size: 12px; border-radius: 20px; border: 1px solid #CBD5E1; background: #fff; color: var(--navy-dark); font-weight: 600; cursor: pointer;">
+                <i class="fa-solid fa-map-location-dot"></i> State Bodies (<span id="adminGovCountState">0</span>)
+              </button>
+              <button type="button" class="tier-pill-btn" id="pillTierDistrict" onclick="setAdminLeadershipTier('district')" style="padding: 4px 12px; font-size: 12px; border-radius: 20px; border: 1px solid #CBD5E1; background: #fff; color: var(--navy-dark); font-weight: 600; cursor: pointer;">
+                <i class="fa-solid fa-location-crosshairs"></i> District Directorate (<span id="adminGovCountDistrict">0</span>)
+              </button>
+              <button type="button" class="tier-pill-btn" id="pillTierItCell" onclick="setAdminLeadershipTier('it_cell')" style="padding: 4px 12px; font-size: 12px; border-radius: 20px; border: 1px solid #BAE6FD; background: #F0F9FF; color: #0284C7; font-weight: 700; cursor: pointer;">
+                <i class="fa-solid fa-laptop-code"></i> IT Cell Dossiers (<span id="adminGovCountItCell">0</span>)
+              </button>
             </div>
             <div class="table-responsive">
               <table class="admin-table">
@@ -1834,6 +1860,18 @@
       <form id="formLeadership" onsubmit="handleSaveLeadership(event)">
         <div class="admin-modal-body">
           <input type="hidden" id="leadItemKey">
+
+          <!-- DEDICATED IT CELL DOSSIER MODE BANNER -->
+          <div id="itCellDossierBanner" style="display: none; background: #F0F9FF; border: 1px solid #BAE6FD; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px; color: #0369A1; font-weight: 700; font-size: 13px;">
+              <i class="fa-solid fa-laptop-code" style="font-size: 16px;"></i>
+              <span>IT & Digital Media Cell — Official Portfolio & Dossier Mode</span>
+            </div>
+            <p style="margin: 4px 0 0; font-size: 11.5px; color: #0284C7; line-height: 1.4;">
+              Officers added under this option will be published directly to the public portal's <strong>IT & Digital Media Cell</strong> governing wing with technical credentials, social handles, and official PDF dossier attachment.
+            </p>
+          </div>
+
           <div class="form-grid-modal">
             <div class="form-group-modal">
               <label for="leadName">Full Name</label>
@@ -1851,6 +1889,7 @@
                 <option value="national">Tier 1: National Supreme Command (राष्ट्रीय सर्वोच्च कमान)</option>
                 <option value="state">Tier 2: State Governing Body (प्रदेश कार्यकारिणी)</option>
                 <option value="district">Tier 3: District Governing Body (जिल्हा कार्यकारिणी)</option>
+                <option value="it_cell">Tier 4: IT & Digital Media Cell (आईटी एवं डिजिटल मीडिया प्रकोष्ठ)</option>
               </select>
             </div>
             <div class="form-group-modal">

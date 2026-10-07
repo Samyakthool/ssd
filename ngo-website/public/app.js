@@ -2394,9 +2394,9 @@ function renderGoverningCards(leadersList) {
     `;
   } else {
     councilContainer.innerHTML = filtered.map(lead => {
-      const isDistrict = (lead.level === 'district');
-      const isState = (lead.level === 'state') || (!isDistrict && lead.state && lead.state !== 'National HQ');
-      const isItCell = (lead.category === "IT & Digital Media Cell" || lead.category === "IT Cell" || (lead.rankBadge && lead.rankBadge.toLowerCase().includes('it')) || (lead.designation && lead.designation.toLowerCase().includes('it')));
+      const isItCell = (lead.level === 'it_cell') || (lead.category === "IT & Digital Media Cell" || lead.category === "IT Cell" || (lead.rankBadge && lead.rankBadge.toLowerCase().includes('it')) || (lead.designation && lead.designation.toLowerCase().includes('it')));
+      const isDistrict = !isItCell && (lead.level === 'district');
+      const isState = !isItCell && ((lead.level === 'state') || (!isDistrict && lead.state && lead.state !== 'National HQ'));
       const stateName = lead.state || (isDistrict || isState ? 'Maharashtra' : 'National HQ');
       const badgeText = lead.rankBadge || (isItCell ? 'IT & Digital Cell' : (isDistrict ? `${lead.district || 'District'} Command` : (isState ? `${stateName} Command` : 'National Command')));
 
@@ -2786,8 +2786,9 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
   const pdfBtn = modal.querySelector("#portfolioOfficerPdfBtn");
 
   const isAdv = leader.category === "Advisory Board" || (leader.designation && leader.designation.includes("Advisory")) || (leader.rankBadge && leader.rankBadge.includes("Advisory")) || (leader.id && String(leader.id).startsWith("adv_")) || isAdvisory;
-  const isDistrict = (leader.level === 'district');
-  const isState = (leader.level === 'state') || (!isDistrict && leader.state && leader.state !== 'National HQ' && leader.state !== 'All-India');
+  const isItCell = !isAdv && ((leader.level === 'it_cell') || (leader.category === "IT & Digital Media Cell" || leader.category === "IT Cell" || (leader.rankBadge && leader.rankBadge.toLowerCase().includes('it')) || (leader.designation && leader.designation.toLowerCase().includes('it'))));
+  const isDistrict = !isAdv && !isItCell && (leader.level === 'district');
+  const isState = !isAdv && !isItCell && ((leader.level === 'state') || (!isDistrict && leader.state && leader.state !== 'National HQ' && leader.state !== 'All-India'));
   const stateName = leader.state || (isDistrict || isState ? 'Maharashtra' : 'National HQ');
 
   if (photoEl) {
@@ -2801,6 +2802,9 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
     if (isAdv) {
       tierBadgeEl.innerHTML = `<i class="fa-solid fa-scale-balanced"></i> Senior Advisory & Elders Council (मार्गदर्शक मंडल)`;
       tierBadgeEl.className = "portfolio-tier-badge advisory";
+    } else if (isItCell) {
+      tierBadgeEl.innerHTML = `<i class="fa-solid fa-laptop-code"></i> IT & Digital Media Cell (आईटी एवं डिजिटल मीडिया प्रकोष्ठ)`;
+      tierBadgeEl.className = "portfolio-tier-badge it-cell";
     } else if (isDistrict) {
       tierBadgeEl.innerHTML = `<i class="fa-solid fa-location-dot"></i> District Directorate (${escapeHtml(leader.district || stateName)})`;
       tierBadgeEl.className = "portfolio-tier-badge district";
@@ -2814,19 +2818,19 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
   }
 
   if (rankBadgeEl) {
-    rankBadgeEl.textContent = leader.rankBadge || (isAdv ? "Senior Advisory Council" : (isDistrict ? `${leader.district || stateName} District Command` : (isState ? `${stateName} State Command` : "National Central HQ")));
+    rankBadgeEl.textContent = leader.rankBadge || (isAdv ? "Senior Advisory Council" : (isItCell ? "Central IT & Cyber Directorate" : (isDistrict ? `${leader.district || stateName} District Command` : (isState ? `${stateName} State Command` : "National Central HQ"))));
   }
 
   if (credEl) {
-    credEl.textContent = leader.credentials || (leader.district ? `${leader.district} | ${stateName}` : (isAdv ? "Senior Advisory Fellow & Movement Scholar" : stateName));
+    credEl.textContent = leader.credentials || (isItCell ? "Central IT & Cyber Directorate" : (leader.district ? `${leader.district} | ${stateName}` : (isAdv ? "Senior Advisory Fellow & Movement Scholar" : stateName)));
   }
 
   if (hqEl) {
-    hqEl.textContent = isDistrict ? `${leader.district || 'Nagpur'}, ${stateName}` : (isState ? `${stateName} State HQ` : 'National HQ (New Delhi / Nagpur)');
+    hqEl.textContent = isItCell ? 'Central IT & Cyber Directorate' : (isDistrict ? `${leader.district || 'Nagpur'}, ${stateName}` : (isState ? `${stateName} State HQ` : 'National HQ (New Delhi / Nagpur)'));
   }
 
   if (wingEl) {
-    wingEl.textContent = leader.category || (isAdv ? "Senior Advisory (मार्गदर्शक मंडल)" : "Supreme Council");
+    wingEl.textContent = leader.category || (isAdv ? "Senior Advisory (मार्गदर्शक मंडल)" : (isItCell ? "IT & Digital Media Cell" : "Supreme Council"));
   }
 
   if (bioEl) {
@@ -2834,6 +2838,8 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
     if (!bioText) {
       if (isAdv) {
         bioText = `${leader.name} serves on the Senior Advisory & Elders Council (मार्गदर्शक मंडल) of Samata Sainik Dal, providing veteran ideological direction, historical research guidance, and policy oversight for nationwide movement expansion in accordance with Bodhisattva Dr. B.R. Ambedkar's foundational 1927 charter.`;
+      } else if (isItCell) {
+        bioText = `${leader.name} leads technology and cyber defense operations as ${leader.designation || 'IT Directorate Officer'} in Samata Sainik Dal, managing digital infrastructure, secure cadet registry databases, verified identity frameworks, and strategic media dissemination across nationwide networks.`;
       } else {
         bioText = `${leader.name} serves as ${leader.designation || 'Command Officer'} in Samata Sainik Dal, actively leading volunteer mobilizations, legal protection protocols, and constitutional awareness programs across the nation.`;
       }
@@ -2845,6 +2851,8 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
     let tags = [];
     if (isAdv) {
       tags = ["Movement Ideology & Ethics", "Historical Archives & Treatises", "Constitutional Guidance", "Elders Mentorship", "Youth Direction", "Centenary 2027 Counsel"];
+    } else if (isItCell) {
+      tags = ["Cyber Security & Systems", "Digital Infrastructure", "Cloud Architecture", "SSD Portal Operations", "Cadet Verification Engine", "Media Outreach"];
     } else if (leader.designation && leader.designation.toLowerCase().includes("legal")) {
       tags = ["Constitutional Law Defense", "SC/ST Atrocities Tribunal Support", "High Court & Supreme Court Petitions", "Cadet Civil Rights", "Pro-Bono Network"];
     } else if (leader.designation && leader.designation.toLowerCase().includes("cadet")) {

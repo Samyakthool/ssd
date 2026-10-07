@@ -1610,6 +1610,13 @@ body.modal-open {
   border: 1px solid rgba(217, 93, 0, 0.3);
 }
 
+.portfolio-tier-badge.it-cell {
+  background: rgba(2, 132, 199, 0.16);
+  color: #0284C7;
+  border: 1px solid rgba(2, 132, 199, 0.45);
+  box-shadow: 0 0 10px rgba(2, 132, 199, 0.15);
+}
+
 .portfolio-name {
   font-family: inherit;
   font-size: 24px;
@@ -1934,5 +1941,28 @@ body.modal-open {
   color: #DC2626;
   border-color: #FCA5A5;
 }
+
+/* Quick Tier Navigation Pills */
+.tier-pill-btn {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.tier-pill-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+}
+.tier-pill-btn.active {
+  background: var(--navy-dark, #001F3F) !important;
+  color: #FFFFFF !important;
+  border-color: var(--navy-dark, #001F3F) !important;
+  box-shadow: 0 2px 6px rgba(0, 31, 63, 0.25);
+}
+.tier-pill-btn#pillTierItCell.active {
+  background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%) !important;
+  color: #FFFFFF !important;
+  border-color: #0284C7 !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+}
+
 
 

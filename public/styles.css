@@ -3823,6 +3823,13 @@ body.nav-open .header-wrapper {
   border: 1px solid rgba(217, 93, 0, 0.3);
 }
 
+.portfolio-tier-badge.it-cell {
+  background: rgba(2, 132, 199, 0.16);
+  color: #0284C7;
+  border: 1px solid rgba(2, 132, 199, 0.45);
+  box-shadow: 0 0 10px rgba(2, 132, 199, 0.15);
+}
+
 .portfolio-name {
   font-family: var(--font-heading);
   font-size: 24px;

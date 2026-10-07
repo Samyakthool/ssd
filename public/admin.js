@@ -4263,22 +4263,39 @@ function renderLeadershipTable(filteredList = null) {
   const leadObj = adminData.leadership || ssdInitialSeed.leadership;
   let list = filteredList || Object.entries(leadObj).map(([key, val]) => ({ id: key, ...val }));
 
+  // Update tier counts for chips
+  const allLeaders = Object.values(leadObj || {});
+  const itCellTotal = allLeaders.filter(l => (l.level === 'it_cell') || (l.category === 'IT & Digital Media Cell' || l.category === 'IT Cell' || (l.rankBadge && l.rankBadge.toLowerCase().includes('it')) || (l.designation && l.designation.toLowerCase().includes('it')))).length;
+  const natTotal = allLeaders.filter(l => (l.level === 'national' || (!l.level && (!l.state || l.state === 'National HQ'))) && !(l.level === 'it_cell' || l.category === 'IT & Digital Media Cell' || l.category === 'IT Cell')).length;
+  const stateTotal = allLeaders.filter(l => (l.level === 'state' || (l.state && l.state !== 'National HQ' && l.level !== 'district')) && !(l.level === 'it_cell' || l.category === 'IT & Digital Media Cell' || l.category === 'IT Cell')).length;
+  const distTotal = allLeaders.filter(l => l.level === 'district').length;
+
+  setText("adminGovCountAll", allLeaders.length);
+  setText("adminGovCountNational", natTotal);
+  setText("adminGovCountState", stateTotal);
+  setText("adminGovCountDistrict", distTotal);
+  setText("adminGovCountItCell", itCellTotal);
+
   list.sort((a, b) => (Number(a.order) || 99) - (Number(b.order) || 99));
 
   if (list.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">No governing body members found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">No governing body members found for the selected tier.</td></tr>';
     return;
   }
 
   tbody.innerHTML = list.map(m => {
-    const isDistrict = (m.level === 'district');
-    const isState = (m.level === 'state') || (!isDistrict && m.state && m.state !== 'National HQ' && m.state !== 'All-India');
-    const isNational = !isDistrict && !isState;
+    const isItCell = (m.level === 'it_cell') || (m.category === "IT & Digital Media Cell" || m.category === "IT Cell" || (m.rankBadge && m.rankBadge.toLowerCase().includes('it')) || (m.designation && m.designation.toLowerCase().includes('it')));
+    const isDistrict = !isItCell && (m.level === 'district');
+    const isState = !isItCell && ((m.level === 'state') || (!isDistrict && m.state && m.state !== 'National HQ' && m.state !== 'All-India'));
+    const isNational = !isItCell && !isDistrict && !isState;
     const stateName = m.state || (isDistrict || isState ? 'Maharashtra' : 'National HQ');
 
     let tierBadge = '';
     let rankBadgeClass = 'badge-approved';
-    if (isDistrict) {
+    if (isItCell) {
+      tierBadge = `<span class="badge-status" style="background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%); color: #fff; font-weight: 700;"><i class="fa-solid fa-laptop-code"></i> IT Cell</span>`;
+      rankBadgeClass = 'badge-info';
+    } else if (isDistrict) {
       tierBadge = `<span class="badge-status badge-district"><i class="fa-solid fa-location-crosshairs"></i> ${escapeHtml(m.district || 'District')} (${escapeHtml(stateName)})</span>`;
       rankBadgeClass = 'badge-district';
     } else if (isState) {
@@ -4292,7 +4309,7 @@ function renderLeadershipTable(filteredList = null) {
     return `
       <tr>
         <td>
-          <img src="${escapeHtml(m.photoUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80')}" alt="${escapeHtml(m.name)}" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-orange);">
+          <img src="${escapeHtml(m.photoUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80')}" alt="${escapeHtml(m.name)}" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid ${isItCell ? '#0284C7' : 'var(--primary-orange)'};">
         </td>
         <td>
           <strong>${escapeHtml(m.name)}</strong>
@@ -4304,14 +4321,14 @@ function renderLeadershipTable(filteredList = null) {
         </td>
         <td>
           <div><strong>${escapeHtml(m.designation)}</strong></div>
-          <small class="badge-status ${rankBadgeClass}" style="font-size: 10px; margin-top: 3px; display: inline-block;">${escapeHtml(m.rankBadge || (isDistrict ? (m.district || stateName) + ' Command' : (isState ? stateName + ' Command' : 'National Command')))}</small>
+          <small class="badge-status ${rankBadgeClass}" style="font-size: 10px; margin-top: 3px; display: inline-block;">${escapeHtml(m.rankBadge || (isItCell ? 'Central IT & Cyber Directorate' : (isDistrict ? (m.district || stateName) + ' Command' : (isState ? stateName + ' Command' : 'National Command'))))}</small>
         </td>
         <td><span class="badge-status badge-info">${escapeHtml(m.category || 'Supreme Council')}</span></td>
         <td>${getApprovalBadgeHtml(m, 'leadership')}</td>
         <td style="text-align: right;">
           <div class="action-btn-group" style="justify-content: flex-end;">
             ${getApprovalActionButtons(m, 'leadership')}
-            <button type="button" class="action-icon-btn" onclick="openOfficerPortfolioModal('${escapeHtml(m.id || m.name)}')" title="View Portfolio Dossier" style="color: var(--primary-orange);">
+            <button type="button" class="action-icon-btn" onclick="openOfficerPortfolioModal('${escapeHtml(m.id || m.name)}')" title="View Portfolio Dossier" style="color: ${isItCell ? '#0284C7' : 'var(--primary-orange)'};">
               <i class="fa-solid fa-id-card"></i>
             </button>
             <button type="button" class="action-icon-btn" onclick="openEditLeadershipModal('${m.id}')" title="Edit Member">
@@ -4333,13 +4350,26 @@ function filterLeadershipTable() {
   const district = document.getElementById("leadershipDistrictFilter")?.value || "all";
   const cat = document.getElementById("leadershipFilter")?.value || "all";
 
+  // Sync active pill state
+  document.querySelectorAll(".tier-pill-btn").forEach(btn => {
+    btn.classList.remove("active");
+    btn.style.background = "";
+    btn.style.borderColor = "";
+    btn.style.color = "";
+  });
+  const activeId = "pillTier" + (tier === 'it_cell' ? 'ItCell' : (tier.charAt(0).toUpperCase() + tier.slice(1)));
+  const activeBtn = document.getElementById(activeId);
+  if (activeBtn) activeBtn.classList.add("active");
+
   const all = Object.entries(adminData.leadership || ssdInitialSeed.leadership).map(([key, val]) => ({ id: key, ...val }));
   const filtered = all.filter(m => {
-    const isDistrict = (m.level === 'district');
-    const isState = (m.level === 'state') || (!isDistrict && m.state && m.state !== 'National HQ' && m.state !== 'All-India');
-    const isNational = (m.level === 'national') || (!m.level && (!m.state || m.state === 'National HQ' || m.state === 'All-India'));
+    const isItCell = (m.level === 'it_cell') || (m.category === "IT & Digital Media Cell" || m.category === "IT Cell" || (m.rankBadge && m.rankBadge.toLowerCase().includes('it')) || (m.designation && m.designation.toLowerCase().includes('it')));
+    const isDistrict = !isItCell && (m.level === 'district');
+    const isState = !isItCell && ((m.level === 'state') || (!isDistrict && m.state && m.state !== 'National HQ' && m.state !== 'All-India'));
+    const isNational = !isItCell && !isDistrict && !isState;
 
-    if (tier === 'national' && !isNational) return false;
+    if (tier === 'it_cell' && !isItCell) return false;
+    if (tier === 'national' && (!isNational || isItCell)) return false;
     if (tier === 'state' && !isState) return false;
     if (tier === 'district' && !isDistrict) return false;
 
@@ -4361,6 +4391,12 @@ function filterLeadershipTable() {
   });
 
   renderLeadershipTable(filtered);
+}
+
+function setAdminLeadershipTier(tier) {
+  const selectEl = document.getElementById("leadershipTierFilter");
+  if (selectEl) selectEl.value = tier;
+  filterLeadershipTable();
 }
 
 function onAdminStateFilterChange() {
@@ -4396,7 +4432,14 @@ function onAdminStateFilterChange() {
   filterLeadershipTable();
 }
 
-function openAddLeadershipModal() {
+function openAddLeadershipModal(tier = null) {
+  if (tier === 'it_cell') {
+    return openAddItCellDossierModal();
+  }
+
+  const banner = document.getElementById("itCellDossierBanner");
+  if (banner) banner.style.display = "none";
+
   populateLeadershipStateAndDistrictOptions();
   setInputValue("leadItemKey", "");
   setInputValue("leadName", "");
@@ -4405,6 +4448,10 @@ function openAddLeadershipModal() {
   const currentTierFilter = document.getElementById("leadershipTierFilter")?.value || 'national';
   const stateFilter = document.getElementById("leadershipStateFilter")?.value;
   const districtFilter = document.getElementById("leadershipDistrictFilter")?.value;
+
+  if (currentTierFilter === 'it_cell') {
+    return openAddItCellDossierModal();
+  }
 
   if (currentTierFilter === 'district') {
     setInputValue("leadLevel", 'district');
@@ -4441,23 +4488,50 @@ function openAddLeadershipModal() {
   openAdminModal("modalLeadership");
 }
 
+function openAddItCellDossierModal() {
+  populateLeadershipStateAndDistrictOptions();
+  setInputValue("leadItemKey", "");
+  setInputValue("leadName", "");
+  setInputValue("leadDesignation", "National IT Secretary (राष्ट्रीय आईटी सचिव)");
+  setInputValue("leadLevel", "it_cell");
+  setInputValue("leadCategory", "IT & Digital Media Cell");
+  setInputValue("leadState", "National HQ");
+  setInputValue("leadDistrict", "");
+  setInputValue("leadRankBadge", "Central IT & Cyber Directorate");
+  setInputValue("leadPhotoUrl", "");
+  setInputValue("leadPdfUrl", "");
+  setInputValue("leadCredentials", "B.Tech / MCA | Central Cyber Command");
+  setInputValue("leadBio", "Leads nationwide cyber communication, digital cadre mobilization, portal systems security, and online constitutional awareness initiatives.");
+  setInputValue("leadOrder", "1");
+  updateImagePreview("leadPhotoPreview", "");
+  updatePdfPreview("leadPdfPreview", "");
+  updateLeadDistrictDatalist();
+
+  const banner = document.getElementById("itCellDossierBanner");
+  if (banner) banner.style.display = "block";
+
+  setText("modalLeadershipHeading", "Appoint IT & Digital Media Cell Officer (Official Dossier)");
+  openAdminModal("modalLeadership");
+}
+
 function openEditLeadershipModal(id) {
   populateLeadershipStateAndDistrictOptions();
   const leadObj = adminData.leadership || ssdInitialSeed.leadership;
   const m = leadObj[id];
   if (!m) return;
 
-  const isDistrict = (m.level === 'district');
-  const isState = (m.level === 'state') || (!isDistrict && m.state && m.state !== 'National HQ');
+  const isItCell = (m.level === 'it_cell') || (m.category === "IT & Digital Media Cell" || m.category === "IT Cell" || (m.rankBadge && m.rankBadge.toLowerCase().includes('it')) || (m.designation && m.designation.toLowerCase().includes('it')));
+  const isDistrict = !isItCell && (m.level === 'district');
+  const isState = !isItCell && ((m.level === 'state') || (!isDistrict && m.state && m.state !== 'National HQ'));
 
   setInputValue("leadItemKey", id);
   setInputValue("leadName", m.name || "");
   setInputValue("leadDesignation", m.designation || "");
-  setInputValue("leadLevel", m.level || (isDistrict ? 'district' : (isState ? 'state' : 'national')));
+  setInputValue("leadLevel", m.level || (isItCell ? 'it_cell' : (isDistrict ? 'district' : (isState ? 'state' : 'national'))));
   setInputValue("leadState", m.state || (isDistrict || isState ? 'Maharashtra' : 'National HQ'));
   setInputValue("leadDistrict", m.district || "");
-  setInputValue("leadCategory", m.category || "Supreme Council");
-  setInputValue("leadRankBadge", m.rankBadge || "");
+  setInputValue("leadCategory", m.category || (isItCell ? "IT & Digital Media Cell" : "Supreme Council"));
+  setInputValue("leadRankBadge", m.rankBadge || (isItCell ? "Central IT & Cyber Directorate" : ""));
   setInputValue("leadPhotoUrl", m.photoUrl || "");
   setInputValue("leadPdfUrl", m.pdfUrl || "");
   setInputValue("leadCredentials", m.credentials || "");
@@ -4466,7 +4540,11 @@ function openEditLeadershipModal(id) {
   updateImagePreview("leadPhotoPreview", m.photoUrl || "");
   updatePdfPreview("leadPdfPreview", m.pdfUrl || "");
   updateLeadDistrictDatalist();
-  setText("modalLeadershipHeading", `Edit Officer: ${m.name}`);
+
+  const banner = document.getElementById("itCellDossierBanner");
+  if (banner) banner.style.display = isItCell ? "block" : "none";
+
+  setText("modalLeadershipHeading", isItCell ? `Edit IT Cell Officer Dossier: ${m.name}` : `Edit Officer: ${m.name}`);
   openAdminModal("modalLeadership");
 }
 
@@ -4958,42 +5036,55 @@ function onLeadTierChange() {
   const rankBadge = document.getElementById("leadRankBadge");
   const districtInput = document.getElementById("leadDistrict");
   const catSelect = document.getElementById("leadCategory");
+  const banner = document.getElementById("itCellDossierBanner");
 
-  if (tier === 'national') {
+  if (tier === 'it_cell') {
+    if (banner) banner.style.display = "block";
     if (stateSelect) stateSelect.value = "National HQ";
     if (districtInput) {
       districtInput.value = "";
-      districtInput.placeholder = "National HQ / All-India Central Office";
+      districtInput.placeholder = "All-India IT & Cyber Media Directorate";
     }
-    if (rankBadge) rankBadge.value = "National Command";
-    if (catSelect && catSelect.value !== "Supreme Council" && catSelect.value !== "Advisory Board") {
-      catSelect.value = "Supreme Council";
-    }
-  } else if (tier === 'state') {
-    if (stateSelect && stateSelect.value === "National HQ") {
-      stateSelect.value = "Maharashtra";
-    }
-    const stateName = stateSelect ? stateSelect.value : "Maharashtra";
-    if (districtInput) {
-      districtInput.placeholder = `e.g. ${stateName} State Directorate`;
-    }
-    if (rankBadge) rankBadge.value = `${stateName} State Command`;
-    if (catSelect && catSelect.value === "Supreme Council") {
-      catSelect.value = "Executive Council";
-    }
-  } else if (tier === 'district') {
-    if (stateSelect && stateSelect.value === "National HQ") {
-      stateSelect.value = "Maharashtra";
-    }
-    const stateName = stateSelect ? stateSelect.value : "Maharashtra";
-    if (districtInput) {
-      if (!districtInput.value.trim()) districtInput.value = "Nagpur";
-      districtInput.placeholder = `e.g. Nagpur / ${stateName} District Directorate`;
-    }
-    const distName = (districtInput && districtInput.value.trim()) ? districtInput.value.trim() : "Nagpur";
-    if (rankBadge) rankBadge.value = `${distName} District Command`;
-    if (catSelect && catSelect.value === "Supreme Council") {
-      catSelect.value = "Cadet Directorate";
+    if (rankBadge) rankBadge.value = "Central IT & Cyber Directorate";
+    if (catSelect) catSelect.value = "IT & Digital Media Cell";
+  } else {
+    if (banner) banner.style.display = "none";
+    if (tier === 'national') {
+      if (stateSelect) stateSelect.value = "National HQ";
+      if (districtInput) {
+        districtInput.value = "";
+        districtInput.placeholder = "National HQ / All-India Central Office";
+      }
+      if (rankBadge) rankBadge.value = "National Command";
+      if (catSelect && catSelect.value !== "Supreme Council" && catSelect.value !== "Advisory Board") {
+        catSelect.value = "Supreme Council";
+      }
+    } else if (tier === 'state') {
+      if (stateSelect && stateSelect.value === "National HQ") {
+        stateSelect.value = "Maharashtra";
+      }
+      const stateName = stateSelect ? stateSelect.value : "Maharashtra";
+      if (districtInput) {
+        districtInput.placeholder = `e.g. ${stateName} State Directorate`;
+      }
+      if (rankBadge) rankBadge.value = `${stateName} State Command`;
+      if (catSelect && catSelect.value === "Supreme Council") {
+        catSelect.value = "Executive Council";
+      }
+    } else if (tier === 'district') {
+      if (stateSelect && stateSelect.value === "National HQ") {
+        stateSelect.value = "Maharashtra";
+      }
+      const stateName = stateSelect ? stateSelect.value : "Maharashtra";
+      if (districtInput) {
+        if (!districtInput.value.trim()) districtInput.value = "Nagpur";
+        districtInput.placeholder = `e.g. Nagpur / ${stateName} District Directorate`;
+      }
+      const distName = (districtInput && districtInput.value.trim()) ? districtInput.value.trim() : "Nagpur";
+      if (rankBadge) rankBadge.value = `${distName} District Command`;
+      if (catSelect && catSelect.value === "Supreme Council") {
+        catSelect.value = "Cadet Directorate";
+      }
     }
   }
   updateLeadDistrictDatalist();
@@ -5050,6 +5141,8 @@ window.onLeadDistrictInputChange = onLeadDistrictInputChange;
 window.onAdminStateFilterChange = onAdminStateFilterChange;
 window.filterLeadershipTable = filterLeadershipTable;
 window.openAddLeadershipModal = openAddLeadershipModal;
+window.openAddItCellDossierModal = openAddItCellDossierModal;
+window.setAdminLeadershipTier = setAdminLeadershipTier;
 window.openEditLeadershipModal = openEditLeadershipModal;
 window.handleSaveLeadership = handleSaveLeadership;
 window.deleteLeadershipMember = deleteLeadershipMember;
@@ -7938,8 +8031,9 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
   const pdfBtn = modal.querySelector("#portfolioOfficerPdfBtn");
 
   const isAdv = leader.category === "Advisory Board" || (leader.designation && leader.designation.includes("Advisory")) || (leader.rankBadge && leader.rankBadge.includes("Advisory")) || isAdvisory;
-  const isDistrict = (leader.level === 'district');
-  const isState = (leader.level === 'state') || (!isDistrict && leader.state && leader.state !== 'National HQ' && leader.state !== 'All-India');
+  const isItCell = !isAdv && ((leader.level === 'it_cell') || (leader.category === "IT & Digital Media Cell" || leader.category === "IT Cell" || (leader.rankBadge && leader.rankBadge.toLowerCase().includes('it')) || (leader.designation && leader.designation.toLowerCase().includes('it'))));
+  const isDistrict = !isAdv && !isItCell && (leader.level === 'district');
+  const isState = !isAdv && !isItCell && ((leader.level === 'state') || (!isDistrict && leader.state && leader.state !== 'National HQ' && leader.state !== 'All-India'));
   const stateName = leader.state || (isDistrict || isState ? 'Maharashtra' : 'National HQ');
 
   if (photoEl) {
@@ -7953,6 +8047,9 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
     if (isAdv) {
       tierBadgeEl.innerHTML = `<i class="fa-solid fa-scale-balanced"></i> Senior Advisory & Elders Council (मार्गदर्शक मंडल)`;
       tierBadgeEl.className = "portfolio-tier-badge advisory";
+    } else if (isItCell) {
+      tierBadgeEl.innerHTML = `<i class="fa-solid fa-laptop-code"></i> IT & Digital Media Cell (आईटी एवं डिजिटल मीडिया प्रकोष्ठ)`;
+      tierBadgeEl.className = "portfolio-tier-badge it-cell";
     } else if (isDistrict) {
       tierBadgeEl.innerHTML = `<i class="fa-solid fa-location-dot"></i> District Directorate (${escapeHtml(leader.district || stateName)})`;
       tierBadgeEl.className = "portfolio-tier-badge district";
@@ -7966,19 +8063,19 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
   }
 
   if (rankBadgeEl) {
-    rankBadgeEl.textContent = leader.rankBadge || (isAdv ? "Senior Advisory Council" : (isDistrict ? `${leader.district || stateName} District Command` : (isState ? `${stateName} State Command` : "National Central HQ")));
+    rankBadgeEl.textContent = leader.rankBadge || (isAdv ? "Senior Advisory Council" : (isItCell ? "Central IT & Cyber Directorate" : (isDistrict ? `${leader.district || stateName} District Command` : (isState ? `${stateName} State Command` : "National Central HQ"))));
   }
 
   if (credEl) {
-    credEl.textContent = leader.credentials || (leader.district ? `${leader.district} | ${stateName}` : (isAdv ? "Senior Advisory Fellow & Movement Scholar" : stateName));
+    credEl.textContent = leader.credentials || (isItCell ? "Central IT & Cyber Directorate" : (leader.district ? `${leader.district} | ${stateName}` : (isAdv ? "Senior Advisory Fellow & Movement Scholar" : stateName)));
   }
 
   if (hqEl) {
-    hqEl.textContent = isDistrict ? `${leader.district || 'Nagpur'}, ${stateName}` : (isState ? `${stateName} State HQ` : 'National HQ (New Delhi / Nagpur)');
+    hqEl.textContent = isItCell ? 'Central IT & Cyber Directorate' : (isDistrict ? `${leader.district || 'Nagpur'}, ${stateName}` : (isState ? `${stateName} State HQ` : 'National HQ (New Delhi / Nagpur)'));
   }
 
   if (wingEl) {
-    wingEl.textContent = leader.category || (isAdv ? "Senior Advisory (मार्गदर्शक मंडल)" : "Supreme Council");
+    wingEl.textContent = leader.category || (isAdv ? "Senior Advisory (मार्गदर्शक मंडल)" : (isItCell ? "IT & Digital Media Cell" : "Supreme Council"));
   }
 
   if (bioEl) {
@@ -7986,6 +8083,8 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
     if (!bioText) {
       if (isAdv) {
         bioText = `${leader.name} serves on the Senior Advisory & Elders Council (मार्गदर्शक मंडल) of Samata Sainik Dal, providing veteran ideological direction, historical research guidance, and policy oversight for nationwide movement expansion in accordance with Bodhisattva Dr. B.R. Ambedkar's foundational 1927 charter.`;
+      } else if (isItCell) {
+        bioText = `${leader.name} leads technology and cyber defense operations as ${leader.designation || 'IT Directorate Officer'} in Samata Sainik Dal, managing digital infrastructure, secure cadet registry databases, verified identity frameworks, and strategic media dissemination across nationwide networks.`;
       } else {
         bioText = `${leader.name} serves as ${leader.designation || 'Command Officer'} in Samata Sainik Dal, actively leading volunteer mobilizations, legal protection protocols, and constitutional awareness programs across the nation.`;
       }
@@ -7997,6 +8096,8 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
     let tags = [];
     if (isAdv) {
       tags = ["Movement Ideology & Ethics", "Historical Archives & Treatises", "Constitutional Guidance", "Elders Mentorship", "Youth Direction", "Centenary 2027 Counsel"];
+    } else if (isItCell) {
+      tags = ["Cyber Security & Systems", "Digital Infrastructure", "Cloud Architecture", "SSD Portal Operations", "Cadet Verification Engine", "Media Outreach"];
     } else if (leader.designation && leader.designation.toLowerCase().includes("legal")) {
       tags = ["Constitutional Law Defense", "SC/ST Atrocities Tribunal Support", "High Court & Supreme Court Petitions", "Cadet Civil Rights", "Pro-Bono Network"];
     } else if (leader.designation && leader.designation.toLowerCase().includes("cadet")) {
