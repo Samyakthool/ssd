@@ -849,6 +849,20 @@ function loadInitialAdminData() {
           campaigns: { ...base.campaigns, ...(parsed.campaigns || {}) },
           gallery: { ...base.gallery, ...(parsed.gallery || {}) }
         };
+        // Sanitize obsolete seeded leadership portraits from localStorage
+        if (base.leadership) {
+          Object.keys(ssdInitialSeed.leadership).forEach(k => {
+            const seedObj = ssdInitialSeed.leadership[k];
+            if (base.leadership[k] && seedObj) {
+              if (!base.leadership[k].photoUrl || base.leadership[k].photoUrl.includes("photo-1534528741775-53994a69daeb")) {
+                base.leadership[k].photoUrl = seedObj.photoUrl;
+              }
+              if (seedObj.level && !base.leadership[k].level) {
+                base.leadership[k].level = seedObj.level;
+              }
+            }
+          });
+        }
       }
     }
   } catch (e) {

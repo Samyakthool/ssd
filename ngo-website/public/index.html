@@ -32,7 +32,7 @@
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
   <!-- Unified Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=5.0">
+  <link rel="stylesheet" href="styles.css?v=6.0">
 </head>
 <body class="font-md">
 
@@ -229,10 +229,11 @@
         <!-- Governing Council Grid -->
         <div class="governing-grid" id="governingContainer">
           <!-- Rendered dynamically by loadGoverningBody() in app.js with instant fallback -->
-          <div class="governing-card">
+          <div class="governing-card" data-level="national" data-state="National HQ" onclick="openOfficerPortfolioModal('lead_1', false)" title="Click to view Dr. Siddharth M. Meshram's official portfolio dossier">
             <div class="governing-header">
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80" alt="President" class="governing-photo">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80" alt="Dr. Siddharth M. Meshram" class="governing-photo" onerror="this.onerror=null; this.src='logo.png';">
               <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> National Command</span>
+              <span class="governing-badge-state" style="background: rgba(255, 107, 0, 0.95);"><i class="fa-solid fa-landmark"></i> Central HQ</span>
             </div>
             <div class="governing-body-content">
               <h3 class="governing-name">Dr. Siddharth M. Meshram</h3>
@@ -242,13 +243,18 @@
                 <i class="fa-solid fa-certificate" style="color: var(--primary-orange);"></i>
                 <span>Ph.D. Constitutional Law | Nagpur HQ</span>
               </div>
+              <div class="view-portfolio-action">
+                <span><i class="fa-solid fa-id-card"></i> Official Dossier</span>
+                <span>View Full Portfolio &rarr;</span>
+              </div>
             </div>
           </div>
 
-          <div class="governing-card">
+          <div class="governing-card" data-level="national" data-state="National HQ" onclick="openOfficerPortfolioModal('lead_2', false)" title="Click to view Commander Ravindra K. Gautam's official portfolio dossier">
             <div class="governing-header">
-              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80" alt="General Secretary" class="governing-photo">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80" alt="Commander Ravindra K. Gautam" class="governing-photo" onerror="this.onerror=null; this.src='logo.png';">
               <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> Executive Council</span>
+              <span class="governing-badge-state" style="background: rgba(255, 107, 0, 0.95);"><i class="fa-solid fa-landmark"></i> Central HQ</span>
             </div>
             <div class="governing-body-content">
               <h3 class="governing-name">Commander Ravindra K. Gautam</h3>
@@ -256,71 +262,116 @@
               <p class="governing-bio">Former NCC Gold Medalist and grassroots organizer; coordinates operations across 28 State Chapters and directs the national cadet syllabus.</p>
               <div class="governing-credentials">
                 <i class="fa-solid fa-certificate" style="color: var(--primary-orange);"></i>
-                <span>M.A. Pol. Science | New Delhi Central Office</span>
+                <span>M.A. Public Admin | New Delhi Secretariat</span>
+              </div>
+              <div class="view-portfolio-action">
+                <span><i class="fa-solid fa-id-card"></i> Official Dossier</span>
+                <span>View Full Portfolio &rarr;</span>
               </div>
             </div>
           </div>
 
-          <div class="governing-card">
+          <div class="governing-card" data-level="national" data-state="National HQ" onclick="openOfficerPortfolioModal('lead_3', false)" title="Click to view Col. (Retd.) Vijay Anand Thorat's official portfolio dossier">
             <div class="governing-header">
-              <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80" alt="Cadet Commander" class="governing-photo">
-              <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> Cadet Directorate</span>
+              <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80" alt="Col. (Retd.) Vijay Anand Thorat" class="governing-photo" onerror="this.onerror=null; this.src='logo.png';">
+              <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> Drill & Defense</span>
+              <span class="governing-badge-state" style="background: rgba(255, 107, 0, 0.95);"><i class="fa-solid fa-landmark"></i> Central HQ</span>
             </div>
             <div class="governing-body-content">
-              <h3 class="governing-name">Brigadier (Retd.) Ashok S. Thorat</h3>
-              <div class="governing-designation">Chief Cadet Dalpati (प्रधान दलपति)</div>
-              <p class="governing-bio">Distinguished veteran officer commanding military drill formations, ceremonial march pasts, and cadet discipline standards nationwide.</p>
+              <h3 class="governing-name">Col. (Retd.) Vijay Anand Thorat</h3>
+              <div class="governing-designation">Chief Cadet Commander (मुख्य सैनिक दलनायक)</div>
+              <p class="governing-bio">Indian Armed Forces Veteran; leads cadet drill curriculum, ceremonial parade standards, emergency disaster rescue wings, and physical fitness camps.</p>
               <div class="governing-credentials">
-                <i class="fa-solid fa-medal" style="color: var(--primary-orange);"></i>
-                <span>Retd. Brigadier, Indian Army | Pune HQ</span>
+                <i class="fa-solid fa-certificate" style="color: var(--primary-orange);"></i>
+                <span>Ex-Indian Army | Central Cadet Directorate</span>
+              </div>
+              <div class="view-portfolio-action">
+                <span><i class="fa-solid fa-id-card"></i> Official Dossier</span>
+                <span>View Full Portfolio &rarr;</span>
               </div>
             </div>
           </div>
 
-          <div class="governing-card">
+          <div class="governing-card" data-level="national" data-state="National HQ" onclick="openOfficerPortfolioModal('lead_4', false)" title="Click to view Smt. Anuradha Tai Kamble's official portfolio dossier">
             <div class="governing-header">
-              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80" alt="Mahila Dal Leader" class="governing-photo">
-              <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> Mahila Dal</span>
+              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80" alt="Smt. Anuradha Tai Kamble" class="governing-photo" onerror="this.onerror=null; this.src='logo.png';">
+              <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> Mahila Front</span>
+              <span class="governing-badge-state" style="background: rgba(255, 107, 0, 0.95);"><i class="fa-solid fa-landmark"></i> Central HQ</span>
             </div>
             <div class="governing-body-content">
-              <h3 class="governing-name">Adv. Savitri B. Gaikwad</h3>
-              <div class="governing-designation">National Mahila Dal Convener (महिला दल संयोजिका)</div>
-              <p class="governing-bio">Pioneering social worker and activist championing grassroots women empowerment, self-defense workshops, and constitutional awareness.</p>
+              <h3 class="governing-name">Smt. Anuradha Tai Kamble</h3>
+              <div class="governing-designation">National Convener, Mahila Dal (राष्ट्रीय संयोजिका)</div>
+              <p class="governing-bio">Social activist and educator; leading women's frontline self-defense wings, legal crisis support networks, and Savitribai Phule girls' educational scholarships.</p>
               <div class="governing-credentials">
-                <i class="fa-solid fa-scale-balanced" style="color: var(--primary-orange);"></i>
-                <span>Advocate, High Court | Mumbai</span>
+                <i class="fa-solid fa-certificate" style="color: var(--primary-orange);"></i>
+                <span>M.S.W., LL.B. | Mumbai State HQ</span>
+              </div>
+              <div class="view-portfolio-action">
+                <span><i class="fa-solid fa-id-card"></i> Official Dossier</span>
+                <span>View Full Portfolio &rarr;</span>
               </div>
             </div>
           </div>
 
-          <div class="governing-card">
+          <div class="governing-card" data-level="national" data-state="National HQ" onclick="openOfficerPortfolioModal('lead_5', false)" title="Click to view Senior Adv. B. P. Sonwane's official portfolio dossier">
             <div class="governing-header">
-              <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80" alt="Legal Head" class="governing-photo">
-              <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> Legal Cell</span>
+              <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80" alt="Senior Adv. B. P. Sonwane" class="governing-photo" onerror="this.onerror=null; this.src='logo.png';">
+              <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> Supreme Court Panel</span>
+              <span class="governing-badge-state" style="background: rgba(255, 107, 0, 0.95);"><i class="fa-solid fa-landmark"></i> Central HQ</span>
             </div>
             <div class="governing-body-content">
-              <h3 class="governing-name">Senior Advocate Mahendra P. Tayade</h3>
-              <div class="governing-designation">National Legal Advisory Cell Head (विधिक प्रकोष्ठ प्रमुख)</div>
-              <p class="governing-bio">Senior constitutional jurist leading SSD's pro-bono network of 850+ advocates defending civil rights and SC/ST protection cases across India.</p>
+              <h3 class="governing-name">Senior Adv. B. P. Sonwane</h3>
+              <div class="governing-designation">Chairman, National Legal Cell (अध्यक्ष, विधिक प्रकोष्ठ)</div>
+              <p class="governing-bio">Senior Advocate with extensive experience in the Supreme Court of India; spearheading pro-bono defense, SC/ST Act enforcement, and constitutional litigation.</p>
               <div class="governing-credentials">
-                <i class="fa-solid fa-building-columns" style="color: var(--primary-orange);"></i>
-                <span>Senior Advocate, Supreme Court of India</span>
+                <i class="fa-solid fa-certificate" style="color: var(--primary-orange);"></i>
+                <span>LL.M. Constitutional Law | Supreme Court of India</span>
+              </div>
+              <div class="view-portfolio-action">
+                <span><i class="fa-solid fa-id-card"></i> Official Dossier</span>
+                <span>View Full Portfolio &rarr;</span>
               </div>
             </div>
           </div>
 
-          <div class="governing-card">
+          <div class="governing-card" data-level="national" data-state="National HQ" onclick="openOfficerPortfolioModal('lead_6', false)" title="Click to view Prof. Mahendra V. Khobragade's official portfolio dossier">
             <div class="governing-header">
-              <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80" alt="Treasurer" class="governing-photo">
+              <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80" alt="Prof. Mahendra V. Khobragade" class="governing-photo" onerror="this.onerror=null; this.src='logo.png';">
               <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> Finance & Audit</span>
+              <span class="governing-badge-state" style="background: rgba(255, 107, 0, 0.95);"><i class="fa-solid fa-landmark"></i> Central HQ</span>
             </div>
             <div class="governing-body-content">
-              <h3 class="governing-name">CA Rahul V. Wankhede</h3>
-              <div class="governing-designation">National Treasurer & Audit Officer (राष्ट्रीय कोषाध्यक्ष)</div>
-              <p class="governing-bio">Fellow Chartered Accountant overseeing financial integrity, audited public disclosures, and 80G tax exemption compliances for the Centenary Fund.</p>
+              <h3 class="governing-name">Prof. Mahendra V. Khobragade</h3>
+              <div class="governing-designation">National Treasurer & Comptroller (राष्ट्रीय कोषाध्यक्ष)</div>
+              <p class="governing-bio">Chartered Accountant and academician; ensures 100% organizational transparency, public audit compliance, 80G tax exemptions, and Centenary 2027 trust governance.</p>
               <div class="governing-credentials">
-                <i class="fa-solid fa-calculator" style="color: var(--primary-orange);"></i>
-                <span>FCA, Chartered Accountant | Nagpur</span>
+                <i class="fa-solid fa-certificate" style="color: var(--primary-orange);"></i>
+                <span>FCA, M.Com | Central Audit Bureau</span>
+              </div>
+              <div class="view-portfolio-action">
+                <span><i class="fa-solid fa-id-card"></i> Official Dossier</span>
+                <span>View Full Portfolio &rarr;</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="governing-card" data-level="it_cell" data-state="National HQ" onclick="openOfficerPortfolioModal('lead_it_1', false)" title="Click to view Er. Aniket S. Meshram's official portfolio dossier">
+            <div class="governing-header">
+              <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=400&q=80" alt="Er. Aniket S. Meshram" class="governing-photo" onerror="this.onerror=null; this.src='logo.png';">
+              <span class="governing-rank-badge"><i class="fa-solid fa-shield"></i> IT & Cyber Directorate</span>
+              <span class="governing-badge-state" style="background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%);"><i class="fa-solid fa-laptop-code"></i> IT & Cyber Cell</span>
+            </div>
+            <div class="governing-body-content">
+              <h3 class="governing-name">Er. Aniket S. Meshram</h3>
+              <div class="governing-designation">National Head, IT & Digital Media Cell (राष्ट्रीय आईटी प्रमुख)</div>
+              <p class="governing-bio">Cloud & Cyber Systems Architect; oversees centralized portal databases, digital member IDs, automated enrollment systems, and nationwide digital infrastructure.</p>
+              <div class="governing-credentials">
+                <i class="fa-solid fa-certificate" style="color: var(--primary-orange);"></i>
+                <span>B.Tech Computer Science | Nagpur Central IT Cell</span>
+              </div>
+              <div class="view-portfolio-action">
+                <span><i class="fa-solid fa-id-card"></i> Official Dossier</span>
+                <span>View Full Portfolio &rarr;</span>
               </div>
             </div>
           </div>
@@ -1168,6 +1219,6 @@
   </nav>
 
   <!-- Unified Application Script -->
-  <script src="app.js?v=5.0"></script>
+  <script src="app.js?v=6.0"></script>
 </body>
 </html>

@@ -853,6 +853,38 @@ function seedSampleFirebaseData() {
 
 // Global Lifecycle
 document.addEventListener("DOMContentLoaded", () => {
+  // Synchronize localStorage with latest verified leadership portraits and metadata
+  (function syncSeedLeadership() {
+    try {
+      const SEED_REV = "2026.10.09.r4";
+      if (localStorage.getItem("ssd_leadership_seed_rev") !== SEED_REV) {
+        const rawStore = localStorage.getItem("ssd_admin_local_data");
+        if (rawStore) {
+          const parsed = JSON.parse(rawStore);
+          if (parsed && parsed.leadership) {
+            Object.keys(ssdSampleData.governingBody).forEach(id => {
+              const fresh = ssdSampleData.governingBody[id];
+              if (parsed.leadership[id]) {
+                parsed.leadership[id].photoUrl = fresh.photoUrl;
+                parsed.leadership[id].rankBadge = fresh.rankBadge;
+                parsed.leadership[id].category = fresh.category;
+                parsed.leadership[id].level = fresh.level;
+                parsed.leadership[id].designation = fresh.designation;
+                parsed.leadership[id].name = fresh.name;
+                parsed.leadership[id].credentials = fresh.credentials;
+                parsed.leadership[id].bio = fresh.bio;
+              } else {
+                parsed.leadership[id] = { ...fresh, id };
+              }
+            });
+            localStorage.setItem("ssd_admin_local_data", JSON.stringify(parsed));
+          }
+        }
+        localStorage.setItem("ssd_leadership_seed_rev", SEED_REV);
+      }
+    } catch (e) {}
+  })();
+
   initStickyHeader();
   initMobileInteractions();
   initGoogleTranslate();
@@ -893,11 +925,21 @@ function getLiveDataset(key, fallback) {
     if (localStore) {
       const parsed = JSON.parse(localStore);
       if (parsed && parsed[key]) {
-        const val = parsed[key];
-        if (Array.isArray(val) && val.length > 0) return val;
-        if (typeof val === 'object' && Object.keys(val).length > 0) {
-          return Object.entries(val).map(([k, v]) => ({ id: k, ...v }));
+        let val = parsed[key];
+        let items = [];
+        if (Array.isArray(val) && val.length > 0) items = val;
+        else if (typeof val === 'object' && Object.keys(val).length > 0) {
+          items = Object.entries(val).map(([k, v]) => ({ id: k, ...v }));
         }
+        if (key === 'leadership' && items.length > 0) {
+          items.forEach(l => {
+            if (l.photoUrl && l.photoUrl.includes("photo-1534528741775-53994a69daeb")) {
+              const match = ssdSampleData.governingBody[l.id];
+              if (match) l.photoUrl = match.photoUrl;
+            }
+          });
+        }
+        if (items.length > 0) return items;
       }
     }
   } catch (e) {}
