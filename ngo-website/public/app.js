@@ -855,6 +855,16 @@ function seedSampleFirebaseData() {
 document.addEventListener("DOMContentLoaded", () => {
   initStickyHeader();
   initMobileInteractions();
+  initGoogleTranslate();
+
+  // Restore persisted language preference
+  const savedLang = (function() {
+    try { return localStorage.getItem("ssd_language") || "en"; } catch (e) { return "en"; }
+  })();
+  if (savedLang && savedLang !== "en") {
+    changeLanguage(savedLang);
+  }
+
   updateDbStatus(isFirebaseLive, isFirebaseLive ? "Connected to Live SSD Firebase Database" : "SSD Official Demo Ready (Connect Firebase in Admin Panel)");
   if (document.getElementById("statMembers")) loadStats();
   if (document.getElementById("campaignsContainer")) loadCampaigns();
@@ -864,6 +874,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById("homeGalleryContainer")) loadHomeGallery();
   if (document.getElementById("governingContainer") || document.getElementById("advisoryContainer")) loadGoverningBody();
   if (document.getElementById("testimonialContainer")) loadTestimonials();
+
+  // Re-run DOM translation pass once initial dynamic datasets populate
+  setTimeout(() => {
+    const activeLang = localStorage.getItem("ssd_language") || "en";
+    if (activeLang && activeLang !== "en") {
+      applyDomTranslations(activeLang, document.body);
+    }
+  }, 350);
 });
 
 // ==========================================================================
@@ -1078,6 +1096,9 @@ function renderNews(newsArray) {
       </div>
     </div>
   `).join('');
+  if (window.currentLanguage && window.currentLanguage !== "en") {
+    applyDomTranslations(window.currentLanguage, container);
+  }
 }
 
 // Load Events
@@ -1972,7 +1993,1412 @@ function toggleHighContrast() {
   document.body.classList.toggle("high-contrast");
 }
 
+// ==========================================================================
+// COMPREHENSIVE I18N AMBEDKARITE TRANSLATION ENGINE (EN / HI / MR)
+// ==========================================================================
+let currentLanguage = 'en';
+
+const SSD_TRANSLATIONS = {
+  hi: {
+    // Top Bar & Accessibility
+    "Central Command Helpline: 1800-24-1927": "केंद्रीय कमान हेल्पलाइन: १८००-२४-१९२७",
+    "centralcommand@samatasainikdal.org": "centralcommand@samatasainikdal.org",
+    "Founded: 24 Sept 1927 | Babasaheb Dr. B.R. Ambedkar": "स्थापना: २४ सितंबर १९२७ | बाबासाहेब डॉ. बी. आर. आंबेडकर",
+    "Accessibility Tools": "सुलभता साधने (Accessibility)",
+    "Decrease Font Size": "फॉन्ट लहान करा",
+    "Normal Font Size": "सामान्य फॉन्ट आकार",
+    "Increase Font Size": "फॉन्ट मोठा करा",
+    "High Contrast Mode": "उच्च कॉन्ट्रास्ट मोड",
+    "Language Selector": "भाषा निवडा",
+
+    // Brand Block
+    "SAMATA SAINIK DAL (SSD)": "समता सैनिक दल (SSD)",
+    "SAMATA SAINIK DAL": "समता सैनिक दल",
+    "समता सैनिक दल (स्थापना: १९२७) | Founded by Dr. B.R. Ambedkar": "समानता, स्वतंत्रता और बंधुता के रक्षक | बोधिसत्व डॉ. बी. आर. आंबेडकर द्वारा स्थापित (१९२७)",
+    "Est. 1927 | Central Command": "स्थापना १९२७ | केंद्रीय कमान",
+    "Open Navigation Menu": "मेनू उघडा",
+    "Close Navigation Menu": "मेनू बंद करा",
+
+    // Navigation Links & Dropdowns
+    "Home": "मुख्य पृष्ठ",
+    "About": "परिचय",
+    "Genesis by Dr. B.R. Ambedkar": "बोधिसत्व डॉ. बी. आर. आंबेडकर द्वारा स्थापना",
+    "Mahad Satyagraha (1927)": "महाड सत्याग्रह (१९२७)",
+    "Governing Body & Leadership": "कार्यकारिणी व नेतृत्व",
+    "Centenary Roadmap (1927–2027)": "शताब्दी रोडमॅप (१९२७–२०२७)",
+    "Centenary Roadmap (1927-2027)": "शताब्दी रोडमॅप (१९२७–२०२७)",
+    "Wings": "विभाग व विंग्स",
+    "Central Cadet Corps (Sainik Wing)": "केंद्रीय कॅडेट कॉर्प्स (सैनिक विंग)",
+    "Mahila Samata Sainik Dal": "महिला समता सैनिक दल",
+    "Constitutional & Legal Cell": "संवैधानिक व विधी प्रकोष्ठ",
+    "Youth & Student Front": "युवा व विद्यार्थी आघाडी",
+    "Community Sewa & Relief Force": "सामाजिक सेवा व मदत दल",
+    "Membership": "सदस्यता",
+    "Sainik Member Portal & ID Card": "सैनिक सदस्य पोर्टल व ओळखपत्र",
+    "Join Dal / New Enlistment": "दल प्रवेश / नवीन नोंदणी",
+    "Public QR Credential Verification": "सार्वजनिक क्यूआर पडताळणी",
+    "Officer / Command Login": "अधिकारी / कमान लॉगिन",
+    "Gazette & Media": "गॅझेट व माध्यम",
+    "Official Gazette & Circulars": "अधिकृत गॅझेट व परिपत्रके",
+    "Photo & Video Archives": "छायाचित्र व व्हिडिओ संग्रह",
+    "Campaigns & Memorials": "अभियान व स्मारके",
+    "Contact": "संपर्क",
+    "Donate": "दान करा",
+    "Member Portal": "सदस्य पोर्टल",
+
+    // Notice Ticker
+    "SSD Official Gazette": "समता सैनिक दल अधिकृत गॅझेट",
+    "SSD Centenary Preparations (1927–2027) National Executive Meeting scheduled at Nagpur Headquarters.": "एसएसडी शताब्दी पूर्वतयारी (१९२७–२०२७) राष्ट्रीय कार्यकारिणीची बैठक नागपूर मुख्यालयात आयोजित.",
+    "National Sainik Cadet Enrollment Q3 2026 is now underway across all State & District units.": "राष्ट्रीय सैनिक कॅडेट नोंदणी २०२६ सर्व राज्य व जिल्हा युनिट्समध्ये सुरू आहे.",
+    "Annual Mahad Satyagraha & Water Rights Memorial March preparations launched.": "वार्षिक महाड सत्याग्रह व जलहक्क स्मृति मार्च तयारी सुरू.",
+    "Constitution Day (26 Nov) Mass Preamble Reading Campaign activated across 500+ districts.": "संविधान दिन (२६ नोव्हेंबर) सामूहिक उद्देशिका वाचन अभियान ५००+ जिल्ह्यांमध्ये सक्रिय.",
+    "View Gazette": "गॅझेट पहा",
+    "View Gazette →": "गॅझेट पहा →",
+    "View Gazette &rarr;": "गॅझेट पहा →",
+    "View All Gazette Circulars": "सर्व गॅझेट परिपत्रके पहा",
+
+    // Hero Section: Governing Body
+    "Supreme Command & National Executive Council": "सर्वोच्च कमान व राष्ट्रीय कार्यकारिणी परिषद",
+    "Governing Body of Samata Sainik Dal": "समता सैनिक दल नियामक मंडळ व राष्ट्रीय नेतृत्व",
+    "Founded by Bodhisattva Dr. B.R. Ambedkar on 24 September 1927. Steered by seasoned Ambedkarite scholars, retired military officers, legal luminaries, and dedicated grassroots commanders across India.": "बोधिसत्व डॉ. बी. आर. आंबेडकर द्वारा २४ सितंबर १९२७ को स्थापित। भारत भर के वरिष्ठ आंबेडकरवादी विद्वान, निवृत्त सैन्य अधिकारी, विधी तज्ञ आणि समर्पित कार्यकर्त्यांच्या नेतृत्वाखाली.",
+    "Enlist Under Central Command": "केंद्रीय कमान अंतर्गत नावनोंदणी करा",
+    "Support Movement & Centenary Fund": "आंदोलन व शताब्दी निधीला सहकार्य करा",
+    "SSD Constitution & 1927 History": "एसएसडी संविधान व १९२७ इतिहास",
+
+    // Leadership Tier Navigation
+    "All Leadership": "सर्व नेतृत्व",
+    "National Supreme Command": "राष्ट्रीय सर्वोच्च कमान",
+    "IT & Digital Media Cell": "आयटी व डिजिटल मीडिया सेल",
+    "State Governing Bodies (प्रदेश कार्यकारिणी)": "राज्य कार्यकारिणी (प्रदेश)",
+    "District Governing Bodies (जिल्हा कार्यकारिणी)": "जिल्हा कार्यकारिणी",
+    "Search governing officer by name, state, district, designation...": "नाव, राज्य, जिल्हा, पद यानुसार अधिकारी शोधा...",
+    "All States": "सर्व राज्ये",
+    "Maharashtra (महाराष्ट्र)": "महाराष्ट्र (Maharashtra)",
+
+    // Ranks, Badges, Portfolios
+    "National Command": "राष्ट्रीय कमान",
+    "Executive Council": "कार्यकारिणी परिषद",
+    "Cadet Directorate": "कॅडेट संचालनालय",
+    "Mahila Dal": "महिला दल",
+    "Legal Cell": "विधी प्रकोष्ठ",
+    "Finance & Audit": "वित्त व लेखापरीक्षण",
+    "IT & Cyber Directorate": "आयटी व सायबर संचालनालय",
+    "Central HQ": "केंद्रीय मुख्यालय",
+    "Official Dossier": "अधिकृत दस्ताऐवज / डॉसियर",
+    "View Full Portfolio →": "संपूर्ण प्रोफाइल पहा →",
+    "View Full Portfolio &rarr;": "संपूर्ण प्रोफाइल पहा →",
+    "View Full Portfolio": "संपूर्ण प्रोफाइल पहा",
+    "Senior Advisory & Elders Council (मार्गदर्शक मंडल)": "वरिष्ठ सल्लागार व मार्गदर्शक मंडळ",
+    "Distinguished Ambedkarite thinkers, veteran freedom fighters, and movement elders guiding policy. Click any portfolio to view full dossier.": "धोरण मार्गदर्शन करणारे ज्येष्ठ आंबेडकरवादी विचारवंत, स्वातंत्र्यसैनिक व चळवळीचे मार्गदर्शक. संपूर्ण डॉसियर पाहण्यासाठी क्लिक करा.",
+    "Click Profile to Open Portfolio": "प्रोफाइल पाहण्यासाठी क्लिक करा",
+    "Open Portfolio": "प्रोफाइल उघडा",
+
+    // Council Designations
+    "National President (राष्ट्रीय अध्यक्ष)": "राष्ट्रीय अध्यक्ष",
+    "National General Secretary (राष्ट्रीय महासचिव)": "राष्ट्रीय महासचिव",
+    "Chief Cadet Dalpati (प्रधान दलपति)": "प्रधान दलपती (Chief Cadet Dalpati)",
+    "National Mahila Dal Convener (महिला दल संयोजिका)": "महिला दल संयोजिका",
+    "National Legal Advisory Cell Head (विधिक प्रकोष्ठ प्रमुख)": "विधी प्रकोष्ठ प्रमुख",
+    "National Treasurer & Audit Officer (राष्ट्रीय कोषाध्यक्ष)": "राष्ट्रीय कोषाध्यक्ष",
+    "National IT & Digital Media Head (राष्ट्रीय आयटी प्रमुख)": "राष्ट्रीय आयटी प्रमुख",
+    "National Cyber Operations Lead (राष्ट्रीय सायबर ऑपरेशन्स प्रमुख)": "राष्ट्रीय सायबर ऑपरेशन्स प्रमुख",
+    "Senior Advisory Member": "वरिष्ठ सल्लागार सदस्य",
+    "Council Member": "परिषद सदस्य",
+    "National Central HQ": "राष्ट्रीय मध्यवर्ती मुख्यालय",
+    "Advisory Board": "सल्लागार मंडळ",
+    "Senior Ambedkarite Historian & Author": "वरिष्ठ आंबेडकरवादी इतिहासकार व लेखक",
+    "Human Rights Defender & Scholar": "मानवाधिकार संरक्षक व विचारवंत",
+    "Veteran 1956 Deekshabhoomi Parade Organizer": "१९५६ दीक्षाभूमी संचलन आयोजक",
+    "Nagpur HQ": "नागपूर मुख्यालय",
+    "New Delhi Central Office": "नवी दिल्ली मध्यवर्ती कार्यालय",
+    "Pune HQ": "पुणे मुख्यालय",
+    "Mumbai": "मुंबई",
+
+    // Campaigns Section
+    "Active National Missions": "सक्रिय राष्ट्रीय मोहिमा",
+    "Ongoing Campaigns & Centenary Drives": "सध्याची अभियाने व शताब्दी उपक्रम",
+    "Grassroots initiatives mobilizing thousands of cadets, legal advocates, and community volunteers across 28 states of India.": "भारतातील २८ राज्यांमधील हजारो कॅडेट्स, वकील आणि स्वयंसेवकांना संघटित करणारे उपक्रम.",
+    "Centenary Drive": "शताब्दी मोहीम",
+    "Legal & Rights": "विधी व हक्क",
+    "Women Wing": "महिला विंग",
+    "Community Sewa": "सामाजिक सेवा",
+    "SSD Centenary 1927–2027 Mission (शताब्दी महोत्सव)": "एसएसडी शताब्दी १९२७–२०२७ महोत्सव",
+    "Nationwide 100-Year commemorative march pasts, building 1,000 Ambedkar Study Libraries, and establishing the Centenary National Memorial at Mahad & Nagpur.": "देशव्यापी १०० वर्षे स्मृति संचलन, १००० आंबेडकर अभ्यासिका ग्रंथालये आणि महाड व नागपूर येथे राष्ट्रीय स्मारक निर्मिती.",
+    "National Constitutional Literacy & Preamble Yatra": "राष्ट्रीय संविधान साक्षरता व उद्देशिका यात्रा",
+    "Distributing pocket Constitutions in rural villages, mass Preamble recitation camps, and training grassroots advocates to resist caste atrocities legally.": "गावागावात संविधान पुस्तिका वितरण, उद्देशिका वाचन आणि अत्याचाराविरुद्ध कायदेशीर लढा देण्यासाठी वकिलांचे प्रशिक्षण.",
+    "Mahila Self-Defense & Savitribai Phule Academy": "महिला स्वसंरक्षण व सावित्रीबाई फुले अकादमी",
+    "Physical stick drill, martial self-defense training, anti-harassment rapid action units, and educational scholarships for Bahujan female students.": "लाठीकाठी कसरत, स्वसंरक्षण प्रशिक्षण, महिला सुरक्षा पथक आणि बहुजन विद्यार्थिनींसाठी शिष्यवृत्ती.",
+    "Samata 24/7 Voluntary Blood Donor & Disaster Force": "समता २४/७ रक्तदाता व आपत्ती निवारण दल",
+    "Nationwide emergency voluntary blood donor registry, flood rescue battalions, free medical diagnosis, and community health camps in underprivileged bastis.": "देशव्यापी आपत्कालीन रक्तदाता नोंदणी, पूर बचाव पथक, मोफत आरोग्य तपासणी आणि वस्त्यांमध्ये वैद्यकीय शिबिरे.",
+    "Goal: ₹50.0 Lakh": "लक्ष्य: ₹५०.० लाख",
+    "Goal: ₹25.0 Lakh": "लक्ष्य: ₹२५.० लाख",
+    "Goal: ₹30.0 Lakh": "लक्ष्य: ₹३०.० लाख",
+    "Goal: ₹20.0 Lakh": "लक्ष्य: ₹२०.० लाख",
+    "73% Raised": "७३% संकलित",
+    "68% Raised": "६८% संकलित",
+    "65% Raised": "६५% संकलित",
+    "79% Raised": "७९% संकलित",
+    "15,000+ Volunteers": "१५,०००+ स्वयंसेवक",
+    "8,200+ Volunteers": "८,२००+ स्वयंसेवक",
+    "12,000+ Volunteers": "१२,०००+ स्वयंसेवक",
+    "25,000+ Volunteers": "२५,०००+ स्वयंसेवक",
+    "250+ Districts": "२५०+ जिल्हे",
+    "500+ Districts": "५००+ जिल्हे",
+    "180+ Districts": "१८०+ जिल्हे",
+    "320+ Districts": "३२०+ जिल्हे",
+    "Support": "सहकार्य करा",
+    "Enlist": "सामील व्हा",
+
+    // Specialized Divisions
+    "Operational Divisions": "कार्यकारी विभाग",
+    "Departments & Specialized Wings of SSD": "समता सैनिक दलाचे विभाग व विशेष विंग्स",
+    "Structured like a disciplined non-violent defense force to educate, agitate, and organize at grassroots, state, and national levels.": "शिका, संघर्ष करा आणि संघटित व्हा या तत्त्वावर आधारित शिस्तबद्ध अहिंसक सामाजिक संरक्षण दल.",
+    "Central Cadet Corps": "केंद्रीय कॅडेट कॉर्प्स",
+    "Rigorous physical drill, parade ranks, uniform code of conduct, flag ceremonies, and non-violent social defense training.": "कठोर शारीरिक संचलन, परेड, गणवेश आचारसंहिता, ध्वजवंदन आणि अहिंसक सामाजिक संरक्षण प्रशिक्षण.",
+    "Explore Cadet Wing →": "कॅडेट विंग पहा →",
+    "Explore Cadet Wing &rarr;": "कॅडेट विंग पहा →",
+    "Explore Mahila Dal →": "महिला दल पहा →",
+    "Explore Mahila Dal &rarr;": "महिला दल पहा →",
+    "Legal & Constitutional Cell": "विधी व संवैधानिक प्रकोष्ठ",
+    "Nationwide advocate network offering pro-bono legal defense, constitutional literacy camps, and emergency legal hotlines.": "विनामूल्य कायदेशीर मदत, संविधान साक्षरता शिबिरे आणि आपत्कालीन कायदेशीर मदत देणारे देशव्यापी वकील जाळे.",
+    "Explore Legal Cell →": "विधी प्रकोष्ठ पहा →",
+    "Explore Legal Cell &rarr;": "विधी प्रकोष्ठ पहा →",
+    "Youth & Student Front": "युवा व विद्यार्थी आघाडी",
+    "Dr. Ambedkar study circles, civil services & competitive exam mentorship, digital skills, and annual youth leadership summits.": "डॉ. आंबेडकर अभ्यास मंडळे, स्पर्धा परीक्षा मार्गदर्शन, डिजिटल कौशल्ये आणि वार्षिक युवा नेतृत्व परिषद.",
+    "Explore Youth Front →": "युवा आघाडी पहा →",
+    "Explore Youth Front &rarr;": "युवा आघाडी पहा →",
+    "Community Sewa & Relief": "सामाजिक सेवा व मदत दल",
+    "Voluntary blood donor registry, emergency disaster rescue task force, free health diagnostic camps, and community libraries.": "रक्तदाता नोंदणी, आपत्कालीन बचाव दल, मोफत आरोग्य तपासणी आणि अभ्यासिका ग्रंथालये.",
+    "Explore Relief Task Force →": "मदत कार्य दल पहा →",
+    "Explore Relief Task Force &rarr;": "मदत कार्य दल पहा →",
+    "Online Sainik Enlistment": "ऑनलाइन सैनिक भरती नोंदणी",
+    "Step forward to serve equality and democracy. Enlist online in any of our 5 specialized operational divisions.": "समता आणि लोकशाहीच्या रक्षणासाठी पुढे या. आमच्या ५ विशेष विभागांपैकी कोणत्याही विभागात नोंदणी करा.",
+    "Full Enlistment Portal →": "संपूर्ण नोंदणी पोर्टल →",
+    "Full Enlistment Portal &rarr;": "संपूर्ण नोंदणी पोर्टल →",
+
+    // 4-Step Enlistment Guide
+    "Direct Enlistment": "थेट प्रवेश नोंदणी",
+    "Join Samata Sainik Dal — Take the Solemn Pledge": "समता सैनिक दलात सामील व्हा — प्रतिज्ञा घ्या",
+    "Answer the historic call of Bodhisattva Babasaheb Dr. B.R. Ambedkar. Become a disciplined volunteer for equality, human dignity, and constitutional morality.": "बोधिसत्व बाबासाहेब डॉ. बी. आर. आंबेडकरांच्या ऐतिहासिक हाकेला प्रतिसाद द्या. समता, मानवी प्रतिष्ठा आणि संवैधानिक मूल्यांसाठी शिस्तबद्ध स्वयंसेवक व्हा.",
+    "4-Step Official Enlistment Process": "४-टप्प्यांची अधिकृत प्रवेश प्रक्रिया",
+    "Official Cadre Induction": "अधिकृत संवर्ग प्रवेश",
+    "Select Your Operational Wing": "तुमचा कार्य विभाग निवडा",
+    "Choose from Cadet Corps (Drill & Discipline), Mahila Dal (Women's Leadership), Legal Cell (Advocacy), Youth Front, or Sewa Relief.": "कॅडेट कॉर्प्स, महिला दल, विधी प्रकोष्ठ, युवा आघाडी किंवा सेवा मदत दल यापैकी निवडा.",
+    "Submit District & Contact Details": "जिल्हा व संपर्क तपशील सादर करा",
+    "Provide your local address to be connected directly with your District Commander and local State Chapter.": "जिल्हा कमांडर आणि राज्य शाखेशी जोडले जाण्यासाठी आपला पत्ता नोंदवा.",
+    "Take the Solemn Volunteer Pledge": "पवित्र स्वयंसेवक प्रतिज्ञा घ्या",
+    "Commit to the principles of self-respect, moral character, non-violence, and total dedication to liberty, equality, and fraternity.": "स्वाभिमान, चारित्र्य, अहिंसा आणि समता-स्वातंत्र्य-बंधुतेच्या तत्त्वांना समर्पित राहण्याची प्रतिज्ञा.",
+    "Receive SSD Digital ID & Unit Assignment": "एसएसडी डिजिटल ओळखपत्र व युनिट वाटप मिळवा",
+    "Central Command verifies your application, registers you in the national roll, and invites you to the next drill camp.": "केंद्रीय कमान अर्जाची पडताळणी करून राष्ट्रीय नोंदवहीत नोंद करते आणि आगामी शिबिराचे निमंत्रण देते.",
+    "Open Full Online Enlistment Portal →": "संपूर्ण ऑनलाइन नोंदणी पोर्टल उघडा →",
+    "Open Full Online Enlistment Portal &rarr;": "संपूर्ण ऑनलाइन नोंदणी पोर्टल उघडा →",
+    "Track Application Status": "अर्जाची स्थिती तपासा",
+
+    // Photo Gallery
+    "Visual History & March Past Archives": "दृश्य इतिहास व संचलन संग्रह",
+    "Photo Gallery & Field Action Archives": "छायाचित्र गॅलरी व क्षेत्रीय कृती संग्रह",
+    "Moments of discipline, historic struggles, Deekshabhoomi parades, and grassroots community defense.": "शिस्त, ऐतिहासिक संघर्ष, दीक्षाभूमी संचलन आणि सामाजिक संरक्षणाचे क्षण.",
+    "All Photos": "सर्व छायाचित्रे",
+    "Cadet Drills & Parades": "कॅडेट संचलन व परेड",
+    "Mahila Samata Dal": "महिला समता दल",
+    "Historical Memorials": "ऐतिहासिक स्मारके",
+    "Community Sewa & Relief": "सामाजिक सेवा व मदत",
+    "Cadet Drills": "कॅडेट कवायत",
+    "Constitution": "संविधान",
+    "Youth Front": "युवा आघाडी",
+    "SSD Uniform Cadet Corps Ceremonial March Past - Deekshabhoomi Nagpur": "एसएसडी गणवेशधारी कॅडेट दीक्षाभूमी नागपूर संचलन",
+    "Mahila Samata Sainik Dal Volunteers at National Equality Rally": "महिला समता सैनिक दल राष्ट्रीय समता रॅली",
+    "Constitution Day Mass Preamble Reading Assembly": "संविधान दिन सामूहिक उद्देशिका वाचन सभा",
+    "Youth Cadet Physical Training & Non-Violent Defense Drill": "युवा कॅडेट शारीरिक कवायत व अहिंसक संरक्षण प्रशिक्षण",
+    "View Complete High-Resolution Photo Archives →": "संपूर्ण उच्च-दर्जाचे छायाचित्र संग्रह पहा →",
+    "View Complete High-Resolution Photo Archives &rarr;": "संपूर्ण उच्च-दर्जाचे छायाचित्र संग्रह पहा →",
+
+    // Transparent Community Support / Donate
+    "Transparent Community Support": "पारदर्शक सामाजिक सहकार्य",
+    "Support the Movement — Fuel the Fight for Equality": "चळवळीला पाठिंबा द्या — समतेच्या लढ्याला बळ द्या",
+    "Samata Sainik Dal is self-funded by conscious citizens. Every rupee directly strengthens grassroots cadet training, pro-bono legal defense, and disaster relief.": "समता सैनिक दल जागरूक नागरिकांच्या सहकार्याने चालवले जाते. प्रत्येक रुपया कॅडेट प्रशिक्षण, विनामूल्य कायदेशीर मदत आणि मदत कार्याला बळ देतो.",
+    "Choose Your Contribution": "आपले योगदान निवडा",
+    "One-Time Contribution": "एकवेळचे योगदान",
+    "Monthly Supporter": "मासिक समर्थक",
+    "Select Contribution Amount": "योगदान रक्कम निवडा",
+    "Enter custom amount": "इतर रक्कम प्रविष्ट करा",
+    "Direct Allocation Cause": "थेट वाटप उद्दिष्ट",
+    "Bal Sainik Uniforms & Drill Equipment": "बाल सैनिक गणवेश व कवायत साहित्य",
+    "Constitutional Literacy & Preamble Booklets": "संविधान साक्षरता व उद्देशिका पुस्तिका",
+    "Pro-Bono Legal Defense Fund (SC/ST Cases)": "विनामूल्य विधी सहाय्य निधी (अ‍ॅट्रॉसिटी केसेस)",
+    "Disaster Rescue & 24/7 Blood Task Force": "आपत्ती बचाव व २४/७ रक्त कार्य दल",
+    "SSD Centenary 2027 Trust & Library Corpus": "एसएसडी शताब्दी २०२७ ट्रस्ट व अभ्यासिका निधी",
+    "General Organizational Fund": "सामान्य संघटना निधी",
+    "Direct Impact:": "थेट परिणाम:",
+    "Prints and distributes 50 pocket Constitutions and Preamble learning cards in rural school clusters.": "ग्रामीण भागातील शाळांमध्ये ५० पॉकेट संविधाने आणि उद्देशिका पत्रिका वाटप.",
+    "Proceed to Contribute Online →": "ऑनलाइन योगदानासाठी पुढे जा →",
+    "Proceed to Contribute Online &rarr;": "ऑनलाइन योगदानासाठी पुढे जा →",
+
+    // Babasaheb Quote
+    "The Foundational Command of Dr. B.R. Ambedkar": "डॉ. बाबासाहेब आंबेडकरांचा पायाभूत संदेश",
+    "\"My soldiers of equality! You must maintain strict discipline and self-respect. A volunteer of Samata Sainik Dal must be ready to sacrifice personal comfort for the collective dignity, equality, and rights of the oppressed. Let your conduct be an embodiment of character and non-violent courage.\"": "\"माझ्या समतेच्या सैनिकांनो! तुम्ही कठोर शिस्त आणि स्वाभिमान बाळगला पाहिजे. समता सैनिक दलाच्या स्वयंसेवकाने शोषितांच्या सामूहिक सन्मान, समता आणि हक्कांसाठी वैयक्तिक सुखाचा त्याग करण्यास सदैव तयार राहिले पाहिजे. तुमचे आचरण हे चारित्र्य आणि अहिंसक धैर्याचे मूर्तिमंत रूप असावे.\"",
+    "— Dr. Bhimrao Ramji Ambedkar, Founder, Samata Sainik Dal (24 September 1927)": "— डॉ. भीमराव रामजी आंबेडकर, संस्थापक, समता सैनिक दल (२४ सप्टेंबर १९२७)",
+    "Read Complete History & Centenary Roadmap (1927–2027)": "संपूर्ण इतिहास व शताब्दी रोडमॅप (१९२७–२०२७) वाचा",
+    "Read Complete History & Centenary Roadmap (1927-2027)": "संपूर्ण इतिहास व शताब्दी रोडमॅप (१९२७–२०२७) वाचा",
+
+    // Bulletins & Gazette
+    "SSD Bulletins & Gazette": "एसएसडी बुलेटिन व गॅझेट",
+    "Latest Central Command Dispatches & Events": "केंद्रीय कमान परिपत्रके व आगामी कार्यक्रम",
+    "Real-time announcements, drill camp schedules, and national conclaves synchronized live with our central database.": "अधिकृत घोषणा, संचलन शिबिर वेळापत्रक आणि राष्ट्रीय अधिवेशने.",
+    "Official Dispatches": "अधिकृत परिपत्रके",
+    "Upcoming Events": "आगामी कार्यक्रम",
+    "View All Dispatches →": "सर्व परिपत्रके पहा →",
+    "View All Dispatches &rarr;": "सर्व परिपत्रके पहा →",
+    "Full Calendar →": "संपूर्ण दिनदर्शिका →",
+    "Full Calendar &rarr;": "संपूर्ण दिनदर्शिका →",
+    "Read Dispatch →": "परिपत्रक वाचा →",
+    "Read Dispatch &rarr;": "परिपत्रक वाचा →",
+    "Read Dispatch": "परिपत्रक वाचा",
+    "Schedule PDF": "वेळापत्रक पीडीएफ",
+    "PDF Circular": "पीडीएफ परिपत्रक",
+    "No dispatches found": "कोणतेही परिपत्रक उपलब्ध नाही",
+    "No Upcoming Events Scheduled": "कोणतेही आगामी कार्यक्रम नियोजित नाहीत",
+    "No photographs found in this category.": "या श्रेणीत कोणतीही छायाचित्रे आढळली नाहीत.",
+
+    // Footer
+    "Samata Sainik Dal": "समता सैनिक दल",
+    "Samata Sainik Dal (SSD), founded by Bodhisattva Dr. B.R. Ambedkar on 24 September 1927. Dedicated to non-violent social defense, constitutional rights, and human dignity across India.": "समता सैनिक दल (एसएसडी), बोधिसत्व डॉ. बी. आर. आंबेडकर यांनी २४ सप्टेंबर १९२७ रोजी स्थापन केले. भारतभरात अहिंसक सामाजिक संरक्षण, संविधानिक अधिकार आणि मानवी सन्मानासाठी समर्पित.",
+    "SSD Departments": "एसएसडी विभाग",
+    "Quick Portals": "महत्वाच्या लिंक्स",
+    "Ongoing Campaigns": "सध्याची अभियाने",
+    "Online Sainik Enlistment": "ऑनलाइन सैनिक भरती नोंदणी",
+    "Donate & Support SSD": "देणगी व सहकार्य",
+    "Governing Body Council": "नियामक मंडळ परिषद",
+    "Photo Archives & Lightbox": "छायाचित्र संग्रह",
+    "History & Genesis (1927)": "इतिहास व स्थापना (१९२७)",
+    "National Command Desk": "राष्ट्रीय कमान संपर्क",
+    "Command Admin Portal": "कमान अ‍ॅडमिन पोर्टल",
+    "SSD Official Gazette": "समता सैनिक दल अधिकृत गॅझेट",
+    "Subscribe to receive official circulars, drill schedules, and centenary announcements.": "अधिकृत परिपत्रके, संचलन वेळापत्रक आणि शताब्दी घोषणा मिळवण्यासाठी सबस्क्राईब करा.",
+    "Enter your email ID": "आपला ईमेल प्रविष्ट करा",
+    "Liberty, Equality, Fraternity. No spam.": "स्वातंत्र्य, समता, बंधुता. स्पॅम नाही.",
+    "Constitution of SSD": "एसएसडीचे संविधान",
+    "State Directory": "राज्य निर्देशिका",
+    "Grievance Desk": "तक्रार निवारण कक्ष",
+    "© 1927–2026 Samata Sainik Dal (SSD). Founded by Bodhisattva Dr. B.R. Ambedkar. Jai Bhim | Equality For All.": "© १९२७–२०२६ समता सैनिक दल (एसएसडी). बोधिसत्व डॉ. बी. आर. आंबेडकर यांनी स्थापन केलेले. जय भीम | समता सर्वांसाठी.",
+    "© 1927-2026 Samata Sainik Dal (SSD). Founded by Bodhisattva Dr. B.R. Ambedkar. Jai Bhim | Equality For All.": "© १९२७–२०२६ समता सैनिक दल (एसएसडी). बोधिसत्व डॉ. बी. आर. आंबेडकर यांनी स्थापन केलेले. जय भीम | समता सर्वांसाठी.",
+
+    // Mobile Bottom Quick Bar
+    "Helpline": "हेल्पलाइन",
+    "Top": "वरती जा",
+
+    // Modals
+    "Complete Contribution": "योगदान पूर्ण करा",
+    "Contribution Amount (₹) *": "योगदान रक्कम (₹) *",
+    "Earmarked Purpose *": "निश्चित उद्देश *",
+    "Donor Full Name *": "दात्याचे संपूर्ण नाव *",
+    "Your name": "आपले नाव",
+    "Email ID *": "ईमेल आयडी *",
+    "Mobile No *": "मोबाईल नंबर *",
+    "Phone number": "फोन नंबर",
+    "PAN Card Number (for 80G Tax Exemption Receipt)": "पॅन कार्ड क्रमांक (८०जी कर सवलत पावतीसाठी)",
+    "Payment Method": "पेमेंट पद्धत",
+    "Proceed to Secure Pay (Razorpay / UPI / Cards)": "सुरक्षित पेमेंटसाठी पुढे जा (रेझरपे / यूपीआय)",
+    "Official Contribution Receipt": "अधिकृत योगदान पावती",
+    "80G Tax Exempt": "८०जी करमुक्त",
+    "Receipt No:": "पावती क्रमांक:",
+    "Payment ID (Razorpay):": "पेमेंट आयडी (Razorpay):",
+    "Date & Time:": "दिनांक व वेळ:",
+    "Payment Status:": "पेमेंट स्थिती:",
+    "Donor Name:": "दात्याचे नाव:",
+    "PAN Number:": "पॅन क्रमांक:",
+    "Cause Allocated:": "वाटप केलेले उद्दिष्ट:",
+    "Amount Contributed:": "दिलेली रक्कम:",
+    "Print Receipt": "पावती प्रिंट करा",
+    "Close": "बंद करा",
+    "Samata Sainik Dal • Leadership Dossier": "समता सैनिक दल • नेतृत्व दस्ताऐवज / डॉसियर",
+    "Verified SSD": "पडताळणीकृत एसएसडी",
+    "Credentials & Background": "शैक्षणिक पात्रता व पार्श्वभूमी",
+    "Key Focus & Movement Portfolios": "प्रमुख कार्यक्षेत्र व चळवळीतील जबाबदारी",
+    "Movement Service Record & Biographical Dossier": "चळवळ सेवा नोंद व जीवनपट",
+    "Download Dossier PDF": "डॉसियर पीडीएफ डाउनलोड करा",
+    "Contact Secretariat": "सचिवालयाशी संपर्क साधा",
+    "Close Dossier": "डॉसियर बंद करा",
+
+    // Subpage Details
+    "Historical Heritage": "ऐतिहासिक वारसा",
+    "History, Ideology & Centenary Horizon": "इतिहास, विचारधारा आणि शताब्दी क्षितिज",
+    "The genesis, struggle, and historic achievements of Samata Sainik Dal, founded on 24 September 1927 by Bodhisattva Dr. B.R. Ambedkar.": "बोधिसत्व डॉ. बी. आर. आंबेडकर यांनी २४ सप्टेंबर १९२७ रोजी स्थापन केलेल्या समता सैनिक दलाचा उदय, संघर्ष आणि ऐतिहासिक कार्य.",
+    "History & About": "इतिहास व परिचय",
+    "Foundation 1927": "स्थापना १९२७",
+    "Genesis of the Soldiers for Equality": "समतेच्या सैनिकांची निर्मिती",
+    "Born out of the historic demand for civil rights, self-respect, and the eradication of caste oppression.": "नागरी हक्क, स्वाभिमान आणि विषमतेच्या निर्मूलनाच्या ऐतिहासिक गरजेतून जन्म.",
+    "Why Babasaheb Formed Samata Sainik Dal": "बाबासाहेबांनी समता सैनिक दल का स्थापन केले",
+    "The Core Motto of SSD": "एसएसडीचे मुख्य ब्रीदवाक्य",
+    "Central Defense Wing": "केंद्रीय संरक्षण विंग",
+    "Central Cadet Corps (केंद्रीय सैनिक दस्ता)": "केंद्रीय कॅडेट कॉर्प्स (केंद्रीय सैनिक दस्ता)",
+    "The backbone of Samata Sainik Dal — building disciplined, fearless, and non-violent soldiers dedicated to equality, public safety, and constitutional defense.": "समता सैनिक दलाचा कणा — समता, सार्वजनिक सुरक्षा आणि संविधान रक्षणासाठी शिस्तबद्ध, निर्भय आणि अहिंसक सैनिकांची निर्मिती.",
+    "The Cadet Tradition": "कॅडेट परंपरा",
+    "Discipline, Physical Vigilance, and Social Courage": "शिस्त, शारीरिक दक्षता आणि सामाजिक धैर्य",
+    "Join Cadet Corps": "कॅडेट कॉर्प्समध्ये सामील व्हा",
+    "View Drill Photos": "कवायत छायाचित्रे पहा",
+    "Official Uniform Specifications": "अधिकृत गणवेश तपशील",
+    "Official Sainik Enlistment Portal": "अधिकृत सैनिक नावनोंदणी पोर्टल",
+    "Answer the clarion call of Dr. Babasaheb Ambedkar. Enlist as a disciplined soldier of equality dedicated to constitutional values and social defense.": "डॉ. बाबासाहेब आंबेडकरांच्या हाकेला प्रतिसाद द्या. संविधान आणि सामाजिक संरक्षणासाठी समर्पित सैनिक व्हा.",
+    "National Call of Duty": "राष्ट्रीय कर्तव्य हाक",
+    "Sainik Enlistment": "सैनिक नोंदणी",
+    "Enlistment & Verification Process": "नावनोंदणी व पडताळणी प्रक्रिया",
+    "Step-by-Step Procedure": "टप्प्याटप्प्याने प्रक्रिया",
+    "How your application is processed from registration to digital ID issuance and drill deployment.": "नोंदणीपासून डिजिटल ओळखपत्र आणि तैनातीपर्यंत अर्जाची प्रक्रिया कशी होते.",
+    "Step 01": "टप्पा ०१",
+    "Step 02": "टप्पा ०२",
+    "Step 03": "टप्पा ०३",
+    "Step 04": "टप्पा ०४",
+    "Submit Application": "अर्ज सादर करा",
+    "District Command Review": "जिल्हा कमान पुनरावलोकन",
+    "Digital ID & Uniform Guide": "डिजिटल ओळखपत्र व गणवेश मार्गदर्शक",
+    "Cadet Drill & Deployment": "कॅडेट कवायत व तैनाती",
+    "Official Sainik Application Form": "अधिकृत सैनिक अर्ज फॉर्म",
+    "Please enter accurate details for administrative registration and multi-tier hierarchical identity verification.": "प्रशासकीय नोंदणी व ओळख पडताळणीसाठी कृपया अचूक माहिती प्रविष्ट करा.",
+    "Full Legal Name": "पूर्ण कायदेशीर नाव",
+    "Email Address": "ईमेल पत्ता",
+    "Mobile / WhatsApp": "मोबाईल / व्हॉट्सअ‍ॅप",
+    "Date of Birth": "जन्मतारीख",
+    "Gender": "लिंग",
+    "Male": "पुरुष",
+    "Female": "महिला",
+    "Other": "इतर",
+    "Preferred SSD Wing / Division": "इच्छित एसएसडी विंग / विभाग",
+    "Blood Group": "रक्तगट",
+    "Educational Qualification": "शैक्षणिक पात्रता",
+    "Occupation / Profession": "व्यवसाय / पेशा",
+    "State Chapter": "राज्य शाखा",
+    "National Headquarters & Grievance Desk": "राष्ट्रीय मुख्यालय व तक्रार निवारण कक्ष",
+    "Connect with SSD Central Command for unit formation, legal emergency assistance, cadet training camps, and public inquiries.": "इकाई गठन, विधिक आपातकालीन सहायता, कैडेट प्रशिक्षण शिविर और पूछताछ के लिए एसएसडी केंद्रीय कमान से संपर्क करें।",
+    "Citizen & Cadet Support": "नागरिक एवं कैडेट सहायता",
+    "Contact Desk": "संपर्क कक्ष",
+    "Central Administrative Secretariat": "केंद्रीय प्रशासकीय सचिवालय",
+    "Serving the Ambedkarite social equality movement with unwavering discipline and commitment since 1927.": "१९२७ से अटूट अनुशासन और समर्पण के साथ आंबेडकरवादी सामाजिक समानता आंदोलन की सेवा में समर्पित।",
+    "Central Command & Deekshabhoomi Desk": "केंद्रीय कमान एवं दीक्षाभूमि डेस्क",
+    "National Command Helpline": "राष्ट्रीय कमान हेल्पलाइन",
+    "Official Communications": "आधिकारिक संचार",
+    "Office Visiting Hours": "कार्यालयीन भेंट का समय",
+    "Send an Official Communication": "आधिकारिक संदेश भेजें",
+    "Submit your message to the Central Command or concerned State Chapter.": "केंद्रीय कमान या संबंधित राज्य इकाई को अपना संदेश प्रेषित करें।",
+    "Your Full Name": "आपका पूरा नाम",
+    "Your Email": "आपका ईमेल",
+    "Send Message": "संदेश भेजें",
+    "Return to Portal": "पोर्टल पर वापस जाएं",
+    "Public Credential Verification": "सार्वजनिक साख सत्यापन",
+    "Verify Sainik Credentials & Official Ranks": "सैनिक साख एवं आधिकारिक रैंक सत्यापित करें",
+    "Central Command Verification Desk": "केंद्रीय कमान सत्यापन डेस्क",
+    "Samata Sainik Dal (SSD) | Official National Portal | Founded by Dr. B.R. Ambedkar (1927)": "समता सैनिक दल (SSD) | आधिकारिक राष्ट्रीय पोर्टल | डॉ. बी. आर. आंबेडकर द्वारा स्थापित (१९२७)",
+    "Skip to main content": "मुख्य सामग्री पर जाएं",
+    "English": "English",
+    "हिन्दी (Hindi)": "हिन्दी (Hindi)",
+    "मराठी (Marathi)": "मराठी (Marathi)",
+    "Dr. Siddharth M. Meshram": "डॉ. सिद्धार्थ एम. मेश्राम",
+    "Eminent Constitutional scholar and veteran Ambedkarite leader with 40+ years in social transformation; overseeing national policy and the Centenary 2027 vision.": "प्रख्यात संवैधानिक विद्वान और वरिष्ठ आंबेडकरवादी नेता, जिन्होंने सामाजिक परिवर्तन में ४०+ वर्ष समर्पित किए; राष्ट्रीय नीति और शताब्दी २०२७ विज़न के मार्गदर्शक।",
+    "Ph.D. Constitutional Law | Nagpur HQ": "पीएच.डी. संवैधानिक कानून | नागपुर मुख्यालय",
+    "Commander Ravindra K. Gautam": "कमांडर रवींद्र के. गौतम",
+    "Former NCC Gold Medalist and grassroots organizer; coordinates operations across 28 State Chapters and directs the national cadet syllabus.": "पूर्व एनसीसी स्वर्ण पदक विजेता और जमीनी स्तर के संगठक; २८ राज्य शाखाओं के कार्यों का समन्वय और राष्ट्रीय कैडेट पाठ्यक्रम के निदेशक।",
+    "M.A. Pol. Science | New Delhi Central Office": "एम.ए. राजनीति विज्ञान | नई दिल्ली केंद्रीय कार्यालय",
+    "Brigadier (Retd.) Ashok S. Thorat": "ब्रिगेडियर (से.नि.) अशोक एस. थोरात",
+    "Distinguished veteran officer commanding military drill formations, ceremonial march pasts, and cadet discipline standards nationwide.": "प्रतिष्ठित सेवानिवृत्त सैन्य अधिकारी, जो सैन्य ड्रिल फॉर्मेशन, औपचारिक संचलन (मार्च पास्ट) और देशभर में कैडेट अनुशासन मानकों का नेतृत्व करते हैं।",
+    "Retd. Brigadier, Indian Army | Pune HQ": "सेवानिवृत्त ब्रिगेडियर, भारतीय सेना | पुणे मुख्यालय",
+    "Adv. Savitri B. Gaikwad": "अधिवक्ता सावित्री बी. गायकवाड़",
+    "Pioneering social worker and activist championing grassroots women empowerment, self-defense workshops, and constitutional awareness.": "अग्रणी सामाजिक कार्यकर्ता, जो जमीनी स्तर पर महिला सशक्तिकरण, आत्मरक्षा कार्यशालाओं और संवैधानिक जागरूकता का नेतृत्व करती हैं।",
+    "Advocate, High Court | Mumbai": "अधिवक्ता, उच्च न्यायालय | मुंबई",
+    "Senior Advocate Mahendra P. Tayade": "वरिष्ठ अधिवक्ता महेंद्र पी. तायड़े",
+    "Senior constitutional jurist leading SSD's pro-bono network of 850+ advocates defending civil rights and SC/ST protection cases across India.": "वरिष्ठ संवैधानिक न्यायविद, जो भारत भर में नागरिक अधिकारों और एससी/एसटी संरक्षण मामलों की रक्षा करने वाले ८५०+ अधिवक्ताओं के नि:शुल्क नेटवर्क का नेतृत्व करते हैं।",
+    "Senior Advocate, Supreme Court of India": "वरिष्ठ अधिवक्ता, भारत का सर्वोच्च न्यायालय",
+    "CA Rahul V. Wankhede": "सीए राहुल वी. वानखेड़े",
+    "Fellow Chartered Accountant overseeing financial integrity, audited public disclosures, and 80G tax exemption compliances for the Centenary Fund.": "चार्टर्ड अकाउंटेंट (FCA), जो शताब्दी कोष के वित्तीय अखंडता, अंकेक्षित सार्वजनिक प्रकटीकरण और 80G आयकर छूट अनुपालन की निगरानी करते हैं।",
+    "FCA, Chartered Accountant | Nagpur": "एफसीए, चार्टर्ड अकाउंटेंट | नागपुर",
+    "Prof. Yashwantrao More": "प्रो. यशवंतराव मोरे",
+    "Senior Ambedkarite Historian & Author": "वरिष्ठ आंबेडकरवादी इतिहासकार एवं लेखक",
+    "Adv. Rekha Gaikwad": "अधिवक्ता रेखा गायकवाड़",
+    "Human Rights Defender & Scholar": "मानवाधिकार रक्षक एवं अध्येता",
+    "Commander Suresh Jadhav": "कमांडर सुरेश जाधव",
+    "Veteran 1956 Deekshabhoomi Parade Organizer": "१९५६ ऐतिहासिक दीक्षाभूमि परेड के वरिष्ठ संगठक",
+    "Click Profile to Open Portfolio": "प्रोफ़ाइल देखने के लिए क्लिक करें",
+    "Open Portfolio": "पोर्टफोलियो देखें",
+    "Active National Missions": "सक्रिय राष्ट्रीय मिशन",
+    "Ongoing Campaigns & Centenary Drives": "चल रहे अभियान एवं शताब्दी अभियान",
+    "Grassroots initiatives mobilizing thousands of cadets, legal advocates, and community volunteers across 28 states of India.": "भारत के २८ राज्यों में हजारों कैडेटों, वकीलों और स्वयंसेवकों को लामबंद करने वाली जमीनी पहल।",
+    "Centenary Drive": "शताब्दी अभियान",
+    "SSD Centenary 1927–2027 Mission (शताब्दी महोत्सव)": "एसएसडी शताब्दी १९२७–२०२७ मिशन (शताब्दी महोत्सव)",
+    "Nationwide 100-Year commemorative march pasts, building 1,000 Ambedkar Study Libraries, and establishing the Centenary National Memorial at Mahad & Nagpur.": "देशव्यापी १०० वर्षीय स्मारक संचलन, १,००० आंबेडकर अध्ययन पुस्तकालयों का निर्माण, और महाड व नागपुर में शताब्दी राष्ट्रीय स्मारक की स्थापना।",
+    "Legal & Rights": "विधिक एवं अधिकार",
+    "National Constitutional Literacy & Preamble Yatra": "राष्ट्रीय संवैधानिक साक्षरता एवं उद्देशिका यात्रा",
+    "Distributing pocket Constitutions in rural villages, mass Preamble recitation camps, and training grassroots advocates to resist caste atrocities legally.": "ग्रामीण क्षेत्रों में पॉकेट संविधान वितरण, सामूहिक उद्देशिका वाचन शिविर, और जातिगत अत्याचारों का कानूनी मुकाबला करने के लिए जमीनी कार्यकर्ताओं का प्रशिक्षण।",
+    "Women Wing": "महिला विंग",
+    "Mahila Self-Defense & Savitribai Phule Academy": "महिला आत्मरक्षा एवं सावित्रीबाई फुले अकादमी",
+    "Physical stick drill, martial self-defense training, anti-harassment rapid action units, and educational scholarships for Bahujan female students.": "शारीरिक लाठी ड्रिल, मार्शल आत्मरक्षा प्रशिक्षण, उत्पीड़न-रोधी त्वरित कार्रवाई दल, और बहुजन छात्राओं के लिए शैक्षिक छात्रवृत्तियां।",
+    "Community Sewa": "सामुदायिक सेवा",
+    "Samata 24/7 Voluntary Blood Donor & Disaster Force": "समता २४/७ स्वैच्छिक रक्तदाता एवं आपदा राहत दल",
+    "Nationwide emergency voluntary blood donor registry, flood rescue battalions, free medical diagnosis, and community health camps in underprivileged bastis.": "देशव्यापी आपातकालीन स्वैच्छिक रक्तदाता रजिस्ट्री, बाढ़ बचाव दल, नि:शुल्क चिकित्सा निदान, और वंचित बस्तियों में स्वास्थ्य शिविर।",
+    "Operational Divisions": "परिचालन प्रभाग (विंग्स)",
+    "Departments & Specialized Wings of SSD": "समता सैनिक दल के विभाग एवं विशेष विंग्स",
+    "Structured like a disciplined non-violent defense force to educate, agitate, and organize at grassroots, state, and national levels.": "तळागाळात, राज्य आणि राष्ट्रीय स्तरावर 'शिका, संघटित व्हा आणि संघर्ष करा' या तत्त्वावर आधारलेली एक अनुशासित अहिंसक संरक्षण सेना।",
+    "Central Cadet Corps": "केंद्रीय कैडेट कॉर्प्स",
+    "Rigorous physical drill, parade ranks, uniform code of conduct, flag ceremonies, and non-violent social defense training.": "कठोर शारीरिक ड्रिल, परेड रैंक, वर्दी आचार संहिता, ध्वज वंदन समारोह और अहिंसक सामाजिक सुरक्षा प्रशिक्षण।",
+    "Explore Cadet Wing →": "कैडेट विंग देखें →",
+    "Explore Cadet Wing &rarr;": "कैडेट विंग देखें →",
+    "Mahila Samata Sainik Dal": "महिला समता सैनिक दल",
+    "Frontline women defense wing focusing on leadership academy, anti-atrocity legal assistance, self-reliance, and education.": "अग्रिम पंक्ति की महिला सुरक्षा विंग जो नेतृत्व अकादमी, अत्याचार-विरोधी कानूनी सहायता, आत्मनिर्भरता और शिक्षा पर केंद्रित है।",
+    "Explore Mahila Dal →": "महिला दल देखें →",
+    "Explore Mahila Dal &rarr;": "महिला दल देखें →",
+    "Legal & Constitutional Cell": "विधिक एवं संवैधानिक प्रकोष्ठ",
+    "Nationwide advocate network offering pro-bono legal defense, constitutional literacy camps, and emergency legal hotlines.": "देशव्यापी अधिवक्ताओं का नेटवर्क जो नि:शुल्क कानूनी रक्षा, संवैधानिक साक्षरता शिविर और आपातकालीन कानूनी हेल्पलाइन प्रदान करता है।",
+    "Explore Legal Cell →": "विधिक प्रकोष्ठ देखें →",
+    "Explore Legal Cell &rarr;": "विधिक प्रकोष्ठ देखें →",
+    "Youth & Student Front": "युवा एवं छात्र मोर्चा",
+    "Dr. Ambedkar study circles, civil services & competitive exam mentorship, digital skills, and annual youth leadership summits.": "डॉ. आंबेडकर अध्ययन मंडल, सिविल सेवा एवं प्रतियोगी परीक्षा मार्गदर्शन, डिजिटल कौशल और वार्षिक युवा नेतृत्व शिखर सम्मेलन।",
+    "Explore Youth Front →": "युवा मोर्चा देखें →",
+    "Explore Youth Front &rarr;": "युवा मोर्चा देखें →",
+    "Community Sewa & Relief": "सामुदायिक सेवा एवं राहत",
+    "Voluntary blood donor registry, emergency disaster rescue task force, free health diagnostic camps, and community libraries.": "स्वैच्छिक रक्तदाता रजिस्ट्री, आपातकालीन आपदा बचाव कार्यबल, नि:शुल्क स्वास्थ्य निदान शिविर और सामुदायिक पुस्तकालय।",
+    "Explore Relief Task Force →": "राहत कार्यबल देखें →",
+    "Explore Relief Task Force &rarr;": "राहत कार्यबल देखें →",
+    "Online Sainik Enlistment": "ऑनलाइन सैनिक भर्ती",
+    "Step forward to serve equality and democracy. Enlist online in any of our 5 specialized operational divisions.": "समानता और लोकतंत्र की सेवा के लिए आगे आएं। हमारे ५ विशेष परिचालन प्रभागों में से किसी में भी ऑनलाइन भर्ती हों।",
+    "Full Enlistment Portal →": "संपूर्ण भर्ती पोर्टल →",
+    "Full Enlistment Portal &rarr;": "संपूर्ण भर्ती पोर्टल →",
+    "Direct Enlistment": "प्रत्यक्ष सैनिक भर्ती",
+    "Join Samata Sainik Dal — Take the Solemn Pledge": "समता सैनिक दल में शामिल हों — निष्ठा की प्रतिज्ञा लें",
+    "Answer the historic call of Bodhisattva Babasaheb Dr. B.R. Ambedkar. Become a disciplined volunteer for equality, human dignity, and constitutional morality.": "बोधिसत्व बाबासाहेब डॉ. बी. आर. आंबेडकर के ऐतिहासिक आह्वान का उत्तर दें। समानता, मानवीय गरिमा और संवैधानिक नैतिकता के अनुशासित स्वयंसेवक बनें।",
+    "4-Step Official Enlistment Process": "४-चरणीय आधिकारिक भर्ती प्रक्रिया",
+    "Official Cadre Induction": "आधिकारिक कैडर दीक्षा",
+    "Select Your Operational Wing": "अपने कार्य प्रभाग का चयन करें",
+    "Choose from Cadet Corps (Drill & Discipline), Mahila Dal (Women's Leadership), Legal Cell (Advocacy), Youth Front, or Sewa Relief.": "कैडेट कॉर्प्स (ड्रिल और अनुशासन), महिला दल (महिला नेतृत्व), लीगल सेल (विधिक रक्षा), यूथ फ्रंट, या सेवा रिलीफ में से चुनें।",
+    "Submit District & Contact Details": "जिला एवं संपर्क विवरण दर्ज करें",
+    "Provide your local address to be connected directly with your District Commander and local State Chapter.": "अपने जिला कमांडर और स्थानीय राज्य शाखा से सीधे जुड़ने के लिए अपना स्थानीय पता प्रदान करें।",
+    "Take the Solemn Volunteer Pledge": "निष्ठावान स्वयंसेवक की शपथ लें",
+    "Commit to the principles of self-respect, moral character, non-violence, and total dedication to liberty, equality, and fraternity.": "स्वाभिमान, नैतिक चरित्र, अहिंसा और स्वतंत्रता, समानता व बंधुता के प्रति पूर्ण समर्पण के सिद्धांतों का संकल्प लें।",
+    "Receive SSD Digital ID & Unit Assignment": "एसएसडी डिजिटल आईडी एवं यूनिट असाइनमेंट प्राप्त करें",
+    "Central Command verifies your application, registers you in the national roll, and invites you to the next drill camp.": "केंद्रीय कमान आपके आवेदन का सत्यापन करती है, राष्ट्रीय रजिस्टर में दर्ज करती है, और आपको अगले ड्रिल कैंप में आमंत्रित करती है।",
+    "Open Full Online Enlistment Portal →": "संपूर्ण ऑनलाइन भर्ती पोर्टल खोलें →",
+    "Open Full Online Enlistment Portal &rarr;": "संपूर्ण ऑनलाइन भर्ती पोर्टल खोलें →",
+    "Track Application Status": "आवेदन की स्थिति जांचें",
+    "Visual History & March Past Archives": "दृश्य इतिहास एवं संचलन (मार्च पास्ट) संग्रह",
+    "Photo Gallery & Field Action Archives": "फोटो गैलरी एवं मैदानी कार्य संग्रह",
+    "Moments of discipline, historic struggles, Deekshabhoomi parades, and grassroots community defense.": "अनुशासन, ऐतिहासिक संघर्ष, दीक्षाभूमि परेड और जमीनी स्तर पर सामाजिक सुरक्षा के ऐतिहासिक क्षण।",
+    "All Photos": "सभी छायाचित्र",
+    "Cadet Drills & Parades": "कैडेट ड्रिल एवं परेड",
+    "Mahila Samata Dal": "महिला समता दल",
+    "Historical Memorials": "ऐतिहासिक स्मारक",
+    "Cadet Drills": "कैडेट ड्रिल",
+    "SSD Uniform Cadet Corps Ceremonial March Past - Deekshabhoomi Nagpur": "एसएसडी वर्दीधारी कैडेट कॉर्प्स औपचारिक संचलन (मार्च पास्ट) - दीक्षाभूमि नागपुर",
+    "Mahila Samata Sainik Dal Volunteers at National Equality Rally": "राष्ट्रीय समता रैली में महिला समता सैनिक दल की स्वयंसेविकाएं",
+    "Constitution": "संविधान",
+    "Constitution Day Mass Preamble Reading Assembly": "संविधान दिवस पर सामूहिक उद्देशिका वाचन सभा",
+    "Youth Front": "युवा मोर्चा",
+    "Youth Cadet Physical Training & Non-Violent Defense Drill": "युवा कैडेट शारीरिक प्रशिक्षण एवं अहिंसक सुरक्षा ड्रिल",
+    "View Complete High-Resolution Photo Archives →": "संपूर्ण उच्च-रिज़ॉल्यूशन फोटो संग्रह देखें →",
+    "View Complete High-Resolution Photo Archives &rarr;": "संपूर्ण उच्च-रिज़ॉल्यूशन फोटो संग्रह देखें →",
+    "Transparent Community Support": "पारदर्शी जनसहयोग",
+    "Support the Movement — Fuel the Fight for Equality": "आंदोलन को समर्थन दें — समानता की लड़ाई को सशक्त बनाएं",
+    "Samata Sainik Dal is self-funded by conscious citizens. Every rupee directly strengthens grassroots cadet training, pro-bono legal defense, and disaster relief.": "समता सैनिक दल जागरूक नागरिकों द्वारा स्वयं वित्तपोषित है। आपका प्रत्येक रुपया सीधे कैडेट प्रशिक्षण, नि:शुल्क विधिक रक्षा और आपदा राहत को मजबूत करता है।",
+    "Choose Your Contribution": "अपना सहयोग चुनें",
+    "One-Time Contribution": "एकमुश्त सहयोग",
+    "Monthly Supporter": "मासिक समर्थक",
+    "Select Contribution Amount": "सहयोग राशि चुनें",
+    "Enter custom amount": "अन्य राशि दर्ज करें",
+    "Direct Allocation Cause": "सहयोग का उद्देश्य",
+    "Bal Sainik Uniforms & Drill Equipment": "बाल सैनिक वर्दी एवं ड्रिल उपकरण",
+    "Constitutional Literacy & Preamble Booklets": "संवैधानिक साक्षरता एवं उद्देशिका पुस्तिकाएं",
+    "Pro-Bono Legal Defense Fund (SC/ST Cases)": "नि:शुल्क विधिक रक्षा कोष (एससी/एसटी मामले)",
+    "Disaster Rescue & 24/7 Blood Task Force": "आपदा बचाव एवं २४/७ रक्त कार्यबल",
+    "SSD Centenary 2027 Trust & Library Corpus": "एसएसडी शताब्दी २०२७ ट्रस्ट एवं पुस्तकालय कोष",
+    "General Organizational Fund": "सामान्य संगठनात्मक कोष",
+    "Direct Impact:": "प्रत्यक्ष प्रभाव:",
+    "Prints and distributes 50 pocket Constitutions and Preamble learning cards in rural school clusters.": "ग्रामीण स्कूलों में ५० पॉकेट संविधान और उद्देशिका कार्ड मुद्रित और वितरित करता है।",
+    "Proceed to Contribute Online →": "ऑनलाइन सहयोग के लिए आगे बढ़ें →",
+    "Proceed to Contribute Online &rarr;": "ऑनलाइन सहयोग के लिए आगे बढ़ें →",
+    "The Foundational Command of Dr. B.R. Ambedkar": "डॉ. बी. आर. आंबेडकर का बुनियादी आदेश",
+    "\"My soldiers of equality! You must maintain strict discipline and self-respect. A volunteer of Samata Sainik Dal must be ready to sacrifice personal comfort for the collective dignity, equality, and rights of the oppressed. Let your conduct be an embodiment of character and non-violent courage.\"": "\"समानता के मेरे सैनिकों! तुम्हें कठोर अनुशासन और स्वाभिमान बनाए रखना चाहिए। समता सैनिक दल के एक स्वयंसेवक को शोषितों की सामूहिक गरिमा, समानता और अधिकारों के लिए व्यक्तिगत सुख का त्याग करने को तत्पर रहना चाहिए। तुम्हारा आचरण चरित्र और अहिंसक साहस का प्रतीक होना चाहिए।\"",
+    "— Dr. Bhimrao Ramji Ambedkar, Founder, Samata Sainik Dal (24 September 1927)": "— डॉ. भीमराव रामजी आंबेडकर, संस्थापक, समता सैनिक दल (२४ सितंबर १९२७)",
+    "Read Complete History & Centenary Roadmap (1927–2027)": "संपूर्ण इतिहास एवं शताब्दी रोडमैप (१९२७–२०२७) पढ़ें",
+    "SSD Bulletins & Gazette": "एसएसडी बुलेटिन एवं गॅझेट",
+    "Latest Central Command Dispatches & Events": "नवीनतम केंद्रीय कमान समाचार एवं कार्यक्रम",
+    "Real-time announcements, drill camp schedules, and national conclaves synchronized live with our central database.": "हमारे केंद्रीय डेटाबेस से सीधे समन्वयित वास्तविक समय की घोषणाएं, ड्रिल शिविर और राष्ट्रीय सम्मेलन।",
+    "Official Dispatches": "आधिकारिक समाचार",
+    "View All Dispatches →": "सभी समाचार देखें →",
+    "View All Dispatches &rarr;": "सभी समाचार देखें →",
+    "Upcoming Events": "आगामी कार्यक्रम",
+    "Full Calendar →": "संपूर्ण कैलेंडर देखें →",
+    "Full Calendar &rarr;": "संपूर्ण कैलेंडर देखें →",
+    "Fetching latest SSD dispatches from Firebase...": "फायरबेस से नवीनतम एसएसडी समाचार प्राप्त किए जा रहे हैं...",
+    "Fetching upcoming events from Firebase...": "फायरबेस से आगामी कार्यक्रमों का विवरण प्राप्त किया जा रहा है...",
+    "Complete Contribution": "सहयोग पूरा करें",
+    "Contribution Amount (₹) *": "सहयोग राशि (₹) *",
+    "Earmarked Purpose *": "निर्दिष्ट उद्देश्य *",
+    "Donor Full Name *": "सहयोगकर्ता का पूरा नाम *",
+    "Email ID *": "ईमेल आईडी *",
+    "Mobile No *": "मोबाइल नंबर *",
+    "PAN Card Number (for 80G Tax Exemption Receipt)": "पैन कार्ड नंबर (80G आयकर छूट रसीद के लिए)",
+    "Payment Method": "भुगतान विधि",
+    "UPI / QR": "यूपीआई / क्यूआर",
+    "Net Banking / NEFT": "नेट बैंकिंग / एनईएफटी",
+    "Card": "डेबिट / क्रेडिट कार्ड",
+    "Proceed to Secure Pay (Razorpay / UPI / Cards)": "सुरक्षित भुगतान के लिए आगे बढ़ें (Razorpay / UPI / Cards)",
+    "Initializing Razorpay Gateway...": "रेज़रपे गेटवे शुरू हो रहा है...",
+    "256-Bit Encrypted Secure Checkout via Razorpay (UPI, Google Pay, Cards, NetBanking)": "रेज़रपे के माध्यम से २५६-बिट एन्क्रिप्टेड सुरक्षित भुगतान (UPI, Google Pay, Cards, NetBanking)",
+    "Official Contribution Receipt": "आधिकारिक सहयोग रसीद",
+    "80G Tax Exempt": "80G कर छूट",
+    "Receipt No:": "रसीद संख्या:",
+    "Payment ID (Razorpay):": "भुगतान आईडी (Razorpay):",
+    "Date & Time:": "दिनांक व समय:",
+    "Payment Status:": "भुगतान स्थिति:",
+    "SUCCESS / CAPTURED": "सफल / प्राप्त (SUCCESS)",
+    "Donor Name:": "सहयोगकर्ता का नाम:",
+    "PAN Number:": "पैन नंबर:",
+    "Cause Allocated:": "आवंटित उद्देश्य:",
+    "Amount Contributed:": "सहयोग राशि:",
+    "This is a computer-generated digital receipt under 80G provisions and does not require a physical signature.": "यह 80G प्रावधानों के तहत कंप्यूटर जनित डिजिटल रसीद है और इसमें भौतिक हस्ताक्षर की आवश्यकता नहीं है।",
+    "Jai Bhim! Thank you for strengthening the movement for social equality.": "जय भीम! सामाजिक समानता के आंदोलन को सशक्त बनाने के लिए आपका हार्दिक धन्यवाद।",
+    "SSD Central Gazette Dispatch": "समता सैनिक दल केंद्रीय गॅझेट बुलेटिन",
+    "Date": "दिनांक",
+    "Category": "श्रेणी",
+    "Print Receipt": "रसीद प्रिंट करें",
+    "Close": "बंद करें",
+    "Close Dossier": "डॉसियर बंद करें",
+    "Contact Secretariat": "सचिवालय से संपर्क करें",
+    "Download Dossier PDF": "डॉसियर पीडीएफ डाउनलोड करें",
+    "Verified SSD": "सत्यापित एसएसडी",
+    "Credentials & Background": "योग्यता एवं पृष्ठभूमि",
+    "Key Focus & Movement Portfolios": "प्रमुख कार्यक्षेत्र एवं आंदोलन पोर्टफोलियो",
+    "Movement Service Record & Biographical Dossier": "आंदोलन सेवा अभिलेख एवं जीवनी डॉसियर",
+    "Samata Sainik Dal • Leadership Dossier": "समता सैनिक दल • नेतृत्व डॉसियर",
+    "Samata Sainik Dal &bull; Leadership Dossier": "समता सैनिक दल • नेतृत्व डॉसियर",
+    "\"Samata Sainik Dal was established on 24 September 1927 by Bodhisattva Dr. B.R. Ambedkar to organize a disciplined, self-respecting non-violent vanguard for the defense of constitutional morality and social democracy.\"": "\"समता सैनिक दल की स्थापना २४ सितंबर १९२७ को बोधिसत्व डॉ. बी. आर. आंबेडकर द्वारा संवैधानिक नैतिकता और सामाजिक लोकतंत्र की रक्षा के लिए एक अनुशासित, आत्मसम्मानित और अहिंसक सेना के रूप में की गई थी।\"",
+    "SSD Departments": "एसएसडी विभाग (प्रभाग)",
+    "Quick Portals": "त्वरित पोर्टल",
+    "Subscribe to receive official circulars, drill schedules, and centenary announcements.": "अधिकृत परिपत्र, ड्रिल अनुसूची और शताब्दी घोषणाएं प्राप्त करने के लिए सदस्यता लें।",
+    "Enter your email ID": "अपना ईमेल आईडी दर्ज करें",
+    "Liberty, Equality, Fraternity. No spam.": "स्वतंत्रता, समानता, बंधुता। कोई स्पैम नहीं।",
+    "Constitution of SSD": "एसएसडी का संविधान",
+    "State Directory": "राज्य निर्देशिका",
+    "Grievance Desk": "शिकायत निवारण डेस्क",
+    "Helpline": "हेल्पलाइन",
+    "Enlist": "सैनिक भर्ती",
+    "Top": "शीर्ष (Top)"
+  },
+  mr: {
+    // Top Bar & Accessibility
+    "Central Command Helpline: 1800-24-1927": "केंद्रीय कमान हेल्पलाईन: १८००-२४-१९२७",
+    "centralcommand@samatasainikdal.org": "centralcommand@samatasainikdal.org",
+    "Founded: 24 Sept 1927 | Babasaheb Dr. B.R. Ambedkar": "स्थापना: २४ सप्टेंबर १९२७ | डॉ. बाबासाहेब आंबेडकर",
+    "Accessibility Tools": "सुलभता साधने (Accessibility)",
+    "Decrease Font Size": "फॉन्ट लहान करा",
+    "Normal Font Size": "सामान्य फॉन्ट आकार",
+    "Increase Font Size": "फॉन्ट मोठा करा",
+    "High Contrast Mode": "उच्च कॉन्ट्रास्ट मोड",
+    "Language Selector": "भाषा निवडा",
+
+    // Brand Block
+    "SAMATA SAINIK DAL (SSD)": "समता सैनिक दल (SSD)",
+    "SAMATA SAINIK DAL": "समता सैनिक दल",
+    "समता सैनिक दल (स्थापना: १९२७) | Founded by Dr. B.R. Ambedkar": "समता, स्वातंत्र्य आणि बंधुतेचे रक्षक | डॉ. बाबासाहेब आंबेडकर यांनी स्थापन केलेले (१९२७)",
+    "Est. 1927 | Central Command": "स्थापना १९२७ | केंद्रीय कमान",
+    "Open Navigation Menu": "मेनू उघडा",
+    "Close Navigation Menu": "मेनू बंद करा",
+
+    // Navigation Links & Dropdowns
+    "Home": "मुख्य पृष्ठ",
+    "About": "परिचय",
+    "Genesis by Dr. B.R. Ambedkar": "डॉ. बाबासाहेब आंबेडकर यांच्याद्वारे स्थापना",
+    "Mahad Satyagraha (1927)": "महाड सत्याग्रह (१९२७)",
+    "Governing Body & Leadership": "कार्यकारिणी व नेतृत्व",
+    "Centenary Roadmap (1927–2027)": "शताब्दी रोडमॅप (१९२७–२०२७)",
+    "Centenary Roadmap (1927-2027)": "शताब्दी रोडमॅप (१९२७–२०२७)",
+    "Wings": "विभाग व विंग्स",
+    "Central Cadet Corps (Sainik Wing)": "केंद्रीय कॅडेट कॉर्प्स (सैनिक विंग)",
+    "Mahila Samata Sainik Dal": "महिला समता सैनिक दल",
+    "Constitutional & Legal Cell": "संवैधानिक व विधी प्रकोष्ठ",
+    "Youth & Student Front": "युवा व विद्यार्थी आघाडी",
+    "Community Sewa & Relief Force": "सामाजिक सेवा व मदत दल",
+    "Membership": "सदस्यता",
+    "Sainik Member Portal & ID Card": "सैनिक सदस्य पोर्टल व ओळखपत्र",
+    "Join Dal / New Enlistment": "दलात सामील व्हा / नवीन नोंदणी",
+    "Public QR Credential Verification": "सार्वजनिक क्यूआर पडताळणी",
+    "Officer / Command Login": "अधिकारी / कमान लॉगिन",
+    "Gazette & Media": "गॅझेट व माध्यम",
+    "Official Gazette & Circulars": "अधिकृत गॅझेट व परिपत्रके",
+    "Photo & Video Archives": "छायाचित्र व व्हिडिओ संग्रह",
+    "Campaigns & Memorials": "अभियान व स्मारके",
+    "Contact": "संपर्क",
+    "Donate": "देणगी द्या",
+    "Member Portal": "सदस्य पोर्टल",
+
+    // Notice Ticker
+    "SSD Official Gazette": "समता सैनिक दल अधिकृत गॅझेट",
+    "SSD Centenary Preparations (1927–2027) National Executive Meeting scheduled at Nagpur Headquarters.": "एसएसडी शताब्दी पूर्वतयारी (१९२७–२०२७) राष्ट्रीय कार्यकारिणीची बैठक नागपूर मुख्यालयात आयोजित.",
+    "National Sainik Cadet Enrollment Q3 2026 is now underway across all State & District units.": "राष्ट्रीय सैनिक कॅडेट नोंदणी २०२६ सर्व राज्य व जिल्हा युनिट्समध्ये सुरू आहे.",
+    "Annual Mahad Satyagraha & Water Rights Memorial March preparations launched.": "वार्षिक महाड सत्याग्रह व जलहक्क स्मृति मार्च पूर्वतयारी सुरू.",
+    "Constitution Day (26 Nov) Mass Preamble Reading Campaign activated across 500+ districts.": "संविधान दिन (२६ नोव्हेंबर) सामूहिक उद्देशिका वाचन अभियान ५००+ जिल्ह्यांमध्ये सक्रिय.",
+    "View Gazette": "गॅझेट पहा",
+    "View Gazette →": "गॅझेट पहा →",
+    "View Gazette &rarr;": "गॅझेट पहा →",
+    "View All Gazette Circulars": "सर्व गॅझेट परिपत्रके पहा",
+
+    // Hero Section: Governing Body
+    "Supreme Command & National Executive Council": "सर्वोच्च कमान व राष्ट्रीय कार्यकारिणी परिषद",
+    "Governing Body of Samata Sainik Dal": "समता सैनिक दल नियामक मंडळ व राष्ट्रीय नेतृत्व",
+    "Founded by Bodhisattva Dr. B.R. Ambedkar on 24 September 1927. Steered by seasoned Ambedkarite scholars, retired military officers, legal luminaries, and dedicated grassroots commanders across India.": "बोधिसत्व डॉ. बाबासाहेब आंबेडकर यांनी २४ सप्टेंबर १९२७ रोजी स्थापन केलेले. देशभरातील ज्येष्ठ आंबेडकरवादी विचारवंत, सेवानिवृत्त लष्करी अधिकारी, विधिज्ञ आणि समर्पित कार्यकर्त्यांद्वारे संचलित.",
+    "Enlist Under Central Command": "केंद्रीय कमान अंतर्गत नावनोंदणी करा",
+    "Support Movement & Centenary Fund": "चळवळ व शताब्दी निधीला सहकार्य करा",
+    "SSD Constitution & 1927 History": "एसएसडी संविधान व १९२७ इतिहास",
+
+    // Leadership Tier Navigation
+    "All Leadership": "सर्व नेतृत्व",
+    "National Supreme Command": "राष्ट्रीय सर्वोच्च कमान",
+    "IT & Digital Media Cell": "आयटी व डिजिटल मीडिया सेल",
+    "State Governing Bodies (प्रदेश कार्यकारिणी)": "राज्य कार्यकारिणी (प्रदेश)",
+    "District Governing Bodies (जिल्हा कार्यकारिणी)": "जिल्हा कार्यकारिणी",
+    "Search governing officer by name, state, district, designation...": "नाव, राज्य, जिल्हा, पद यानुसार अधिकारी शोधा...",
+    "All States": "सर्व राज्ये",
+    "Maharashtra (महाराष्ट्र)": "महाराष्ट्र (Maharashtra)",
+
+    // Ranks, Badges, Portfolios
+    "National Command": "राष्ट्रीय कमान",
+    "Executive Council": "कार्यकारिणी परिषद",
+    "Cadet Directorate": "कॅडेट संचालनालय",
+    "Mahila Dal": "महिला दल",
+    "Legal Cell": "विधी प्रकोष्ठ",
+    "Finance & Audit": "वित्त व लेखापरीक्षण",
+    "IT & Cyber Directorate": "आयटी व सायबर संचालनालय",
+    "Central HQ": "केंद्रीय मुख्यालय",
+    "Official Dossier": "अधिकृत दस्ताऐवज / डॉसियर",
+    "View Full Portfolio →": "संपूर्ण प्रोफाइल पहा →",
+    "View Full Portfolio &rarr;": "संपूर्ण प्रोफाइल पहा →",
+    "View Full Portfolio": "संपूर्ण प्रोफाइल पहा",
+    "Senior Advisory & Elders Council (मार्गदर्शक मंडल)": "वरिष्ठ सल्लागार व मार्गदर्शक मंडळ",
+    "Distinguished Ambedkarite thinkers, veteran freedom fighters, and movement elders guiding policy. Click any portfolio to view full dossier.": "धोरण मार्गदर्शन करणारे ज्येष्ठ आंबेडकरवादी विचारवंत, स्वातंत्र्यसैनिक व चळवळीचे मार्गदर्शक. संपूर्ण डॉसियर पाहण्यासाठी क्लिक करा.",
+    "Click Profile to Open Portfolio": "प्रोफाइल पाहण्यासाठी क्लिक करा",
+    "Open Portfolio": "प्रोफाइल उघडा",
+
+    // Council Designations
+    "National President (राष्ट्रीय अध्यक्ष)": "राष्ट्रीय अध्यक्ष",
+    "National General Secretary (राष्ट्रीय महासचिव)": "राष्ट्रीय महासचिव",
+    "Chief Cadet Dalpati (प्रधान दलपति)": "प्रधान दलपती (Chief Cadet Dalpati)",
+    "National Mahila Dal Convener (महिला दल संयोजिका)": "महिला दल संयोजिका",
+    "National Legal Advisory Cell Head (विधिक प्रकोष्ठ प्रमुख)": "विधी प्रकोष्ठ प्रमुख",
+    "National Treasurer & Audit Officer (राष्ट्रीय कोषाध्यक्ष)": "राष्ट्रीय कोषाध्यक्ष",
+    "National IT & Digital Media Head (राष्ट्रीय आयटी प्रमुख)": "राष्ट्रीय आयटी प्रमुख",
+    "National Cyber Operations Lead (राष्ट्रीय सायबर ऑपरेशन्स प्रमुख)": "राष्ट्रीय सायबर ऑपरेशन्स प्रमुख",
+    "Senior Advisory Member": "वरिष्ठ सल्लागार सदस्य",
+    "Council Member": "परिषद सदस्य",
+    "National Central HQ": "राष्ट्रीय मध्यवर्ती मुख्यालय",
+    "Advisory Board": "सल्लागार मंडळ",
+    "Senior Ambedkarite Historian & Author": "वरिष्ठ आंबेडकरवादी इतिहासकार व लेखक",
+    "Human Rights Defender & Scholar": "मानवाधिकार संरक्षक व विचारवंत",
+    "Veteran 1956 Deekshabhoomi Parade Organizer": "१९५६ दीक्षाभूमी संचलन आयोजक",
+    "Nagpur HQ": "नागपूर मुख्यालय",
+    "New Delhi Central Office": "नवी दिल्ली मध्यवर्ती कार्यालय",
+    "Pune HQ": "पुणे मुख्यालय",
+    "Mumbai": "मुंबई",
+
+    // Campaigns Section
+    "Active National Missions": "सक्रिय राष्ट्रीय मोहिमा",
+    "Ongoing Campaigns & Centenary Drives": "सध्याची अभियाने व शताब्दी उपक्रम",
+    "Grassroots initiatives mobilizing thousands of cadets, legal advocates, and community volunteers across 28 states of India.": "भारतातील २८ राज्यांमधील हजारो कॅडेट्स, वकील आणि स्वयंसेवकांना संघटित करणारे उपक्रम.",
+    "Centenary Drive": "शताब्दी मोहीम",
+    "Legal & Rights": "विधी व हक्क",
+    "Women Wing": "महिला विंग",
+    "Community Sewa": "सामाजिक सेवा",
+    "SSD Centenary 1927–2027 Mission (शताब्दी महोत्सव)": "एसएसडी शताब्दी १९२७–२०२७ महोत्सव",
+    "Nationwide 100-Year commemorative march pasts, building 1,000 Ambedkar Study Libraries, and establishing the Centenary National Memorial at Mahad & Nagpur.": "देशव्यापी १०० वर्षे स्मृति संचलन, १००० आंबेडकर अभ्यासिका ग्रंथालये आणि महाड व नागपूर येथे राष्ट्रीय स्मारक निर्मिती.",
+    "National Constitutional Literacy & Preamble Yatra": "राष्ट्रीय संविधान साक्षरता व उद्देशिका यात्रा",
+    "Distributing pocket Constitutions in rural villages, mass Preamble recitation camps, and training grassroots advocates to resist caste atrocities legally.": "गावागावात संविधान पुस्तिका वितरण, उद्देशिका वाचन आणि अत्याचाराविरुद्ध कायदेशीर लढा देण्यासाठी वकिलांचे प्रशिक्षण.",
+    "Mahila Self-Defense & Savitribai Phule Academy": "महिला स्वसंरक्षण व सावित्रीबाई फुले अकादमी",
+    "Physical stick drill, martial self-defense training, anti-harassment rapid action units, and educational scholarships for Bahujan female students.": "लाठीकाठी कसरत, स्वसंरक्षण प्रशिक्षण, महिला सुरक्षा पथक आणि बहुजन विद्यार्थिनींसाठी शिष्यवृत्ती.",
+    "Samata 24/7 Voluntary Blood Donor & Disaster Force": "समता २४/७ रक्तदाता व आपत्ती निवारण दल",
+    "Nationwide emergency voluntary blood donor registry, flood rescue battalions, free medical diagnosis, and community health camps in underprivileged bastis.": "देशव्यापी आपत्कालीन रक्तदाता नोंदणी, पूर बचाव पथक, मोफत आरोग्य तपासणी आणि वस्त्यांमध्ये वैद्यकीय शिबिरे.",
+    "Goal: ₹50.0 Lakh": "लक्ष्य: ₹५०.० लाख",
+    "Goal: ₹25.0 Lakh": "लक्ष्य: ₹२५.० लाख",
+    "Goal: ₹30.0 Lakh": "लक्ष्य: ₹३०.० लाख",
+    "Goal: ₹20.0 Lakh": "लक्ष्य: ₹२०.० लाख",
+    "73% Raised": "७३% संकलित",
+    "68% Raised": "६८% संकलित",
+    "65% Raised": "६५% संकलित",
+    "79% Raised": "७९% संकलित",
+    "15,000+ Volunteers": "१५,०००+ स्वयंसेवक",
+    "8,200+ Volunteers": "८,२००+ स्वयंसेवक",
+    "12,000+ Volunteers": "१२,०००+ स्वयंसेवक",
+    "25,000+ Volunteers": "२५,०००+ स्वयंसेवक",
+    "250+ Districts": "२५०+ जिल्हे",
+    "500+ Districts": "५००+ जिल्हे",
+    "180+ Districts": "१८०+ जिल्हे",
+    "320+ Districts": "३२०+ जिल्हे",
+    "Support": "सहकार्य करा",
+    "Enlist": "सामील व्हा",
+
+    // Specialized Divisions
+    "Operational Divisions": "कार्यकारी विभाग",
+    "Departments & Specialized Wings of SSD": "समता सैनिक दलाचे विभाग व विशेष विंग्स",
+    "Structured like a disciplined non-violent defense force to educate, agitate, and organize at grassroots, state, and national levels.": "शिका, संघर्ष करा आणि संघटित व्हा या तत्त्वावर आधारित शिस्तबद्ध अहिंसक सामाजिक संरक्षण दल.",
+    "Central Cadet Corps": "केंद्रीय कॅडेट कॉर्प्स",
+    "Rigorous physical drill, parade ranks, uniform code of conduct, flag ceremonies, and non-violent social defense training.": "कठोर शारीरिक संचलन, परेड, गणवेश आचारसंहिता, ध्वजवंदन आणि अहिंसक सामाजिक संरक्षण प्रशिक्षण.",
+    "Explore Cadet Wing →": "कॅडेट विंग पहा →",
+    "Explore Cadet Wing &rarr;": "कॅडेट विंग पहा →",
+    "Explore Mahila Dal →": "महिला दल पहा →",
+    "Explore Mahila Dal &rarr;": "महिला दल पहा →",
+    "Legal & Constitutional Cell": "विधी व संवैधानिक प्रकोष्ठ",
+    "Nationwide advocate network offering pro-bono legal defense, constitutional literacy camps, and emergency legal hotlines.": "विनामूल्य कायदेशीर मदत, संविधान साक्षरता शिबिरे आणि आपत्कालीन कायदेशीर मदत देणारे देशव्यापी वकील जाळे.",
+    "Explore Legal Cell →": "विधी प्रकोष्ठ पहा →",
+    "Explore Legal Cell &rarr;": "विधी प्रकोष्ठ पहा →",
+    "Youth & Student Front": "युवा व विद्यार्थी आघाडी",
+    "Dr. Ambedkar study circles, civil services & competitive exam mentorship, digital skills, and annual youth leadership summits.": "डॉ. आंबेडकर अभ्यास मंडळे, स्पर्धा परीक्षा मार्गदर्शन, डिजिटल कौशल्ये आणि वार्षिक युवा नेतृत्व परिषद.",
+    "Explore Youth Front →": "युवा आघाडी पहा →",
+    "Explore Youth Front &rarr;": "युवा आघाडी पहा →",
+    "Community Sewa & Relief": "सामाजिक सेवा व मदत दल",
+    "Voluntary blood donor registry, emergency disaster rescue task force, free health diagnostic camps, and community libraries.": "रक्तदाता नोंदणी, आपत्कालीन बचाव दल, मोफत आरोग्य तपासणी आणि अभ्यासिका ग्रंथालये.",
+    "Explore Relief Task Force →": "मदत कार्य दल पहा →",
+    "Explore Relief Task Force &rarr;": "मदत कार्य दल पहा →",
+    "Online Sainik Enlistment": "ऑनलाइन सैनिक भरती नोंदणी",
+    "Step forward to serve equality and democracy. Enlist online in any of our 5 specialized operational divisions.": "समता आणि लोकशाहीच्या रक्षणासाठी पुढे या. आमच्या ५ विशेष विभागांपैकी कोणत्याही विभागात नोंदणी करा.",
+    "Full Enlistment Portal →": "संपूर्ण नोंदणी पोर्टल →",
+    "Full Enlistment Portal &rarr;": "संपूर्ण नोंदणी पोर्टल →",
+
+    // 4-Step Enlistment Guide
+    "Direct Enlistment": "थेट प्रवेश नोंदणी",
+    "Join Samata Sainik Dal — Take the Solemn Pledge": "समता सैनिक दलात सामील व्हा — प्रतिज्ञा घ्या",
+    "Answer the historic call of Bodhisattva Babasaheb Dr. B.R. Ambedkar. Become a disciplined volunteer for equality, human dignity, and constitutional morality.": "बोधिसत्व बाबासाहेब डॉ. बाबासाहेब आंबेडकरांच्या ऐतिहासिक हाकेला प्रतिसाद द्या. समता, मानवी प्रतिष्ठा आणि संवैधानिक मूल्यांसाठी शिस्तबद्ध स्वयंसेवक व्हा.",
+    "4-Step Official Enlistment Process": "४-टप्प्यांची अधिकृत प्रवेश प्रक्रिया",
+    "Official Cadre Induction": "अधिकृत संवर्ग प्रवेश",
+    "Select Your Operational Wing": "तुमचा कार्य विभाग निवडा",
+    "Choose from Cadet Corps (Drill & Discipline), Mahila Dal (Women's Leadership), Legal Cell (Advocacy), Youth Front, or Sewa Relief.": "कॅडेट कॉर्प्स, महिला दल, विधी प्रकोष्ठ, युवा आघाडी किंवा सेवा मदत दल यापैकी निवडा.",
+    "Submit District & Contact Details": "जिल्हा व संपर्क तपशील सादर करा",
+    "Provide your local address to be connected directly with your District Commander and local State Chapter.": "जिल्हा कमांडर आणि राज्य शाखेशी जोडले जाण्यासाठी आपला पत्ता नोंदवा.",
+    "Take the Solemn Volunteer Pledge": "पवित्र स्वयंसेवक प्रतिज्ञा घ्या",
+    "Commit to the principles of self-respect, moral character, non-violence, and total dedication to liberty, equality, and fraternity.": "स्वाभिमान, चारित्र्य, अहिंसा आणि समता-स्वातंत्र्य-बंधुतेच्या तत्त्वांना समर्पित राहण्याची प्रतिज्ञा.",
+    "Receive SSD Digital ID & Unit Assignment": "एसएसडी डिजिटल ओळखपत्र व युनिट वाटप मिळवा",
+    "Central Command verifies your application, registers you in the national roll, and invites you to the next drill camp.": "केंद्रीय कमान अर्जाची पडताळणी करून राष्ट्रीय नोंदवहीत नोंद करते आणि आगामी शिबिराचे निमंत्रण देते.",
+    "Open Full Online Enlistment Portal →": "संपूर्ण ऑनलाइन नोंदणी पोर्टल उघडा →",
+    "Open Full Online Enlistment Portal &rarr;": "संपूर्ण ऑनलाइन नोंदणी पोर्टल उघडा →",
+    "Track Application Status": "अर्जाची स्थिती तपासा",
+
+    // Photo Gallery
+    "Visual History & March Past Archives": "दृश्य इतिहास व संचलन संग्रह",
+    "Photo Gallery & Field Action Archives": "छायाचित्र गॅलरी व क्षेत्रीय कृती संग्रह",
+    "Moments of discipline, historic struggles, Deekshabhoomi parades, and grassroots community defense.": "शिस्त, ऐतिहासिक संघर्ष, दीक्षाभूमी संचलन आणि सामाजिक संरक्षणाचे क्षण.",
+    "All Photos": "सर्व छायाचित्रे",
+    "Cadet Drills & Parades": "कॅडेट संचलन व परेड",
+    "Mahila Samata Dal": "महिला समता दल",
+    "Historical Memorials": "ऐतिहासिक स्मारके",
+    "Community Sewa & Relief": "सामाजिक सेवा व मदत",
+    "Cadet Drills": "कॅडेट कवायत",
+    "Constitution": "संविधान",
+    "Youth Front": "युवा आघाडी",
+    "SSD Uniform Cadet Corps Ceremonial March Past - Deekshabhoomi Nagpur": "एसएसडी गणवेशधारी कॅडेट दीक्षाभूमी नागपूर संचलन",
+    "Mahila Samata Sainik Dal Volunteers at National Equality Rally": "महिला समता सैनिक दल राष्ट्रीय समता रॅली",
+    "Constitution Day Mass Preamble Reading Assembly": "संविधान दिन सामूहिक उद्देशिका वाचन सभा",
+    "Youth Cadet Physical Training & Non-Violent Defense Drill": "युवा कॅडेट शारीरिक कवायत व अहिंसक संरक्षण प्रशिक्षण",
+    "View Complete High-Resolution Photo Archives →": "संपूर्ण उच्च-दर्जाचे छायाचित्र संग्रह पहा →",
+    "View Complete High-Resolution Photo Archives &rarr;": "संपूर्ण उच्च-दर्जाचे छायाचित्र संग्रह पहा →",
+
+    // Transparent Community Support / Donate
+    "Transparent Community Support": "पारदर्शक सामाजिक सहकार्य",
+    "Support the Movement — Fuel the Fight for Equality": "चळवळीला पाठिंबा द्या — समतेच्या लढ्याला बळ द्या",
+    "Samata Sainik Dal is self-funded by conscious citizens. Every rupee directly strengthens grassroots cadet training, pro-bono legal defense, and disaster relief.": "समता सैनिक दल जागरूक नागरिकांच्या सहकार्याने चालवले जाते. प्रत्येक रुपया कॅडेट प्रशिक्षण, विनामूल्य कायदेशीर मदत आणि मदत कार्याला बळ देतो.",
+    "Choose Your Contribution": "आपले योगदान निवडा",
+    "One-Time Contribution": "एकवेळचे योगदान",
+    "Monthly Supporter": "मासिक समर्थक",
+    "Select Contribution Amount": "योगदान रक्कम निवडा",
+    "Enter custom amount": "इतर रक्कम प्रविष्ट करा",
+    "Direct Allocation Cause": "थेट वाटप उद्दिष्ट",
+    "Bal Sainik Uniforms & Drill Equipment": "बाल सैनिक गणवेश व कवायत साहित्य",
+    "Constitutional Literacy & Preamble Booklets": "संविधान साक्षरता व उद्देशिका पुस्तिका",
+    "Pro-Bono Legal Defense Fund (SC/ST Cases)": "विनामूल्य विधी सहाय्य निधी (अ‍ॅट्रॉसिटी केसेस)",
+    "Disaster Rescue & 24/7 Blood Task Force": "आपत्ती बचाव व २४/७ रक्त कार्य दल",
+    "SSD Centenary 2027 Trust & Library Corpus": "एसएसडी शताब्दी २०२७ ट्रस्ट व अभ्यासिका निधी",
+    "General Organizational Fund": "सामान्य संघटना निधी",
+    "Direct Impact:": "थेट परिणाम:",
+    "Prints and distributes 50 pocket Constitutions and Preamble learning cards in rural school clusters.": "ग्रामीण भागातील शाळांमध्ये ५० पॉकेट संविधाने आणि उद्देशिका पत्रिका वाटप.",
+    "Proceed to Contribute Online →": "ऑनलाइन योगदानासाठी पुढे जा →",
+    "Proceed to Contribute Online &rarr;": "ऑनलाइन योगदानासाठी पुढे जा →",
+
+    // Babasaheb Quote
+    "The Foundational Command of Dr. B.R. Ambedkar": "डॉ. बाबासाहेब आंबेडकरांचा पायाभूत संदेश",
+    "\"My soldiers of equality! You must maintain strict discipline and self-respect. A volunteer of Samata Sainik Dal must be ready to sacrifice personal comfort for the collective dignity, equality, and rights of the oppressed. Let your conduct be an embodiment of character and non-violent courage.\"": "\"माझ्या समतेच्या सैनिकांनो! तुम्ही कठोर शिस्त आणि स्वाभिमान बाळगला पाहिजे. समता सैनिक दलाच्या स्वयंसेवकाने शोषितांच्या सामूहिक सन्मान, समता आणि हक्कांसाठी वैयक्तिक सुखाचा त्याग करण्यास सदैव तयार राहिले पाहिजे. तुमचे आचरण हे चारित्र्य आणि अहिंसक धैर्याचे मूर्तिमंत रूप असावे.\"",
+    "— Dr. Bhimrao Ramji Ambedkar, Founder, Samata Sainik Dal (24 September 1927)": "— डॉ. भीमराव रामजी आंबेडकर, संस्थापक, समता सैनिक दल (२४ सप्टेंबर १९२७)",
+    "Read Complete History & Centenary Roadmap (1927–2027)": "संपूर्ण इतिहास व शताब्दी रोडमॅप (१९२७–२०२७) वाचा",
+    "Read Complete History & Centenary Roadmap (1927-2027)": "संपूर्ण इतिहास व शताब्दी रोडमॅप (१९२७–२०२७) वाचा",
+
+    // Bulletins & Gazette
+    "SSD Bulletins & Gazette": "एसएसडी बुलेटिन व गॅझेट",
+    "Latest Central Command Dispatches & Events": "केंद्रीय कमान परिपत्रके व आगामी कार्यक्रम",
+    "Real-time announcements, drill camp schedules, and national conclaves synchronized live with our central database.": "अधिकृत घोषणा, संचलन शिबिर वेळापत्रक आणि राष्ट्रीय अधिवेशने.",
+    "Official Dispatches": "अधिकृत परिपत्रके",
+    "Upcoming Events": "आगामी कार्यक्रम",
+    "View All Dispatches →": "सर्व परिपत्रके पहा →",
+    "View All Dispatches &rarr;": "सर्व परिपत्रके पहा →",
+    "Full Calendar →": "संपूर्ण दिनदर्शिका →",
+    "Full Calendar &rarr;": "संपूर्ण दिनदर्शिका →",
+    "Read Dispatch →": "परिपत्रक वाचा →",
+    "Read Dispatch &rarr;": "परिपत्रक वाचा →",
+    "Read Dispatch": "परिपत्रक वाचा",
+    "Schedule PDF": "वेळापत्रक पीडीएफ",
+    "PDF Circular": "पीडीएफ परिपत्रक",
+    "No dispatches found": "कोणतेही परिपत्रक उपलब्ध नाही",
+    "No Upcoming Events Scheduled": "कोणतेही आगामी कार्यक्रम नियोजित नाहीत",
+    "No photographs found in this category.": "या श्रेणीत कोणतीही छायाचित्रे आढळली नाहीत.",
+
+    // Footer
+    "Samata Sainik Dal": "समता सैनिक दल",
+    "Samata Sainik Dal (SSD), founded by Bodhisattva Dr. B.R. Ambedkar on 24 September 1927. Dedicated to non-violent social defense, constitutional rights, and human dignity across India.": "समता सैनिक दल (एसएसडी), बोधिसत्व डॉ. बाबासाहेब आंबेडकर यांनी २४ सप्टेंबर १९२७ रोजी स्थापन केले. भारतभरात अहिंसक सामाजिक संरक्षण, संविधानिक अधिकार आणि मानवी सन्मानासाठी समर्पित.",
+    "SSD Departments": "एसएसडी विभाग",
+    "Quick Portals": "महत्वाच्या लिंक्स",
+    "Ongoing Campaigns": "सध्याची अभियाने",
+    "Online Sainik Enlistment": "ऑनलाइन सैनिक भरती नोंदणी",
+    "Donate & Support SSD": "देणगी व सहकार्य",
+    "Governing Body Council": "नियामक मंडळ परिषद",
+    "Photo Archives & Lightbox": "छायाचित्र संग्रह",
+    "History & Genesis (1927)": "इतिहास व स्थापना (१९२७)",
+    "National Command Desk": "राष्ट्रीय कमान संपर्क",
+    "Command Admin Portal": "कमान अ‍ॅडमिन पोर्टल",
+    "SSD Official Gazette": "समता सैनिक दल अधिकृत गॅझेट",
+    "Subscribe to receive official circulars, drill schedules, and centenary announcements.": "अधिकृत परिपत्रके, संचलन वेळापत्रक आणि शताब्दी घोषणा मिळवण्यासाठी सबस्क्राईब करा.",
+    "Enter your email ID": "आपला ईमेल प्रविष्ट करा",
+    "Liberty, Equality, Fraternity. No spam.": "स्वातंत्र्य, समता, बंधुता. स्पॅम नाही.",
+    "Constitution of SSD": "एसएसडीचे संविधान",
+    "State Directory": "राज्य निर्देशिका",
+    "Grievance Desk": "तक्रार निवारण कक्ष",
+    "© 1927–2026 Samata Sainik Dal (SSD). Founded by Bodhisattva Dr. B.R. Ambedkar. Jai Bhim | Equality For All.": "© १९२७–२०२६ समता सैनिक दल (एसएसडी). बोधिसत्व डॉ. बाबासाहेब आंबेडकर यांनी स्थापन केलेले. जय भीम | समता सर्वांसाठी.",
+    "© 1927-2026 Samata Sainik Dal (SSD). Founded by Bodhisattva Dr. B.R. Ambedkar. Jai Bhim | Equality For All.": "© १९२७–२०२६ समता सैनिक दल (एसएसडी). बोधिसत्व डॉ. बाबासाहेब आंबेडकर यांनी स्थापन केलेले. जय भीम | समता सर्वांसाठी.",
+
+    // Mobile Bottom Quick Bar
+    "Helpline": "हेल्पलाईन",
+    "Top": "वरती जा",
+
+    // Modals
+    "Complete Contribution": "योगदान पूर्ण करा",
+    "Contribution Amount (₹) *": "योगदान रक्कम (₹) *",
+    "Earmarked Purpose *": "निश्चित उद्देश *",
+    "Donor Full Name *": "दात्याचे संपूर्ण नाव *",
+    "Your name": "आपले नाव",
+    "Email ID *": "ईमेल आयडी *",
+    "Mobile No *": "मोबाईल नंबर *",
+    "Phone number": "फोन नंबर",
+    "PAN Card Number (for 80G Tax Exemption Receipt)": "पॅन कार्ड क्रमांक (८०जी कर सवलत पावतीसाठी)",
+    "Payment Method": "पेमेंट पद्धत",
+    "Proceed to Secure Pay (Razorpay / UPI / Cards)": "सुरक्षित पेमेंटसाठी पुढे जा (रेझरपे / यूपीआय)",
+    "Official Contribution Receipt": "अधिकृत देणगी पावती",
+    "80G Tax Exempt": "८०जी करमुक्त",
+    "Receipt No:": "पावती क्रमांक:",
+    "Payment ID (Razorpay):": "पेमेंट आयडी (Razorpay):",
+    "Date & Time:": "दिनांक व वेळ:",
+    "Payment Status:": "पेमेंट स्थिती:",
+    "Donor Name:": "दात्याचे नाव:",
+    "PAN Number:": "पॅन क्रमांक:",
+    "Cause Allocated:": "वाटप केलेले उद्दिष्ट:",
+    "Amount Contributed:": "दिलेली रक्कम:",
+    "Print Receipt": "पावती प्रिंट करा",
+    "Close": "बंद करा",
+    "Samata Sainik Dal • Leadership Dossier": "समता सैनिक दल • नेतृत्व दस्ताऐवज / डॉसियर",
+    "Verified SSD": "पडताळणीकृत एसएसडी",
+    "Credentials & Background": "शैक्षणिक पात्रता व पार्श्वभूमी",
+    "Key Focus & Movement Portfolios": "प्रमुख कार्यक्षेत्र व चळवळीतील जबाबदारी",
+    "Movement Service Record & Biographical Dossier": "चळवळ सेवा नोंद व जीवनपट",
+    "Download Dossier PDF": "डॉसियर पीडीएफ डाउनलोड करा",
+    "Contact Secretariat": "सचिवालयाशी संपर्क साधा",
+    "Close Dossier": "डॉसियर बंद करा",
+
+    // Subpage Details
+    "Historical Heritage": "ऐतिहासिक वारसा",
+    "History, Ideology & Centenary Horizon": "इतिहास, विचारधारा आणि शताब्दी क्षितिज",
+    "The genesis, struggle, and historic achievements of Samata Sainik Dal, founded on 24 September 1927 by Bodhisattva Dr. B.R. Ambedkar.": "बोधिसत्व डॉ. बाबासाहेब आंबेडकर यांनी २४ सप्टेंबर १९२७ रोजी स्थापन केलेल्या समता सैनिक दलाचा उदय, संघर्ष आणि ऐतिहासिक कार्य.",
+    "History & About": "इतिहास व परिचय",
+    "Foundation 1927": "स्थापना १९२७",
+    "Genesis of the Soldiers for Equality": "समतेच्या सैनिकांची निर्मिती",
+    "Born out of the historic demand for civil rights, self-respect, and the eradication of caste oppression.": "नागरी हक्क, स्वाभिमान आणि विषमतेच्या निर्मूलनाच्या ऐतिहासिक गरजेतून जन्म.",
+    "Why Babasaheb Formed Samata Sainik Dal": "बाबासाहेबांनी समता सैनिक दल का स्थापन केले",
+    "The Core Motto of SSD": "एसएसडीचे मुख्य ब्रीदवाक्य",
+    "Central Defense Wing": "केंद्रीय संरक्षण विंग",
+    "Central Cadet Corps (केंद्रीय सैनिक दस्ता)": "केंद्रीय कॅडेट कॉर्प्स (केंद्रीय सैनिक दस्ता)",
+    "The backbone of Samata Sainik Dal — building disciplined, fearless, and non-violent soldiers dedicated to equality, public safety, and constitutional defense.": "समता सैनिक दलाचा कणा — समता, सार्वजनिक सुरक्षा आणि संविधान रक्षणासाठी शिस्तबद्ध, निर्भय आणि अहिंसक सैनिकांची निर्मिती.",
+    "The Cadet Tradition": "कॅडेट परंपरा",
+    "Discipline, Physical Vigilance, and Social Courage": "शिस्त, शारीरिक दक्षता आणि सामाजिक धैर्य",
+    "Join Cadet Corps": "कॅडेट कॉर्प्समध्ये सामील व्हा",
+    "View Drill Photos": "कवायत छायाचित्रे पहा",
+    "Official Uniform Specifications": "अधिकृत गणवेश तपशील",
+    "Official Sainik Enlistment Portal": "अधिकृत सैनिक नावनोंदणी पोर्टल",
+    "Answer the clarion call of Dr. Babasaheb Ambedkar. Enlist as a disciplined soldier of equality dedicated to constitutional values and social defense.": "डॉ. बाबासाहेब आंबेडकरांच्या हाकेला प्रतिसाद द्या. संविधान आणि सामाजिक संरक्षणासाठी समर्पित सैनिक व्हा.",
+    "National Call of Duty": "राष्ट्रीय कर्तव्य हाक",
+    "Sainik Enlistment": "सैनिक नोंदणी",
+    "Enlistment & Verification Process": "नावनोंदणी व पडताळणी प्रक्रिया",
+    "Step-by-Step Procedure": "टप्प्याटप्प्याने प्रक्रिया",
+    "How your application is processed from registration to digital ID issuance and drill deployment.": "नोंदणीपासून डिजिटल ओळखपत्र आणि तैनातीपर्यंत अर्जाची प्रक्रिया कशी होते.",
+    "Step 01": "टप्पा ०१",
+    "Step 02": "टप्पा ०२",
+    "Step 03": "टप्पा ०३",
+    "Step 04": "टप्पा ०४",
+    "Submit Application": "अर्ज सादर करा",
+    "District Command Review": "जिल्हा कमान पुनरावलोकन",
+    "Digital ID & Uniform Guide": "डिजिटल ओळखपत्र व गणवेश मार्गदर्शक",
+    "Cadet Drill & Deployment": "कॅडेट कवायत व तैनाती",
+    "Official Sainik Application Form": "अधिकृत सैनिक अर्ज फॉर्म",
+    "Please enter accurate details for administrative registration and multi-tier hierarchical identity verification.": "प्रशासकीय नोंदणी व ओळख पडताळणीसाठी कृपया अचूक माहिती प्रविष्ट करा.",
+    "Full Legal Name": "पूर्ण कायदेशीर नाव",
+    "Email Address": "ईमेल पत्ता",
+    "Mobile / WhatsApp": "मोबाईल / व्हॉट्सअ‍ॅप",
+    "Date of Birth": "जन्मतारीख",
+    "Gender": "लिंग",
+    "Male": "पुरुष",
+    "Female": "महिला",
+    "Other": "इतर",
+    "Preferred SSD Wing / Division": "इच्छित एसएसडी विंग / विभाग",
+    "Blood Group": "रक्तगट",
+    "Educational Qualification": "शैक्षणिक पात्रता",
+    "Occupation / Profession": "व्यवसाय / पेशा",
+    "State Chapter": "राज्य शाखा",
+    "National Headquarters & Grievance Desk": "राष्ट्रीय मुख्यालय व तक्रार निवारण कक्ष",
+    "Connect with SSD Central Command for unit formation, legal emergency assistance, cadet training camps, and public inquiries.": "शाखा स्थापना, विधी साहाय्य, कॅडेट प्रशिक्षण आणि चौकशीसाठी एसएसडी केंद्रीय कमानशी संपर्क साधा.",
+    "Citizen & Cadet Support": "नागरिक व कॅडेट साहाय्य",
+    "Contact Desk": "संपर्क कक्ष",
+    "Central Administrative Secretariat": "केंद्रीय प्रशासकीय सचिवालय",
+    "Serving the Ambedkarite social equality movement with unwavering discipline and commitment since 1927.": "१९२७ पासून आंबेडकरवादी समता चळवळीची निष्ठेने व शिस्तीने सेवा करत आहे.",
+    "Central Command & Deekshabhoomi Desk": "केंद्रीय कमान व दीक्षाभूमी संपर्क",
+    "National Command Helpline": "राष्ट्रीय कमान हेल्पलाईन",
+    "Official Communications": "अधिकृत संप्रेषण",
+    "Office Visiting Hours": "कार्यालयीन भेट वेळ",
+    "Send an Official Communication": "अधिकृत संदेश पाठवा",
+    "Submit your message to the Central Command or concerned State Chapter.": "केंद्रीय कमान किंवा संबंधित राज्य शाखेला आपला संदेश पाठवा.",
+    "Your Full Name": "आपले पूर्ण नाव",
+    "Your Email": "आपला ईमेल",
+    "Send Message": "संदेश पाठवा",
+    "Return to Portal": "पोर्टलवर परत जा",
+    "Public Credential Verification": "सार्वजनिक ओळखपत्र पडताळणी",
+    "Verify Sainik Credentials & Official Ranks": "सैनिक ओळखपत्र व अधिकृत पद पडताळणी",
+    "Central Command Verification Desk": "केंद्रीय कमान पडताळणी कक्ष",
+    "Samata Sainik Dal (SSD) | Official National Portal | Founded by Dr. B.R. Ambedkar (1927)": "समता सैनिक दल (SSD) | अधिकृत राष्ट्रीय पोर्टल | डॉ. बाबासाहेब आंबेडकर यांनी स्थापन केलेले (१९२७)",
+    "Skip to main content": "मुख्य सामग्रीकडे जा",
+    "English": "English",
+    "हिन्दी (Hindi)": "हिन्दी (Hindi)",
+    "मराठी (Marathi)": "मराठी (Marathi)",
+    "Dr. Siddharth M. Meshram": "डॉ. सिद्धार्थ एम. मेश्राम",
+    "Eminent Constitutional scholar and veteran Ambedkarite leader with 40+ years in social transformation; overseeing national policy and the Centenary 2027 vision.": "प्रख्यात घटनातज्ज्ञ व ज्येष्ठ आंबेडकरवादी नेते, ज्यांनी सामाजिक परिवर्तनात ४०+ वर्षे समर्पित केली; राष्ट्रीय धोरण व शताब्दी २०२७ व्हिजनचे मार्गदर्शक.",
+    "Ph.D. Constitutional Law | Nagpur HQ": "पीएच.डी. घटनात्मक कायदा | नागपूर मुख्यालय",
+    "Commander Ravindra K. Gautam": "कमांडर रवींद्र के. गौतम",
+    "Former NCC Gold Medalist and grassroots organizer; coordinates operations across 28 State Chapters and directs the national cadet syllabus.": "माजी एनसीसी सुवर्णपदक विजेते व तळागाळातील संघटक; २८ राज्य शाखांचे समन्वयक आणि राष्ट्रीय कॅडेट अभ्यासक्रमाचे संचालक.",
+    "M.A. Pol. Science | New Delhi Central Office": "एम.ए. राज्यशास्त्र | नवी दिल्ली केंद्रीय कार्यालय",
+    "Brigadier (Retd.) Ashok S. Thorat": "ब्रिगेडियर (निवृत्त) अशोक एस. थोरात",
+    "Distinguished veteran officer commanding military drill formations, ceremonial march pasts, and cadet discipline standards nationwide.": "प्रतिष्ठित निवृत्त लष्करी अधिकारी, जे देशभरातील सैनिकी कवायत, संचलन (मार्च पास्ट) व कॅडेट शिस्त मानकांचे नेतृत्व करतात.",
+    "Retd. Brigadier, Indian Army | Pune HQ": "निवृत्त ब्रिगेडियर, भारतीय लष्कर | पुणे मुख्यालय",
+    "Adv. Savitri B. Gaikwad": "अ‍ॅड. सावित्री बी. गायकवाड",
+    "Pioneering social worker and activist championing grassroots women empowerment, self-defense workshops, and constitutional awareness.": "ज्येष्ठ सामाजिक कार्यकर्त्या, ज्या तळागाळात महिला सबलीकरण, स्वसंरक्षण कार्यशाळा आणि घटनात्मक जागृतीचे नेतृत्व करतात.",
+    "Advocate, High Court | Mumbai": "अ‍ॅडव्होकेट, उच्च न्यायालय | मुंबई",
+    "Senior Advocate Mahendra P. Tayade": "ज्येष्ठ विधिज्ञ महेंद्र पी. तायडे",
+    "Senior constitutional jurist leading SSD's pro-bono network of 850+ advocates defending civil rights and SC/ST protection cases across India.": "ज्येष्ठ घटनातज्ज्ञ विधिज्ञ, जे भारतभरात नागरी हक्क व अ‍ॅट्रॉसिटी कायद्यांतर्गत ८५०+ वकिलांच्या मोफत कायदेशीर नेटवर्कचे नेतृत्व करतात.",
+    "Senior Advocate, Supreme Court of India": "ज्येष्ठ विधिज्ञ, भारताचे सर्वोच्च न्यायालय",
+    "CA Rahul V. Wankhede": "सीए राहुल व्ही. वानखेडे",
+    "Fellow Chartered Accountant overseeing financial integrity, audited public disclosures, and 80G tax exemption compliances for the Centenary Fund.": "चार्टर्ड अकाउंटंट (FCA), जे शताब्दी निधीची आर्थिक पारदर्शकता, ऑडिटेड हिशोब आणि ८०जी कर सवलत नियमांचे पालन पाहतात.",
+    "FCA, Chartered Accountant | Nagpur": "एफसीए, चार्टर्ड अकाउंटंट | नागपूर",
+    "Prof. Yashwantrao More": "प्रा. यशवंतराव मोरे",
+    "Senior Ambedkarite Historian & Author": "ज्येष्ठ आंबेडकरवादी इतिहासकार व लेखक",
+    "Adv. Rekha Gaikwad": "अ‍ॅड. रेखा गायकवाड",
+    "Human Rights Defender & Scholar": "मानवाधिकार रक्षक व विचारवंत",
+    "Commander Suresh Jadhav": "कमांडर सुरेश जाधव",
+    "Veteran 1956 Deekshabhoomi Parade Organizer": "१९५६ ऐतिहासिक दीक्षाभूमी संचलन आयोजक",
+    "Click Profile to Open Portfolio": "प्रोफाइल पाहण्यासाठी क्लिक करा",
+    "Open Portfolio": "पोर्टफोलिओ उघडा",
+    "Active National Missions": "सक्रिय राष्ट्रीय मोहिमा",
+    "Ongoing Campaigns & Centenary Drives": "सुरू असलेली अभियाने व शताब्दी उपक्रम",
+    "Grassroots initiatives mobilizing thousands of cadets, legal advocates, and community volunteers across 28 states of India.": "भारतातील २८ राज्यांत हजारो कॅडेट्स, वकील आणि स्वयंसेवकांना संघटित करणारे तळागाळातील उपक्रम.",
+    "Centenary Drive": "शताब्दी अभियान",
+    "SSD Centenary 1927–2027 Mission (शताब्दी महोत्सव)": "एसएसडी शताब्दी १९२७–२०२७ मिशन (शताब्दी महोत्सव)",
+    "Nationwide 100-Year commemorative march pasts, building 1,000 Ambedkar Study Libraries, and establishing the Centenary National Memorial at Mahad & Nagpur.": "देशव्यापी १००-वर्षीय स्मृति संचलन, १,००० आंबेडकर अभ्यास ग्रंथालयांची निर्मिती, आणि महाड व नागपूर येथे शताब्दी राष्ट्रीय स्मारकाची स्थापना.",
+    "Legal & Rights": "विधी व अधिकार",
+    "National Constitutional Literacy & Preamble Yatra": "राष्ट्रीय संविधान साक्षरता व उद्देशिका यात्रा",
+    "Distributing pocket Constitutions in rural villages, mass Preamble recitation camps, and training grassroots advocates to resist caste atrocities legally.": "ग्रामीण भागात पॉकेट संविधान वाटप, सामूहिक उद्देशिका वाचन शिबिरे आणि जातीय अत्याचारांना कायदेशीर आव्हान देण्यासाठी कार्यकर्त्यांचे प्रशिक्षण.",
+    "Women Wing": "महिला विंग",
+    "Mahila Self-Defense & Savitribai Phule Academy": "महिला स्वसंरक्षण व सावित्रीबाई फुले प्रबोधिनी",
+    "Physical stick drill, martial self-defense training, anti-harassment rapid action units, and educational scholarships for Bahujan female students.": "शारीरिक लाठी कवायत, स्वसंरक्षण मार्शल आर्ट्स प्रशिक्षण, छेडछाड विरोधी कृती दल आणि बहुजन विद्यार्थिनींसाठी शैक्षणिक शिष्यवृत्ती.",
+    "Community Sewa": "सामाजिक सेवा",
+    "Samata 24/7 Voluntary Blood Donor & Disaster Force": "समता २४/७ ऐच्छिक रक्तदाता व आपत्ती निवारण दल",
+    "Nationwide emergency voluntary blood donor registry, flood rescue battalions, free medical diagnosis, and community health camps in underprivileged bastis.": "देशव्यापी आपत्कालीन ऐच्छिक रक्तदाता नोंदणी, पूर बचाव पथक, मोफत वैद्यकीय निदान आणि वंचित वस्त्यांमध्ये आरोग्य शिबिरे.",
+    "Operational Divisions": "कार्यकारी विभाग व विंग्स",
+    "Departments & Specialized Wings of SSD": "समता सैनिक दलाचे विभाग व विशेष विंग्स",
+    "Structured like a disciplined non-violent defense force to educate, agitate, and organize at grassroots, state, and national levels.": "तळागाळात, राज्य आणि राष्ट्रीय स्तरावर 'शिका, संघटित व्हा आणि संघर्ष करा' या तत्त्वावर आधारलेली एक शिस्तबद्ध अहिंसक संरक्षण सेना.",
+    "Central Cadet Corps": "केंद्रीय कॅडेट कॉर्प्स",
+    "Rigorous physical drill, parade ranks, uniform code of conduct, flag ceremonies, and non-violent social defense training.": "कडक शारीरिक कवायत, संचलन पदे, गणवेश आचारसंहिता, ध्वज समारंभ आणि अहिंसक सामाजिक संरक्षण प्रशिक्षण.",
+    "Explore Cadet Wing →": "कॅडेट विंग पहा →",
+    "Explore Cadet Wing &rarr;": "कॅडेट विंग पहा →",
+    "Mahila Samata Sainik Dal": "महिला समता सैनिक दल",
+    "Frontline women defense wing focusing on leadership academy, anti-atrocity legal assistance, self-reliance, and education.": "आघाडीची महिला संरक्षण विंग, जी नेतृत्व प्रबोधिनी, अत्याचारविरोधी कायदेशीर साहाय्य, स्वावलंबन व शिक्षणावर भर देते.",
+    "Explore Mahila Dal →": "महिला दल पहा →",
+    "Explore Mahila Dal &rarr;": "महिला दल पहा →",
+    "Legal & Constitutional Cell": "विधी व संवैधानिक कक्ष",
+    "Nationwide advocate network offering pro-bono legal defense, constitutional literacy camps, and emergency legal hotlines.": "देशव्यापी विधिज्ञांचे नेटवर्क, जे मोफत कायदेशीर संरक्षण, संविधान साक्षरता शिबिरे आणि आपत्कालीन कायदेशीर हेल्पलाइन चालवते.",
+    "Explore Legal Cell →": "विधी कक्ष पहा →",
+    "Explore Legal Cell &rarr;": "विधी कक्ष पहा →",
+    "Youth & Student Front": "युवा व विद्यार्थी आघाडी",
+    "Dr. Ambedkar study circles, civil services & competitive exam mentorship, digital skills, and annual youth leadership summits.": "डॉ. आंबेडकर अभ्यास मंडळे, स्पर्धा परीक्षा मार्गदर्शन, डिजिटल कौशल्ये आणि वार्षिक युवा नेतृत्व परिषद.",
+    "Explore Youth Front →": "युवा आघाडी पहा →",
+    "Explore Youth Front &rarr;": "युवा आघाडी पहा →",
+    "Community Sewa & Relief": "सामाजिक सेवा व मदत",
+    "Voluntary blood donor registry, emergency disaster rescue task force, free health diagnostic camps, and community libraries.": "ऐच्छिक रक्तदाता नोंदणी, आपत्कालीन आपत्ती बचाव कार्यदल, मोफत आरोग्य तपासणी शिबिरे आणि समाज ग्रंथालये.",
+    "Explore Relief Task Force →": "मदत कार्यदल पहा →",
+    "Explore Relief Task Force &rarr;": "मदत कार्यदल पहा →",
+    "Online Sainik Enlistment": "ऑनलाइन सैनिक भरती",
+    "Step forward to serve equality and democracy. Enlist online in any of our 5 specialized operational divisions.": "समता आणि लोकशाहीच्या रक्षणासाठी पुढे या. आमच्या ५ विशेष कार्यविभागांपैकी कोणत्याही विभागात ऑनलाइन भरती व्हा.",
+    "Full Enlistment Portal →": "संपूर्ण भरती पोर्टल →",
+    "Full Enlistment Portal &rarr;": "संपूर्ण भरती पोर्टल →",
+    "Direct Enlistment": "थेट सैनिक भरती",
+    "Join Samata Sainik Dal — Take the Solemn Pledge": "समता सैनिक दलात सामील व्हा — निष्ठापूर्वक प्रतिज्ञा घ्या",
+    "Answer the historic call of Bodhisattva Babasaheb Dr. B.R. Ambedkar. Become a disciplined volunteer for equality, human dignity, and constitutional morality.": "बोधिसत्व डॉ. बाबासाहेब आंबेडकरांच्या ऐतिहासिक हाकेला प्रतिसाद द्या. समता, मानवी प्रतिष्ठा आणि घटनात्मक मूल्यांचे शिस्तबद्ध स्वयंसेवक बना.",
+    "4-Step Official Enlistment Process": "४-टप्प्यांची अधिकृत भरती प्रक्रिया",
+    "Official Cadre Induction": "अधिकृत कॅडर दीक्षा",
+    "Select Your Operational Wing": "आपला कार्य विभाग निवडा",
+    "Choose from Cadet Corps (Drill & Discipline), Mahila Dal (Women's Leadership), Legal Cell (Advocacy), Youth Front, or Sewa Relief.": "कॅडेट कॉर्प्स (कवायत व शिस्त), महिला दल (महिला नेतृत्व), विधी कक्ष (कायदेशीर साहाय्य), युवा आघाडी, किंवा सेवा रिलीफमधून निवडा.",
+    "Submit District & Contact Details": "जिल्हा व संपर्क माहिती भरा",
+    "Provide your local address to be connected directly with your District Commander and local State Chapter.": "आपल्या जिल्हा कमांडर व राज्य शाखेशी थेट जोडले जाण्यासाठी आपला पत्ता नोंदवा.",
+    "Take the Solemn Volunteer Pledge": "निष्ठावान स्वयंसेवकाची प्रतिज्ञा घ्या",
+    "Commit to the principles of self-respect, moral character, non-violence, and total dedication to liberty, equality, and fraternity.": "स्वाभिमान, शील, अहिंसा आणि स्वातंत्र्य, समता व बंधुतेच्या तत्त्वांशी एकनिष्ठ राहण्याचा संकल्प करा.",
+    "Receive SSD Digital ID & Unit Assignment": "एसएसडी डिजिटल ओळखपत्र व शाखा वाटप मिळवा",
+    "Central Command verifies your application, registers you in the national roll, and invites you to the next drill camp.": "केंद्रीय कमान आपल्या अर्जाची पडताळणी करते, राष्ट्रीय नोंदवहीत नोंद करते आणि पुढील संचलन शिबिरासाठी आमंत्रित करते.",
+    "Open Full Online Enlistment Portal →": "संपूर्ण ऑनलाइन भरती पोर्टल उघडा →",
+    "Open Full Online Enlistment Portal &rarr;": "संपूर्ण ऑनलाइन भरती पोर्टल उघडा →",
+    "Track Application Status": "अर्जाची सद्यस्थिती तपासा",
+    "Visual History & March Past Archives": "दृश्य इतिहास व संचलन (मार्च पास्ट) संग्रह",
+    "Photo Gallery & Field Action Archives": "छायाचित्र दालन व प्रत्यक्ष कार्य संग्रह",
+    "Moments of discipline, historic struggles, Deekshabhoomi parades, and grassroots community defense.": "शिस्त, ऐतिहासिक लढे, दीक्षाभूमी संचलन आणि तळागाळातील सामाजिक संरक्षणाचे ऐतिहासिक क्षण.",
+    "All Photos": "सर्व छायाचित्रे",
+    "Cadet Drills & Parades": "कॅडेट कवायत व संचलन",
+    "Mahila Samata Dal": "महिला समता दल",
+    "Historical Memorials": "ऐतिहासिक स्मारके",
+    "Cadet Drills": "कॅडेट कवायत",
+    "SSD Uniform Cadet Corps Ceremonial March Past - Deekshabhoomi Nagpur": "एसएसडी गणवेशधारी कॅडेट कॉर्प्स औपचारिक संचलन - दीक्षाभूमी नागपूर",
+    "Mahila Samata Sainik Dal Volunteers at National Equality Rally": "राष्ट्रीय समता मेळाव्यात महिला समता सैनिक दल स्वयंसेविका",
+    "Constitution": "संविधान",
+    "Constitution Day Mass Preamble Reading Assembly": "संविधान दिन सामूहिक उद्देशिका वाचन सभा",
+    "Youth Front": "युवा आघाडी",
+    "Youth Cadet Physical Training & Non-Violent Defense Drill": "युवा कॅडेट शारीरिक प्रशिक्षण व अहिंसक संरक्षण कवायत",
+    "View Complete High-Resolution Photo Archives →": "संपूर्ण हाय-रिझोल्यूशन फोटो संग्रह पहा →",
+    "View Complete High-Resolution Photo Archives &rarr;": "संपूर्ण हाय-रिझोल्यूशन फोटो संग्रह पहा →",
+    "Transparent Community Support": "पारदर्शक लोकसहभाग",
+    "Support the Movement — Fuel the Fight for Equality": "चळवळीला बळ द्या — समतेच्या लढ्याला साथ द्या",
+    "Samata Sainik Dal is self-funded by conscious citizens. Every rupee directly strengthens grassroots cadet training, pro-bono legal defense, and disaster relief.": "समता सैनिक दल हे सजग नागरिकांच्या सहभागातून चालवले जाते. आपला प्रत्येक रुपया थेट कॅडेट प्रशिक्षण, मोफत कायदेशीर लढा आणि आपत्ती निवारणाला बळ देतो.",
+    "Choose Your Contribution": "आपला सहयोग निवडा",
+    "One-Time Contribution": "एकवेळ सहयोग",
+    "Monthly Supporter": "मासिक समर्थक",
+    "Select Contribution Amount": "सहयोग रक्कम निवडा",
+    "Enter custom amount": "इतर रक्कम टाका",
+    "Direct Allocation Cause": "सहयोगाचे उद्दिष्ट",
+    "Bal Sainik Uniforms & Drill Equipment": "बाल सैनिक गणवेश व कवायत साहित्य",
+    "Constitutional Literacy & Preamble Booklets": "संविधान साक्षरता व उद्देशिका पुस्तिका",
+    "Pro-Bono Legal Defense Fund (SC/ST Cases)": "मोफत कायदेशीर संरक्षण निधी (अ‍ॅट्रॉसिटी केसेस)",
+    "Disaster Rescue & 24/7 Blood Task Force": "आपत्ती निवारण व २४/७ रक्त कार्यदल",
+    "SSD Centenary 2027 Trust & Library Corpus": "एसएसडी शताब्दी २०२७ ट्रस्ट व ग्रंथालय निधी",
+    "General Organizational Fund": "सामान्य संघटनात्मक निधी",
+    "Direct Impact:": "थेट परिणाम:",
+    "Prints and distributes 50 pocket Constitutions and Preamble learning cards in rural school clusters.": "ग्रामीण शाळांमध्ये ५० पॉकेट संविधाने आणि उद्देशिका कार्डांचे वाटप करते.",
+    "Proceed to Contribute Online →": "ऑनलाइन सहयोगासाठी पुढे जा →",
+    "Proceed to Contribute Online &rarr;": "ऑनलाइन सहयोगासाठी पुढे जा →",
+    "The Foundational Command of Dr. B.R. Ambedkar": "डॉ. बाबासाहेब आंबेडकरांचा पायाभूत आदेश",
+    "\"My soldiers of equality! You must maintain strict discipline and self-respect. A volunteer of Samata Sainik Dal must be ready to sacrifice personal comfort for the collective dignity, equality, and rights of the oppressed. Let your conduct be an embodiment of character and non-violent courage.\"": "\"समतेच्या माझ्या सैनिकांनो! तुम्ही कडक शिस्त आणि स्वाभिमान बाळगला पाहिजे. समता सैनिक दलाच्या स्वयंसेवकाने शोषितांच्या सामूहिक सन्मान, समता आणि हक्कांसाठी वैयक्तिक सुखाचा त्याग करण्यास तयार असले पाहिजे. तुमचे वर्तन हे शील आणि अहिंसक शौर्याचे प्रतीक असावे.\"",
+    "— Dr. Bhimrao Ramji Ambedkar, Founder, Samata Sainik Dal (24 September 1927)": "— डॉ. बाबासाहेब आंबेडकर, संस्थापक, समता सैनिक दल (२४ सप्टेंबर १९२७)",
+    "Read Complete History & Centenary Roadmap (1927–2027)": "संपूर्ण इतिहास व शताब्दी रोडमॅप (१९२७–२०२७) वाचा",
+    "SSD Bulletins & Gazette": "एसएसडी बुलेटिन व गॅझेट",
+    "Latest Central Command Dispatches & Events": "ताज्या केंद्रीय कमान घडामोडी व कार्यक्रम",
+    "Real-time announcements, drill camp schedules, and national conclaves synchronized live with our central database.": "आमच्या केंद्रीय डेटाबेसशी थेट जोडलेल्या ताज्या घोषणा, संचलन शिबिरे आणि राष्ट्रीय अधिवेशने.",
+    "Official Dispatches": "अधिकृत घडामोडी",
+    "View All Dispatches →": "सर्व घडामोडी पहा →",
+    "View All Dispatches &rarr;": "सर्व घडामोडी पहा →",
+    "Upcoming Events": "आगामी कार्यक्रम",
+    "Full Calendar →": "संपूर्ण कॅलेंडर पहा →",
+    "Full Calendar &rarr;": "संपूर्ण कॅलेंडर पहा →",
+    "Fetching latest SSD dispatches from Firebase...": "फायरबेसवरून ताज्या घडामोडी प्राप्त होत आहेत...",
+    "Fetching upcoming events from Firebase...": "फायरबेसवरून आगामी कार्यक्रमांचे तपशील प्राप्त होत आहेत...",
+    "Complete Contribution": "सहयोग पूर्ण करा",
+    "Contribution Amount (₹) *": "सहयोग रक्कम (₹) *",
+    "Earmarked Purpose *": "निर्दिष्ट उद्दिष्ट *",
+    "Donor Full Name *": "सहयोगकर्त्याचे पूर्ण नाव *",
+    "Email ID *": "ईमेल आयडी *",
+    "Mobile No *": "मोबाईल नंबर *",
+    "PAN Card Number (for 80G Tax Exemption Receipt)": "पॅन कार्ड क्रमांक (८०जी कर सवलत पावतीसाठी)",
+    "Payment Method": "पेमेंट पद्धत",
+    "UPI / QR": "यूपीआय / क्यूआर",
+    "Net Banking / NEFT": "नेट बँकिंग / एनईएफटी",
+    "Card": "डेबिट / क्रेडिट कार्ड",
+    "Proceed to Secure Pay (Razorpay / UPI / Cards)": "सुरक्षित पेमेंटसाठी पुढे जा (Razorpay / UPI / Cards)",
+    "Initializing Razorpay Gateway...": "रेझरपे गेटवे सुरू होत आहे...",
+    "256-Bit Encrypted Secure Checkout via Razorpay (UPI, Google Pay, Cards, NetBanking)": "रेझरपेद्वारे २५६-बिट एन्क्रिप्टेड सुरक्षित पेमेंट (UPI, Google Pay, Cards, NetBanking)",
+    "Official Contribution Receipt": "अधिकृत सहयोग पावती",
+    "80G Tax Exempt": "८०जी कर सवलत",
+    "Receipt No:": "पावती क्र.:",
+    "Payment ID (Razorpay):": "पेमेंट आयडी (Razorpay):",
+    "Date & Time:": "दिनांक व वेळ:",
+    "Payment Status:": "पेमेंट स्थिती:",
+    "SUCCESS / CAPTURED": "यशस्वी / प्राप्त (SUCCESS)",
+    "Donor Name:": "सहयोगकर्त्याचे नाव:",
+    "PAN Number:": "पॅन क्र.:",
+    "Cause Allocated:": "वाटप केलेले उद्दिष्ट:",
+    "Amount Contributed:": "सहयोग रक्कम:",
+    "This is a computer-generated digital receipt under 80G provisions and does not require a physical signature.": "ही ८०जी तरतुदींनुसार संगणक-निर्मित डिजिटल पावती असून प्रत्यक्ष स्वाक्षरीची आवश्यकता नाही.",
+    "Jai Bhim! Thank you for strengthening the movement for social equality.": "जय भीम! सामाजिक समतेच्या चळवळीला बळ दिल्याबद्दल मनःपूर्वक धन्यवाद.",
+    "SSD Central Gazette Dispatch": "समता सैनिक दल केंद्रीय गॅझेट बुलेटिन",
+    "Date": "दिनांक",
+    "Category": "श्रेणी",
+    "Print Receipt": "पावती प्रिंट करा",
+    "Close": "बंद करा",
+    "Close Dossier": "डॉसियर बंद करा",
+    "Contact Secretariat": "सचिवालयाशी संपर्क साधा",
+    "Download Dossier PDF": "डॉसियर पीडीएफ डाउनलोड करा",
+    "Verified SSD": "सत्यापित एसएसडी",
+    "Credentials & Background": "पात्रता व पार्श्वभूमी",
+    "Key Focus & Movement Portfolios": "प्रमुख कार्यक्षेत्र व आंदोलन पोर्टफोलिओ",
+    "Movement Service Record & Biographical Dossier": "आंदोलन सेवा अभिलेख व चरित्रात्मक डॉसियर",
+    "Samata Sainik Dal • Leadership Dossier": "समता सैनिक दल • नेतृत्व डॉसियर",
+    "Samata Sainik Dal &bull; Leadership Dossier": "समता सैनिक दल • नेतृत्व डॉसियर",
+    "\"Samata Sainik Dal was established on 24 September 1927 by Bodhisattva Dr. B.R. Ambedkar to organize a disciplined, self-respecting non-violent vanguard for the defense of constitutional morality and social democracy.\"": "\"समता सैनिक दल हे २४ सप्टेंबर १९२७ रोजी बोधिसत्व डॉ. बाबासाहेब आंबेडकर यांनी घटनात्मक नैतिकता आणि सामाजिक लोकशाहीच्या रक्षणासाठी एक शिस्तबद्ध, स्वाभिमानी आणि अहिंसक आघाडी म्हणून स्थापन केले होते.\"",
+    "SSD Departments": "एसएसडी विभाग (प्रभाग)",
+    "Quick Portals": "त्वरित पोर्टल",
+    "Subscribe to receive official circulars, drill schedules, and centenary announcements.": "अधिकृत परिपत्रके, संचलन वेळापत्रक आणि शताब्दी घोषणा प्राप्त करण्यासाठी सदस्यता घ्या.",
+    "Enter your email ID": "आपला ईमेल आयडी टाका",
+    "Liberty, Equality, Fraternity. No spam.": "स्वातंत्र्य, समता, बंधुता. कोणताही स्पॅम नाही.",
+    "Constitution of SSD": "एसएसडीचे संविधान",
+    "State Directory": "राज्य निर्देशिका",
+    "Grievance Desk": "तक्रार निवारण कक्ष",
+    "Helpline": "हेल्पलाईन",
+    "Enlist": "सैनिक भरती",
+    "Top": "शीर्ष (Top)"
+  }
+};
+
+function applyDomTranslations(lang, root) {
+  if (!root) root = document.body;
+  if (!root) return;
+
+  if (lang === "en") {
+    // Restore text nodes
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (!node.parentElement) return NodeFilter.FILTER_REJECT;
+        const tag = node.parentElement.tagName.toLowerCase();
+        if (["script", "style", "textarea", "code", "pre"].includes(tag)) return NodeFilter.FILTER_REJECT;
+        if (node.parentElement.closest("#langSelect") || node.parentElement.closest(".notranslate")) return NodeFilter.FILTER_REJECT;
+        if (node.parentElement.closest("#adminPanel") || node.parentElement.closest(".admin-portal")) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    }, false);
+
+    let node;
+    while ((node = walker.nextNode())) {
+      if (node._ssdOrigValue !== undefined) {
+        node.nodeValue = node._ssdOrigValue;
+      }
+    }
+
+    // Restore attributes
+    root.querySelectorAll("[data-ssd-orig-placeholder]").forEach(el => {
+      el.setAttribute("placeholder", el.getAttribute("data-ssd-orig-placeholder"));
+    });
+    root.querySelectorAll("[data-ssd-orig-title]").forEach(el => {
+      el.setAttribute("title", el.getAttribute("data-ssd-orig-title"));
+    });
+    root.querySelectorAll("[data-ssd-orig-aria]").forEach(el => {
+      el.setAttribute("aria-label", el.getAttribute("data-ssd-orig-aria"));
+    });
+    return;
+  }
+
+  const dict = SSD_TRANSLATIONS[lang];
+  if (!dict) return;
+
+  // Build sorted keys for phrase matching
+  if (!SSD_TRANSLATIONS._sortedKeys || SSD_TRANSLATIONS._sortedLang !== lang) {
+    SSD_TRANSLATIONS._sortedKeys = Object.keys(dict).sort((a, b) => b.length - a.length);
+    SSD_TRANSLATIONS._sortedLang = lang;
+  }
+  const sortedKeys = SSD_TRANSLATIONS._sortedKeys;
+
+  // Walk text nodes
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      if (!node.parentElement) return NodeFilter.FILTER_REJECT;
+      const tag = node.parentElement.tagName.toLowerCase();
+      if (["script", "style", "textarea", "code", "pre"].includes(tag)) return NodeFilter.FILTER_REJECT;
+      if (node.parentElement.closest("#langSelect") || node.parentElement.closest(".notranslate")) return NodeFilter.FILTER_REJECT;
+      if (node.parentElement.closest("#adminPanel") || node.parentElement.closest(".admin-portal")) return NodeFilter.FILTER_REJECT;
+      if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  }, false);
+
+  let node;
+  while ((node = walker.nextNode())) {
+    if (node._ssdOrigValue === undefined) {
+      node._ssdOrigValue = node.nodeValue;
+    }
+    const orig = node._ssdOrigValue;
+    const trimmed = orig.trim();
+
+    if (dict[trimmed]) {
+      const leading = orig.match(/^\s*/)[0];
+      const trailing = orig.match(/\s*$/)[0];
+      node.nodeValue = leading + dict[trimmed] + trailing;
+    } else {
+      let updated = orig;
+      let matched = false;
+      for (let i = 0; i < sortedKeys.length; i++) {
+        const k = sortedKeys[i];
+        if (k.length > 2 && updated.includes(k)) {
+          updated = updated.split(k).join(dict[k]);
+          matched = true;
+        }
+      }
+      if (matched) {
+        node.nodeValue = updated;
+      }
+    }
+  }
+
+  // Translate placeholders
+  root.querySelectorAll("input[placeholder], textarea[placeholder]").forEach(el => {
+    if (el.closest("#langSelect") || el.closest("#adminPanel")) return;
+    if (!el.hasAttribute("data-ssd-orig-placeholder")) {
+      el.setAttribute("data-ssd-orig-placeholder", el.getAttribute("placeholder") || "");
+    }
+    const orig = el.getAttribute("data-ssd-orig-placeholder");
+    if (orig && dict[orig]) {
+      el.setAttribute("placeholder", dict[orig]);
+    } else if (orig) {
+      let updated = orig;
+      for (let i = 0; i < sortedKeys.length; i++) {
+        const k = sortedKeys[i];
+        if (k.length > 2 && updated.includes(k)) {
+          updated = updated.split(k).join(dict[k]);
+        }
+      }
+      el.setAttribute("placeholder", updated);
+    }
+  });
+
+  // Translate titles
+  root.querySelectorAll("[title]").forEach(el => {
+    if (el.closest("#langSelect") || el.closest("#adminPanel")) return;
+    if (!el.hasAttribute("data-ssd-orig-title")) {
+      el.setAttribute("data-ssd-orig-title", el.getAttribute("title") || "");
+    }
+    const orig = el.getAttribute("data-ssd-orig-title");
+    if (orig && dict[orig]) {
+      el.setAttribute("title", dict[orig]);
+    }
+  });
+
+  // Translate aria-label
+  root.querySelectorAll("[aria-label]").forEach(el => {
+    if (el.closest("#langSelect") || el.closest("#adminPanel")) return;
+    if (!el.hasAttribute("data-ssd-orig-aria")) {
+      el.setAttribute("data-ssd-orig-aria", el.getAttribute("aria-label") || "");
+    }
+    const orig = el.getAttribute("data-ssd-orig-aria");
+    if (orig && dict[orig]) {
+      el.setAttribute("aria-label", dict[orig]);
+    }
+  });
+}
+
+
+// ==========================================================================
+// GOOGLE TRANSLATE UNIVERSAL ENGINE INTEGRATION (FULL-PAGE TRANSLATION)
+// ==========================================================================
+function initGoogleTranslate() {
+  if (window._googleTranslateInitDone) return;
+  window._googleTranslateInitDone = true;
+
+  if (!document.getElementById("google_translate_element")) {
+    const el = document.createElement("div");
+    el.id = "google_translate_element";
+    el.style.display = "none";
+    document.body.appendChild(el);
+  }
+
+  window.googleTranslateElementInit = function() {
+    try {
+      new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'en,hi,mr',
+        autoDisplay: false
+      }, 'google_translate_element');
+    } catch (e) {
+      console.warn("Google Translate initialization notice:", e);
+    }
+  };
+
+  if (!document.querySelector('script[src*="translate.google.com/translate_a/element.js"]')) {
+    const s = document.createElement("script");
+    s.type = "text/javascript";
+    s.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+    s.async = true;
+    document.head.appendChild(s);
+  }
+}
+
+function triggerGoogleTranslate(lang) {
+  const domain = window.location.hostname;
+  const cookiePath = "path=/";
+
+  if (!lang || lang === 'en') {
+    // Clear Google translate cookies
+    document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; " + cookiePath + ";";
+    document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=" + domain + "; " + cookiePath + ";";
+    if (domain.includes('.')) {
+      const rootDomain = domain.split('.').slice(-2).join('.');
+      document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=." + rootDomain + "; " + cookiePath + ";";
+    }
+  } else {
+    // Set cookie for Google translate: /en/hi or /en/mr
+    const cookieVal = "/en/" + lang;
+    document.cookie = "googtrans=" + cookieVal + "; " + cookiePath + ";";
+    document.cookie = "googtrans=" + cookieVal + "; domain=" + domain + "; " + cookiePath + ";";
+    if (domain.includes('.')) {
+      const rootDomain = domain.split('.').slice(-2).join('.');
+      document.cookie = "googtrans=" + cookieVal + "; domain=." + rootDomain + "; " + cookiePath + ";";
+    }
+  }
+
+  // Trigger Google combo if already rendered in DOM
+  const combo = document.querySelector(".goog-te-combo");
+  if (combo) {
+    const targetVal = (!lang || lang === 'en') ? '' : lang;
+    if (combo.value !== targetVal) {
+      combo.value = targetVal;
+      combo.dispatchEvent(new Event("change"));
+    }
+  } else {
+    initGoogleTranslate();
+    let tries = 0;
+    const interval = setInterval(() => {
+      tries++;
+      const c = document.querySelector(".goog-te-combo");
+      if (c) {
+        clearInterval(interval);
+        const targetVal = (!lang || lang === 'en') ? '' : lang;
+        if (c.value !== targetVal) {
+          c.value = targetVal;
+          c.dispatchEvent(new Event("change"));
+        }
+      } else if (tries > 30) {
+        clearInterval(interval);
+      }
+    }, 150);
+  }
+}
+
 function changeLanguage(lang) {
+  if (!lang) lang = 'en';
+  currentLanguage = lang;
+  window.currentLanguage = lang;
+  try {
+    localStorage.setItem("ssd_language", lang);
+  } catch (e) {}
+
+  document.documentElement.lang = lang;
+
+  // Sync all language dropdowns on the page
+  document.querySelectorAll("#langSelect").forEach(sel => {
+    sel.value = lang;
+  });
+
   const orgName = document.getElementById("orgNameText");
   const orgTagline = document.getElementById("orgTaglineText");
 
@@ -1986,6 +3412,12 @@ function changeLanguage(lang) {
     if (orgName) orgName.textContent = "SAMATA SAINIK DAL (SSD)";
     if (orgTagline) orgTagline.textContent = "समता सैनिक दल (स्थापना: १९२७) | Founded by Dr. B.R. Ambedkar";
   }
+
+  // Apply our comprehensive native Ambedkarite translation dictionary
+  applyDomTranslations(lang, document.body);
+
+  // Trigger Google Translate engine for 100% full-page universal coverage
+  triggerGoogleTranslate(lang);
 }
 
 function toggleMobileMenu() {
@@ -2224,6 +3656,10 @@ function renderCampaigns(campaignsArray) {
       </div>
     `;
   }).join('');
+
+  if (window.currentLanguage && window.currentLanguage !== 'en') {
+    applyDomTranslations(window.currentLanguage, container);
+  }
 }
 
 // ==========================================================================
@@ -2464,6 +3900,11 @@ function renderGoverningCards(leadersList) {
         <span class="advisory-portfolio-badge"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open Portfolio</span>
       </div>
     `).join('');
+  }
+
+  if (window.currentLanguage && window.currentLanguage !== 'en') {
+    if (councilContainer) applyDomTranslations(window.currentLanguage, councilContainer);
+    if (advisoryContainer) applyDomTranslations(window.currentLanguage, advisoryContainer);
   }
 }
 

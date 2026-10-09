@@ -91,6 +91,9 @@ app.use('/api', globalApiRateLimiter);
 
 // URL Normalization & Serverless Compatibility Middleware
 app.use((req, res, next) => {
+  if (req.url === '/' || req.url === '') {
+    return next();
+  }
   if (req.url === '/api' || req.url === '/api/') {
     return res.json({
       status: 'OK',
