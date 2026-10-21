@@ -1294,21 +1294,34 @@
               </div>
             </div>
 
-            <!-- Seed / Reset Sample Data -->
+            <!-- Database Maintenance & Demo Data Manager -->
             <div class="card-panel">
               <div class="card-panel-header">
                 <div class="card-panel-title">
-                  <i class="fa-solid fa-arrows-rotate" style="color: var(--primary-orange);"></i>
-                  <h3>Seed Official Dataset</h3>
+                  <i class="fa-solid fa-database" style="color: var(--primary-orange);"></i>
+                  <h3>Database Maintenance & Clean Up</h3>
                 </div>
               </div>
-              <div style="padding: 24px;">
-                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 18px;">
-                  Seed or refresh the official 1927–2026 verified sample dataset (Dispatches, Campaigns, Historical Gallery, and Leadership Council) to Supabase Cloud Database.
-                </p>
-                <button type="button" class="btn-admin btn-admin-primary" onclick="seedDatabaseFromAdmin()">
-                  <i class="fa-solid fa-cloud-arrow-up"></i> Seed Official SSD Data
-                </button>
+              <div style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+                <div>
+                  <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 4px; color: var(--text-heading, inherit);">Clear All Demo & Test Data</h4>
+                  <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 12px; line-height: 1.5;">
+                    Permanently purge all demo membership applications, test member IDs, sample donations, receipts, and audit logs. Official master data (roles, states, districts, wings, executive leadership, official officer accounts) is safely preserved.
+                  </p>
+                  <button type="button" class="btn-admin" onclick="clearDemoDataFromAdmin()" style="background: #dc2626; color: #fff; border: none; padding: 9px 18px; border-radius: 6px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-trash-can"></i> Clear All Demo Data
+                  </button>
+                </div>
+                <hr style="border: none; border-top: 1px solid var(--border-color, #e2e8f0); margin: 6px 0;">
+                <div>
+                  <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 4px; color: var(--text-heading, inherit);">Seed Official Historical Content</h4>
+                  <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 12px; line-height: 1.5;">
+                    Seed or refresh the official 1927–2026 verified historical dataset (Dispatches, Campaigns, Historical Gallery, and Leadership Council) to database storage.
+                  </p>
+                  <button type="button" class="btn-admin btn-admin-primary" onclick="seedDatabaseFromAdmin()">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Seed Official SSD Content
+                  </button>
+                </div>
               </div>
             </div>
           </div>

@@ -7605,6 +7605,35 @@ function seedDatabaseFromAdmin() {
   }
 }
 
+async function clearDemoDataFromAdmin() {
+  if (!confirm("⚠️ Are you sure you want to CLEAR ALL DEMO DATA?\n\nThis will permanently purge all demo membership applications, member records, donations, receipts, and audit logs.\n\nOfficial structure (roles, wings, leadership council, state/district directorates, officer accounts) will be preserved.\n\nProceed?")) {
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem('ssd_token') || sessionStorage.getItem('ssd_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch('/api/admin/clear-demo-data', {
+      method: 'POST',
+      headers
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      showToast(data.message || 'All demo records successfully cleared!', 'success');
+      setTimeout(() => window.location.reload(), 1200);
+    } else {
+      showToast('Error: ' + (data.error || 'Failed to clear demo data'), 'error');
+    }
+  } catch (err) {
+    showToast('Network error: ' + err.message, 'error');
+  }
+}
+window.clearDemoDataFromAdmin = clearDemoDataFromAdmin;
+window.seedDatabaseFromAdmin = seedDatabaseFromAdmin;
+
 // ==========================================================================
 // MODAL & UI HELPERS
 // ==========================================================================

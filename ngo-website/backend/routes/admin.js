@@ -197,4 +197,57 @@ router.post('/settings', authenticate, requireRole('super_admin'), async (req, r
   }
 });
 
+// 6. CLEAR ALL DEMO DATA (Super Admin only)
+router.post('/clear-demo-data', authenticate, requireRole('super_admin'), async (req, res) => {
+  try {
+    embeddedStore.membership_applications.clear();
+    embeddedStore.approval_actions.clear();
+    embeddedStore.members.clear();
+    embeddedStore.donations.clear();
+    embeddedStore.receipts.clear();
+    embeddedStore.audit_logs.clear();
+    embeddedStore.contact_messages.clear();
+    embeddedStore.event_registrations.clear();
+
+    const officialEmails = new Set([
+      'admin@ssd.org',
+      'secretary@ssd.org',
+      'state.mh@ssd.org',
+      'region.vidarbha@ssd.org',
+      'district.nagpur@ssd.org',
+      'district.pune@ssd.org',
+      'finance@ssd.org',
+      'media@ssd.org',
+      'approvals@ssd.org',
+      'taluka.nagpur@ssd.org',
+      'taluka.haveli@ssd.org'
+    ]);
+
+    const preservedUserIds = new Set();
+    for (const [id, u] of embeddedStore.users.entries()) {
+      if (officialEmails.has(u.email)) {
+        preservedUserIds.add(id);
+      } else {
+        embeddedStore.users.delete(id);
+      }
+    }
+
+    for (const [id, j] of embeddedStore.user_jurisdictions.entries()) {
+      if (!preservedUserIds.has(j.user_id)) {
+        embeddedStore.user_jurisdictions.delete(id);
+      }
+    }
+
+    saveEmbeddedStore();
+
+    return res.json({
+      success: true,
+      message: 'All demo applications, members, donations, receipts, and audit logs cleared successfully.'
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;
+

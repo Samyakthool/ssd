@@ -330,8 +330,9 @@ export async function runMigration() {
     embeddedStore.user_jurisdictions.set(j.id, j);
   }
 
-  // 6. SEED MEMBERSHIP APPLICATIONS IN VARIOUS STATES
-  const sampleApps = [
+  // 6. SEED MEMBERSHIP APPLICATIONS (Only when SEED_DEMO_DATA=true)
+  if (process.env.SEED_DEMO_DATA === 'true') {
+    const sampleApps = [
     {
       id: 'SSD-2026-8F42K7',
       full_name: 'Aniket M. Meshram',
@@ -631,6 +632,7 @@ export async function runMigration() {
       is_80g_eligible: true,
       issued_at: d.created_at
     });
+  }
   }
 
   // 9. SEED EVENTS
