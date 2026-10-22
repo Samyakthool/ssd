@@ -23,7 +23,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
   <!-- Admin Stylesheet -->
-  <link rel="stylesheet" href="admin.css?v=6.0">
+  <link rel="stylesheet" href="admin.css?v=7.0">
 </head>
 <body>
 
@@ -1102,7 +1102,7 @@
               </div>
               <div style="padding: 24px;">
                 <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 18px;">
-                  Export a snapshot of all members, donations, news, campaigns, events, and grievance records as a single JSON file.
+                  Export a snapshot of all members, news, campaigns, events, and grievance records as a single JSON file.
                 </p>
                 <button type="button" class="btn-admin btn-admin-navy" onclick="exportFullDatabaseJSON()">
                   <i class="fa-solid fa-file-code"></i> Download JSON Snapshot
@@ -1213,7 +1213,7 @@
                 <div>
                   <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 4px; color: var(--text-heading, inherit);">Clear All Demo & Test Data</h4>
                   <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 12px; line-height: 1.5;">
-                    Permanently purge all demo membership applications, test member IDs, sample donations, receipts, and audit logs. Official master data (roles, states, districts, wings, executive leadership, official officer accounts) is safely preserved.
+                    Permanently purge all demo membership applications, test member IDs, and audit logs. Official master data (roles, states, districts, wings, executive leadership, official officer accounts) is safely preserved.
                   </p>
                   <button type="button" class="btn-admin" onclick="clearDemoDataFromAdmin()" style="background: #dc2626; color: #fff; border: none; padding: 9px 18px; border-radius: 6px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
                     <i class="fa-solid fa-trash-can"></i> Clear All Demo Data
@@ -2066,7 +2066,6 @@
                 <option value="district_official">District Command Officer / Dalpati (District Scrutiny - L3)</option>
                 <option value="taluka_official">Taluka Executive Officer (Sub-District Ground Verification - L2)</option>
                 <option value="chapter_official">Chapter Unit Official (Local Unit - L1)</option>
-                <option value="finance_admin">National Treasury Officer (Centenary Fund & 80G Audit)</option>
                 <option value="media_admin">Chief Media & IT Cell Officer (Gazette & Media)</option>
                 <option value="testimonials_editor">Voices & Testimonies Editor (Cadre Content - L4)</option>
               </select>
@@ -2585,6 +2584,6 @@
   </div>
 
   <!-- Admin Application Script -->
-  <script src="admin.js?v=6.0"></script>
+  <script src="admin.js?v=7.0"></script>
 </body>
 </html>

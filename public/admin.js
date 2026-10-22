@@ -8159,7 +8159,7 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
     } else if (leader.designation && leader.designation.toLowerCase().includes("mahila")) {
       tags = ["Mahila Dal Expansion", "Women Self-Defense", "Grassroots Legal Literacy", "Equal Rights Advocacy", "Community Organizing"];
     } else if (leader.designation && leader.designation.toLowerCase().includes("treasur")) {
-      tags = ["Centenary Fund Audit", "80G Tax Exempt Compliances", "Financial Governance", "Transparent Public Accounting", "Resource Mobilization"];
+      tags = ["Institutional Governance", "Asset Administration", "Accounting Records", "Compliance & Reporting", "Resource Mobilization"];
     } else {
       tags = ["National Command Coordination", "State Chapter Administration", "Democratic Governance", "Sainik Enlistment", "Centenary 2027 Vision"];
     }
