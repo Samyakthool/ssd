@@ -329,6 +329,199 @@ async function runTests() {
     if (!data.success || data.logs.length === 0) throw new Error('Audit logs missing');
   });
 
+  // 12. VOICES FROM THE FRONTLINE & CADRE TESTIMONIES TESTS
+  let createdTestimonyId = '';
+  await assert('Public Testimonials Retrieval', async () => {
+    const res = await fetch('http://localhost:3000/api/testimonials');
+    const data = await res.json();
+    if (res.status !== 200 || !data.success || !Array.isArray(data.testimonials)) {
+      throw new Error('Failed to retrieve published testimonies');
+    }
+    if (data.testimonials.length === 0) throw new Error('Expected default seeded testimonies');
+  });
+
+  await assert('Cadre Testimony Creation & Upsert by SuperAdmin', async () => {
+    const testPayload = {
+      name: 'Subedar Major Ramesh Shinde',
+      designation: 'State Parade Commander, Maharashtra',
+      category: 'leadership',
+      cadetId: 'SSD-MH-2026-TEST',
+      state: 'Maharashtra',
+      tenure: '28 Years Active Cadre',
+      highlight: 'Discipline in khaki is our defense of the Constitution.',
+      quote: 'From grassroots taluka shakhas to state conclaves, our sainiks maintain unwavering constitutional vigilance.',
+      is_published: true
+    };
+    const res = await fetch('http://localhost:3000/api/testimonials', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: JSON.stringify(testPayload)
+    });
+    const data = await res.json();
+    if (res.status !== 200 || !data.success || !data.testimonial) {
+      throw new Error('Failed to create testimony: ' + JSON.stringify(data));
+    }
+    createdTestimonyId = data.testimonial.id;
+  });
+
+  await assert('Cadre Testimony Status Toggle (Publish/Draft)', async () => {
+    if (!createdTestimonyId) throw new Error('No testimony ID to toggle');
+    const res = await fetch(`http://localhost:3000/api/testimonials/${createdTestimonyId}/toggle`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const data = await res.json();
+    if (res.status !== 200 || !data.success || data.is_published !== false) {
+      throw new Error('Expected testimony to toggle to draft');
+    }
+  });
+
+  await assert('Cadre Testimony Deletion', async () => {
+    if (!createdTestimonyId) throw new Error('No testimony ID to delete');
+    const res = await fetch(`http://localhost:3000/api/testimonials/${createdTestimonyId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const data = await res.json();
+    if (res.status !== 200 || !data.success) {
+      throw new Error('Failed to delete testimony: ' + JSON.stringify(data));
+    }
+  });
+
+  // 13. GRANULAR OFFICER PERMISSION FOR TESTIMONIALS
+  await assert('Granular Desk Permission Authorization for Command Officer', async () => {
+    const newOfficer = {
+      email: `voices.editor.${Date.now()}@ssd.org`,
+      password: 'EditorPass2026!',
+      fullName: 'Sainik Jyoti Gaikwad',
+      phone: '+91 98220 99881',
+      roleId: 'district_official',
+      department: 'Central Media & Frontline Archives',
+      can_edit_testimonials: true,
+      stateId: 'state_mh',
+      districtId: 'dist_mh_nagpur'
+    };
+    const res = await fetch('http://localhost:3000/api/auth/officers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: JSON.stringify(newOfficer)
+    });
+    const data = await res.json();
+    if (res.status !== 200 || !data.success || !data.officerId) {
+      throw new Error('Failed to onboard officer with granular permission: ' + JSON.stringify(data));
+    }
+
+    // Verify officer listing contains can_edit_testimonials
+    const listRes = await fetch('http://localhost:3000/api/auth/officers', {
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const listData = await listRes.json();
+    const found = listData.officers.find(o => o.id === data.officerId);
+    if (!found || !found.can_edit_testimonials) {
+      throw new Error('Officer did not retain can_edit_testimonials permission');
+    }
+  });
+
+  // 14. CMS HOMEPAGE & AIM-MOTTO TESTS
+  await assert('Homepage CMS Content Delivery', async () => {
+    const res = await fetch('http://localhost:3000/api/cms/homepage');
+    const data = await res.json();
+    if (res.status !== 200 || !data.success || !data.homepage.hero) {
+      throw new Error('Failed to retrieve homepage CMS content');
+    }
+  });
+
+  await assert('Trilingual Aim & Motto Formulation', async () => {
+    const res = await fetch('http://localhost:3000/api/cms/aim-motto');
+    const data = await res.json();
+    if (res.status !== 200 || !data.success || !data.aim_motto.official_aim.mr || !data.aim_motto.official_motto.hi) {
+      throw new Error('Aim & motto missing required trilingual formulations');
+    }
+  });
+
+  // 15. HISTORICAL ORGANIZATIONS & TIMELINE TESTS
+  await assert('Historical Predecessors & Verified Organizations', async () => {
+    const res = await fetch('http://localhost:3000/api/cms/history/organizations');
+    const data = await res.json();
+    if (res.status !== 200 || !data.success || data.organizations.length < 5) {
+      throw new Error('Expected at least 5 verified historical predecessor profiles');
+    }
+  });
+
+  await assert('Historical Timeline Chronology', async () => {
+    const res = await fetch('http://localhost:3000/api/cms/history/timeline');
+    const data = await res.json();
+    if (res.status !== 200 || !data.success || data.timeline.length < 8) {
+      throw new Error('Expected at least 8 verified historical timeline milestones');
+    }
+  });
+
+  // 16. CONSTITUTION & INTEGRITY CHECKSUM
+  await assert('Official Constitution Chapters & Cryptographic Checksum', async () => {
+    const res = await fetch('http://localhost:3000/api/constitution');
+    const data = await res.json();
+    if (res.status !== 200 || !data.success || !data.constitution.chapters || data.constitution.chapters.length < 6) {
+      throw new Error('Constitution chapters incomplete');
+    }
+    const checksum = data.constitution.sha256Checksum;
+    const verifyRes = await fetch('http://localhost:3000/api/constitution/verify-checksum', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ checksum })
+    });
+    const verifyData = await verifyRes.json();
+    if (!verifyData.valid) throw new Error('Checksum verification failed');
+  });
+
+  // 17. DIGITAL LIBRARY CATALOG & ACCESS TIERS
+  await assert('Digital Library Categories & Access Control Filtering', async () => {
+    const catsRes = await fetch('http://localhost:3000/api/library/categories');
+    const catsData = await catsRes.json();
+    if (catsRes.status !== 200 || !catsData.success || catsData.categories.length < 6) {
+      throw new Error('Library categories incomplete');
+    }
+
+    const resRes = await fetch('http://localhost:3000/api/library/resources');
+    const resData = await resRes.json();
+    if (resRes.status !== 200 || !resData.success || resData.resources.length < 5) {
+      throw new Error('Library resources catalog empty or incomplete');
+    }
+  });
+
+  // 18. STATUTORY TERMS & CONDITIONS (20 CLAUSES) & DPDP PRIVACY POLICY
+  await assert('Statutory Terms & Conditions 20-Clause Compliance & DPDP Privacy Policy', async () => {
+    const termsRes = await fetch('http://localhost:3000/api/legal/terms');
+    const termsData = await termsRes.json();
+    if (termsRes.status !== 200 || !termsData.success || termsData.terms.sections.length !== 20) {
+      throw new Error('Terms & conditions must have exactly 20 required clauses');
+    }
+
+    const privRes = await fetch('http://localhost:3000/api/legal/privacy');
+    const privData = await privRes.json();
+    if (privRes.status !== 200 || !privData.success || privData.privacy.sections.length < 6) {
+      throw new Error('Privacy policy incomplete');
+    }
+
+    const acceptRes = await fetch('http://localhost:3000/api/legal/accept-terms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userIdentifier: 'SSD-MH-2026-TEST-CADET',
+        versionAccepted: '1.0'
+      })
+    });
+    const acceptData = await acceptRes.json();
+    if (acceptRes.status !== 200 || !acceptData.success || !acceptData.recordId) {
+      throw new Error('Failed to record user statutory terms acceptance');
+    }
+  });
+
   console.log(`\n==========================================================================`);
   console.log(` 🏁 TEST SUITE SUMMARY: ${passed} PASSED, ${failed} FAILED`);
   console.log(`==========================================================================\n`);

@@ -176,6 +176,15 @@
           <span class="sidebar-badge" id="badgeTestimonialsCount">0</span>
         </a>
 
+        <div class="menu-category-label">Content Management System (CMS)</div>
+        <a class="sidebar-item" onclick="switchView('cms')" id="nav-cms">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-pen-to-square"></i>
+            <span>CMS Command Desk</span>
+          </div>
+          <span class="sidebar-badge" style="background: rgba(255, 107, 0, 0.2); color: var(--primary-orange); font-weight: 700;">PRO</span>
+        </a>
+
         <div class="menu-category-label">System & Access Control</div>
         <a class="sidebar-item" onclick="switchView('admins')" id="nav-admins">
           <div class="sidebar-item-left">
@@ -851,6 +860,414 @@
               </table>
             </div>
           </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW: CONTENT MANAGEMENT SYSTEM (CMS)
+             ========================================== -->
+        <section id="viewCms" class="view-panel">
+          
+          <!-- CMS WORKFLOW & PERMISSION STATUS BAR -->
+          <div class="card-panel" style="margin-bottom: 20px; background: linear-gradient(135deg, #0A1F44 0%, #1A3A6B 100%); color: #FFFFFF; border-left: 5px solid var(--primary-orange);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+              <div>
+                <span style="font-size: 11px; font-weight: 800; color: #FFAE66; text-transform: uppercase; letter-spacing: 1.5px;">Central Command Editorial Board</span>
+                <h3 style="font-family: var(--font-heading); font-size: 20px; color: #FFFFFF; margin: 2px 0 6px;">Multi-Tier Content Management & Publication Desk</h3>
+                <div style="font-size: 12.5px; color: #D6E0EA;">
+                  <span><i class="fa-solid fa-code-branch"></i> Workflow: <strong>Draft &rarr; Editorial Review &rarr; Command Approval &rarr; Publication</strong></span> &bull; 
+                  <span><i class="fa-solid fa-user-shield"></i> Your Clearance: <strong id="cmsClearanceBadge" style="color: #FFAE66;">Authorized Editor</strong></span>
+                </div>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn-admin btn-admin-outline" style="border-color: rgba(255,255,255,0.4); color: #fff;" onclick="loadAllCmsData()">
+                  <i class="fa-solid fa-arrows-rotate"></i> Refresh All CMS
+                </button>
+                <a href="index.html" target="_blank" class="btn-admin btn-admin-primary">
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i> Preview Live Portal
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- CMS MODULE SELECTOR TABS -->
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; border-bottom: 2px solid #E2E8F0; padding-bottom: 8px;">
+            <button type="button" class="btn-admin btn-admin-outline cms-tab-btn active" id="tabBtnCmsHome" onclick="switchCmsTab('home')">
+              <i class="fa-solid fa-house"></i> Homepage & Hero
+            </button>
+            <button type="button" class="btn-admin btn-admin-outline cms-tab-btn" id="tabBtnCmsAim" onclick="switchCmsTab('aim')">
+              <i class="fa-solid fa-bullseye"></i> Aim & Motto (Trilingual)
+            </button>
+            <button type="button" class="btn-admin btn-admin-outline cms-tab-btn" id="tabBtnCmsPredecessors" onclick="switchCmsTab('predecessors')">
+              <i class="fa-solid fa-landmark"></i> Historical Predecessors
+            </button>
+            <button type="button" class="btn-admin btn-admin-outline cms-tab-btn" id="tabBtnCmsTimeline" onclick="switchCmsTab('timeline')">
+              <i class="fa-solid fa-timeline"></i> Centennial Timeline
+            </button>
+            <button type="button" class="btn-admin btn-admin-outline cms-tab-btn" id="tabBtnCmsConstitution" onclick="switchCmsTab('constitution')">
+              <i class="fa-solid fa-book-bookmark"></i> Constitution & Amendments
+            </button>
+            <button type="button" class="btn-admin btn-admin-outline cms-tab-btn" id="tabBtnCmsLibrary" onclick="switchCmsTab('library')">
+              <i class="fa-solid fa-book-atlas"></i> Digital Library Catalog
+            </button>
+            <button type="button" class="btn-admin btn-admin-outline cms-tab-btn" id="tabBtnCmsLegal" onclick="switchCmsTab('legal')">
+              <i class="fa-solid fa-scale-balanced"></i> Terms & Privacy (DPDP)
+            </button>
+            <button type="button" class="btn-admin btn-admin-outline cms-tab-btn" id="tabBtnCmsAudit" onclick="switchCmsTab('audit')">
+              <i class="fa-solid fa-list-check"></i> CMS Audit Trail
+            </button>
+          </div>
+
+          <!-- SUB-PANEL 1: HOMEPAGE & HERO -->
+          <div id="cmsPanelHome" class="cms-subpanel">
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-image" style="color: var(--primary-orange);"></i>
+                  <h3>Hero Banner & Homepage Dynamic Presentation</h3>
+                </div>
+              </div>
+              <form id="formCmsHero" onsubmit="handleSaveCmsHero(event)" style="padding: 24px;">
+                <div class="form-grid-modal">
+                  <div class="form-group-modal" style="grid-column: 1 / -1;">
+                    <label for="cmsHeroHeadline">Hero Main Headline</label>
+                    <input type="text" id="cmsHeroHeadline" required style="font-weight: 700; font-size: 16px;">
+                  </div>
+                  <div class="form-group-modal" style="grid-column: 1 / -1;">
+                    <label for="cmsHeroSubheadline">Hero Subtitle / Mission Statement</label>
+                    <textarea id="cmsHeroSubheadline" rows="3" required></textarea>
+                  </div>
+                  <div class="form-group-modal">
+                    <label for="cmsHeroPrimaryText">Primary CTA Button Text</label>
+                    <input type="text" id="cmsHeroPrimaryText" required>
+                  </div>
+                  <div class="form-group-modal">
+                    <label for="cmsHeroPrimaryLink">Primary CTA Link</label>
+                    <input type="text" id="cmsHeroPrimaryLink" required>
+                  </div>
+                  <div class="form-group-modal">
+                    <label for="cmsHeroSecondaryText">Secondary CTA Button Text</label>
+                    <input type="text" id="cmsHeroSecondaryText" required>
+                  </div>
+                  <div class="form-group-modal">
+                    <label for="cmsHeroSecondaryLink">Secondary CTA Link</label>
+                    <input type="text" id="cmsHeroSecondaryLink" required>
+                  </div>
+                  <div class="form-group-modal">
+                    <label for="cmsHeroTertiaryText">Tertiary CTA Button Text</label>
+                    <input type="text" id="cmsHeroTertiaryText" required>
+                  </div>
+                  <div class="form-group-modal">
+                    <label for="cmsHeroTertiaryLink">Tertiary CTA Link</label>
+                    <input type="text" id="cmsHeroTertiaryLink" required>
+                  </div>
+                  <div class="form-group-modal" style="grid-column: 1 / -1;">
+                    <label for="cmsHeroBg">Hero Background Image URL</label>
+                    <input type="text" id="cmsHeroBg" required>
+                  </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; margin-top: 14px;">
+                  <button type="submit" class="btn-admin btn-admin-primary">
+                    <i class="fa-solid fa-floppy-disk"></i> Save & Publish Homepage Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- SUB-PANEL 2: AIM & MOTTO (TRILINGUAL) -->
+          <div id="cmsPanelAim" class="cms-subpanel" style="display: none;">
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-bullseye" style="color: var(--primary-orange);"></i>
+                  <h3>Official Aim & Motto Trilingual Formulation (EN / MR / HI)</h3>
+                </div>
+              </div>
+              <form id="formCmsAimMotto" onsubmit="handleSaveCmsAimMotto(event)" style="padding: 24px;">
+                <h4 style="color: var(--dark-navy); margin-bottom: 12px; font-size: 15px;"><i class="fa-solid fa-compass"></i> Official Aim Formulations</h4>
+                <div class="form-grid-modal">
+                  <div class="form-group-modal" style="grid-column: 1 / -1;">
+                    <label for="cmsAimEn">Official Aim (English)</label>
+                    <textarea id="cmsAimEn" rows="2" required></textarea>
+                  </div>
+                  <div class="form-group-modal" style="grid-column: 1 / -1;">
+                    <label for="cmsAimMr">Official Aim (मराठी मूळ - Marathi)</label>
+                    <textarea id="cmsAimMr" rows="2" required></textarea>
+                  </div>
+                  <div class="form-group-modal" style="grid-column: 1 / -1;">
+                    <label for="cmsAimHi">Official Aim (हिन्दी प्रारूप - Hindi)</label>
+                    <textarea id="cmsAimHi" rows="2" required></textarea>
+                  </div>
+                </div>
+
+                <h4 style="color: var(--dark-navy); margin: 20px 0 12px; font-size: 15px;"><i class="fa-solid fa-shield-halved"></i> Official Motto Formulations</h4>
+                <div class="form-grid-modal">
+                  <div class="form-group-modal">
+                    <label for="cmsMottoEn">Motto (English)</label>
+                    <input type="text" id="cmsMottoEn" required>
+                  </div>
+                  <div class="form-group-modal">
+                    <label for="cmsMottoMr">Motto (मराठी)</label>
+                    <input type="text" id="cmsMottoMr" required>
+                  </div>
+                  <div class="form-group-modal">
+                    <label for="cmsMottoHi">Motto (हिन्दी)</label>
+                    <input type="text" id="cmsMottoHi" required>
+                  </div>
+                </div>
+
+                <h4 style="color: var(--dark-navy); margin: 20px 0 12px; font-size: 15px;"><i class="fa-solid fa-scale-balanced"></i> Discipline & Non-Violence Charter</h4>
+                <div class="form-grid-modal">
+                  <div class="form-group-modal" style="grid-column: 1 / -1;">
+                    <label for="cmsDisciplineEn">Discipline Charter (English)</label>
+                    <textarea id="cmsDisciplineEn" rows="2" required></textarea>
+                  </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 14px;">
+                  <button type="submit" class="btn-admin btn-admin-primary">
+                    <i class="fa-solid fa-floppy-disk"></i> Update Aim & Motto Charter
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- SUB-PANEL 3: HISTORICAL PREDECESSORS -->
+          <div id="cmsPanelPredecessors" class="cms-subpanel" style="display: none;">
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-landmark" style="color: var(--primary-orange);"></i>
+                  <h3>Historical Predecessor Organizations & Movement Profiles</h3>
+                </div>
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openAddHistoricalOrgModal()">
+                  <i class="fa-solid fa-plus"></i> Add Historical Organization
+                </button>
+              </div>
+              <div class="table-responsive">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Title & Location</th>
+                      <th>Founding Date</th>
+                      <th>Key Figures</th>
+                      <th>Primary Citation / Source</th>
+                      <th>Status</th>
+                      <th style="text-align: right;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cmsHistoricalOrgsTableBody">
+                    <tr><td colspan="6" style="text-align: center; padding: 20px;">Loading historical organizations...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-PANEL 4: HISTORICAL TIMELINE -->
+          <div id="cmsPanelTimeline" class="cms-subpanel" style="display: none;">
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-timeline" style="color: var(--primary-orange);"></i>
+                  <h3>Centennial Historical Milestones (1924–2027)</h3>
+                </div>
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openAddTimelineModal()">
+                  <i class="fa-solid fa-plus"></i> Add Timeline Milestone
+                </button>
+              </div>
+              <div class="table-responsive">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Year</th>
+                      <th>Milestone Title</th>
+                      <th>Formatted Date & Location</th>
+                      <th>Period / Era</th>
+                      <th>Published</th>
+                      <th style="text-align: right;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cmsTimelineTableBody">
+                    <tr><td colspan="6" style="text-align: center; padding: 20px;">Loading historical milestones...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-PANEL 5: CONSTITUTION & AMENDMENTS -->
+          <div id="cmsPanelConstitution" class="cms-subpanel" style="display: none;">
+            <div class="card-panel" style="margin-bottom: 24px;">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-book-bookmark" style="color: var(--primary-orange);"></i>
+                  <h3>Official Constitution Current Status & Integrity Checksum</h3>
+                </div>
+              </div>
+              <div style="padding: 24px; background: #F8FAFC; border-radius: 8px; margin: 16px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+                  <div>
+                    <span style="font-size: 11px; font-weight: 700; color: #64748B;">Current Version:</span>
+                    <div style="font-size: 18px; font-weight: 800; color: var(--dark-navy);" id="cmsConstVersion">-</div>
+                  </div>
+                  <div>
+                    <span style="font-size: 11px; font-weight: 700; color: #64748B;">Effective Date:</span>
+                    <div style="font-size: 15px; font-weight: 700; color: var(--dark-navy);" id="cmsConstDate">-</div>
+                  </div>
+                  <div>
+                    <span style="font-size: 11px; font-weight: 700; color: #64748B;">Approving Authority:</span>
+                    <div style="font-size: 13px; font-weight: 600; color: var(--dark-navy);" id="cmsConstAuthority">-</div>
+                  </div>
+                  <div>
+                    <span style="font-size: 11px; font-weight: 700; color: #64748B;">Cryptographic SHA-256:</span>
+                    <code style="font-size: 11px; color: var(--primary-orange); word-break: break-all;" id="cmsConstChecksum">-</code>
+                  </div>
+                </div>
+              </div>
+
+              <!-- REGISTER AMENDMENT FORM -->
+              <div style="padding: 24px; border-top: 1px solid #E2E8F0;">
+                <h4 style="font-size: 16px; color: var(--dark-navy); margin-bottom: 12px;">
+                  <i class="fa-solid fa-stamp" style="color: var(--primary-orange);"></i> Register Official Constitutional Amendment / Revision
+                </h4>
+                <p style="font-size: 13px; color: #64748B; margin-bottom: 16px;">
+                  Under constitutional rules, every amendment increments the version and creates a permanent immutable record with cryptographic integrity checksum.
+                </p>
+                <form id="formCmsAmendment" onsubmit="handleRegisterAmendment(event)">
+                  <div class="form-grid-modal">
+                    <div class="form-group-modal">
+                      <label for="amdVersion">New Edition / Version (e.g. 2.5)</label>
+                      <input type="text" id="amdVersion" required placeholder="e.g. 2.5">
+                    </div>
+                    <div class="form-group-modal">
+                      <label for="amdDate">Effective Date</label>
+                      <input type="text" id="amdDate" required placeholder="e.g. November 2026">
+                    </div>
+                    <div class="form-group-modal">
+                      <label for="amdAuthority">Approving Authority</label>
+                      <input type="text" id="amdAuthority" required value="National Supreme Command & Central Directorate, Nagpur">
+                    </div>
+                    <div class="form-group-modal">
+                      <label for="amdArticles">Articles Amended</label>
+                      <input type="text" id="amdArticles" required placeholder="e.g. Article 4, 12, 19">
+                    </div>
+                    <div class="form-group-modal" style="grid-column: 1 / -1;">
+                      <label for="amdSummary">Amendment Rationale & Resolution Summary</label>
+                      <textarea id="amdSummary" rows="2" required placeholder="Outline why this constitutional amendment was promulgated..."></textarea>
+                    </div>
+                  </div>
+                  <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                    <button type="submit" class="btn-admin btn-admin-primary">
+                      <i class="fa-solid fa-stamp"></i> Register Official Amendment
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-PANEL 6: DIGITAL LIBRARY -->
+          <div id="cmsPanelLibrary" class="cms-subpanel" style="display: none;">
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-book-atlas" style="color: var(--primary-orange);"></i>
+                  <h3>Digital Library Catalog & Access Permissions</h3>
+                </div>
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openAddLibraryModal()">
+                  <i class="fa-solid fa-plus"></i> Add Archival Resource
+                </button>
+              </div>
+              <div class="table-responsive">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Title & Year</th>
+                      <th>Category & Language</th>
+                      <th>Author / Publisher</th>
+                      <th>Access Tier</th>
+                      <th>Format & Checksum</th>
+                      <th style="text-align: right;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cmsLibraryTableBody">
+                    <tr><td colspan="6" style="text-align: center; padding: 20px;">Loading library resources...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-PANEL 7: TERMS & PRIVACY (DPDP) -->
+          <div id="cmsPanelLegal" class="cms-subpanel" style="display: none;">
+            <div class="card-panel" style="margin-bottom: 24px;">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-scale-balanced" style="color: var(--primary-orange);"></i>
+                  <h3>Terms & Conditions (20 Clauses) & DPDP Privacy Policies</h3>
+                </div>
+              </div>
+              <div style="padding: 24px;">
+                <p style="font-size: 14px; color: #475569; margin-bottom: 16px;">
+                  Terms & Conditions (20 sections) and Privacy Policy are currently active and compliant with Indian IT Act 2000 and DPDP Act 2023.
+                </p>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                  <a href="terms.html" target="_blank" class="btn-admin btn-admin-outline"><i class="fa-solid fa-file-contract"></i> View Live Terms</a>
+                  <a href="privacy.html" target="_blank" class="btn-admin btn-admin-outline"><i class="fa-solid fa-user-shield"></i> View Live Privacy</a>
+                </div>
+
+                <h4 style="font-size: 15px; color: var(--dark-navy); margin: 28px 0 12px;">Recent User Acceptance Records (Statutory Audit)</h4>
+                <div class="table-responsive">
+                  <table class="admin-table">
+                    <thead>
+                      <tr>
+                        <th>User Identifier</th>
+                        <th>Terms Version</th>
+                        <th>Timestamp</th>
+                        <th>IP Address</th>
+                        <th>User Agent</th>
+                      </tr>
+                    </thead>
+                    <tbody id="cmsAcceptancesTableBody">
+                      <tr><td colspan="5" style="text-align: center; padding: 20px;">Loading acceptance logs...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-PANEL 8: CMS AUDIT TRAIL -->
+          <div id="cmsPanelAudit" class="cms-subpanel" style="display: none;">
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fa-solid fa-list-check" style="color: var(--primary-orange);"></i>
+                  <h3>CMS Editorial Audit Trail & Version Logs</h3>
+                </div>
+              </div>
+              <div class="table-responsive">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Timestamp</th>
+                      <th>Editor / Officer</th>
+                      <th>Role</th>
+                      <th>Action</th>
+                      <th>Entity Type</th>
+                      <th>Details</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cmsAuditTableBody">
+                    <tr><td colspan="6" style="text-align: center; padding: 20px;">Loading audit trail...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
         </section>
 
         <!-- ==========================================
@@ -2068,6 +2485,11 @@
                 <option value="chapter_official">Chapter Unit Official (Local Unit - L1)</option>
                 <option value="media_admin">Chief Media & IT Cell Officer (Gazette & Media)</option>
                 <option value="testimonials_editor">Voices & Testimonies Editor (Cadre Content - L4)</option>
+                <option value="content_editor">Content Editor (CMS General Desk - L4)</option>
+                <option value="historical_editor">Historical Editor (Archives & Predecessors - L5)</option>
+                <option value="library_manager">Library Manager (Digital Archival Repository - L5)</option>
+                <option value="constitution_manager">Constitution Manager (Statutory Custodian - L6)</option>
+                <option value="legal_reviewer">Legal Reviewer (Terms & DPDP Compliance - L6)</option>
               </select>
             </div>
             <div class="form-group-modal">
@@ -2574,6 +2996,198 @@
         </button>
         <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalReviewDecision')">Close</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       CMS MODAL 1: HISTORICAL PREDECESSOR ORGANIZATION
+       ========================================== -->
+  <div id="modalCmsHistOrg" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 760px;">
+      <div class="admin-modal-header">
+        <h3 id="modalCmsHistOrgTitle"><i class="fa-solid fa-landmark" style="color: var(--primary-orange);"></i> Add / Edit Historical Organization</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalCmsHistOrg')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formCmsHistOrg" onsubmit="handleSaveCmsHistOrg(event)">
+        <div class="admin-modal-body">
+          <input type="hidden" id="cmsHistOrgId">
+          <div class="form-grid-modal">
+            <div class="form-group-modal" style="grid-column: 1 / -1;">
+              <label for="cmsHistOrgName">Organization Name</label>
+              <input type="text" id="cmsHistOrgName" required placeholder="e.g. Bahishkrit Hitakarini Sabha">
+            </div>
+            <div class="form-group-modal">
+              <label for="cmsHistOrgDateRange">Historical Period / Date Range</label>
+              <input type="text" id="cmsHistOrgDateRange" required placeholder="e.g. 1924–1928">
+            </div>
+            <div class="form-group-modal">
+              <label for="cmsHistOrgLocation">Founding Location</label>
+              <input type="text" id="cmsHistOrgLocation" required placeholder="e.g. Damodar Hall, Parel, Bombay">
+            </div>
+            <div class="form-group-modal" style="grid-column: 1 / -1;">
+              <label for="cmsHistOrgLeaders">Key Historical Figures (comma-separated)</label>
+              <input type="text" id="cmsHistOrgLeaders" required placeholder="e.g. Dr. B. R. Ambedkar, Shivram Janba Kamble">
+            </div>
+            <div class="form-group-modal" style="grid-column: 1 / -1;">
+              <label for="cmsHistOrgSummary">Historical Overview & Purpose</label>
+              <textarea id="cmsHistOrgSummary" rows="3" required placeholder="Describe the formation and mandate of this organization..."></textarea>
+            </div>
+            <div class="form-group-modal" style="grid-column: 1 / -1;">
+              <label for="cmsHistOrgSignificance">SSD Lineage & Historical Significance</label>
+              <textarea id="cmsHistOrgSignificance" rows="3" required placeholder="Document the verified historical connection and lineage to SSD..."></textarea>
+            </div>
+            <div class="form-group-modal" style="grid-column: 1 / -1;">
+              <label for="cmsHistOrgSources">Primary Citations & Archival Sources (comma-separated)</label>
+              <input type="text" id="cmsHistOrgSources" required placeholder="e.g. Dr. Babasaheb Ambedkar: Writings and Speeches, Vol. 17">
+            </div>
+            <div class="form-group-modal">
+              <label for="cmsHistOrgStatus">Editorial Status</label>
+              <select id="cmsHistOrgStatus" required>
+                <option value="published">Published (Live to Public)</option>
+                <option value="draft">Draft (Editorial Review)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalCmsHistOrg')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-floppy-disk"></i> Save Historical Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       CMS MODAL 2: CENTENNIAL TIMELINE MILESTONE
+       ========================================== -->
+  <div id="modalCmsTimeline" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 760px;">
+      <div class="admin-modal-header">
+        <h3 id="modalCmsTimelineTitle"><i class="fa-solid fa-timeline" style="color: var(--primary-orange);"></i> Add / Edit Timeline Milestone</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalCmsTimeline')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formCmsTimeline" onsubmit="handleSaveCmsTimeline(event)">
+        <div class="admin-modal-body">
+          <input type="hidden" id="cmsTimelineId">
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="cmsTimelineYear">Milestone Year</label>
+              <input type="number" id="cmsTimelineYear" required placeholder="e.g. 1927" min="1900" max="2100">
+            </div>
+            <div class="form-group-modal">
+              <label for="cmsTimelinePeriod">Period / Era Category</label>
+              <input type="text" id="cmsTimelinePeriod" required placeholder="e.g. Satyagraha & Foundations">
+            </div>
+            <div class="form-group-modal" style="grid-column: 1 / -1;">
+              <label for="cmsTimelineTitleText">Milestone Title</label>
+              <input type="text" id="cmsTimelineTitleText" required placeholder="e.g. Mahad Satyagraha & Volunteer Corps Mobilization">
+            </div>
+            <div class="form-group-modal" style="grid-column: 1 / -1;">
+              <label for="cmsTimelineFormattedDate">Formatted Date & Location</label>
+              <input type="text" id="cmsTimelineFormattedDate" required placeholder="e.g. March 19–20, 1927 • Mahad, Kolaba District">
+            </div>
+            <div class="form-group-modal" style="grid-column: 1 / -1;">
+              <label for="cmsTimelineDescription">Detailed Milestone Description</label>
+              <textarea id="cmsTimelineDescription" rows="4" required placeholder="Historical context and actions undertaken..."></textarea>
+            </div>
+            <div class="form-group-modal">
+              <label for="cmsTimelinePublished">Publication Status</label>
+              <select id="cmsTimelinePublished" required>
+                <option value="true">Published</option>
+                <option value="false">Draft</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalCmsTimeline')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-floppy-disk"></i> Save Milestone</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       CMS MODAL 3: DIGITAL LIBRARY RESOURCE
+       ========================================== -->
+  <div id="modalCmsLibrary" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 820px;">
+      <div class="admin-modal-header">
+        <h3 id="modalCmsLibraryTitle"><i class="fa-solid fa-book-atlas" style="color: var(--primary-orange);"></i> Add / Edit Archival Resource</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalCmsLibrary')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formCmsLibrary" onsubmit="handleSaveCmsLibrary(event)">
+        <div class="admin-modal-body">
+          <input type="hidden" id="cmsLibraryId">
+          <div class="form-grid-modal">
+            <div class="form-group-modal" style="grid-column: 1 / -1;">
+              <label for="cmsLibraryTitleText">Resource Title</label>
+              <input type="text" id="cmsLibraryTitleText" required placeholder="e.g. Samata Sainik Dal Niyamavali va Vidhan">
+            </div>
+            <div class="form-group-modal">
+              <label for="cmsLibraryAuthor">Author / Compiler / Authority</label>
+              <input type="text" id="cmsLibraryAuthor" required placeholder="e.g. Dr. B. R. Ambedkar">
+            </div>
+            <div class="form-group-modal">
+              <label for="cmsLibraryCategory">Resource Category</label>
+              <select id="cmsLibraryCategory" required>
+                <option value="Constitution & Principles">Constitution & Principles</option>
+                <option value="Speeches & Historical Addresses">Speeches & Historical Addresses</option>
+                <option value="Ideological Treatises & Handbooks">Ideological Treatises & Handbooks</option>
+                <option value="Centennial Gazette & Circulars">Centennial Gazette & Circulars</option>
+                <option value="Archival Documents">Archival Documents</option>
+                <option value="Research Papers">Research Papers</option>
+              </select>
+            </div>
+            <div class="form-group-modal">
+              <label for="cmsLibraryLanguage">Language</label>
+              <select id="cmsLibraryLanguage" required>
+                <option value="Marathi">Marathi</option>
+                <option value="English">English</option>
+                <option value="Hindi">Hindi</option>
+                <option value="Bilingual">Bilingual</option>
+              </select>
+            </div>
+            <div class="form-group-modal">
+              <label for="cmsLibraryYear">Publication Year</label>
+              <input type="text" id="cmsLibraryYear" required placeholder="e.g. 1928" style="font-family: monospace;">
+            </div>
+            <div class="form-group-modal">
+              <label for="cmsLibraryAccessTier">Access Clearance Tier</label>
+              <select id="cmsLibraryAccessTier" required>
+                <option value="public">Public (Open to All Citizens)</option>
+                <option value="member">Registered Member Only (Requires Cadre Login)</option>
+                <option value="restricted">Restricted Command Only (Officers & Council)</option>
+              </select>
+            </div>
+            <div class="form-group-modal">
+              <label for="cmsLibraryFormat">File / Media Format</label>
+              <select id="cmsLibraryFormat" required>
+                <option value="PDF">PDF Document</option>
+                <option value="DOCUMENT">Official Document</option>
+                <option value="AUDIO">Archival Audio</option>
+                <option value="IMAGE">Archival Photograph</option>
+              </select>
+            </div>
+            <div class="form-group-modal" style="grid-column: 1 / -1;">
+              <label for="cmsLibraryChecksum">Cryptographic SHA-256 Checksum</label>
+              <input type="text" id="cmsLibraryChecksum" placeholder="64-character hex checksum (optional, auto-generated if empty)" style="font-family: monospace; font-size: 11px;">
+            </div>
+            <div class="form-group-modal" style="grid-column: 1 / -1;">
+              <label for="cmsLibraryFileUrl">Document URL / Storage Key</label>
+              <input type="text" id="cmsLibraryFileUrl" required placeholder="e.g. https://example.org/docs/ssd-constitution.pdf or local path">
+            </div>
+            <div class="form-group-modal" style="grid-column: 1 / -1;">
+              <label for="cmsLibraryDescription">Archival Significance & Description</label>
+              <textarea id="cmsLibraryDescription" rows="3" required placeholder="Contextualize this historical document, provenance, and publication history..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalCmsLibrary')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-floppy-disk"></i> Save Archival Resource</button>
+        </div>
+      </form>
     </div>
   </div>
 

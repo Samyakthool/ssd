@@ -86,7 +86,18 @@ const embeddedStore = {
   contact_messages: new Map(),
   audit_logs: new Map(),
   testimonials: new Map(),
-  system_settings: new Map()
+  system_settings: new Map(),
+  cms_sections: new Map(),
+  aim_motto: new Map(),
+  historical_organizations: new Map(),
+  historical_timeline: new Map(),
+  constitution: new Map(),
+  library_categories: new Map(),
+  library_resources: new Map(),
+  terms_conditions: new Map(),
+  privacy_policy: new Map(),
+  content_audit_logs: new Map(),
+  content_approvals: new Map()
 };
 
 // Persistence file for embedded storage (using /tmp on Vercel)
@@ -174,6 +185,74 @@ function loadEmbeddedStore() {
       for (const [k, v] of Object.entries(defaultSeedData.testimonials)) {
         embeddedStore.testimonials.set(k, v);
       }
+      seeded = true;
+    }
+    if (embeddedStore.aim_motto.size === 0 && defaultSeedData.aim_motto) {
+      embeddedStore.aim_motto.set('current', {
+        id: 'current',
+        ...defaultSeedData.aim_motto,
+        is_published: true,
+        updated_at: new Date().toISOString()
+      });
+      seeded = true;
+    }
+    if (embeddedStore.historical_organizations.size === 0 && defaultSeedData.historical_organizations) {
+      defaultSeedData.historical_organizations.forEach(item => {
+        embeddedStore.historical_organizations.set(item.id, { ...item, is_published: true });
+      });
+      seeded = true;
+    }
+    if (embeddedStore.historical_timeline.size === 0 && defaultSeedData.historical_timeline) {
+      defaultSeedData.historical_timeline.forEach(item => {
+        embeddedStore.historical_timeline.set(item.id, { ...item, is_published: true });
+      });
+      seeded = true;
+    }
+    if (embeddedStore.constitution.size === 0 && defaultSeedData.constitution) {
+      embeddedStore.constitution.set('current', {
+        id: 'current',
+        ...defaultSeedData.constitution,
+        is_published: true,
+        updated_at: new Date().toISOString()
+      });
+      seeded = true;
+    }
+    if (embeddedStore.library_categories.size === 0 && defaultSeedData.library_categories) {
+      defaultSeedData.library_categories.forEach(item => {
+        embeddedStore.library_categories.set(item.id, item);
+      });
+      seeded = true;
+    }
+    if (embeddedStore.library_resources.size === 0 && defaultSeedData.library_resources) {
+      defaultSeedData.library_resources.forEach(item => {
+        embeddedStore.library_resources.set(item.id, { ...item, is_published: true });
+      });
+      seeded = true;
+    }
+    if (embeddedStore.terms_conditions.size === 0 && defaultSeedData.terms_conditions) {
+      embeddedStore.terms_conditions.set('current', {
+        id: 'current',
+        ...defaultSeedData.terms_conditions,
+        is_published: true,
+        updated_at: new Date().toISOString()
+      });
+      seeded = true;
+    }
+    if (embeddedStore.privacy_policy.size === 0 && defaultSeedData.privacy_policy) {
+      embeddedStore.privacy_policy.set('current', {
+        id: 'current',
+        ...defaultSeedData.privacy_policy,
+        is_published: true,
+        updated_at: new Date().toISOString()
+      });
+      seeded = true;
+    }
+    if (embeddedStore.cms_sections.size === 0 && defaultSeedData.cms_homepage) {
+      embeddedStore.cms_sections.set('homepage', {
+        id: 'homepage',
+        ...defaultSeedData.cms_homepage,
+        updated_at: new Date().toISOString()
+      });
       seeded = true;
     }
     if (seeded) {

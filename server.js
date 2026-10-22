@@ -34,6 +34,10 @@ import galleryRoutes from './backend/routes/gallery.js';
 import statsRoutes from './backend/routes/stats.js';
 import testimonialRoutes from './backend/routes/testimonials.js';
 import syncRoutes from './backend/routes/sync.js';
+import cmsRoutes from './backend/routes/cms.js';
+import constitutionRoutes from './backend/routes/constitution.js';
+import libraryRoutes from './backend/routes/library.js';
+import legalRoutes from './backend/routes/legal.js';
 import { initRealtimeRoutes } from './backend/utils/realtime.js';
 import { sendEmailHandler } from './backend/utils/mailer.js';
 
@@ -135,6 +139,10 @@ app.use('/api/gallery', galleryRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/sync', syncRoutes);
+app.use('/api/cms', cmsRoutes);
+app.use('/api/constitution', constitutionRoutes);
+app.use('/api/library', libraryRoutes);
+app.use('/api/legal', legalRoutes);
 app.all('/api/send-email', sendEmailHandler);
 
 // Initialize Real-Time SSE Event Stream & Broadcast Engine

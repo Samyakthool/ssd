@@ -32,7 +32,12 @@ import leadershipRoutes from './backend/routes/leadership.js';
 import campaignRoutes from './backend/routes/campaigns.js';
 import galleryRoutes from './backend/routes/gallery.js';
 import statsRoutes from './backend/routes/stats.js';
+import testimonialRoutes from './backend/routes/testimonials.js';
 import syncRoutes from './backend/routes/sync.js';
+import cmsRoutes from './backend/routes/cms.js';
+import constitutionRoutes from './backend/routes/constitution.js';
+import libraryRoutes from './backend/routes/library.js';
+import legalRoutes from './backend/routes/legal.js';
 import { initRealtimeRoutes } from './backend/utils/realtime.js';
 import { sendEmailHandler } from './backend/utils/mailer.js';
 
@@ -90,6 +95,9 @@ app.use('/api', globalApiRateLimiter);
 
 // URL Normalization & Serverless Compatibility Middleware
 app.use((req, res, next) => {
+  if (req.url === '/' || req.url === '') {
+    return next();
+  }
   if (req.url === '/api' || req.url === '/api/') {
     return res.json({
       status: 'OK',
@@ -128,8 +136,13 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/leadership', leadershipRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/gallery', galleryRoutes);
+app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/sync', syncRoutes);
+app.use('/api/cms', cmsRoutes);
+app.use('/api/constitution', constitutionRoutes);
+app.use('/api/library', libraryRoutes);
+app.use('/api/legal', legalRoutes);
 app.all('/api/send-email', sendEmailHandler);
 
 // Initialize Real-Time SSE Event Stream & Broadcast Engine

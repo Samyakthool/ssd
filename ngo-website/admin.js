@@ -2398,6 +2398,7 @@ const viewMetadata = {
   campaigns: { title: "Ongoing Missions & Causes", sub: "Manage active fundraising goals & volunteer targets" },
   gallery: { title: "Historical & Event Photo Archives", sub: "Curate high-resolution public photo albums" },
   testimonials: { title: "Voices from the Frontline & Cadre Testimonies", sub: "Curate and publish authentic testimonies from state commanders, legal cells, and grassroots cadets" },
+  cms: { title: "Content Management & Publication Desk", sub: "Curate and publish homepage, aim & motto, historical archives, constitution, and digital library" },
   admins: { title: "Authorized Command Officers", sub: "Multi-user authentication, roles & access permissions" },
   contacts: { title: "Grievance Desk & Public Inquiries", sub: "Respond to incoming state command queries" },
   stats: { title: "Public Portal Live Counters", sub: "Update homepage live counters directly in Supabase Cloud" },
@@ -2473,6 +2474,8 @@ function switchView(viewKey) {
     renderTestimonialsTable();
   } else if (viewKey === 'contacts') {
     renderContactsTable();
+  } else if (viewKey === 'cms') {
+    renderCmsView();
   } else if (viewKey === 'stats') {
     populateStatsForm();
   } else if (viewKey === 'settings') {
@@ -8865,4 +8868,720 @@ window.handleSaveTestimonial = handleSaveTestimonial;
 window.toggleTestimonialPublish = toggleTestimonialPublish;
 window.deleteTestimonial = deleteTestimonial;
 window.canEditTestimonials = canEditTestimonials;
+
+// ==========================================================================
+// CONTENT MANAGEMENT SYSTEM (CMS) MODULE
+// ==========================================================================
+
+let cmsCache = {
+  homepage: null,
+  aimMotto: null,
+  historicalOrgs: [],
+  timeline: [],
+  constitution: null,
+  library: [],
+  acceptances: [],
+  auditLogs: []
+};
+
+function getCmsAuthHeaders() {
+  const token = localStorage.getItem("ssd_auth_token") || "";
+  return {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}`
+  };
+}
+
+function renderCmsView() {
+  let userRole = "authorized_editor";
+  try {
+    const userJson = sessionStorage.getItem("ssd_admin_user");
+    if (userJson) {
+      const u = JSON.parse(userJson);
+      userRole = u.role || u.role_id || "Authorized Editor";
+    }
+  } catch (e) {}
+  const badge = document.getElementById("cmsClearanceBadge");
+  if (badge) badge.textContent = userRole.toUpperCase().replace(/_/g, ' ');
+
+  loadAllCmsData();
+}
+
+function switchCmsTab(tabKey) {
+  document.querySelectorAll(".cms-tab-btn").forEach(btn => btn.classList.remove("active"));
+  const btn = document.getElementById("tabBtnCms" + tabKey.charAt(0).toUpperCase() + tabKey.slice(1));
+  if (btn) btn.classList.add("active");
+
+  document.querySelectorAll(".cms-subpanel").forEach(p => p.style.display = "none");
+  const panel = document.getElementById("cmsPanel" + tabKey.charAt(0).toUpperCase() + tabKey.slice(1));
+  if (panel) panel.style.display = "block";
+}
+
+async function loadAllCmsData() {
+  await Promise.allSettled([
+    loadCmsHomepageData(),
+    loadCmsAimMottoData(),
+    loadCmsHistoricalOrgsData(),
+    loadCmsTimelineData(),
+    loadCmsConstitutionData(),
+    loadCmsLibraryData(),
+    loadCmsLegalAcceptances(),
+    loadCmsAuditLogs()
+  ]);
+}
+
+async function loadCmsHomepageData() {
+  try {
+    const res = await fetch("/api/cms/homepage");
+    const data = await res.json();
+    if (data.success && data.homepage) {
+      cmsCache.homepage = data.homepage;
+      const hero = data.homepage.hero || {};
+      const elHead = document.getElementById("cmsHeroHeadline");
+      const elSub = document.getElementById("cmsHeroSubheadline");
+      const elPText = document.getElementById("cmsHeroPrimaryText");
+      const elPLink = document.getElementById("cmsHeroPrimaryLink");
+      const elSText = document.getElementById("cmsHeroSecondaryText");
+      const elSLink = document.getElementById("cmsHeroSecondaryLink");
+      const elTText = document.getElementById("cmsHeroTertiaryText");
+      const elTLink = document.getElementById("cmsHeroTertiaryLink");
+      const elBg = document.getElementById("cmsHeroBg");
+
+      if (elHead && hero.headline) elHead.value = hero.headline;
+      if (elSub && hero.subheadline) elSub.value = hero.subheadline;
+      if (elPText && hero.cta_primary) elPText.value = hero.cta_primary.text || "Explore SSD";
+      if (elPLink && hero.cta_primary) elPLink.value = hero.cta_primary.link || "#about";
+      if (elSText && hero.cta_secondary) elSText.value = hero.cta_secondary.text || "Become a Sainik";
+      if (elSLink && hero.cta_secondary) elSLink.value = hero.cta_secondary.link || "#join";
+      if (elTText && hero.cta_tertiary) elTText.value = hero.cta_tertiary.text || "Explore Digital Library";
+      if (elTLink && hero.cta_tertiary) elTLink.value = hero.cta_tertiary.link || "library.html";
+      if (elBg && hero.background_image) elBg.value = hero.background_image;
+    }
+  } catch (err) {
+    console.warn("CMS Homepage load error:", err);
+  }
+}
+
+async function handleSaveCmsHero(e) {
+  if (e) e.preventDefault();
+  const payload = {
+    hero: {
+      headline: document.getElementById("cmsHeroHeadline")?.value || "",
+      subheadline: document.getElementById("cmsHeroSubheadline")?.value || "",
+      background_image: document.getElementById("cmsHeroBg")?.value || "",
+      cta_primary: {
+        text: document.getElementById("cmsHeroPrimaryText")?.value || "Explore SSD",
+        link: document.getElementById("cmsHeroPrimaryLink")?.value || "#about"
+      },
+      cta_secondary: {
+        text: document.getElementById("cmsHeroSecondaryText")?.value || "Become a Sainik",
+        link: document.getElementById("cmsHeroSecondaryLink")?.value || "#join"
+      },
+      cta_tertiary: {
+        text: document.getElementById("cmsHeroTertiaryText")?.value || "Explore Digital Library",
+        link: document.getElementById("cmsHeroTertiaryLink")?.value || "library.html"
+      }
+    }
+  };
+
+  try {
+    const res = await fetch("/api/cms/homepage", {
+      method: "PUT",
+      headers: getCmsAuthHeaders(),
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast("Homepage Hero banner updated and published successfully!", "success");
+      loadCmsAuditLogs();
+    } else {
+      showToast(data.error || "Failed to update homepage hero", "error");
+    }
+  } catch (err) {
+    showToast("Network error updating homepage hero", "error");
+  }
+}
+
+async function loadCmsAimMottoData() {
+  try {
+    const res = await fetch("/api/cms/aim-motto");
+    const data = await res.json();
+    if (data.success && data.aim_motto) {
+      cmsCache.aimMotto = data.aim_motto;
+      const am = data.aim_motto;
+      if (document.getElementById("cmsAimEn")) document.getElementById("cmsAimEn").value = am.aim?.en || "";
+      if (document.getElementById("cmsAimMr")) document.getElementById("cmsAimMr").value = am.aim?.mr || "";
+      if (document.getElementById("cmsAimHi")) document.getElementById("cmsAimHi").value = am.aim?.hi || "";
+      if (document.getElementById("cmsMottoEn")) document.getElementById("cmsMottoEn").value = am.motto?.en || "";
+      if (document.getElementById("cmsMottoMr")) document.getElementById("cmsMottoMr").value = am.motto?.mr || "";
+      if (document.getElementById("cmsMottoHi")) document.getElementById("cmsMottoHi").value = am.motto?.hi || "";
+      if (document.getElementById("cmsDisciplineEn")) document.getElementById("cmsDisciplineEn").value = am.discipline?.en || "";
+    }
+  } catch (err) {
+    console.warn("CMS Aim & Motto load error:", err);
+  }
+}
+
+async function handleSaveCmsAimMotto(e) {
+  if (e) e.preventDefault();
+  const payload = {
+    aim: {
+      en: document.getElementById("cmsAimEn")?.value || "",
+      mr: document.getElementById("cmsAimMr")?.value || "",
+      hi: document.getElementById("cmsAimHi")?.value || ""
+    },
+    motto: {
+      en: document.getElementById("cmsMottoEn")?.value || "",
+      mr: document.getElementById("cmsMottoMr")?.value || "",
+      hi: document.getElementById("cmsMottoHi")?.value || ""
+    },
+    discipline: {
+      en: document.getElementById("cmsDisciplineEn")?.value || ""
+    }
+  };
+
+  try {
+    const res = await fetch("/api/cms/aim-motto", {
+      method: "PUT",
+      headers: getCmsAuthHeaders(),
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast("Aim & Motto charter updated successfully!", "success");
+      loadCmsAuditLogs();
+    } else {
+      showToast(data.error || "Failed to update Aim & Motto", "error");
+    }
+  } catch (err) {
+    showToast("Network error updating Aim & Motto", "error");
+  }
+}
+
+async function loadCmsHistoricalOrgsData() {
+  const tbody = document.getElementById("cmsHistoricalOrgsTableBody");
+  if (!tbody) return;
+  try {
+    const res = await fetch("/api/cms/historical-organizations");
+    const data = await res.json();
+    if (data.success && data.organizations) {
+      cmsCache.historicalOrgs = data.organizations;
+      if (data.organizations.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #64748B;">No historical predecessor profiles found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.organizations.map(org => `
+        <tr>
+          <td>
+            <strong>${escapeHtml(org.name)}</strong>
+            <div style="font-size: 11px; color: #64748B;">${escapeHtml(org.location || '')}</div>
+          </td>
+          <td><span class="badge" style="background: #EEF2F6; color: var(--dark-navy); font-weight: 700;">${escapeHtml(org.date_range || '')}</span></td>
+          <td style="font-size: 12px; color: #334155;">${escapeHtml(Array.isArray(org.leaders) ? org.leaders.join(', ') : (org.leaders || ''))}</td>
+          <td style="font-size: 11px; color: #64748B; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            ${escapeHtml(Array.isArray(org.sources) ? org.sources.join('; ') : (org.sources || ''))}
+          </td>
+          <td>
+            <span class="badge" style="background: ${org.status === 'published' ? '#DCFCE7; color: #15803D;' : '#FEF3C7; color: #B45309;'}">
+              ${escapeHtml(org.status || 'published')}
+            </span>
+          </td>
+          <td style="text-align: right; white-space: nowrap;">
+            <button type="button" class="btn-table-action" onclick="openEditHistoricalOrgModal('${org.id}')" title="Edit">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button type="button" class="btn-table-action" style="color: #DC2626;" onclick="deleteCmsHistOrg('${org.id}')" title="Delete">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Error loading historical organizations.</td></tr>';
+  }
+}
+
+function openAddHistoricalOrgModal() {
+  document.getElementById("modalCmsHistOrgTitle").innerHTML = '<i class="fa-solid fa-landmark" style="color: var(--primary-orange);"></i> Add Historical Organization';
+  document.getElementById("cmsHistOrgId").value = "";
+  document.getElementById("cmsHistOrgName").value = "";
+  document.getElementById("cmsHistOrgDateRange").value = "";
+  document.getElementById("cmsHistOrgLocation").value = "";
+  document.getElementById("cmsHistOrgLeaders").value = "";
+  document.getElementById("cmsHistOrgSummary").value = "";
+  document.getElementById("cmsHistOrgSignificance").value = "";
+  document.getElementById("cmsHistOrgSources").value = "";
+  document.getElementById("cmsHistOrgStatus").value = "published";
+  openAdminModal("modalCmsHistOrg");
+}
+
+function openEditHistoricalOrgModal(id) {
+  const org = (cmsCache.historicalOrgs || []).find(o => o.id === id);
+  if (!org) return;
+  document.getElementById("modalCmsHistOrgTitle").innerHTML = '<i class="fa-solid fa-pen-to-square" style="color: var(--primary-orange);"></i> Edit Historical Organization';
+  document.getElementById("cmsHistOrgId").value = org.id;
+  document.getElementById("cmsHistOrgName").value = org.name || "";
+  document.getElementById("cmsHistOrgDateRange").value = org.date_range || "";
+  document.getElementById("cmsHistOrgLocation").value = org.location || "";
+  document.getElementById("cmsHistOrgLeaders").value = Array.isArray(org.leaders) ? org.leaders.join(", ") : (org.leaders || "");
+  document.getElementById("cmsHistOrgSummary").value = org.summary || "";
+  document.getElementById("cmsHistOrgSignificance").value = org.significance || "";
+  document.getElementById("cmsHistOrgSources").value = Array.isArray(org.sources) ? org.sources.join(", ") : (org.sources || "");
+  document.getElementById("cmsHistOrgStatus").value = org.status || "published";
+  openAdminModal("modalCmsHistOrg");
+}
+
+async function handleSaveCmsHistOrg(e) {
+  if (e) e.preventDefault();
+  const id = document.getElementById("cmsHistOrgId").value.trim();
+  const payload = {
+    name: document.getElementById("cmsHistOrgName").value.trim(),
+    date_range: document.getElementById("cmsHistOrgDateRange").value.trim(),
+    location: document.getElementById("cmsHistOrgLocation").value.trim(),
+    leaders: document.getElementById("cmsHistOrgLeaders").value.split(",").map(s => s.trim()).filter(Boolean),
+    summary: document.getElementById("cmsHistOrgSummary").value.trim(),
+    significance: document.getElementById("cmsHistOrgSignificance").value.trim(),
+    sources: document.getElementById("cmsHistOrgSources").value.split(",").map(s => s.trim()).filter(Boolean),
+    status: document.getElementById("cmsHistOrgStatus").value
+  };
+
+  const url = id ? `/api/cms/historical-organizations/${encodeURIComponent(id)}` : `/api/cms/historical-organizations`;
+  const method = id ? "PUT" : "POST";
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: getCmsAuthHeaders(),
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeAdminModal("modalCmsHistOrg");
+      showToast("Historical organization saved successfully!", "success");
+      loadCmsHistoricalOrgsData();
+      loadCmsAuditLogs();
+    } else {
+      showToast(data.error || "Failed to save historical organization", "error");
+    }
+  } catch (err) {
+    showToast("Network error saving historical organization", "error");
+  }
+}
+
+async function deleteCmsHistOrg(id) {
+  if (!confirm("Are you sure you want to remove this historical organization record?")) return;
+  try {
+    const res = await fetch(`/api/cms/historical-organizations/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: getCmsAuthHeaders()
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast("Historical organization removed", "success");
+      loadCmsHistoricalOrgsData();
+      loadCmsAuditLogs();
+    } else {
+      showToast(data.error || "Failed to delete record", "error");
+    }
+  } catch (err) {
+    showToast("Network error deleting record", "error");
+  }
+}
+
+async function loadCmsTimelineData() {
+  const tbody = document.getElementById("cmsTimelineTableBody");
+  if (!tbody) return;
+  try {
+    const res = await fetch("/api/cms/timeline");
+    const data = await res.json();
+    if (data.success && data.timeline) {
+      cmsCache.timeline = data.timeline;
+      if (data.timeline.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #64748B;">No timeline milestones found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.timeline.map(m => `
+        <tr>
+          <td><strong style="color: var(--primary-orange); font-size: 15px;">${escapeHtml(String(m.year))}</strong></td>
+          <td>
+            <strong>${escapeHtml(m.title)}</strong>
+            <div style="font-size: 11px; color: #64748B; max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              ${escapeHtml(m.description || '')}
+            </div>
+          </td>
+          <td style="font-size: 12px; color: #334155;">${escapeHtml(m.formatted_date || '')}</td>
+          <td><span class="badge" style="background: #EFF6FF; color: #1D4ED8;">${escapeHtml(m.period || '')}</span></td>
+          <td>
+            <span class="badge" style="background: ${m.is_published !== false ? '#DCFCE7; color: #15803D;' : '#FEF3C7; color: #B45309;'}">
+              ${m.is_published !== false ? 'Published' : 'Draft'}
+            </span>
+          </td>
+          <td style="text-align: right; white-space: nowrap;">
+            <button type="button" class="btn-table-action" onclick="openEditTimelineModal('${m.id}')" title="Edit">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button type="button" class="btn-table-action" style="color: #DC2626;" onclick="deleteCmsTimeline('${m.id}')" title="Delete">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Error loading timeline.</td></tr>';
+  }
+}
+
+function openAddTimelineModal() {
+  document.getElementById("modalCmsTimelineTitle").innerHTML = '<i class="fa-solid fa-timeline" style="color: var(--primary-orange);"></i> Add Timeline Milestone';
+  document.getElementById("cmsTimelineId").value = "";
+  document.getElementById("cmsTimelineYear").value = new Date().getFullYear();
+  document.getElementById("cmsTimelinePeriod").value = "Contemporary & Future";
+  document.getElementById("cmsTimelineTitleText").value = "";
+  document.getElementById("cmsTimelineFormattedDate").value = "";
+  document.getElementById("cmsTimelineDescription").value = "";
+  document.getElementById("cmsTimelinePublished").value = "true";
+  openAdminModal("modalCmsTimeline");
+}
+
+function openEditTimelineModal(id) {
+  const m = (cmsCache.timeline || []).find(item => item.id === id);
+  if (!m) return;
+  document.getElementById("modalCmsTimelineTitle").innerHTML = '<i class="fa-solid fa-pen-to-square" style="color: var(--primary-orange);"></i> Edit Timeline Milestone';
+  document.getElementById("cmsTimelineId").value = m.id;
+  document.getElementById("cmsTimelineYear").value = m.year || "";
+  document.getElementById("cmsTimelinePeriod").value = m.period || "";
+  document.getElementById("cmsTimelineTitleText").value = m.title || "";
+  document.getElementById("cmsTimelineFormattedDate").value = m.formatted_date || "";
+  document.getElementById("cmsTimelineDescription").value = m.description || "";
+  document.getElementById("cmsTimelinePublished").value = m.is_published !== false ? "true" : "false";
+  openAdminModal("modalCmsTimeline");
+}
+
+async function handleSaveCmsTimeline(e) {
+  if (e) e.preventDefault();
+  const id = document.getElementById("cmsTimelineId").value.trim();
+  const payload = {
+    year: parseInt(document.getElementById("cmsTimelineYear").value, 10),
+    period: document.getElementById("cmsTimelinePeriod").value.trim(),
+    title: document.getElementById("cmsTimelineTitleText").value.trim(),
+    formatted_date: document.getElementById("cmsTimelineFormattedDate").value.trim(),
+    description: document.getElementById("cmsTimelineDescription").value.trim(),
+    is_published: document.getElementById("cmsTimelinePublished").value === "true"
+  };
+
+  const url = id ? `/api/cms/timeline/${encodeURIComponent(id)}` : `/api/cms/timeline`;
+  const method = id ? "PUT" : "POST";
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: getCmsAuthHeaders(),
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeAdminModal("modalCmsTimeline");
+      showToast("Timeline milestone saved successfully!", "success");
+      loadCmsTimelineData();
+      loadCmsAuditLogs();
+    } else {
+      showToast(data.error || "Failed to save milestone", "error");
+    }
+  } catch (err) {
+    showToast("Network error saving milestone", "error");
+  }
+}
+
+async function deleteCmsTimeline(id) {
+  if (!confirm("Are you sure you want to remove this milestone?")) return;
+  try {
+    const res = await fetch(`/api/cms/timeline/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: getCmsAuthHeaders()
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast("Milestone removed successfully", "success");
+      loadCmsTimelineData();
+      loadCmsAuditLogs();
+    } else {
+      showToast(data.error || "Failed to delete milestone", "error");
+    }
+  } catch (err) {
+    showToast("Network error deleting milestone", "error");
+  }
+}
+
+async function loadCmsConstitutionData() {
+  try {
+    const res = await fetch("/api/constitution");
+    const data = await res.json();
+    if (data.success && data.constitution) {
+      cmsCache.constitution = data.constitution;
+      const c = data.constitution;
+      if (document.getElementById("cmsConstVersion")) document.getElementById("cmsConstVersion").textContent = "Edition " + (c.version || "2.4");
+      if (document.getElementById("cmsConstDate")) document.getElementById("cmsConstDate").textContent = c.effective_date || "October 2026";
+      if (document.getElementById("cmsConstAuthority")) document.getElementById("cmsConstAuthority").textContent = c.approving_authority || "Supreme Command Directorate";
+      if (document.getElementById("cmsConstChecksum")) document.getElementById("cmsConstChecksum").textContent = c.integrity_checksum || "Verified SHA-256";
+    }
+  } catch (err) {
+    console.warn("CMS Constitution load error:", err);
+  }
+}
+
+async function handleRegisterAmendment(e) {
+  if (e) e.preventDefault();
+  const payload = {
+    version: document.getElementById("amdVersion").value.trim(),
+    effective_date: document.getElementById("amdDate").value.trim(),
+    authority: document.getElementById("amdAuthority").value.trim(),
+    articles_amended: document.getElementById("amdArticles").value.trim(),
+    summary: document.getElementById("amdSummary").value.trim()
+  };
+
+  try {
+    const res = await fetch("/api/constitution/amendments", {
+      method: "POST",
+      headers: getCmsAuthHeaders(),
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`Constitutional amendment promulgated! Version updated to ${payload.version}`, "success");
+      document.getElementById("formCmsAmendment")?.reset();
+      loadCmsConstitutionData();
+      loadCmsAuditLogs();
+    } else {
+      showToast(data.error || "Failed to promulgate amendment", "error");
+    }
+  } catch (err) {
+    showToast("Network error registering amendment", "error");
+  }
+}
+
+async function loadCmsLibraryData() {
+  const tbody = document.getElementById("cmsLibraryTableBody");
+  if (!tbody) return;
+  try {
+    const res = await fetch("/api/library/resources");
+    const data = await res.json();
+    if (data.success && data.resources) {
+      cmsCache.library = data.resources;
+      if (data.resources.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #64748B;">No library resources found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.resources.map(r => `
+        <tr>
+          <td>
+            <strong>${escapeHtml(r.title)}</strong>
+            <div style="font-size: 11px; color: #64748B;">Published ${escapeHtml(String(r.year || ''))}</div>
+          </td>
+          <td>
+            <span class="badge" style="background: #F1F5F9; color: var(--dark-navy);">${escapeHtml(r.category || '')}</span>
+            <div style="font-size: 11px; color: #64748B; margin-top: 2px;">${escapeHtml(r.language || '')}</div>
+          </td>
+          <td style="font-size: 12.5px; color: #334155;">${escapeHtml(r.author || '')}</td>
+          <td>
+            <span class="badge" style="background: ${r.access_tier === 'public' ? '#DCFCE7; color: #15803D;' : (r.access_tier === 'member' ? '#DBEAFE; color: #1E40AF;' : '#FEE2E2; color: #B91C1C;')}">
+              ${escapeHtml((r.access_tier || 'public').toUpperCase())}
+            </span>
+          </td>
+          <td>
+            <span style="font-size: 11px; font-weight: 700; color: #64748B;">${escapeHtml(r.file_format || 'PDF')}</span>
+            <div style="font-family: monospace; font-size: 10px; color: #94A3B8; max-width: 120px; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(r.checksum || '')}">
+              ${escapeHtml(r.checksum ? r.checksum.slice(0, 12) + '...' : 'SHA-256 verified')}
+            </div>
+          </td>
+          <td style="text-align: right; white-space: nowrap;">
+            <button type="button" class="btn-table-action" onclick="openEditLibraryModal('${r.id}')" title="Edit">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button type="button" class="btn-table-action" style="color: #DC2626;" onclick="deleteCmsLibrary('${r.id}')" title="Delete">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Error loading library resources.</td></tr>';
+  }
+}
+
+function openAddLibraryModal() {
+  document.getElementById("modalCmsLibraryTitle").innerHTML = '<i class="fa-solid fa-book-atlas" style="color: var(--primary-orange);"></i> Add Archival Resource';
+  document.getElementById("cmsLibraryId").value = "";
+  document.getElementById("cmsLibraryTitleText").value = "";
+  document.getElementById("cmsLibraryAuthor").value = "";
+  document.getElementById("cmsLibraryCategory").value = "Constitution & Principles";
+  document.getElementById("cmsLibraryLanguage").value = "Marathi";
+  document.getElementById("cmsLibraryYear").value = new Date().getFullYear();
+  document.getElementById("cmsLibraryAccessTier").value = "public";
+  document.getElementById("cmsLibraryFormat").value = "PDF";
+  document.getElementById("cmsLibraryChecksum").value = "";
+  document.getElementById("cmsLibraryFileUrl").value = "";
+  document.getElementById("cmsLibraryDescription").value = "";
+  openAdminModal("modalCmsLibrary");
+}
+
+function openEditLibraryModal(id) {
+  const r = (cmsCache.library || []).find(item => item.id === id);
+  if (!r) return;
+  document.getElementById("modalCmsLibraryTitle").innerHTML = '<i class="fa-solid fa-pen-to-square" style="color: var(--primary-orange);"></i> Edit Archival Resource';
+  document.getElementById("cmsLibraryId").value = r.id;
+  document.getElementById("cmsLibraryTitleText").value = r.title || "";
+  document.getElementById("cmsLibraryAuthor").value = r.author || "";
+  document.getElementById("cmsLibraryCategory").value = r.category || "Constitution & Principles";
+  document.getElementById("cmsLibraryLanguage").value = r.language || "Marathi";
+  document.getElementById("cmsLibraryYear").value = r.year || "";
+  document.getElementById("cmsLibraryAccessTier").value = r.access_tier || "public";
+  document.getElementById("cmsLibraryFormat").value = r.file_format || "PDF";
+  document.getElementById("cmsLibraryChecksum").value = r.checksum || "";
+  document.getElementById("cmsLibraryFileUrl").value = r.file_url || "";
+  document.getElementById("cmsLibraryDescription").value = r.description || "";
+  openAdminModal("modalCmsLibrary");
+}
+
+async function handleSaveCmsLibrary(e) {
+  if (e) e.preventDefault();
+  const id = document.getElementById("cmsLibraryId").value.trim();
+  const payload = {
+    title: document.getElementById("cmsLibraryTitleText").value.trim(),
+    author: document.getElementById("cmsLibraryAuthor").value.trim(),
+    category: document.getElementById("cmsLibraryCategory").value,
+    language: document.getElementById("cmsLibraryLanguage").value,
+    year: document.getElementById("cmsLibraryYear").value.trim(),
+    access_tier: document.getElementById("cmsLibraryAccessTier").value,
+    file_format: document.getElementById("cmsLibraryFormat").value,
+    checksum: document.getElementById("cmsLibraryChecksum").value.trim() || undefined,
+    file_url: document.getElementById("cmsLibraryFileUrl").value.trim(),
+    description: document.getElementById("cmsLibraryDescription").value.trim()
+  };
+
+  const url = id ? `/api/library/resources/${encodeURIComponent(id)}` : `/api/library/resources`;
+  const method = id ? "PUT" : "POST";
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: getCmsAuthHeaders(),
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeAdminModal("modalCmsLibrary");
+      showToast("Library resource saved successfully!", "success");
+      loadCmsLibraryData();
+      loadCmsAuditLogs();
+    } else {
+      showToast(data.error || "Failed to save library resource", "error");
+    }
+  } catch (err) {
+    showToast("Network error saving library resource", "error");
+  }
+}
+
+async function deleteCmsLibrary(id) {
+  if (!confirm("Are you sure you want to remove this archival resource?")) return;
+  try {
+    const res = await fetch(`/api/library/resources/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: getCmsAuthHeaders()
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast("Archival resource removed", "success");
+      loadCmsLibraryData();
+      loadCmsAuditLogs();
+    } else {
+      showToast(data.error || "Failed to delete resource", "error");
+    }
+  } catch (err) {
+    showToast("Network error deleting resource", "error");
+  }
+}
+
+async function loadCmsLegalAcceptances() {
+  const tbody = document.getElementById("cmsAcceptancesTableBody");
+  if (!tbody) return;
+  try {
+    const res = await fetch("/api/legal/acceptances", {
+      headers: getCmsAuthHeaders()
+    });
+    const data = await res.json();
+    if (data.success && data.acceptances) {
+      cmsCache.acceptances = data.acceptances;
+      if (data.acceptances.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #64748B;">No statutory user acceptances recorded yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.acceptances.slice(0, 30).map(a => `
+        <tr>
+          <td><strong>${escapeHtml(a.user_identifier || a.user_id || 'Citizen')}</strong></td>
+          <td><span class="badge" style="background: #EEF2F6; color: var(--dark-navy);">v${escapeHtml(a.version || '1.0')}</span></td>
+          <td style="font-size: 12px; color: #64748B;">${new Date(a.accepted_at || a.timestamp).toLocaleString('en-IN')}</td>
+          <td style="font-family: monospace; font-size: 11px;">${escapeHtml(a.ip_address || '127.0.0.1')}</td>
+          <td style="font-size: 11px; color: #94A3B8; max-width: 220px; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(a.user_agent || 'Browser')}</td>
+        </tr>
+      `).join('');
+    }
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Error loading legal acceptances.</td></tr>';
+  }
+}
+
+async function loadCmsAuditLogs() {
+  const tbody = document.getElementById("cmsAuditTableBody");
+  if (!tbody) return;
+  try {
+    const res = await fetch("/api/cms/audit-logs", {
+      headers: getCmsAuthHeaders()
+    });
+    const data = await res.json();
+    if (data.success && data.logs) {
+      cmsCache.auditLogs = data.logs;
+      if (data.logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #64748B;">No CMS audit records yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.logs.slice(0, 40).map(l => `
+        <tr>
+          <td style="font-size: 11.5px; color: #64748B; white-space: nowrap;">${new Date(l.timestamp || l.created_at).toLocaleString('en-IN')}</td>
+          <td><strong>${escapeHtml(l.officer_name || l.user_id || 'System Officer')}</strong></td>
+          <td><span class="badge" style="background: #FEF3C7; color: #B45309;">${escapeHtml(l.role || 'Officer')}</span></td>
+          <td><span class="badge" style="background: #EFF6FF; color: #1D4ED8; font-weight: 700;">${escapeHtml(l.action)}</span></td>
+          <td style="font-size: 12px; color: #334155;">${escapeHtml(l.entity_type || '')}</td>
+          <td style="font-size: 11px; color: #64748B; max-width: 240px; overflow: hidden; text-overflow: ellipsis;">
+            ${escapeHtml(typeof l.details === 'object' ? JSON.stringify(l.details) : String(l.details || ''))}
+          </td>
+        </tr>
+      `).join('');
+    }
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Error loading CMS audit logs.</td></tr>';
+  }
+}
+
+// CMS Global Bindings
+window.renderCmsView = renderCmsView;
+window.switchCmsTab = switchCmsTab;
+window.loadAllCmsData = loadAllCmsData;
+window.handleSaveCmsHero = handleSaveCmsHero;
+window.handleSaveCmsAimMotto = handleSaveCmsAimMotto;
+window.openAddHistoricalOrgModal = openAddHistoricalOrgModal;
+window.openEditHistoricalOrgModal = openEditHistoricalOrgModal;
+window.handleSaveCmsHistOrg = handleSaveCmsHistOrg;
+window.deleteCmsHistOrg = deleteCmsHistOrg;
+window.openAddTimelineModal = openAddTimelineModal;
+window.openEditTimelineModal = openEditTimelineModal;
+window.handleSaveCmsTimeline = handleSaveCmsTimeline;
+window.deleteCmsTimeline = deleteCmsTimeline;
+window.handleRegisterAmendment = handleRegisterAmendment;
+window.openAddLibraryModal = openAddLibraryModal;
+window.openEditLibraryModal = openEditLibraryModal;
+window.handleSaveCmsLibrary = handleSaveCmsLibrary;
+window.deleteCmsLibrary = deleteCmsLibrary;
 
