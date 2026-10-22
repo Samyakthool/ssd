@@ -147,7 +147,6 @@
             <li class="nav-item"><a href="contact.html" class="nav-link">Contact</a></li>
           </ul>
           <div class="nav-cta" style="display: flex; gap: 8px;">
-            <a href="index.html#donate" class="btn btn-secondary btn-sm" style="color: var(--primary-orange); border-color: rgba(255,107,0,0.3);"><i class="fa-solid fa-hand-holding-heart"></i> Donate</a>
             <a href="member-portal.html" class="btn btn-primary btn-sm"><i class="fa-solid fa-id-badge"></i> Member Portal</a>
           </div>
         </nav>
@@ -181,7 +180,6 @@
           <p class="section-subtitle" style="max-width: 850px; margin: 0 auto 16px;">Founded by Bodhisattva Dr. B.R. Ambedkar on 24 September 1927. Steered by seasoned Ambedkarite scholars, retired military officers, legal luminaries, and dedicated grassroots commanders across India.</p>
           <div style="display: flex; justify-content: center; gap: 14px; margin-top: 20px; flex-wrap: wrap;">
             <a href="#join-us" class="btn btn-primary"><i class="fa-solid fa-user-shield"></i> Enlist Under Central Command</a>
-            <a href="#donate" class="btn btn-outline-navy"><i class="fa-solid fa-hand-holding-dollar"></i> Support Movement & Centenary Fund</a>
             <a href="about.html" class="btn btn-navy"><i class="fa-solid fa-book-bookmark"></i> SSD Constitution & 1927 History</a>
           </div>
         </div>
@@ -454,8 +452,7 @@
                 </div>
               </div>
               <div class="campaign-actions">
-                <button type="button" class="btn btn-primary btn-sm" onclick="openDonationModal('Centenary 2027 Trust Fund', 1000)"><i class="fa-solid fa-hand-holding-dollar"></i> Support</button>
-                <a href="#join-us" class="btn btn-outline-navy btn-sm"><i class="fa-solid fa-user-plus"></i> Enlist</a>
+                <a href="#join-us" class="btn btn-primary btn-sm"><i class="fa-solid fa-user-plus"></i> Enlist</a>
               </div>
             </div>
           </div>
@@ -482,8 +479,7 @@
                 </div>
               </div>
               <div class="campaign-actions">
-                <button type="button" class="btn btn-primary btn-sm" onclick="openDonationModal('Constitutional Literacy', 1000)"><i class="fa-solid fa-hand-holding-dollar"></i> Support</button>
-                <a href="#join-us" class="btn btn-outline-navy btn-sm"><i class="fa-solid fa-user-plus"></i> Enlist</a>
+                <a href="#join-us" class="btn btn-primary btn-sm"><i class="fa-solid fa-user-plus"></i> Enlist</a>
               </div>
             </div>
           </div>
@@ -510,8 +506,7 @@
                 </div>
               </div>
               <div class="campaign-actions">
-                <button type="button" class="btn btn-primary btn-sm" onclick="openDonationModal('Mahila Dal Welfare', 1000)"><i class="fa-solid fa-hand-holding-dollar"></i> Support</button>
-                <a href="#join-us" class="btn btn-outline-navy btn-sm"><i class="fa-solid fa-user-plus"></i> Enlist</a>
+                <a href="#join-us" class="btn btn-primary btn-sm"><i class="fa-solid fa-user-plus"></i> Enlist</a>
               </div>
             </div>
           </div>
@@ -538,8 +533,7 @@
                 </div>
               </div>
               <div class="campaign-actions">
-                <button type="button" class="btn btn-primary btn-sm" onclick="openDonationModal('Disaster Relief & Sewa', 1000)"><i class="fa-solid fa-hand-holding-dollar"></i> Support</button>
-                <a href="#join-us" class="btn btn-outline-navy btn-sm"><i class="fa-solid fa-user-plus"></i> Enlist</a>
+                <a href="#join-us" class="btn btn-primary btn-sm"><i class="fa-solid fa-user-plus"></i> Enlist</a>
               </div>
             </div>
           </div>
@@ -748,67 +742,6 @@
       </div>
     </section>
 
-    <!-- SECTION: DONATE US / COMMUNITY SUPPORT -->
-    <section class="donation-section" id="donate">
-      <div class="container">
-        <div class="section-header">
-          <span class="section-badge" style="background: rgba(255, 255, 255, 0.1); color: var(--primary-orange); border-color: rgba(255, 107, 0, 0.4);"><i class="fa-solid fa-hand-holding-dollar"></i> Transparent Community Support</span>
-          <h2 class="section-title section-title-white">Support the Movement — Fuel the Fight for Equality</h2>
-          <p class="section-subtitle section-subtitle-white">Samata Sainik Dal is self-funded by conscious citizens. Every rupee directly strengthens grassroots cadet training, pro-bono legal defense, and disaster relief.</p>
-        </div>
-
-        <div class="donation-grid">
-          <!-- Left: Interactive Donation Calculator Card -->
-          <div class="donation-calculator-card">
-            <h3 style="font-size: 20px; color: var(--white); margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
-              <i class="fa-solid fa-coins" style="color: var(--primary-orange);"></i> Choose Your Contribution
-            </h3>
-
-            <!-- Frequency Toggle -->
-            <div class="donation-frequency-toggle">
-              <button type="button" class="freq-btn active" data-freq="once" onclick="setDonationFrequency('once')">One-Time Contribution</button>
-              <button type="button" class="freq-btn" data-freq="monthly" onclick="setDonationFrequency('monthly')">Monthly Supporter</button>
-            </div>
-
-            <!-- Amount Preset Chips -->
-            <label class="form-label" style="color: #DDD; font-size: 13px;">Select Contribution Amount</label>
-            <div class="amount-presets-grid">
-              <div class="preset-chip" data-amount="500" onclick="selectDonationPreset(500)">₹500</div>
-              <div class="preset-chip active" data-amount="1000" onclick="selectDonationPreset(1000)">₹1,000</div>
-              <div class="preset-chip" data-amount="2500" onclick="selectDonationPreset(2500)">₹2,500</div>
-              <div class="preset-chip" data-amount="5000" onclick="selectDonationPreset(5000)">₹5,000</div>
-            </div>
-
-            <!-- Custom Amount Input -->
-            <div class="custom-amount-group">
-              <span class="custom-amount-symbol">₹</span>
-              <input type="number" id="customDonationAmount" class="custom-amount-input" placeholder="Enter custom amount" value="1000" oninput="onCustomAmountChange(this.value)">
-            </div>
-
-            <!-- Cause Allocation Dropdown -->
-            <label class="form-label" style="color: #DDD; font-size: 13px;">Direct Allocation Cause</label>
-            <select id="donationCauseSelector" class="donation-cause-select" onchange="onDonationCauseChange(this)">
-              <option value="Bal Sainik Uniform & Drill">Bal Sainik Uniforms & Drill Equipment</option>
-              <option value="Constitutional Literacy" selected>Constitutional Literacy & Preamble Booklets</option>
-              <option value="Legal Defense Corpus">Pro-Bono Legal Defense Fund (SC/ST Cases)</option>
-              <option value="Disaster Relief & Sewa">Disaster Rescue & 24/7 Blood Task Force</option>
-              <option value="Centenary 2027 Trust Fund">SSD Centenary 2027 Trust & Library Corpus</option>
-              <option value="General Organization Fund">General Organizational Fund</option>
-            </select>
-
-            <!-- Dynamic Impact Description -->
-            <div class="impact-description-box" id="donationImpactDesc">
-              <strong><i class="fa-solid fa-sparkles"></i> Direct Impact:</strong> Prints and distributes 50 pocket Constitutions and Preamble learning cards in rural school clusters.
-            </div>
-
-            <!-- Proceed Button -->
-            <button type="button" class="btn btn-primary" style="width: 100%; font-size: 15px;" onclick="openDonationModal()">
-              <i class="fa-solid fa-shield-heart"></i> Proceed to Contribute Online &rarr;
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <!-- BABASAHEB FOUNDING COMMAND & HISTORY CALLOUT -->
     <section style="padding: 60px 0; background-color: var(--white); border-top: 1px solid var(--border-color);">
@@ -867,157 +800,9 @@
 
   </main>
 
-  <!-- DONATION MODAL -->
-  <div class="donation-modal" id="donationModal" onclick="closeDonationModalOnBackdrop(event)">
-    <div class="donation-modal-content">
-      <div class="donation-modal-header">
-        <h3><i class="fa-solid fa-hand-holding-heart"></i> Complete Contribution</h3>
-        <button type="button" onclick="closeDonationModal()" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">&times;</button>
-      </div>
-      <div class="donation-modal-body">
-        <form id="donationSubmitForm" onsubmit="handleDonationSubmit(event)">
-          <div class="form-group" style="margin-bottom: 12px;">
-            <label class="form-label" for="modalDonationAmount">Contribution Amount (₹) *</label>
-            <input type="number" id="modalDonationAmount" class="form-control" required min="100" value="1000">
-          </div>
 
-          <div class="form-group" style="margin-bottom: 12px;">
-            <label class="form-label" for="modalDonationCause">Earmarked Purpose *</label>
-            <select id="modalDonationCause" class="form-control" required>
-              <option value="Bal Sainik Uniform & Drill">Bal Sainik Uniforms & Drill Equipment</option>
-              <option value="Constitutional Literacy">Constitutional Literacy & Preamble Booklets</option>
-              <option value="Legal Defense Corpus">Pro-Bono Legal Defense Fund (SC/ST Cases)</option>
-              <option value="Disaster Relief & Sewa">Disaster Rescue & 24/7 Blood Task Force</option>
-              <option value="Centenary 2027 Trust Fund">SSD Centenary 2027 Trust & Library Corpus</option>
-              <option value="General Organization Fund">General Organizational Fund</option>
-            </select>
-          </div>
 
-          <div class="form-group" style="margin-bottom: 12px;">
-            <label class="form-label" for="donorName">Donor Full Name *</label>
-            <input type="text" id="donorName" class="form-control" placeholder="Your name" required>
-          </div>
 
-          <div class="form-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
-            <div class="form-group">
-              <label class="form-label" for="donorEmail">Email ID *</label>
-              <input type="email" id="donorEmail" class="form-control" placeholder="name@domain.com" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="donorPhone">Mobile No *</label>
-              <input type="tel" id="donorPhone" class="form-control" placeholder="Phone number" required>
-            </div>
-          </div>
-
-          <div class="form-group" style="margin-bottom: 14px;">
-            <label class="form-label" for="donorPan">PAN Card Number (for 80G Tax Exemption Receipt)</label>
-            <input type="text" id="donorPan" class="form-control" placeholder="ABCDE1234F (Optional)" maxlength="10">
-          </div>
-
-          <div class="form-group" style="margin-bottom: 18px;">
-            <label class="form-label">Payment Method</label>
-            <div style="display: flex; gap: 15px; font-size: 13px; color: #444;">
-              <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
-                <input type="radio" name="donationPayMethod" value="UPI / QR" checked> UPI / QR
-              </label>
-              <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
-                <input type="radio" name="donationPayMethod" value="Net Banking / NEFT"> Net Banking / NEFT
-              </label>
-              <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
-                <input type="radio" name="donationPayMethod" value="Debit / Credit Card"> Card
-              </label>
-            </div>
-          </div>
-
-          <button type="submit" id="donationSubmitBtn" class="btn btn-primary" style="width: 100%;">
-            <span class="btn-text"><i class="fa-solid fa-lock"></i> Proceed to Secure Pay (Razorpay / UPI / Cards)</span>
-            <span class="btn-spinner" style="display: none;"><div class="spinner" style="width: 18px; height: 18px; border-width: 2px;"></div> Initializing Razorpay Gateway...</span>
-          </button>
-          <div style="text-align: center; margin-top: 10px; font-size: 11px; color: #777;">
-            <i class="fa-solid fa-shield-halved" style="color: var(--success-green);"></i> 256-Bit Encrypted Secure Checkout via Razorpay (UPI, Google Pay, Cards, NetBanking)
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- OFFICIAL 80G TAX-EXEMPT DONATION RECEIPT MODAL -->
-  <div class="donation-modal" id="receiptModal" onclick="closeReceiptModalOnBackdrop(event)">
-    <div class="donation-modal-content" style="max-width: 580px;">
-      <div class="donation-modal-header" style="background: var(--dark-navy);">
-        <h3 style="display: flex; align-items: center; gap: 8px; font-size: 16px; color: white;">
-          <i class="fa-solid fa-receipt" style="color: var(--primary-orange);"></i> Official Contribution Receipt
-        </h3>
-        <button type="button" class="news-modal-close" onclick="closeReceiptModal()">&times;</button>
-      </div>
-      <div class="donation-modal-body" id="receiptPrintArea" style="padding: 24px; background: #FFF;">
-        <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 20px; position: relative;">
-          <!-- Receipt Header -->
-          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--primary-orange); padding-bottom: 12px; margin-bottom: 15px;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <img src="logo.png" alt="SSD Emblem" style="width: 50px; height: 50px; object-fit: contain;">
-              <div>
-                <h4 style="font-family: var(--font-heading); font-size: 15px; color: var(--dark-navy); margin: 0;">SAMATA SAINIK DAL</h4>
-                <p style="font-size: 10.5px; color: var(--muted-gray); margin: 0;">Est. 24 Sept 1927 | Founder: Dr. B.R. Ambedkar</p>
-              </div>
-            </div>
-            <div style="text-align: right;">
-              <span style="background: var(--success-green); color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase;">80G Tax Exempt</span>
-            </div>
-          </div>
-
-          <!-- Receipt Details Grid -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; margin-bottom: 15px;">
-            <div>
-              <span style="color: var(--muted-gray);">Receipt No:</span>
-              <div style="font-weight: 700; color: var(--dark-navy);" id="receiptNo">SSD-REC-2026-0001</div>
-            </div>
-            <div>
-              <span style="color: var(--muted-gray);">Payment ID (Razorpay):</span>
-              <div style="font-weight: 700; color: var(--dark-navy); font-family: monospace;" id="receiptPayId">—</div>
-            </div>
-            <div>
-              <span style="color: var(--muted-gray);">Date & Time:</span>
-              <div style="font-weight: 700; color: var(--dark-navy);" id="receiptDate">-</div>
-            </div>
-            <div>
-              <span style="color: var(--muted-gray);">Payment Status:</span>
-              <div style="font-weight: 700; color: var(--success-green);">SUCCESS / CAPTURED</div>
-            </div>
-          </div>
-
-          <!-- Donor & Amount Block -->
-          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 12px; margin-bottom: 15px; font-size: 12.5px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-              <span style="color: var(--muted-gray);">Donor Name:</span>
-              <strong style="color: var(--dark-navy);" id="receiptDonorName">-</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-              <span style="color: var(--muted-gray);">PAN Number:</span>
-              <strong style="color: var(--dark-navy);" id="receiptDonorPan">N/A</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-              <span style="color: var(--muted-gray);">Cause Allocated:</span>
-              <strong style="color: var(--primary-orange);" id="receiptCause">-</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; padding-top: 6px; border-top: 1px dashed #CBD5E1; font-size: 14px;">
-              <span style="font-weight: 700; color: var(--dark-navy);">Amount Contributed:</span>
-              <strong style="color: var(--success-green); font-size: 16px;" id="receiptAmount">₹1,000</strong>
-            </div>
-          </div>
-
-          <div style="font-size: 10.5px; color: #777; line-height: 1.4; text-align: center; border-top: 1px solid #E2E8F0; padding-top: 10px;">
-            This is a computer-generated digital receipt under 80G provisions and does not require a physical signature.<br>
-            <em>Jai Bhim! Thank you for strengthening the movement for social equality.</em>
-          </div>
-        </div>
-      </div>
-      <div style="padding: 14px 24px; background: #F8FAFC; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
-        <button type="button" class="btn btn-navy btn-sm" onclick="printReceiptArea()"><i class="fa-solid fa-print"></i> Print Receipt</button>
-        <button type="button" class="btn btn-outline-navy btn-sm" onclick="closeReceiptModal()">Close</button>
-      </div>
-    </div>
-  </div>
 
   <!-- LIGHTBOX MODAL -->
   <div class="lightbox-modal" id="lightboxModal" onclick="closeLightboxOnBackdrop(event)">
@@ -1154,7 +939,7 @@
           <ul class="footer-links">
             <li><a href="#campaigns"><i class="fa-solid fa-angle-right"></i> Ongoing Campaigns</a></li>
             <li><a href="#join-us"><i class="fa-solid fa-angle-right"></i> Online Sainik Enlistment</a></li>
-            <li><a href="#donate"><i class="fa-solid fa-angle-right"></i> Donate & Support SSD</a></li>
+
             <li><a href="#governing-body"><i class="fa-solid fa-angle-right"></i> Governing Body Council</a></li>
             <li><a href="#gallery"><i class="fa-solid fa-angle-right"></i> Photo Archives & Lightbox</a></li>
             <li><a href="about.html"><i class="fa-solid fa-angle-right"></i> History & Genesis (1927)</a></li>
@@ -1208,10 +993,7 @@
       <i class="fa-solid fa-user-shield"></i>
       <span>Enlist</span>
     </a>
-    <a href="#donate" class="bottom-bar-item" title="Support Movement">
-      <i class="fa-solid fa-hand-holding-heart"></i>
-      <span>Donate</span>
-    </a>
+
     <a href="javascript:void(0)" onclick="window.scrollTo({top:0, behavior:'smooth'})" class="bottom-bar-item" title="Back to Top">
       <i class="fa-solid fa-chevron-up"></i>
       <span>Top</span>

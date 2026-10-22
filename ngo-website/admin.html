@@ -118,13 +118,6 @@
           <span class="sidebar-badge" id="badgeMembersCount">0</span>
         </a>
 
-        <a class="sidebar-item" onclick="switchView('donations')" id="nav-donations">
-          <div class="sidebar-item-left">
-            <i class="fa-solid fa-hand-holding-dollar"></i>
-            <span>Centenary Fund</span>
-          </div>
-          <span class="sidebar-badge" id="badgeDonationsCount">0</span>
-        </a>
 
         <a class="sidebar-item" onclick="switchView('leadership')" id="nav-leadership">
           <div class="sidebar-item-left">
@@ -298,14 +291,6 @@
               <div class="kpi-icon-wrap"><i class="fa-solid fa-user-shield"></i></div>
             </div>
 
-            <div class="kpi-card">
-              <div class="kpi-info">
-                <span class="label">Centenary Fund</span>
-                <h3 id="kpiDonationsTotal">₹0</h3>
-                <p class="sub" style="color: var(--primary-orange);"><i class="fa-solid fa-arrow-trend-up"></i> Movement Support</p>
-              </div>
-              <div class="kpi-icon-wrap green"><i class="fa-solid fa-hand-holding-dollar"></i></div>
-            </div>
 
             <div class="kpi-card">
               <div class="kpi-info">
@@ -522,48 +507,6 @@
           </div>
         </section>
 
-        <!-- ==========================================
-             VIEW 3: DONATIONS LEDGER
-             ========================================== -->
-        <section id="viewDonations" class="view-panel">
-          <div class="card-panel">
-            <div class="card-panel-header">
-              <div class="card-panel-title">
-                <i class="fa-solid fa-hand-holding-dollar" style="color: var(--primary-orange);"></i>
-                <h3>Centenary Movement Fund Ledger (/donations)</h3>
-              </div>
-              <div class="card-panel-actions">
-                <div class="search-input-group">
-                  <i class="fa-solid fa-magnifying-glass"></i>
-                  <input type="text" id="donationSearchInput" placeholder="Search donor, PAN, receipt..." oninput="filterDonationsTable()">
-                </div>
-                <button type="button" class="btn-admin btn-admin-outline" onclick="exportDonationsToCSV()">
-                  <i class="fa-solid fa-file-csv"></i> Export Donations CSV
-                </button>
-              </div>
-            </div>
-            <div class="table-responsive">
-              <table class="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Receipt No.</th>
-                      <th>Payment ID (Razorpay)</th>
-                      <th>Date</th>
-                      <th>Donor Name</th>
-                      <th>Amount (₹)</th>
-                      <th>Cause / Allocation</th>
-                      <th>PAN / Tax ID</th>
-                      <th>Status</th>
-                      <th style="text-align: right;">Actions</th>
-                    </tr>
-                  </thead>
-                <tbody id="donationsTableBody">
-                  <tr><td colspan="9" style="text-align: center; padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading donations from Supabase Cloud...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
 
         <!-- ==========================================
              VIEW: GOVERNING BODY & LEADERSHIP COUNCIL
@@ -1167,35 +1110,6 @@
               </div>
             </div>
 
-            <!-- Razorpay Payment Gateway Settings -->
-            <div class="card-panel">
-              <div class="card-panel-header">
-                <div class="card-panel-title">
-                  <i class="fa-solid fa-credit-card" style="color: var(--primary-orange);"></i>
-                  <h3>Razorpay Payment Gateway API</h3>
-                </div>
-              </div>
-              <div style="padding: 24px;">
-                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">
-                  Configure the active Razorpay Key ID used across all online donation checkout dialogs (UPI, Google Pay, Cards, NetBanking).
-                </p>
-                <form id="razorpayConfigForm" onsubmit="saveRazorpayConfig(event)">
-                  <div class="form-group-modal" style="margin-bottom: 14px;">
-                    <label for="adminRazorpayKeyId">Razorpay Key ID</label>
-                    <input type="text" id="adminRazorpayKeyId" placeholder="rzp_test_... or rzp_live_..." required style="font-family: monospace; font-size: 13px;">
-                  </div>
-                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; font-size: 12.5px;">
-                    <span id="razorpayModeBadge" class="badge-status badge-approved"><i class="fa-solid fa-shield-check"></i> Gateway Active</span>
-                    <button type="button" class="btn-admin btn-admin-outline" style="padding: 6px 12px; font-size: 11.5px;" onclick="testRazorpayPing()">
-                      <i class="fa-solid fa-bolt"></i> Verify Gateway
-                    </button>
-                  </div>
-                  <button type="submit" class="btn-admin btn-admin-primary">
-                    <i class="fa-solid fa-floppy-disk"></i> Save Gateway Key
-                  </button>
-                </form>
-              </div>
-            </div>
 
             <!-- Automated Email Dispatch System (EmailJS & API) -->
             <div class="card-panel">
@@ -1210,7 +1124,7 @@
               </div>
               <div style="padding: 24px;">
                 <p style="color: var(--text-muted); font-size: 13.5px; margin-bottom: 18px; line-height: 1.5;">
-                  Configure automated dispatch of <strong>80G Tax Donation Receipts</strong> and <strong>Cadet Enlistment Welcome Letters</strong> directly to donors and applicants via EmailJS or Serverless dispatch API.
+                  Configure automated dispatch of <strong>Cadet Enlistment Welcome Letters</strong> directly to applicants via EmailJS or Serverless dispatch API.
                 </p>
                 <form id="emailConfigForm" onsubmit="saveEmailConfig(event)">
                   <div class="form-grid-modal">
@@ -1234,11 +1148,7 @@
                     </div>
                   </div>
                   <div class="form-grid-modal">
-                    <div class="form-group-modal">
-                      <label for="adminEmailDonationTpl">80G Donation Receipt Template ID (Optional)</label>
-                      <input type="text" id="adminEmailDonationTpl" placeholder="e.g. template_donation_80g" style="font-family: monospace; font-size: 12.5px;">
-                    </div>
-                    <div class="form-group-modal">
+                    <div class="form-group-modal" style="grid-column: 1 / -1;">
                       <label for="adminEmailEnrollmentTpl">Cadet Enlistment Welcome Template ID (Optional)</label>
                       <input type="text" id="adminEmailEnrollmentTpl" placeholder="e.g. template_cadet_welcome" style="font-family: monospace; font-size: 12.5px;">
                     </div>
@@ -1255,9 +1165,6 @@
                   <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 14px;">
                     <button type="submit" class="btn-admin btn-admin-primary">
                       <i class="fa-solid fa-floppy-disk"></i> Save Email Settings
-                    </button>
-                    <button type="button" class="btn-admin btn-admin-outline" onclick="testSendDonationEmail()">
-                      <i class="fa-solid fa-receipt"></i> Send Sample 80G Email
                     </button>
                     <button type="button" class="btn-admin btn-admin-outline" onclick="testSendEnrollmentEmail()">
                       <i class="fa-solid fa-user-check"></i> Send Sample Enlistment Email
@@ -1641,7 +1548,7 @@
               <input type="text" id="campaignCategory" required placeholder="e.g. Education & Legal">
             </div>
             <div class="form-group-modal">
-              <label for="campaignCauseKey">Cause Key (for donations)</label>
+              <label for="campaignCauseKey">Cause Identifier Key</label>
               <input type="text" id="campaignCauseKey" required placeholder="e.g. Centenary 2027 Fund">
             </div>
           </div>
@@ -2427,84 +2334,7 @@
     </div>
   </div>
 
-  <!-- OFFICIAL 80G TAX-EXEMPT DONATION RECEIPT MODAL (ADMIN) -->
-  <div id="modalAdminReceipt" class="admin-modal">
-    <div class="admin-modal-card" style="max-width: 600px;">
-      <div class="admin-modal-header" style="background: var(--navy-dark); color: white;">
-        <h3 style="display: flex; align-items: center; gap: 8px; font-size: 16px; color: white;">
-          <i class="fa-solid fa-receipt" style="color: var(--primary-orange);"></i> Official Donation Receipt (80G)
-        </h3>
-        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalAdminReceipt')"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="admin-modal-body" id="adminReceiptPrintArea" style="padding: 24px; background: #FFF;">
-        <div style="border: 2px solid var(--border-color); border-radius: 8px; padding: 20px; position: relative;">
-          <!-- Receipt Header -->
-          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--primary-orange); padding-bottom: 12px; margin-bottom: 15px;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <img src="logo.png" alt="SSD Emblem" style="width: 50px; height: 50px; object-fit: contain;">
-              <div>
-                <h4 style="font-size: 15px; color: var(--navy-dark); margin: 0; font-weight: 800;">SAMATA SAINIK DAL</h4>
-                <p style="font-size: 10.5px; color: var(--text-muted); margin: 0;">Est. 24 Sept 1927 | Founder: Dr. B.R. Ambedkar</p>
-              </div>
-            </div>
-            <div style="text-align: right;">
-              <span style="background: var(--success); color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase;">80G Tax Exempt</span>
-            </div>
-          </div>
 
-          <!-- Receipt Details Grid -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; margin-bottom: 15px;">
-            <div>
-              <span style="color: var(--text-muted);">Receipt No:</span>
-              <div style="font-weight: 700; color: var(--navy-dark);" id="admReceiptNo">SSD-REC-2026-0001</div>
-            </div>
-            <div>
-              <span style="color: var(--text-muted);">Payment ID (Razorpay):</span>
-              <div style="font-weight: 700; color: var(--navy-dark); font-family: monospace;" id="admReceiptPayId">—</div>
-            </div>
-            <div>
-              <span style="color: var(--text-muted);">Date & Time:</span>
-              <div style="font-weight: 700; color: var(--navy-dark);" id="admReceiptDate">-</div>
-            </div>
-            <div>
-              <span style="color: var(--text-muted);">Payment Status:</span>
-              <div style="font-weight: 700; color: var(--success);">SUCCESS / CAPTURED</div>
-            </div>
-          </div>
-
-          <!-- Donor & Amount Block -->
-          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 12px; margin-bottom: 15px; font-size: 12.5px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-              <span style="color: var(--text-muted);">Donor Name:</span>
-              <strong style="color: var(--navy-dark);" id="admReceiptDonorName">-</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-              <span style="color: var(--text-muted);">PAN Number:</span>
-              <strong style="color: var(--navy-dark);" id="admReceiptDonorPan">N/A</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-              <span style="color: var(--text-muted);">Cause Allocated:</span>
-              <strong style="color: var(--primary-orange);" id="admReceiptCause">-</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; padding-top: 6px; border-top: 1px dashed #CBD5E1; font-size: 14px;">
-              <span style="font-weight: 700; color: var(--navy-dark);">Amount Contributed:</span>
-              <strong style="color: var(--success); font-size: 16px;" id="admReceiptAmount">₹1,000</strong>
-            </div>
-          </div>
-
-          <div style="font-size: 10.5px; color: #777; line-height: 1.4; text-align: center; border-top: 1px solid #E2E8F0; padding-top: 10px;">
-            This is an official computer-generated digital receipt under 80G provisions and does not require a physical signature.<br>
-            <em>Jai Bhim! In service of Liberty, Equality, and Fraternity.</em>
-          </div>
-        </div>
-      </div>
-      <div class="admin-modal-footer">
-        <button type="button" class="btn-admin btn-admin-primary" onclick="resendAdminReceiptEmail()"><i class="fa-solid fa-paper-plane"></i> Email Receipt to Donor</button>
-        <button type="button" class="btn-admin btn-admin-navy" onclick="printAdminReceiptArea()"><i class="fa-solid fa-print"></i> Print Official Receipt</button>
-        <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalAdminReceipt')">Close</button>
-      </div>
-    </div>
-  </div>
 
   <!-- ==========================================================================
        HIERARCHICAL SAINIK APPLICATION REVIEW & DECISION MODAL

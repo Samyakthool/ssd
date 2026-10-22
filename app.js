@@ -1613,72 +1613,10 @@ function getEmailConfig() {
   return defaultCfg;
 }
 
-function sendDonationEmail(donationRecord) {
-  if (!donationRecord || !donationRecord.email) return;
-  const cfg = getEmailConfig();
-  if (cfg.enabled === false) return;
-
-  const senderEmail = cfg.senderEmail || "samyak.ssd@gmail.com";
-  const senderName = cfg.senderName || "Samata Sainik Dal (SSD)";
-
-  const templateParams = {
-    from_name: senderName,
-    from_email: senderEmail,
-    reply_to: senderEmail,
-    sender_email: senderEmail,
-    to_name: donationRecord.name || donationRecord.donorName || "Supporter",
-    to_email: donationRecord.email || donationRecord.donorEmail,
-    amount: (Number(donationRecord.amount) || 0).toLocaleString(),
-    receipt_number: donationRecord.receiptNumber || ("SSD-REC-" + Date.now().toString().slice(-6)),
-    payment_id: donationRecord.paymentId || "pay_live",
-    cause: donationRecord.cause || "Centenary 2027 Movement Fund",
-    pan: donationRecord.pan || "N/A",
-    date: new Date(donationRecord.timestamp || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
-    org_name: "Samata Sainik Dal (SSD)",
-    org_website: "https://ssdind.vercel.app"
-  };
-
-  // 1. Dispatch via EmailJS SDK if configured
-  if (typeof emailjs !== "undefined" && cfg.publicKey && cfg.serviceId && cfg.donationTemplateId) {
-    try {
-      emailjs.init({ publicKey: cfg.publicKey });
-      emailjs.send(cfg.serviceId, cfg.donationTemplateId, templateParams)
-        .then(() => console.log("Donation 80G receipt email dispatched via EmailJS from " + senderEmail))
-        .catch(err => console.warn("EmailJS donation send error:", err));
-    } catch (err) {
-      console.warn("EmailJS init/send error:", err);
-    }
-  }
-
-  // 2. Dispatch via Serverless Endpoint
-  fetch('/api/send-email', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      type: 'donation',
-      senderEmail: senderEmail,
-      recipientEmail: templateParams.to_email,
-      recipientName: templateParams.to_name,
-      appPassword: cfg.appPassword,
-      data: donationRecord
-    })
-  }).catch(e => console.warn("Serverless email ping:", e));
-
-  // 3. Log Dispatch Record in Firebase
-  if (db) {
-    db.ref('email_dispatches').push({
-      type: "Donation 80G Receipt",
-      senderEmail: senderEmail,
-      recipientEmail: templateParams.to_email,
-      recipientName: templateParams.to_name,
-      receiptNumber: templateParams.receipt_number,
-      amount: donationRecord.amount,
-      paymentId: donationRecord.paymentId,
-      status: "Dispatched",
-      timestamp: Date.now()
-    }).catch(e => console.warn("Firebase dispatch log:", e));
-  }
+function sendDonationEmail() {
+  // Donation feature removed
 }
+
 
 // ==========================================================================
 // AUTOMATED ID, BATCH NUMBER & EMAIL GENERATORS
@@ -3691,8 +3629,7 @@ function renderCampaigns(campaignsArray) {
           </div>
 
           <div class="campaign-actions">
-            <button type="button" class="btn btn-primary btn-sm" onclick="openDonationModal('${camp.causeKey || camp.title}', 1000)"><i class="fa-solid fa-hand-holding-dollar"></i> Support</button>
-            <a href="#join-us" class="btn btn-outline-navy btn-sm"><i class="fa-solid fa-user-plus"></i> Enlist</a>
+            <a href="#join-us" class="btn btn-primary btn-sm"><i class="fa-solid fa-user-plus"></i> Enlist</a>
           </div>
         </div>
       </div>
@@ -4404,272 +4341,23 @@ window.closeOfficerPortfolioModalOnBackdrop = closeOfficerPortfolioModalOnBackdr
 
 
 // ==========================================================================
-// DONATION CALCULATOR & MODAL CONTROLLERS
+// DONATION FEATURE (DEPRECATED & SAFELY STUBBED)
 // ==========================================================================
 let currentDonationFrequency = 'once';
 let selectedDonationAmount = 1000;
 
-const causeImpactDescriptions = {
-  "Bal Sainik Uniform & Drill": "Provides 1 complete cadet uniform kit (khaki/white shirt, trousers, blue beret & brass insignia) and physical drill handbook.",
-  "Constitutional Literacy": "Prints and distributes 50 pocket Constitutions and Preamble learning cards in rural school clusters.",
-  "Legal Defense Corpus": "Funds filing fees, affidavits, and travel allowances for volunteer advocates fighting SC/ST Atrocity & civil rights cases.",
-  "Disaster Relief & Sewa": "Equips a frontline volunteer unit with high-grade emergency medical kits, ropes, stretchers, and relief rations.",
-  "Centenary 2027 Trust Fund": "Directly supports the nationwide 100-Year Centenary memorial construction, historical archives, and 1,000 community libraries.",
-  "General Organization Fund": "Supports day-to-day coordination across 28 State Chapters, national assemblies, and youth leadership camps."
-};
-
-function setDonationFrequency(freq) {
-  currentDonationFrequency = freq;
-  document.querySelectorAll(".donation-frequency-toggle .freq-btn").forEach(btn => {
-    btn.classList.toggle("active", btn.getAttribute("data-freq") === freq);
-  });
-}
-
-function selectDonationPreset(amount) {
-  selectedDonationAmount = amount;
-  document.querySelectorAll(".amount-presets-grid .preset-chip").forEach(chip => {
-    chip.classList.toggle("active", parseInt(chip.getAttribute("data-amount"), 10) === amount);
-  });
-  const customInput = document.getElementById("customDonationAmount");
-  if (customInput) customInput.value = amount;
-}
-
-function onCustomAmountChange(val) {
-  const num = parseInt(val, 10);
-  if (!isNaN(num) && num > 0) {
-    selectedDonationAmount = num;
-    document.querySelectorAll(".amount-presets-grid .preset-chip").forEach(chip => {
-      chip.classList.toggle("active", parseInt(chip.getAttribute("data-amount"), 10) === num);
-    });
-  }
-}
-
-function onDonationCauseChange(selectEl) {
-  const cause = selectEl.value;
-  const impactBox = document.getElementById("donationImpactDesc");
-  if (impactBox) {
-    impactBox.innerHTML = `<strong><i class="fa-solid fa-sparkles"></i> Direct Impact:</strong> ${causeImpactDescriptions[cause] || causeImpactDescriptions["General Organization Fund"]}`;
-  }
-}
-
-function openDonationModal(cause = "General Organization Fund", amount = 1000) {
-  const modal = document.getElementById("donationModal");
-  if (!modal) return;
-
-  const modalCause = document.getElementById("modalDonationCause");
-  const modalAmount = document.getElementById("modalDonationAmount");
-
-  if (modalCause) {
-    for (let i = 0; i < modalCause.options.length; i++) {
-      if (modalCause.options[i].value === cause || modalCause.options[i].text.includes(cause)) {
-        modalCause.selectedIndex = i;
-        break;
-      }
-    }
-  }
-
-  if (modalAmount) modalAmount.value = amount || selectedDonationAmount || 1000;
-
-  modal.classList.add("active");
-  document.body.style.overflow = "hidden";
-}
-
-function closeDonationModal() {
-  const modal = document.getElementById("donationModal");
-  if (modal) {
-    modal.classList.remove("active");
-    document.body.style.overflow = "auto";
-  }
-}
-
-// ==========================================================================
-// RAZORPAY PAYMENT GATEWAY CONFIGURATION
-// ==========================================================================
-const RAZORPAY_DEFAULT_KEY = "rzp_test_1DP5mmOlF5G5ag";
-
-function getRazorpayKey() {
-  return localStorage.getItem("ssd_razorpay_key_id") || RAZORPAY_DEFAULT_KEY;
-}
-
-function openReceiptModal(data) {
-  const modal = document.getElementById("receiptModal");
-  if (!modal) return;
-
-  const noEl = document.getElementById("receiptNo");
-  const payIdEl = document.getElementById("receiptPayId");
-  const dateEl = document.getElementById("receiptDate");
-  const nameEl = document.getElementById("receiptDonorName");
-  const panEl = document.getElementById("receiptDonorPan");
-  const causeEl = document.getElementById("receiptCause");
-  const amountEl = document.getElementById("receiptAmount");
-
-  if (noEl) noEl.textContent = data.receiptNumber || ("SSD-REC-" + Date.now().toString().slice(-6));
-  if (payIdEl) payIdEl.textContent = data.paymentId || ("pay_" + Math.random().toString(36).substring(2, 10));
-  if (dateEl) dateEl.textContent = data.timestamp ? new Date(data.timestamp).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
-  if (nameEl) nameEl.textContent = data.name || data.donorName || "Dedicated Contributor";
-  if (panEl) panEl.textContent = (data.pan && data.pan.trim()) ? data.pan.toUpperCase() : "N/A";
-  if (causeEl) causeEl.textContent = data.cause || "General Organization Fund";
-  if (amountEl) amountEl.textContent = "₹" + (Number(data.amount) || 1000).toLocaleString("en-IN");
-
-  modal.classList.add("active");
-  document.body.style.overflow = "hidden";
-}
-
-function closeReceiptModal() {
-  const modal = document.getElementById("receiptModal");
-  if (modal) {
-    modal.classList.remove("active");
-    document.body.style.overflow = "auto";
-  }
-}
-
-function closeReceiptModalOnBackdrop(e) {
-  if (e.target.id === "receiptModal") closeReceiptModal();
-}
-
-function printReceiptArea() {
-  window.print();
-}
-
-function handleDonationSubmit(e) {
-  e.preventDefault();
-  const form = document.getElementById("donationSubmitForm");
-  const submitBtn = document.getElementById("donationSubmitBtn");
-  const btnText = submitBtn ? submitBtn.querySelector(".btn-text") : null;
-  const btnSpinner = submitBtn ? submitBtn.querySelector(".btn-spinner") : null;
-
-  const rawAmount = parseInt(document.getElementById("modalDonationAmount")?.value, 10) || selectedDonationAmount || 1000;
-  if (rawAmount < 1) {
-    showToast("Please specify a valid contribution amount.", "warning");
-    return;
-  }
-
-  const donorData = {
-    name: document.getElementById("donorName")?.value.trim() || "Supporter",
-    email: document.getElementById("donorEmail")?.value.trim() || "",
-    phone: document.getElementById("donorPhone")?.value.trim() || "",
-    pan: document.getElementById("donorPan") ? document.getElementById("donorPan").value.trim().toUpperCase() : "",
-    amount: rawAmount,
-    cause: document.getElementById("modalDonationCause")?.value || "Centenary 2027 Trust Fund",
-    frequency: currentDonationFrequency,
-    paymentMethod: document.querySelector('input[name="donationPayMethod"]:checked')?.value || "Razorpay (UPI / Cards / NetBanking)",
-    timestamp: Date.now()
-  };
-
-  if (submitBtn) submitBtn.disabled = true;
-  if (btnText) btnText.style.display = "none";
-  if (btnSpinner) btnSpinner.style.display = "inline-flex";
-
-  const completeDonationRecord = (paymentId, orderId = "", signature = "") => {
-    const receiptNumber = "SSD-REC-2026-" + Math.floor(1000 + Math.random() * 9000);
-    const donationRecord = {
-      ...donorData,
-      paymentId: paymentId,
-      orderId: orderId,
-      signature: signature,
-      receiptNumber: receiptNumber,
-      status: "Completed",
-      timestamp: Date.now()
-    };
-
-    const finalizeUI = () => {
-      closeDonationModal();
-      if (form) form.reset();
-      if (submitBtn) submitBtn.disabled = false;
-      if (btnText) btnText.style.display = "inline-flex";
-      if (btnSpinner) btnSpinner.style.display = "none";
-
-      showToast(`Jai Bhim! Thank you, ${donorData.name}. Contribution of ₹${donorData.amount.toLocaleString()} received. 80G Receipt email dispatched.`, "success");
-      sendDonationEmail(donationRecord);
-      openReceiptModal(donationRecord);
-    };
-
-    if (db) {
-      db.ref('donations').push(donationRecord).then(() => {
-        // Sync with active campaign progress if matching cause
-        db.ref('campaigns').once('value', snapshot => {
-          const campaigns = snapshot.val();
-          if (campaigns) {
-            for (let cKey in campaigns) {
-              if (campaigns[cKey].title === donorData.cause || campaigns[cKey].causeKey === donorData.cause) {
-                const currentRaised = Number(campaigns[cKey].raised) || 0;
-                db.ref(`campaigns/${cKey}/raised`).set(currentRaised + donorData.amount);
-                break;
-              }
-            }
-          }
-          finalizeUI();
-        }).catch(() => finalizeUI());
-      }).catch(err => {
-        console.error("Firebase donation recording error:", err);
-        finalizeUI();
-      });
-    } else {
-      finalizeUI();
-    }
-  };
-
-  // Launch Razorpay Standard Checkout SDK if available
-  if (typeof Razorpay !== "undefined") {
-    try {
-      const rzpKey = getRazorpayKey();
-      const options = {
-        key: rzpKey,
-        amount: donorData.amount * 100, // paise
-        currency: "INR",
-        name: "Samata Sainik Dal (SSD)",
-        description: `80G Contribution - ${donorData.cause}`,
-        image: "logo.png",
-        prefill: {
-          name: donorData.name,
-          email: donorData.email,
-          contact: donorData.phone
-        },
-        notes: {
-          cause: donorData.cause,
-          pan: donorData.pan || "N/A",
-          frequency: donorData.frequency,
-          organization: "Samata Sainik Dal (Founded 1927 by Dr. B.R. Ambedkar)"
-        },
-        theme: {
-          color: "#FF6B00"
-        },
-        handler: function (response) {
-          const payId = response.razorpay_payment_id || ("pay_" + Math.random().toString(36).substring(2, 10));
-          completeDonationRecord(payId, response.razorpay_order_id || "", response.razorpay_signature || "");
-        },
-        modal: {
-          ondismiss: function () {
-            if (submitBtn) submitBtn.disabled = false;
-            if (btnText) btnText.style.display = "inline-flex";
-            if (btnSpinner) btnSpinner.style.display = "none";
-            showToast("Razorpay checkout window closed.", "info");
-          }
-        }
-      };
-
-      const rzpInstance = new Razorpay(options);
-      rzpInstance.on('payment.failed', function (response) {
-        console.error("Razorpay payment failed:", response.error);
-        showToast(`Payment declined: ${response.error.description || 'Transaction unsuccessful'}`, "error");
-        if (submitBtn) submitBtn.disabled = false;
-        if (btnText) btnText.style.display = "inline-flex";
-        if (btnSpinner) btnSpinner.style.display = "none";
-      });
-      rzpInstance.open();
-    } catch (rzpErr) {
-      console.warn("Razorpay init notice, using verified transaction recording:", rzpErr);
-      const fallbackPayId = "pay_" + Math.random().toString(36).substring(2, 10);
-      completeDonationRecord(fallbackPayId);
-    }
-  } else {
-    // Graceful fallback if checkout.js is blocked by adblockers
-    const simPayId = "pay_sim_" + Math.random().toString(36).substring(2, 10);
-    setTimeout(() => {
-      completeDonationRecord(simPayId);
-    }, 800);
-  }
-}
+function setDonationFrequency() {}
+function selectDonationPreset() {}
+function onCustomAmountChange() {}
+function onDonationCauseChange() {}
+function openDonationModal() {}
+function closeDonationModal() {}
+function getRazorpayKey() { return ""; }
+function openReceiptModal() {}
+function closeReceiptModal() {}
+function closeReceiptModalOnBackdrop() {}
+function printReceiptArea() {}
+function handleDonationSubmit(e) { if (e && e.preventDefault) e.preventDefault(); }
 
 // ==========================================================================
 // HOMEPAGE QUICK ENLISTMENT HANDLER

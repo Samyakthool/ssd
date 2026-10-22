@@ -1284,7 +1284,7 @@ function applyRolePermissions(role) {
   const isApprover = isSuper || role === "enlistment_officer" || role === "enlistment_admin" || role === "central_admin" || role === "state_official" || role === "regional_official" || role === "district_official" || role === "taluka_official" || role === "chapter_official";
 
   const permissions = {
-    super_admin: ["overview", "approvals", "members", "donations", "leadership", "chapters", "news", "events", "campaigns", "gallery", "testimonials", "admins", "contacts", "stats", "settings"],
+    super_admin: ["overview", "approvals", "members", "leadership", "chapters", "news", "events", "campaigns", "gallery", "testimonials", "admins", "contacts", "stats", "settings"],
     enlistment_officer: ["approvals", "members"],
     enlistment_admin: ["approvals", "members"],
     executive: ["overview", "members", "leadership", "chapters", "news", "events", "campaigns", "gallery", "contacts"],
@@ -1294,8 +1294,8 @@ function applyRolePermissions(role) {
     district_official: ["overview", "approvals", "members"],
     taluka_official: ["overview", "approvals", "members"],
     chapter_official: ["overview", "approvals", "members"],
-    treasurer: ["overview", "donations", "campaigns"],
-    finance_admin: ["overview", "donations", "campaigns"],
+    treasurer: ["overview", "campaigns", "stats"],
+    finance_admin: ["overview", "campaigns", "stats"],
     media: ["overview", "news", "events", "gallery", "testimonials"],
     media_admin: ["overview", "news", "events", "gallery", "testimonials"],
     testimonials_editor: ["overview", "testimonials"]
@@ -2391,7 +2391,6 @@ const viewMetadata = {
   overview: { title: "Central Command Overview", sub: "Nationwide real-time metrics & recent activity" },
   approvals: { title: "SuperAdmin Approvals Desk", sub: "Supreme Command authorization queue for subordinate admin submissions" },
   members: { title: "Enlisted Sainiks Registry", sub: "Verify cadet applications & download state rosters" },
-  donations: { title: "Centenary Movement Fund Ledger", sub: "Real-time contribution audit & donor PAN tracking" },
   leadership: { title: "Governing Body & Council", sub: "Appoint and manage National Leadership & Advisory Board" },
   chapters: { title: "State Chapters & District Directory", sub: "Configure regional state governing chapters and manage district divisions" },
   news: { title: "Gazette Bulletins & Circulars", sub: "Publish official announcements to the public portal" },
@@ -2458,8 +2457,6 @@ function switchView(viewKey) {
     renderAdminsTable();
   } else if (viewKey === 'members') {
     renderMembersTable();
-  } else if (viewKey === 'donations') {
-    renderDonationsTable();
   } else if (viewKey === 'leadership') {
     renderLeadershipTable();
   } else if (viewKey === 'chapters') {
