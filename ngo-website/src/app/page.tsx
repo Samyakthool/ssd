@@ -51,14 +51,51 @@ export default function HomePage() {
       <section className="hero-section">
         <div className="hero-overlay"></div>
         <div className="container hero-content">
-          <div className="hero-badge">
-            <i className="fa-solid fa-shield-heart"></i> Guarding Constitutional Morality Since 1927
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px' }}>
+            <div style={{ position: 'relative', display: 'inline-block', marginBottom: '14px' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/dr-ambedkar-founder.jpg"
+                alt="Bodhisattva Dr. Babasaheb Ambedkar — Founder of Samata Sainik Dal"
+                style={{
+                  width: '180px',
+                  height: '180px',
+                  objectFit: 'cover',
+                  objectPosition: 'center 15%',
+                  borderRadius: '50%',
+                  border: '3px solid var(--primary-orange)',
+                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(255, 107, 0, 0.35)'
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '2px',
+                  right: '2px',
+                  width: '52px',
+                  height: '52px',
+                  background: '#0A1F44',
+                  borderRadius: '50%',
+                  border: '2px solid var(--primary-orange)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.5)'
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo.png?v=8.0" alt="SSD Emblem" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
+              </div>
+            </div>
+            <div className="hero-badge">
+              <i className="fa-solid fa-certificate"></i> FOUNDER &bull; BODHISATTVA DR. BABASAHEB AMBEDKAR (EST. 1927)
+            </div>
           </div>
           <h1 className="hero-title">
             Discipline &bull; Self-Respect &bull; Human Equality
           </h1>
           <p className="hero-subtitle">
-            The non-political, voluntary cadre founded by Bodhisattva Babasaheb Dr. B.R. Ambedkar to safeguard fundamental human rights, constitutional justice, and social democracy across India.
+            The historic, voluntary cadre founded by Bodhisattva Dr. B.R. Ambedkar on 24 September 1927 to safeguard fundamental human rights, constitutional morality, and social democracy across India.
           </p>
 
           <div className="hero-actions" style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', justifyContent: 'center' }}>
