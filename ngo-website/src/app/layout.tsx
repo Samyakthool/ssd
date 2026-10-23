@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'Official Digital Command, Cadre Enlistment & Public Verification Platform of Samata Sainik Dal (Founded by Bodhisattva Dr. B.R. Ambedkar in 1927).',
   icons: {
     icon: [
-      { url: '/logo.svg', type: 'image/svg+xml' },
+      { url: '/logo.png?v=8.0', type: 'image/png' },
       { url: '/favicon.ico', sizes: 'any' }
     ],
     shortcut: '/favicon.ico',

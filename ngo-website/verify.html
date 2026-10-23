@@ -228,7 +228,7 @@
 
     <div class="verify-card">
       <div class="verify-header">
-        <img src="/logo.png" alt="SSD Emblem" class="verify-emblem" onerror="this.src='logo.png'">
+        <img src="/logo.png?v=8.0" alt="SSD Emblem" class="verify-emblem" onerror="this.src='/logo1.png'">
         <h2 style="margin: 0; font-size: 20px; letter-spacing: 0.5px;">SAMATA SAINIK DAL (SSD)</h2>
         <div style="font-size: 12px; color: #FF6B00; font-weight: 700; margin-top: 4px;">CENTRAL COMMAND VERIFICATION REGISTRY</div>
         
@@ -716,7 +716,7 @@
           v: {
             sainikId: derivedId,
             fullName: 'Enlisted Sainik Cadet',
-            photoUrl: '/logo.png',
+            photoUrl: '/logo.png?v=8.0',
             designation: 'Cadet Sainik',
             wing: 'Central Cadet Corps',
             state: stateName,
@@ -806,7 +806,7 @@
 
           body.innerHTML = `
             <div class="sainik-profile-row">
-              <img src="${v.photoUrl || '/logo.png'}" alt="${v.fullName}" class="sainik-photo" onerror="this.onerror=null; this.src='/logo.png'">
+              <img src="${v.photoUrl || '/logo.png?v=8.0'}" alt="${v.fullName}" class="sainik-photo" onerror="this.onerror=null; this.src='/logo1.png'">
               <div class="sainik-main-meta">
                 <span class="sainik-id-tag"><i class="fa-solid fa-id-badge"></i> ${v.sainikId}</span>
                 <h3>${v.fullName}</h3>

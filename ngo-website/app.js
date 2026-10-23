@@ -1958,8 +1958,8 @@ function initStickyHeader() {
 function handleLogoError(imgElement) {
   imgElement.onerror = null;
   const current = imgElement.src || '';
-  if (!current.includes('logo.svg')) {
-    imgElement.src = 'logo.svg';
+  if (!current.includes('logo1.png')) {
+    imgElement.src = 'logo1.png';
   } else {
     imgElement.src = 'logo.png';
   }

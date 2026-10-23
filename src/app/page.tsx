@@ -26,7 +26,7 @@ export default function HomePage() {
             <a href="/" className="brand-block">
               <div className="logo-container">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo.svg" alt="SSD Emblem" className="org-logo" />
+                <img src="/logo.png?v=8.0" alt="SSD Emblem" className="org-logo" />
               </div>
               <div className="brand-text">
                 <span className="org-hindi">समता सैनिक दल</span>

@@ -1957,7 +1957,12 @@ function initStickyHeader() {
 
 function handleLogoError(imgElement) {
   imgElement.onerror = null;
-  imgElement.src = "logo.png";
+  const current = imgElement.src || '';
+  if (!current.includes('logo1.png')) {
+    imgElement.src = 'logo1.png';
+  } else {
+    imgElement.src = 'logo.png';
+  }
 }
 
 function setFontSize(size) {
@@ -4631,5 +4636,63 @@ window.handleStateChange = handleStateChange;
 window.closeConfirmModal = closeConfirmModal;
 window.handleDropdownToggle = handleDropdownToggle;
 window.toggleMobileDropdown = toggleMobileDropdown;
+
+// ==========================================================================
+// DYNAMIC HOMEPAGE CMS HYDRATION & REALTIME UPDATES
+// ==========================================================================
+async function initHomepageCms() {
+  if (!document.getElementById('heroHeadline')) return;
+
+  try {
+    const res = await fetch('/api/cms/homepage');
+    const data = await res.json();
+    if (data.success && data.homepage) {
+      applyHomepageCms(data.homepage);
+    }
+  } catch (e) {
+    // Graceful fallback to static pre-rendered markup
+  }
+
+  if (window.SSDRealtime) {
+    window.SSDRealtime.on('cms:homepage_update', (updated) => {
+      applyHomepageCms(updated);
+    });
+  }
+}
+
+function applyHomepageCms(hp) {
+  if (!hp) return;
+  if (hp.hero) {
+    const hl = document.getElementById('heroHeadline');
+    if (hl && hp.hero.headline) hl.innerHTML = hp.hero.headline;
+    const sub = document.getElementById('heroSubheadline');
+    if (sub && hp.hero.subheadline) sub.innerText = hp.hero.subheadline;
+    const pCta = document.getElementById('heroPrimaryCta');
+    if (pCta && hp.hero.primaryCtaText) {
+      const span = pCta.querySelector('span');
+      if (span) span.innerText = hp.hero.primaryCtaText;
+      if (hp.hero.primaryCtaLink) pCta.href = hp.hero.primaryCtaLink;
+    }
+    const sCta = document.getElementById('heroSecondaryCta');
+    if (sCta && hp.hero.secondaryCtaText) {
+      const span = sCta.querySelector('span');
+      if (span) span.innerText = hp.hero.secondaryCtaText;
+      if (hp.hero.secondaryCtaLink) sCta.href = hp.hero.secondaryCtaLink;
+    }
+    const tCta = document.getElementById('heroTertiaryCta');
+    if (tCta && hp.hero.tertiaryCtaText) {
+      const span = tCta.querySelector('span');
+      if (span) span.innerText = hp.hero.tertiaryCtaText;
+      if (hp.hero.tertiaryCtaLink) tCta.href = hp.hero.tertiaryCtaLink;
+    }
+  }
+  if (hp.aimMottoHighlight && hp.aimMottoHighlight.aimShort) {
+    const aimEl = document.getElementById('homeAimText');
+    if (aimEl) aimEl.innerText = hp.aimMottoHighlight.aimShort;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', initHomepageCms);
+
 
 

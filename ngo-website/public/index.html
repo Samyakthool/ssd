@@ -80,7 +80,7 @@
       <div class="header-main">
         <a href="index.html" class="brand-block" id="brandBlock">
           <div class="logo-container">
-            <img src="logo.png" alt="Samata Sainik Dal Emblem" id="orgLogo" class="org-logo" onerror="handleLogoError(this)">
+            <img src="logo.png?v=8.0" alt="Samata Sainik Dal Emblem" id="orgLogo" class="org-logo" onerror="handleLogoError(this)">
             <div id="logoFallback" class="logo-fallback">SSD</div>
           </div>
           <div class="brand-text">
@@ -96,7 +96,7 @@
         <nav class="main-nav" id="mainNav">
           <div class="drawer-header">
             <div class="drawer-title-group">
-              <img src="logo.png" alt="SSD Logo" class="drawer-logo" onerror="handleLogoError(this)">
+              <img src="logo.png?v=8.0" alt="SSD Logo" class="drawer-logo" onerror="handleLogoError(this)">
               <div>
                 <div class="drawer-heading">SAMATA SAINIK DAL</div>
                 <div class="drawer-subheading">Est. 1927 | Central Command</div>
@@ -112,7 +112,9 @@
               <a href="about.html" class="nav-link" onclick="toggleMobileDropdown(event)">About <i class="fa-solid fa-chevron-down"></i></a>
               <div class="dropdown-menu">
                 <a href="about.html#genesis" class="dropdown-link"><i class="fa-solid fa-scroll"></i> Genesis by Dr. B.R. Ambedkar</a>
-                <a href="about.html#mahad" class="dropdown-link"><i class="fa-solid fa-water"></i> Mahad Satyagraha (1927)</a>
+                <a href="aim-motto.html" class="dropdown-link"><i class="fa-solid fa-bullseye"></i> Official Aim & Motto</a>
+                <a href="history.html" class="dropdown-link"><i class="fa-solid fa-timeline"></i> Historical Timeline & Predecessors</a>
+                <a href="constitution.html" class="dropdown-link"><i class="fa-solid fa-book-bookmark"></i> SSD Constitution & Regulations</a>
                 <a href="index.html#governing-body" class="dropdown-link"><i class="fa-solid fa-landmark-dome"></i> Governing Body & Leadership</a>
                 <a href="about.html#centenary" class="dropdown-link"><i class="fa-solid fa-flag"></i> Centenary Roadmap (1927–2027)</a>
               </div>
@@ -127,6 +129,7 @@
                 <a href="sewa-relief.html" class="dropdown-link"><i class="fa-solid fa-hand-holding-heart"></i> Community Sewa & Relief Force</a>
               </div>
             </li>
+            <li class="nav-item"><a href="library.html" class="nav-link">Digital Library</a></li>
             <li class="nav-item">
               <a href="member-portal.html" class="nav-link" onclick="toggleMobileDropdown(event)">Membership <i class="fa-solid fa-chevron-down"></i></a>
               <div class="dropdown-menu">
@@ -171,7 +174,246 @@
       </div>
     </div>
 
-    <!-- HERO SECTION: GOVERNING BODY & NATIONAL LEADERSHIP -->
+    <!-- 1. HERO COMMAND BANNER -->
+    <section class="hero-command-section" id="hero">
+      <div class="container">
+        <div class="hero-command-inner">
+          <div class="hero-text-block">
+            <div class="hero-badge-live">
+              <span class="pulse-dot"></span>
+              <span>Central Command &bull; Est. 24 Sept 1927</span>
+            </div>
+            <h1 class="hero-headline" id="heroHeadline">
+              DEFENDERS OF <span class="highlight">EQUALITY, LIBERTY</span> & FRATERNITY
+            </h1>
+            <p class="hero-subheadline" id="heroSubheadline">
+              Founded at Mahad by Bodhisattva Dr. B.R. Ambedkar, Samata Sainik Dal is the premier non-violent volunteer corps dedicated to constitutional morality, disciplined social defense, and universal brotherhood.
+            </p>
+            <div class="hero-cta-group">
+              <a href="#about-ssd" class="btn-hero-primary" id="heroPrimaryCta">
+                <i class="fa-solid fa-compass"></i> <span>Explore SSD</span>
+              </a>
+              <a href="membership.html" class="btn-hero-secondary" id="heroSecondaryCta">
+                <i class="fa-solid fa-user-shield"></i> <span>Become a Sainik</span>
+              </a>
+              <a href="library.html" class="btn-hero-tertiary" id="heroTertiaryCta">
+                <i class="fa-solid fa-book-bookmark"></i> <span>Explore Digital Library</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="hero-visual-card">
+            <img src="logo.png?v=8.0" alt="Samata Sainik Dal Emblem" class="hero-emblem-large" onerror="handleLogoError(this)">
+            <div class="hero-visual-quote">
+              "Educate, Agitate, Organize — Guard the Constitution"
+            </div>
+            <div class="hero-visual-cite">
+              Bodhisattva Dr. B.R. Ambedkar &bull; Mahad 1927
+            </div>
+            <div class="hero-stats-row">
+              <div class="hero-stat-box">
+                <h4>100,000+</h4>
+                <span>Active Cadets</span>
+              </div>
+              <div class="hero-stat-box">
+                <h4>28</h4>
+                <span>State Units</span>
+              </div>
+              <div class="hero-stat-box">
+                <h4>99 Yrs</h4>
+                <span>Active Service</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. ABOUT SAMATA SAINIK DAL -->
+    <section id="about-ssd" style="padding: 75px 0 65px; background: #FFFFFF; border-bottom: 1px solid var(--border-color);">
+      <div class="container">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 45px; align-items: center;">
+          <div>
+            <span class="sec-badge-navy"><i class="fa-solid fa-flag"></i> The Non-Violent Vanguard</span>
+            <h2 style="font-family: var(--font-heading); font-size: 34px; font-weight: 800; color: var(--dark-navy); margin-bottom: 16px; line-height: 1.25;">About Samata Sainik Dal</h2>
+            <p style="font-size: 16px; line-height: 1.75; color: #334155; margin-bottom: 18px;">
+              Samata Sainik Dal (Party of the Soldiers for Equality) is a historic volunteer defense organization founded by <strong>Bodhisattva Dr. B.R. Ambedkar</strong> on 24 September 1927 at Mahad, Maharashtra.
+            </p>
+            <p style="font-size: 15px; line-height: 1.7; color: #475569; margin-bottom: 24px;">
+              Unlike conventional political organizations, SSD operates as a permanent disciplined, non-violent corps in khaki uniform and blue caps. Its mission is to instill self-respect, moral character, and constitutional awareness among oppressed citizens, protect democratic assemblies, eradicate caste untouchability, and serve communities during civic crises.
+            </p>
+            <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+              <a href="about.html" class="btn btn-navy"><i class="fa-solid fa-scroll"></i> Genesis & Centenary Vision &rarr;</a>
+              <a href="aim-motto.html" class="btn btn-outline-navy"><i class="fa-solid fa-bullseye"></i> Official Aim & Motto</a>
+            </div>
+          </div>
+          <div style="background: linear-gradient(135deg, #0A1F44 0%, #1A3A6B 100%); border-radius: 16px; padding: 34px; color: #FFFFFF; box-shadow: 0 10px 30px rgba(0,0,0,0.12); border-left: 5px solid var(--primary-orange);">
+            <div style="font-size: 12px; font-weight: 800; color: #FFAE66; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px;">Historic Mandate</div>
+            <h3 style="font-family: var(--font-heading); font-size: 22px; color: #FFFFFF; margin-bottom: 14px;">"Self-Reliance Through Discipline"</h3>
+            <p style="font-size: 15px; line-height: 1.7; color: #D6E0EA; margin-bottom: 20px;">
+              "An unorganized, undisciplined multitude can achieve nothing permanent. Only when thousands of conscious citizens move in unison with iron discipline and moral self-control can the fortress of social inequality be dismantled."
+            </p>
+            <div style="font-size: 13px; color: #FFAE66; font-weight: 700;">— Dr. B.R. Ambedkar, Bahishkrit Bharat (1927)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. AIM & MOTTO HIGHLIGHT SECTION -->
+    <section id="aim-motto" class="aim-motto-showcase">
+      <div class="container">
+        <div class="section-header" style="text-align: center; margin-bottom: 30px;">
+          <span class="sec-badge-navy"><i class="fa-solid fa-bullseye"></i> Foundational Objectives</span>
+          <h2 style="font-family: var(--font-heading); font-size: 32px; font-weight: 800; color: var(--dark-navy); margin-bottom: 10px;">Aim, Motto & Guiding Doctrine</h2>
+          <p style="font-size: 15px; color: #64748B; max-width: 750px; margin: 0 auto;">Official formulation preserved in English, Marathi, and Hindi as promulgated at the 1927 Mahad Conference.</p>
+        </div>
+
+        <div class="aim-motto-grid" style="margin-top: 20px;">
+          <div class="aim-motto-card aim-card">
+            <div class="aim-card-icon"><i class="fa-solid fa-compass"></i></div>
+            <span style="font-size: 11px; font-weight: 800; color: var(--primary-orange); text-transform: uppercase;">Official Aim (ध्येय)</span>
+            <h3 class="aim-card-title">Safeguarding Equality & Democracy</h3>
+            <p class="aim-card-body" id="homeAimText">
+              To organize, educate, and discipline the oppressed masses to safeguard constitutional morality, eliminate caste barriers, and establish an enlightened democratic fraternity based on Liberty, Equality, and Fraternity.
+            </p>
+            <a href="aim-motto.html" style="font-size: 13px; font-weight: 700; color: var(--primary-orange); display: inline-flex; align-items: center; gap: 6px;">
+              View Trilingual Formulations (मराठी / हिन्दी) &rarr;
+            </a>
+          </div>
+
+          <div class="aim-motto-card motto-card">
+            <div class="aim-card-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <span style="font-size: 11px; font-weight: 800; color: var(--dark-navy); text-transform: uppercase;">Official Motto (बोधवाक्य)</span>
+            <h3 class="aim-card-title">Self-Respect & Social Service</h3>
+            <div style="background: #0A1F44; color: #FFAE66; padding: 14px 20px; border-radius: 8px; font-family: var(--font-heading); font-size: 18px; font-weight: 800; margin-bottom: 14px; text-align: center; border-left: 4px solid var(--primary-orange);">
+              "Self-Respect, Discipline, Equality & Social Service"
+            </div>
+            <div style="font-size: 13px; color: #475569; margin-bottom: 14px;">
+              <strong>मराठी:</strong> आत्मसन्मान, शिस्त, समानता आणि समाजसेवा &bull; <strong>हिन्दी:</strong> आत्मसम्मान, अनुशासन, समानता और समाजसेवा
+            </div>
+            <a href="aim-motto.html" style="font-size: 13px; font-weight: 700; color: var(--dark-navy); display: inline-flex; align-items: center; gap: 6px;">
+              Explore Full Aim & Motto Charter &rarr;
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. HISTORICAL TIMELINE HIGHLIGHTS -->
+    <section id="historical-timeline" style="padding: 75px 0 65px; background: #FFFFFF; border-bottom: 1px solid var(--border-color);">
+      <div class="container">
+        <div class="section-header" style="text-align: center; margin-bottom: 35px;">
+          <span class="sec-badge-navy"><i class="fa-solid fa-timeline"></i> Movement Milestones</span>
+          <h2 style="font-family: var(--font-heading); font-size: 32px; font-weight: 800; color: var(--dark-navy); margin-bottom: 8px;">Centennial History & Milestones (1924–2027)</h2>
+          <p style="font-size: 15px; color: #64748B; max-width: 720px; margin: 0 auto;">Pivotal moments in the formation, national expansion, and constitutional service of Samata Sainik Dal.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 22px; border-top: 4px solid var(--primary-orange);">
+            <div style="font-size: 12px; font-weight: 800; color: var(--dark-navy); margin-bottom: 4px;">20 JULY 1924</div>
+            <h4 style="font-size: 16px; font-weight: 800; color: var(--dark-navy); margin-bottom: 8px;">Bahishkrit Hitakarini Sabha</h4>
+            <p style="font-size: 13px; color: #475569; line-height: 1.6;">Dr. Ambedkar establishes youth volunteer squads at Damodar Hall, Parel under the motto 'Educate, Agitate, Organize'.</p>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 22px; border-top: 4px solid var(--primary-orange);">
+            <div style="font-size: 12px; font-weight: 800; color: var(--dark-navy); margin-bottom: 4px;">19–20 MARCH 1927</div>
+            <h4 style="font-size: 16px; font-weight: 800; color: var(--dark-navy); margin-bottom: 8px;">Mahad Satyagraha</h4>
+            <p style="font-size: 13px; color: #475569; line-height: 1.6;">First assertion of water rights at Chavdar Tale; volunteers endure violence under peaceful discipline, confirming the need for a permanent corps.</p>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 22px; border-top: 4px solid var(--primary-orange);">
+            <div style="font-size: 12px; font-weight: 800; color: var(--dark-navy); margin-bottom: 4px;">24–25 DEC 1927</div>
+            <h4 style="font-size: 16px; font-weight: 800; color: var(--dark-navy); margin-bottom: 8px;">Formal SSD Foundation</h4>
+            <p style="font-size: 13px; color: #475569; line-height: 1.6;">Formal inception of Samata Sainik Dal with khaki uniforms, drill standards, and volunteer vows guarding the Manusmriti Dahan.</p>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 22px; border-top: 4px solid var(--primary-orange);">
+            <div style="font-size: 12px; font-weight: 800; color: var(--dark-navy); margin-bottom: 4px;">14 OCT 1956</div>
+            <h4 style="font-size: 16px; font-weight: 800; color: var(--dark-navy); margin-bottom: 8px;">Deekshabhoomi Command</h4>
+            <p style="font-size: 13px; color: #475569; line-height: 1.6;">Over 5,000 SSD volunteers maintain peaceful security as half a million citizens embrace Buddhism at Nagpur.</p>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="history.html" class="btn btn-navy"><i class="fa-solid fa-timeline"></i> Explore Complete Interactive Timeline & Documents &rarr;</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. PREVIOUS ORGANIZATIONS & HISTORICAL PREDECESSORS -->
+    <section id="predecessors" style="padding: 75px 0 65px; background: #F8FAFC; border-bottom: 1px solid var(--border-color);">
+      <div class="container">
+        <div class="section-header" style="text-align: left; margin-bottom: 30px;">
+          <span class="sec-badge-navy"><i class="fa-solid fa-landmark"></i> Historical Roots</span>
+          <h2 style="font-family: var(--font-heading); font-size: 32px; font-weight: 800; color: var(--dark-navy); margin-bottom: 8px;">Previous Organizations & Predecessors</h2>
+          <p style="font-size: 15px; color: #64748B;">Documenting the verifiable institutions and defense squads preceding Samata Sainik Dal.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+          <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 26px; box-shadow: 0 4px 14px rgba(0,0,0,0.05);">
+            <span style="font-size: 11px; font-weight: 800; color: var(--primary-orange); text-transform: uppercase;">1924 &bull; Bombay</span>
+            <h3 style="font-family: var(--font-heading); font-size: 18px; color: var(--dark-navy); font-weight: 800; margin: 6px 0 10px;">Bahishkrit Hitakarini Sabha Volunteers</h3>
+            <p style="font-size: 14px; line-height: 1.65; color: #334155; margin-bottom: 12px;">
+              Early youth defense squads established to protect meeting pandals, manage hostels, and conduct night school study circles.
+            </p>
+            <div style="font-size: 12px; color: #64748B;"><i class="fa-solid fa-bookmark" style="color: var(--primary-orange);"></i> <strong>Citation:</strong> Dr. Babasaheb Ambedkar: Writings and Speeches, Vol. 17.</div>
+          </div>
+
+          <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 26px; box-shadow: 0 4px 14px rgba(0,0,0,0.05);">
+            <span style="font-size: 11px; font-weight: 800; color: var(--primary-orange); text-transform: uppercase;">March 1927 &bull; Mahad</span>
+            <h3 style="font-family: var(--font-heading); font-size: 18px; color: var(--dark-navy); font-weight: 800; margin: 6px 0 10px;">Mahad Satyagraha Social Defense Brigade</h3>
+            <p style="font-size: 14px; line-height: 1.65; color: #334155; margin-bottom: 12px;">
+              Unarmed satyagraha volunteers commanded by Subedar Major R.S. Ghadge and Dalpati B.S. Moon asserting public civil rights.
+            </p>
+            <div style="font-size: 12px; color: #64748B;"><i class="fa-solid fa-bookmark" style="color: var(--primary-orange);"></i> <strong>Citation:</strong> Dhananjay Keer, Life and Mission, Chapter 6.</div>
+          </div>
+
+          <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 26px; box-shadow: 0 4px 14px rgba(0,0,0,0.05);">
+            <span style="font-size: 11px; font-weight: 800; color: var(--primary-orange); text-transform: uppercase;">1936 &bull; Maharashtra</span>
+            <h3 style="font-family: var(--font-heading); font-size: 18px; color: var(--dark-navy); font-weight: 800; margin: 6px 0 10px;">Independent Labour Party (ILP) Volunteer Corps</h3>
+            <p style="font-size: 14px; line-height: 1.65; color: #334155; margin-bottom: 12px;">
+              SSD cadre serving as ground marshals for the 1938 General Textile Workers' Strike and Konkan anti-Khoti tenant marches.
+            </p>
+            <div style="font-size: 12px; color: #64748B;"><i class="fa-solid fa-bookmark" style="color: var(--primary-orange);"></i> <strong>Citation:</strong> Janata Official Organ Archives (1936-1938).</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; text-align: right;">
+          <a href="history.html" style="font-size: 14px; font-weight: 700; color: var(--dark-navy); display: inline-flex; align-items: center; gap: 6px;">
+            Read All Historical Organization Profiles &rarr;
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. CONSTITUTION & ORGANIZATIONAL PRINCIPLES -->
+    <section id="constitution-preview" style="padding: 75px 0 65px; background: #FFFFFF; border-bottom: 1px solid var(--border-color);">
+      <div class="container">
+        <div style="background: #0A1F44; border-radius: 16px; padding: 44px; color: #FFFFFF; border-left: 6px solid var(--primary-orange); box-shadow: 0 10px 35px rgba(0,0,0,0.15);">
+          <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; align-items: center;">
+            <div>
+              <span style="font-size: 12px; font-weight: 800; color: #FFAE66; text-transform: uppercase; letter-spacing: 1.5px;">Official Document</span>
+              <h2 style="font-family: var(--font-heading); font-size: 28px; color: #FFFFFF; margin: 6px 0 14px;">The SSD Constitution & Regulations</h2>
+              <p style="font-size: 15px; line-height: 1.7; color: #E2E8F0; margin-bottom: 20px;">
+                The governance, chapter by-laws, cadet oath, and hierarchical command of Samata Sainik Dal are codified in its official Constitution. Features full text of Chapters I–VI, amendment logs, and cryptographic SHA-256 integrity verification.
+              </p>
+              <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+                <a href="constitution.html" class="btn btn-primary"><i class="fa-solid fa-book-bookmark"></i> Read Official Constitution</a>
+                <a href="SSD_System_Architecture_and_Workflow.pdf" download="SSD_Constitution.pdf" class="btn btn-secondary" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: #fff;"><i class="fa-solid fa-file-pdf"></i> Download Official PDF</a>
+              </div>
+            </div>
+            <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 24px;">
+              <h4 style="font-size: 15px; color: #FFAE66; margin-bottom: 12px; font-family: var(--font-heading);"><i class="fa-solid fa-shield-halved"></i> Integrity Specifications</h4>
+              <ul style="font-size: 13px; color: #CBD5E1; line-height: 1.8;">
+                <li><strong>Current Edition:</strong> Version 2.4 (Centenary Edition)</li>
+                <li><strong>Approving Authority:</strong> National Supreme Command, Nagpur</li>
+                <li><strong>SHA-256 Checksum:</strong> <code style="color: #FFAE66; font-size: 11px;">e3b0c44298fc...b855</code></li>
+                <li><strong>Statutory Preservation:</strong> Version-controlled archive</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. HERO SECTION: GOVERNING BODY & NATIONAL LEADERSHIP -->
     <section class="governing-section governing-hero-section" id="governing-body" style="padding: 70px 0 60px; background: linear-gradient(180deg, #F0F4FA 0%, #FFFFFF 100%); border-bottom: 1px solid var(--border-color);">
       <div class="container">
         <div class="section-header" style="margin-bottom: 30px;">
@@ -797,6 +1039,73 @@
       </div>
     </section>
 
+    <!-- 11. DIGITAL LIBRARY HIGHLIGHTS -->
+    <section id="library-highlights" style="padding: 75px 0 65px; background: #F8FAFC; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+      <div class="container">
+        <div class="section-header" style="text-align: center; margin-bottom: 35px;">
+          <span class="sec-badge-navy"><i class="fa-solid fa-book-bookmark"></i> Archival Vault</span>
+          <h2 style="font-family: var(--font-heading); font-size: 32px; font-weight: 800; color: var(--dark-navy); margin-bottom: 8px;">Digital Library & Historical Archives</h2>
+          <p style="font-size: 15px; color: #64748B; max-width: 720px; margin: 0 auto;">Access digitized primary historical publications, speeches, cadet training syllabi, and constitutional treatises.</p>
+        </div>
+
+        <div class="library-cards-grid" id="homeLibraryGrid">
+          <div class="library-card">
+            <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80" alt="SSD Foundation Charter" class="library-card-cover">
+            <div class="library-card-content">
+              <div class="library-meta-tags">
+                <span class="badge-access-public">Public Document</span>
+                <span style="font-size: 11px; color: #64748B; font-weight: 700;">1927</span>
+              </div>
+              <h3 class="library-card-title">Samata Sainik Dal Foundation Charter & Drill Manual</h3>
+              <div class="library-card-author">Dr. B.R. Ambedkar & Central Directorate</div>
+              <p class="library-card-desc">The original 1927 founding declaration promulgated during the historic Mahad Parishad outlining cadet discipline.</p>
+              <div class="library-card-footer">
+                <span style="font-size: 12px; color: #64748B; font-weight: 600;">PDF &bull; 1.4 MB</span>
+                <a href="library.html" class="library-card-cta"><i class="fa-solid fa-book-reader"></i> Access in Library</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="library-card">
+            <img src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80" alt="The Constitution of SSD" class="library-card-cover">
+            <div class="library-card-content">
+              <div class="library-meta-tags">
+                <span class="badge-access-public">Public Document</span>
+                <span style="font-size: 11px; color: #64748B; font-weight: 700;">2026</span>
+              </div>
+              <h3 class="library-card-title">The Constitution and General Regulations of SSD (v2.4)</h3>
+              <div class="library-card-author">National Supreme Command, Nagpur</div>
+              <p class="library-card-desc">Official revised centenary edition containing chapters I–VI, officer ranks, ethical duties, and legal mandates.</p>
+              <div class="library-card-footer">
+                <span style="font-size: 12px; color: #64748B; font-weight: 600;">PDF &bull; 2.8 MB</span>
+                <a href="constitution.html" class="library-card-cta"><i class="fa-solid fa-book-reader"></i> View Constitution</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="library-card">
+            <img src="https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=600&q=80" alt="Deekshabhoomi Command Records" class="library-card-cover">
+            <div class="library-card-content">
+              <div class="library-meta-tags">
+                <span class="badge-access-member">Member Portal Access</span>
+                <span style="font-size: 11px; color: #64748B; font-weight: 700;">1956</span>
+              </div>
+              <h3 class="library-card-title">Deekshabhoomi Security Operations & Historic Records</h3>
+              <div class="library-card-author">Central Directorate Archives, Nagpur</div>
+              <p class="library-card-desc">Archival report on the mobilization of 5,000 SSD volunteers who secured the historic 1956 conversion ceremony.</p>
+              <div class="library-card-footer">
+                <span style="font-size: 12px; color: #64748B; font-weight: 600;">PDF &bull; 4.1 MB</span>
+                <a href="library.html" class="library-card-cta"><i class="fa-solid fa-lock"></i> Cadet Access</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 35px;">
+          <a href="library.html" class="btn btn-navy"><i class="fa-solid fa-book-open"></i> Browse Complete SSD Digital Library Archives &rarr;</a>
+        </div>
+      </div>
+    </section>
 
   </main>
 
@@ -838,7 +1147,7 @@
     <div class="officer-portfolio-content" onclick="event.stopPropagation()">
       <div class="officer-portfolio-header">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <img src="logo.png" alt="SSD" onerror="handleLogoError(this)" style="height: 28px; width: 28px;">
+          <img src="logo.png?v=8.0" alt="SSD" onerror="handleLogoError(this)" style="height: 28px; width: 28px;">
           <span style="font-weight: 700; font-size: 14px; letter-spacing: 0.5px; text-transform: uppercase;">Samata Sainik Dal &bull; Leadership Dossier</span>
         </div>
         <button type="button" class="portfolio-modal-close" onclick="closeOfficerPortfolioModal()" aria-label="Close Portfolio Modal">&times;</button>
@@ -912,7 +1221,7 @@
     <div class="container">
       <div class="footer-grid">
         <div class="footer-col">
-          <img src="logo.png" alt="SSD Logo" class="footer-logo" onerror="handleLogoError(this)" style="height: 60px; width: 60px; margin-bottom: 12px;">
+          <img src="logo.png?v=8.0" alt="SSD Logo" class="footer-logo" style="height: 60px; width: 60px; margin-bottom: 12px;">
           <h4 style="margin-bottom: 8px;">Samata Sainik Dal</h4>
           <p class="footer-about-text">Samata Sainik Dal (SSD), founded by Bodhisattva Dr. B.R. Ambedkar on 24 September 1927. Dedicated to non-violent social defense, constitutional rights, and human dignity across India.</p>
           <div class="social-links-top" style="margin-top: 15px;">
@@ -937,13 +1246,15 @@
         <div class="footer-col">
           <h4>Quick Portals</h4>
           <ul class="footer-links">
-            <li><a href="#campaigns"><i class="fa-solid fa-angle-right"></i> Ongoing Campaigns</a></li>
+            <li><a href="aim-motto.html"><i class="fa-solid fa-angle-right"></i> Aim & Motto Charter</a></li>
+            <li><a href="history.html"><i class="fa-solid fa-angle-right"></i> Historical Timeline & Predecessors</a></li>
+            <li><a href="constitution.html"><i class="fa-solid fa-angle-right"></i> Official SSD Constitution</a></li>
+            <li><a href="library.html"><i class="fa-solid fa-angle-right"></i> Digital Library Archives</a></li>
             <li><a href="#join-us"><i class="fa-solid fa-angle-right"></i> Online Sainik Enlistment</a></li>
-
-            <li><a href="#governing-body"><i class="fa-solid fa-angle-right"></i> Governing Body Council</a></li>
-            <li><a href="#gallery"><i class="fa-solid fa-angle-right"></i> Photo Archives & Lightbox</a></li>
-            <li><a href="about.html"><i class="fa-solid fa-angle-right"></i> History & Genesis (1927)</a></li>
-            <li><a href="contact.html"><i class="fa-solid fa-angle-right"></i> National Command Desk</a></li>
+            <li><a href="member-portal.html"><i class="fa-solid fa-angle-right"></i> Sainik Member Portal</a></li>
+            <li><a href="verify.html"><i class="fa-solid fa-angle-right"></i> Public QR Verification</a></li>
+            <li><a href="terms.html"><i class="fa-solid fa-angle-right"></i> Terms & Conditions</a></li>
+            <li><a href="privacy.html"><i class="fa-solid fa-angle-right"></i> Privacy Policy (DPDP)</a></li>
             <li><a href="admin.html" style="color: var(--primary-orange); font-weight: 700;"><i class="fa-solid fa-lock"></i> Command Admin Portal</a></li>
           </ul>
         </div>
@@ -974,8 +1285,9 @@
             &copy; 1927–2026 Samata Sainik Dal (SSD). Founded by Bodhisattva Dr. B.R. Ambedkar. Jai Bhim | Equality For All.
           </div>
           <div class="copyright-links">
-            <a href="about.html">Constitution of SSD</a>
-            <a href="contact.html">State Directory</a>
+            <a href="constitution.html">Constitution</a>
+            <a href="terms.html">Terms</a>
+            <a href="privacy.html">Privacy Policy</a>
             <a href="contact.html">Grievance Desk</a>
           </div>
         </div>

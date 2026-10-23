@@ -41,6 +41,7 @@ const itemsToCopy = [
   'member-portal.js',
   'logo.svg',
   'logo.png',
+  'logo1.png',
   'logo.webp',
   'favicon.ico',
   'apple-touch-icon.png',
