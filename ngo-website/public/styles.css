@@ -4251,100 +4251,98 @@ body.nav-open .header-wrapper {
   transform: translateZ(0);
 }
 
-.hero-founder-spotlight {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 18px;
-}
-
-.founder-frame {
-  position: relative;
-  display: inline-block;
-  margin: 0 auto 14px;
-}
-
-.founder-portrait-img {
-  width: 190px;
-  height: 190px;
-  object-fit: cover;
-  object-position: center 15%;
-  border-radius: 50%;
-  border: 3px solid var(--primary-orange);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(255, 107, 0, 0.35);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  display: block;
-}
-
-.founder-portrait-img:hover {
-  transform: scale(1.03);
-  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.7), 0 0 32px rgba(255, 107, 0, 0.5);
-}
-
-.founder-emblem-badge {
-  position: absolute;
-  bottom: 2px;
-  right: 2px;
-  width: 52px;
-  height: 52px;
-  background: #0A1F44;
-  border-radius: 50%;
-  border: 2px solid var(--primary-orange);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
-  transition: transform 0.3s ease;
-}
-
-.founder-frame:hover .founder-emblem-badge {
-  transform: rotate(15deg) scale(1.08);
-}
-
-.founder-emblem-icon {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-  display: block;
-}
-
-.founder-info-block {
+/* Hero Founder Dedicated Image Card */
+.hero-founder-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.45);
   text-align: center;
-  margin-bottom: 10px;
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  max-width: 440px;
+  margin: 0 auto;
 }
 
-.founder-role-tag {
+.hero-founder-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), 0 0 25px rgba(255, 107, 0, 0.25);
+  border-color: rgba(255, 107, 0, 0.5);
+}
+
+.founder-full-frame {
+  position: relative;
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 107, 0, 0.45);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+}
+
+.founder-full-photo {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transition: transform 0.4s ease;
+}
+
+.hero-founder-card:hover .founder-full-photo {
+  transform: scale(1.02);
+}
+
+.founder-card-caption {
+  padding: 16px 10px 6px;
+  text-align: center;
+}
+
+.founder-badge-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 107, 0, 0.18);
-  border: 1px solid rgba(255, 107, 0, 0.6);
+  background: rgba(255, 107, 0, 0.16);
+  border: 1px solid var(--primary-orange);
   color: #FFAE66;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 1.2px;
-  padding: 4px 12px;
+  padding: 5px 14px;
   border-radius: 20px;
   text-transform: uppercase;
   margin-bottom: 8px;
 }
 
-.founder-name {
+.founder-card-name {
   font-family: var(--font-heading);
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
   color: #FFFFFF;
   margin: 0 0 4px;
   letter-spacing: 0.5px;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
-.founder-designation {
-  font-size: 13px;
+.founder-card-sub {
+  font-size: 13.5px;
   color: #D6E0EA;
-  line-height: 1.45;
   margin: 0;
-  max-width: 360px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.hero-stats-left {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  max-width: 580px;
 }
 
 .hero-visual-quote {
