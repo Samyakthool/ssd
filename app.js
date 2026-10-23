@@ -286,9 +286,9 @@ const ssdSampleData = {
   },
   gallery: {
     "gal_1": {
-      imageUrl: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=800&q=80",
-      caption: "SSD Uniform Cadet Corps Ceremonial March Past - Deekshabhoomi Nagpur",
-      category: "Cadet Drills"
+      imageUrl: "dr-ambedkar-with-ssd-cadets.jpg",
+      caption: "Historic Archival Record: Dr. Babasaheb Ambedkar with Uniformed Samata Sainik Dal Cadets",
+      category: "Historical"
     },
     "gal_2": {
       imageUrl: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80",

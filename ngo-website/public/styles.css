@@ -4385,6 +4385,125 @@ body.nav-open .header-wrapper {
   letter-spacing: 0.5px;
 }
 
+/* Historical Archival Showcase Card */
+.archival-showcase-card {
+  background: linear-gradient(145deg, #0A1F44 0%, #102A54 100%);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(10, 31, 68, 0.22);
+  border: 1px solid rgba(255, 107, 0, 0.35);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.archival-showcase-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 22px 50px rgba(10, 31, 68, 0.35), 0 0 24px rgba(255, 107, 0, 0.25);
+  border-color: rgba(255, 107, 0, 0.65);
+}
+
+.archival-photo-frame {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: #050d1a;
+  border-bottom: 3px solid var(--primary-orange);
+}
+
+.archival-photo-img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  object-position: center 20%;
+  display: block;
+  transition: transform 0.4s ease;
+}
+
+.archival-showcase-card:hover .archival-photo-img {
+  transform: scale(1.03);
+}
+
+.archival-photo-tag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(10, 31, 68, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #FFAE66;
+  border: 1px solid rgba(255, 174, 102, 0.5);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.archival-card-body {
+  padding: 24px 26px 26px;
+  color: #FFFFFF;
+}
+
+.archival-card-title {
+  font-family: var(--font-heading);
+  font-size: 19px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 0 0 6px;
+  line-height: 1.3;
+}
+
+.archival-card-subtitle {
+  font-size: 12.5px;
+  color: #FFAE66;
+  font-weight: 600;
+  margin: 0 0 14px;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.archival-card-quote {
+  font-size: 14px;
+  line-height: 1.65;
+  color: #E2E8F0;
+  border-left: 3px solid var(--primary-orange);
+  padding-left: 12px;
+  margin: 0 0 12px;
+  font-style: italic;
+}
+
+.archival-card-author {
+  font-size: 12px;
+  color: #CBD5E1;
+  font-weight: 700;
+  text-align: right;
+  margin: 0;
+}
+
+.history-archival-card {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 28px rgba(10, 31, 68, 0.08);
+  margin-bottom: 50px;
+}
+
+@media (max-width: 860px) {
+  .history-archival-card {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* 2. SECTION BADGES & HEADERS */
 .sec-badge-navy {
   display: inline-flex;
