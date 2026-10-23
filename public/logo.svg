@@ -1,102 +1,114 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="100%" height="100%">
   <defs>
-    <radialGradient id="hubGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#1A3A6B"/>
-      <stop offset="100%" stop-color="#0A1F44"/>
+    <!-- Central Hub Sphere Gradient matching official emblem -->
+    <radialGradient id="ssdCenterHub" cx="48%" cy="44%" r="52%">
+      <stop offset="0%" stop-color="#00EBFF"/>
+      <stop offset="30%" stop-color="#00B5F8"/>
+      <stop offset="65%" stop-color="#0055D0"/>
+      <stop offset="100%" stop-color="#02119C"/>
     </radialGradient>
-    <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
-      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.25"/>
-    </filter>
   </defs>
 
-  <g filter="url(#dropShadow)">
-    <!-- 8 Gear Teeth -->
-    <g fill="#0A1F44">
-      <!-- Top -->
-      <path d="M182 25 L218 25 L212 75 L188 75 Z" />
-      <!-- Top Right -->
-      <path d="M295 72 L320 98 L285 133 L267 115 Z" />
-      <!-- Right -->
-      <path d="M375 182 L375 218 L325 212 L325 188 Z" />
-      <!-- Bottom Right -->
-      <path d="M320 302 L295 328 L267 285 L285 267 Z" />
-      <!-- Bottom -->
-      <path d="M218 375 L182 375 L188 325 L212 325 Z" />
-      <!-- Bottom Left -->
-      <path d="M105 328 L80 302 L115 267 L133 285 Z" />
-      <!-- Left -->
-      <path d="M25 218 L25 182 L75 188 L75 212 Z" />
-      <!-- Top Left -->
-      <path d="M80 98 L105 72 L133 115 L115 133 Z" />
-    </g>
-
-    <!-- Outer Rim Ring -->
-    <circle cx="200" cy="200" r="145" fill="none" stroke="#0A1F44" stroke-width="26"/>
-    <circle cx="200" cy="200" r="158" fill="none" stroke="#FF6B00" stroke-width="3"/>
-    <circle cx="200" cy="200" r="132" fill="none" stroke="#FF6B00" stroke-width="3"/>
-
-    <!-- Inner Track Ring -->
-    <circle cx="200" cy="200" r="115" fill="none" stroke="#0A1F44" stroke-width="8"/>
-    <circle cx="200" cy="200" r="108" fill="#F8FAFC" />
-
-    <!-- 24 Dharma Chakra Spokes -->
-    <g stroke="#0A1F44" stroke-width="3.5" stroke-linecap="round">
-      <line x1="200" y1="200" x2="200" y2="92"/>
-      <line x1="200" y1="200" x2="228" y2="95"/>
-      <line x1="200" y1="200" x2="254" y2="107"/>
-      <line x1="200" y1="200" x2="276" y2="124"/>
-      <line x1="200" y1="200" x2="293" y2="147"/>
-      <line x1="200" y1="200" x2="304" y2="172"/>
-      <line x1="200" y1="200" x2="308" y2="200"/>
-      <line x1="200" y1="200" x2="304" y2="228"/>
-      <line x1="200" y1="200" x2="293" y2="253"/>
-      <line x1="200" y1="200" x2="276" y2="276"/>
-      <line x1="200" y1="200" x2="254" y2="293"/>
-      <line x1="200" y1="200" x2="228" y2="305"/>
-      <line x1="200" y1="200" x2="200" y2="308"/>
-      <line x1="200" y1="200" x2="172" y2="305"/>
-      <line x1="200" y1="200" x2="146" y2="293"/>
-      <line x1="200" y1="200" x2="124" y2="276"/>
-      <line x1="200" y1="200" x2="107" y2="253"/>
-      <line x1="200" y1="200" x2="96" y2="228"/>
-      <line x1="200" y1="200" x2="92" y2="200"/>
-      <line x1="200" y1="200" x2="96" y2="172"/>
-      <line x1="200" y1="200" x2="107" y2="147"/>
-      <line x1="200" y1="200" x2="124" y2="124"/>
-      <line x1="200" y1="200" x2="146" y2="107"/>
-      <line x1="200" y1="200" x2="172" y2="95"/>
-    </g>
-
-    <!-- 24 Small Outer Dots/Teeth on Rim -->
-    <g fill="#0A1F44">
-      <circle cx="200" cy="85" r="4.5"/>
-      <circle cx="229" cy="88" r="4.5"/>
-      <circle cx="257" cy="100" r="4.5"/>
-      <circle cx="281" cy="119" r="4.5"/>
-      <circle cx="300" cy="143" r="4.5"/>
-      <circle cx="311" cy="170" r="4.5"/>
-      <circle cx="315" cy="200" r="4.5"/>
-      <circle cx="311" cy="230" r="4.5"/>
-      <circle cx="300" cy="257" r="4.5"/>
-      <circle cx="281" cy="281" r="4.5"/>
-      <circle cx="257" cy="300" r="4.5"/>
-      <circle cx="229" cy="312" r="4.5"/>
-      <circle cx="200" cy="315" r="4.5"/>
-      <circle cx="171" cy="312" r="4.5"/>
-      <circle cx="143" cy="300" r="4.5"/>
-      <circle cx="119" cy="281" r="4.5"/>
-      <circle cx="100" cy="257" r="4.5"/>
-      <circle cx="89" cy="230" r="4.5"/>
-      <circle cx="85" cy="200" r="4.5"/>
-      <circle cx="89" cy="170" r="4.5"/>
-      <circle cx="100" cy="143" r="4.5"/>
-      <circle cx="119" cy="119" r="4.5"/>
-      <circle cx="143" cy="100" r="4.5"/>
-      <circle cx="171" cy="88" r="4.5"/>
-    </g>
-
-    <!-- Central Hub -->
-    <circle cx="200" cy="200" r="28" fill="url(#hubGrad)" stroke="#FF6B00" stroke-width="3"/>
-    <circle cx="200" cy="200" r="10" fill="#FFFFFF"/>
+  <!-- 8 Gear Teeth -->
+  <g fill="#02119C">
+    <path d="M 446 84 L 442 51 L 500 5 L 558 51 L 554 84 Z" />
+    <path d="M 756 167.7 L 776.5 141.5 L 850 150 L 858.5 223.5 L 832.3 244 Z" />
+    <path d="M 916 446 L 949 442 L 995 500 L 949 558 L 916 554 Z" />
+    <path d="M 832.3 756 L 858.5 776.5 L 850 850 L 776.5 858.5 L 756 832.3 Z" />
+    <path d="M 554 916 L 558 949 L 500 995 L 442 949 L 446 916 Z" />
+    <path d="M 244 832.3 L 223.5 858.5 L 150 850 L 141.5 776.5 L 167.7 756 Z" />
+    <path d="M 84 554 L 51 558 L 5 500 L 51 442 L 84 446 Z" />
+    <path d="M 167.7 244 L 141.5 223.5 L 150 150 L 223.5 141.5 L 244 167.7 Z" />
   </g>
+
+  <!-- Outer Wheel Main Rim (R=416) -->
+  <circle cx="500" cy="500" r="416" fill="#02119C" />
+
+  <!-- 8 Cyan Inlay Accents -->
+  <g fill="#0FC4FC">
+    <path d="M 535.5 147.8 A 354 354 0 0 1 724 225.9 L 701.2 253.7 A 318 318 0 0 0 531.9 183.6 Z" />
+    <path d="M 774.1 276 A 354 354 0 0 1 852.2 464.5 L 816.4 468.1 A 318 318 0 0 0 746.3 298.8 Z" />
+    <path d="M 852.2 535.5 A 354 354 0 0 1 774.1 724 L 746.3 701.2 A 318 318 0 0 0 816.4 531.9 Z" />
+    <path d="M 724 774.1 A 354 354 0 0 1 535.5 852.2 L 531.9 816.4 A 318 318 0 0 0 701.2 746.3 Z" />
+    <path d="M 464.5 852.2 A 354 354 0 0 1 276 774.1 L 298.8 746.3 A 318 318 0 0 0 468.1 816.4 Z" />
+    <path d="M 225.9 724 A 354 354 0 0 1 147.8 535.5 L 183.6 531.9 A 318 318 0 0 0 253.7 701.2 Z" />
+    <path d="M 147.8 464.5 A 354 354 0 0 1 225.9 276 L 253.7 298.8 A 318 318 0 0 0 183.6 468.1 Z" />
+    <path d="M 276 225.9 A 354 354 0 0 1 464.5 147.8 L 468.1 183.6 A 318 318 0 0 0 298.8 253.7 Z" />
+  </g>
+
+  <!-- Inner Blue Rim Border around Cyan (R=318) -->
+  <circle cx="500" cy="500" r="318" fill="none" stroke="#02119C" stroke-width="4" />
+
+  <!-- Crisp White Boundary Ring (R=308, width=8) -->
+  <circle cx="500" cy="500" r="308" fill="none" stroke="#FFFFFF" stroke-width="8" />
+
+  <!-- Solid Blue Chakra Rim (R=292, stroke-width=24) -->
+  <circle cx="500" cy="500" r="292" fill="none" stroke="#02119C" stroke-width="24" />
+
+  <!-- White Chakra Background Disc (R=280) -->
+  <circle cx="500" cy="500" r="280" fill="#FFFFFF" />
+
+  <!-- 24 Dharma Chakra Diamond Spokes -->
+  <g fill="#02119C">
+    <path d="M 497 452 L 476 305 L 487 235 L 492 205 L 508 205 L 513 235 L 524 305 L 503 452 Z" />
+    <path d="M 509.5 452.9 L 527.3 305.4 L 556 240.7 L 568.6 213 L 584.1 217.1 L 581.1 247.4 L 573.7 317.9 L 515.3 454.4 Z" />
+    <path d="M 521.4 456.9 L 576.7 319.1 L 621.2 264 L 640.6 240.5 L 654.4 248.5 L 643.8 277 L 618.3 343.1 L 526.6 459.9 Z" />
+    <path d="M 531.8 463.9 L 620.9 345.1 L 678.2 303.4 L 702.9 285.7 L 714.3 297.1 L 696.6 321.8 L 654.9 379.1 L 536.1 468.2 Z" />
+    <path d="M 540.1 473.4 L 656.9 381.7 L 723 356.2 L 751.5 345.6 L 759.5 359.4 L 736 378.8 L 680.9 423.3 L 543.1 478.6 Z" />
+    <path d="M 545.6 484.7 L 682.1 426.3 L 752.6 418.9 L 782.9 415.9 L 787 431.4 L 759.3 444 L 694.6 472.7 L 547.1 490.5 Z" />
+    <path d="M 548 497 L 695 476 L 765 487 L 795 492 L 795 508 L 765 513 L 695 524 L 548 503 Z" />
+    <path d="M 547.1 509.5 L 694.6 527.3 L 759.3 556 L 787 568.6 L 782.9 584.1 L 752.6 581.1 L 682.1 573.7 L 545.6 515.3 Z" />
+    <path d="M 543.1 521.4 L 680.9 576.7 L 736 621.2 L 759.5 640.6 L 751.5 654.4 L 723 643.8 L 656.9 618.3 L 540.1 526.6 Z" />
+    <path d="M 536.1 531.8 L 654.9 620.9 L 696.6 678.2 L 714.3 702.9 L 702.9 714.3 L 678.2 696.6 L 620.9 654.9 L 531.8 536.1 Z" />
+    <path d="M 526.6 540.1 L 618.3 656.9 L 643.8 723 L 654.4 751.5 L 640.6 759.5 L 621.2 736 L 576.7 680.9 L 521.4 543.1 Z" />
+    <path d="M 515.3 545.6 L 573.7 682.1 L 581.1 752.6 L 584.1 782.9 L 568.6 787 L 556 759.3 L 527.3 694.6 L 509.5 547.1 Z" />
+    <path d="M 503 548 L 524 695 L 513 765 L 508 795 L 492 795 L 487 765 L 476 695 L 497 548 Z" />
+    <path d="M 490.5 547.1 L 472.7 694.6 L 444 759.3 L 431.4 787 L 415.9 782.9 L 418.9 752.6 L 426.3 682.1 L 484.7 545.6 Z" />
+    <path d="M 478.6 543.1 L 423.3 680.9 L 378.8 736 L 359.4 759.5 L 345.6 751.5 L 356.2 723 L 381.7 656.9 L 473.4 540.1 Z" />
+    <path d="M 468.2 536.1 L 379.1 654.9 L 321.8 696.6 L 297.1 714.3 L 285.7 702.9 L 303.4 678.2 L 345.1 620.9 L 463.9 531.8 Z" />
+    <path d="M 459.9 526.6 L 343.1 618.3 L 277 643.8 L 248.5 654.4 L 240.5 640.6 L 264 621.2 L 319.1 576.7 L 456.9 521.4 Z" />
+    <path d="M 454.4 515.3 L 317.9 573.7 L 247.4 581.1 L 217.1 584.1 L 213 568.6 L 240.7 556 L 305.4 527.3 L 452.9 509.5 Z" />
+    <path d="M 452 503 L 305 524 L 235 513 L 205 508 L 205 492 L 235 487 L 305 476 L 452 497 Z" />
+    <path d="M 452.9 490.5 L 305.4 472.7 L 240.7 444 L 213 431.4 L 217.1 415.9 L 247.4 418.9 L 317.9 426.3 L 454.4 484.7 Z" />
+    <path d="M 456.9 478.6 L 319.1 423.3 L 264 378.8 L 240.5 359.4 L 248.5 345.6 L 277 356.2 L 343.1 381.7 L 459.9 473.4 Z" />
+    <path d="M 463.9 468.2 L 345.1 379.1 L 303.4 321.8 L 285.7 297.1 L 297.1 285.7 L 321.8 303.4 L 379.1 345.1 L 468.2 463.9 Z" />
+    <path d="M 473.4 459.9 L 381.7 343.1 L 356.2 277 L 345.6 248.5 L 359.4 240.5 L 378.8 264 L 423.3 319.1 L 478.6 456.9 Z" />
+    <path d="M 484.7 454.4 L 426.3 317.9 L 418.9 247.4 L 415.9 217.1 L 431.4 213 L 444 240.7 L 472.7 305.4 L 490.5 452.9 Z" />
+  </g>
+
+  <!-- White Scalloped Arches between spoke tips -->
+  <g fill="none" stroke="#FFFFFF" stroke-width="3.5">
+    <path d="M 500 212 Q 535.6 229.3 574.5 221.8" />
+    <path d="M 574.5 221.8 Q 604.5 247.8 644 250.6" />
+    <path d="M 644 250.6 Q 666.2 283.4 703.6 296.4" />
+    <path d="M 703.6 296.4 Q 716.6 333.8 749.4 356" />
+    <path d="M 749.4 356 Q 752.2 395.5 778.2 425.5" />
+    <path d="M 778.2 425.5 Q 770.7 464.4 788 500" />
+    <path d="M 788 500 Q 770.7 535.6 778.2 574.5" />
+    <path d="M 778.2 574.5 Q 752.2 604.5 749.4 644" />
+    <path d="M 749.4 644 Q 716.6 666.2 703.6 703.6" />
+    <path d="M 703.6 703.6 Q 666.2 716.6 644 749.4" />
+    <path d="M 644 749.4 Q 604.5 752.2 574.5 778.2" />
+    <path d="M 574.5 778.2 Q 535.6 770.7 500 788" />
+    <path d="M 500 788 Q 464.4 770.7 425.5 778.2" />
+    <path d="M 425.5 778.2 Q 395.5 752.2 356 749.4" />
+    <path d="M 356 749.4 Q 333.8 716.6 296.4 703.6" />
+    <path d="M 296.4 703.6 Q 283.4 666.2 250.6 644" />
+    <path d="M 250.6 644 Q 247.8 604.5 221.8 574.5" />
+    <path d="M 221.8 574.5 Q 229.3 535.6 212 500" />
+    <path d="M 212 500 Q 229.3 464.4 221.8 425.5" />
+    <path d="M 221.8 425.5 Q 247.8 395.5 250.6 356" />
+    <path d="M 250.6 356 Q 283.4 333.8 296.4 296.4" />
+    <path d="M 296.4 296.4 Q 333.8 283.4 356 250.6" />
+    <path d="M 356 250.6 Q 395.5 247.8 425.5 221.8" />
+    <path d="M 425.5 221.8 Q 464.4 229.3 500 212" />
+  </g>
+
+  <!-- White Inner Ring around Hub (R=46, stroke-width=7) -->
+  <circle cx="500" cy="500" r="46" fill="none" stroke="#FFFFFF" stroke-width="7" />
+
+  <!-- Center Spherical Hub Jewel (R=38) -->
+  <circle cx="500" cy="500" r="38" fill="url(#ssdCenterHub)" stroke="#FFFFFF" stroke-width="2.5" />
+  <!-- Center Specular Highlight -->
+  <ellipse cx="490" cy="489" rx="6" ry="4.5" fill="#FFFFFF" opacity="0.8" transform="rotate(-35 490 489)" />
 </svg>

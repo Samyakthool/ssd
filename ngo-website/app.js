@@ -1957,7 +1957,12 @@ function initStickyHeader() {
 
 function handleLogoError(imgElement) {
   imgElement.onerror = null;
-  imgElement.src = "logo.png";
+  const current = imgElement.src || '';
+  if (!current.includes('logo.svg')) {
+    imgElement.src = 'logo.svg';
+  } else {
+    imgElement.src = 'logo.png';
+  }
 }
 
 function setFontSize(size) {

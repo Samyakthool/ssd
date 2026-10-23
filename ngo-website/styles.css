@@ -538,6 +538,10 @@ body {
   transition: all 0.3s ease;
   display: block !important;
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.16));
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .header-wrapper.scrolled .org-logo {
@@ -4243,6 +4247,10 @@ body.nav-open .header-wrapper {
   height: 110px;
   margin: 0 auto 18px;
   filter: drop-shadow(0 6px 16px rgba(0,0,0,0.4));
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  object-fit: contain;
+  transform: translateZ(0);
 }
 
 .hero-visual-quote {

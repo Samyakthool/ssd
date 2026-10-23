@@ -5,8 +5,12 @@ export const metadata: Metadata = {
   title: 'Samata Sainik Dal (SSD) | Central Command Platform',
   description: 'Official Digital Command, Cadre Enlistment & Public Verification Platform of Samata Sainik Dal (Founded by Bodhisattva Dr. B.R. Ambedkar in 1927).',
   icons: {
-    icon: '/logo.svg',
-    apple: '/logo.png',
+    icon: [
+      { url: '/logo.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' }
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
   },
 };
 
