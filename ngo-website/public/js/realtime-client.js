@@ -30,6 +30,14 @@
     if (e.key === 'ssd_admin_local_data') {
       triggerHandlers('storage:sync', { key: e.key }, 'local_storage');
     }
+    if (e.key === 'ssd_last_realtime_event' && e.newValue) {
+      try {
+        const parsed = JSON.parse(e.newValue);
+        if (parsed && parsed.type) {
+          triggerHandlers(parsed.type, parsed.payload, 'storage');
+        }
+      } catch (err) {}
+    }
   });
 
   function triggerHandlers(eventType, payload, origin) {
@@ -90,6 +98,10 @@
         'membership:approve',
         'membership:reject',
         'membership:workflow',
+        'legacy:apply',
+        'legacy:approved',
+        'batches:update',
+        'batches:correct',
         'donation:new',
         'stats:update',
         'chapter:update',
@@ -144,7 +156,12 @@
         } catch (e) {}
       }
 
-      // 3. Dispatch to server to push to other browsers/devices
+      // 3. Dispatch cross-tab via Storage event
+      try {
+        localStorage.setItem('ssd_last_realtime_event', JSON.stringify({ type: eventType, payload, ts: Date.now() }));
+      } catch (e) {}
+
+      // 4. Dispatch to server to push to other browsers/devices
       if (syncToServer) {
         fetch('/api/realtime/broadcast', {
           method: 'POST',

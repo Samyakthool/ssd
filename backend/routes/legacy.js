@@ -587,8 +587,10 @@ router.post('/applications/:id/approve', authenticate, requireRole('super_admin'
 
     saveEmbeddedStore();
 
-    // Broadcast Realtime Event
+    // Broadcast Realtime Events
     broadcastRealtimeEvent('legacy:approved', { sainikId, member: newMember });
+    broadcastRealtimeEvent('membership:approve', { id: app.id, applicationId: app.id, sainikId, status: 'APPROVED', member: newMember });
+    broadcastRealtimeEvent('stats:update');
 
     return res.json({
       success: true,

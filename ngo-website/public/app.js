@@ -44,6 +44,14 @@ if (typeof window.SSDRealtime === 'undefined') {
       if (e.key === 'ssd_admin_local_data') {
         triggerHandlers('storage:sync', { key: e.key }, 'local_storage');
       }
+      if (e.key === 'ssd_last_realtime_event' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (parsed && parsed.type) {
+            triggerHandlers(parsed.type, parsed.payload, 'storage');
+          }
+        } catch (err) {}
+      }
     });
 
     function triggerHandlers(eventType, payload, origin) {
@@ -76,7 +84,7 @@ if (typeof window.SSDRealtime === 'undefined') {
           if (reconnectTimer) clearTimeout(reconnectTimer);
           reconnectTimer = setTimeout(connectSSE, delay);
         };
-        const events = ['connected', 'leadership:update', 'leadership:delete', 'news:update', 'news:delete', 'event:update', 'event:delete', 'event:register', 'campaign:update', 'campaign:delete', 'gallery:update', 'gallery:delete', 'membership:apply', 'membership:approve', 'membership:reject', 'membership:workflow', 'donation:new', 'stats:update', 'chapter:update', 'sync:all'];
+        const events = ['connected', 'leadership:update', 'leadership:delete', 'news:update', 'news:delete', 'event:update', 'event:delete', 'event:register', 'campaign:update', 'campaign:delete', 'gallery:update', 'gallery:delete', 'membership:apply', 'membership:approve', 'membership:reject', 'membership:workflow', 'legacy:apply', 'legacy:approved', 'batches:update', 'batches:correct', 'donation:new', 'stats:update', 'chapter:update', 'sync:all'];
         events.forEach(evt => {
           eventSource.addEventListener(evt, (e) => {
             let data = null;
@@ -108,6 +116,9 @@ if (typeof window.SSDRealtime === 'undefined') {
         if (broadcastChannel) {
           try { broadcastChannel.postMessage({ type: eventType, payload }); } catch (e) {}
         }
+        try {
+          localStorage.setItem('ssd_last_realtime_event', JSON.stringify({ type: eventType, payload, ts: Date.now() }));
+        } catch (e) {}
         if (syncToServer) {
           fetch('/api/realtime/broadcast', {
             method: 'POST',
@@ -975,6 +986,12 @@ function initRealtimeDomSync() {
       if (newStats) renderStats(newStats);
       else loadStats();
     }
+  });
+  window.SSDRealtime.on('membership:apply', () => {
+    if (document.getElementById("statMembers")) loadStats();
+  });
+  window.SSDRealtime.on('legacy:apply', () => {
+    if (document.getElementById("statMembers")) loadStats();
   });
   window.SSDRealtime.on('sync:all', () => {
     if (document.getElementById("newsContainer")) loadNews();
@@ -4691,6 +4708,54 @@ async function handleEnhancedMemberRegistration(e) {
         : `Enlistment Application registered! Reference: ${data.applicationId}`, 
         "success"
       );
+
+      // Real-Time Cross-Client & Broadcast Notification
+      const appRecord = {
+        id: data.applicationId,
+        full_name: fullName,
+        mobile: phone,
+        email: email,
+        dob: dob,
+        gender: gender,
+        wing_name: wing,
+        blood_group: bloodGroup,
+        education: qualification,
+        occupation: occupation,
+        state_name: state,
+        region_name: region,
+        district_name: district,
+        taluka_name: taluka,
+        address: address,
+        membership_type: membershipType,
+        original_joining_date: legacyJoiningDate,
+        joining_date_precision: legacyDatePrecision,
+        existing_sainik_id: legacyExistingId,
+        chapter_name: legacyChapter,
+        status: isLegacy ? 'LEGACY_SUBMITTED' : 'SUBMITTED',
+        created_at: new Date().toISOString()
+      };
+
+      if (window.SSDRealtime && window.SSDRealtime.emit) {
+        window.SSDRealtime.emit('membership:apply', appRecord);
+        if (isLegacy) {
+          window.SSDRealtime.emit('legacy:apply', appRecord);
+        }
+      }
+
+      // Sync to local storage for multi-tab reactivity on the same device
+      try {
+        let parsed = {};
+        const rawLocal = localStorage.getItem('ssd_admin_local_data');
+        if (rawLocal) {
+          try { parsed = JSON.parse(rawLocal); } catch (e) {}
+        }
+        if (!Array.isArray(parsed.membership_applications)) parsed.membership_applications = [];
+        const exIdx = parsed.membership_applications.findIndex(a => a.id === appRecord.id);
+        if (exIdx === -1) {
+          parsed.membership_applications.unshift(appRecord);
+          localStorage.setItem('ssd_admin_local_data', JSON.stringify(parsed));
+        }
+      } catch (e) {}
 
       // Populate and Show Confirmation Modal
       const modal = document.getElementById("appConfirmModal");

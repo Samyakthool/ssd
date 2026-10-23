@@ -390,8 +390,12 @@ router.post('/apply', applicationRateLimiter, upload.single('photo'), async (req
 
     saveEmbeddedStore();
 
-    // Broadcast real-time event
-    broadcastRealtimeEvent(isLegacy ? 'legacy:apply' : 'membership:apply', newApp);
+    // Broadcast real-time events
+    broadcastRealtimeEvent('membership:apply', newApp);
+    if (isLegacy) {
+      broadcastRealtimeEvent('legacy:apply', newApp);
+    }
+    broadcastRealtimeEvent('stats:update');
 
     // Async attempt to persist to Supabase Cloud if configured
     if (supabase) {

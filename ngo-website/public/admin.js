@@ -53,6 +53,14 @@ if (typeof window.SSDRealtime === 'undefined') {
       if (e.key === 'ssd_admin_local_data') {
         triggerHandlers('storage:sync', { key: e.key }, 'local_storage');
       }
+      if (e.key === 'ssd_last_realtime_event' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (parsed && parsed.type) {
+            triggerHandlers(parsed.type, parsed.payload, 'storage');
+          }
+        } catch (err) {}
+      }
     });
 
     function triggerHandlers(eventType, payload, origin) {
@@ -85,7 +93,7 @@ if (typeof window.SSDRealtime === 'undefined') {
           if (reconnectTimer) clearTimeout(reconnectTimer);
           reconnectTimer = setTimeout(connectSSE, delay);
         };
-        const events = ['connected', 'leadership:update', 'leadership:delete', 'news:update', 'news:delete', 'event:update', 'event:delete', 'event:register', 'campaign:update', 'campaign:delete', 'gallery:update', 'gallery:delete', 'membership:apply', 'membership:approve', 'membership:reject', 'membership:workflow', 'donation:new', 'stats:update', 'chapter:update', 'sync:all'];
+        const events = ['connected', 'leadership:update', 'leadership:delete', 'news:update', 'news:delete', 'event:update', 'event:delete', 'event:register', 'campaign:update', 'campaign:delete', 'gallery:update', 'gallery:delete', 'membership:apply', 'membership:approve', 'membership:reject', 'membership:workflow', 'legacy:apply', 'legacy:approved', 'batches:update', 'batches:correct', 'donation:new', 'stats:update', 'chapter:update', 'sync:all'];
         events.forEach(evt => {
           eventSource.addEventListener(evt, (e) => {
             let data = null;
@@ -117,6 +125,9 @@ if (typeof window.SSDRealtime === 'undefined') {
         if (broadcastChannel) {
           try { broadcastChannel.postMessage({ type: eventType, payload }); } catch (e) {}
         }
+        try {
+          localStorage.setItem('ssd_last_realtime_event', JSON.stringify({ type: eventType, payload, ts: Date.now() }));
+        } catch (e) {}
         if (syncToServer) {
           fetch('/api/realtime/broadcast', {
             method: 'POST',
@@ -1073,28 +1084,171 @@ document.addEventListener("DOMContentLoaded", () => {
   initAdminRealtimePipeline();
 });
 
+function playEnlistmentChime() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12); // A5
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.35);
+  } catch (e) {}
+}
+
 // Real-Time Event Pipeline for Admin Command Portal
 function initAdminRealtimePipeline() {
   if (typeof window.SSDRealtime === 'undefined') return;
 
-  // 1. Live Membership Applications from Website
+  function ingestLiveApplication(app, isLegacyEvent = false) {
+    if (!app || !app.id) return;
+    if (!Array.isArray(adminData.membership_applications)) adminData.membership_applications = [];
+    const idx = adminData.membership_applications.findIndex(a => a.id === app.id);
+    if (idx !== -1) {
+      adminData.membership_applications[idx] = { ...adminData.membership_applications[idx], ...app };
+    } else {
+      adminData.membership_applications.unshift(app);
+    }
+    saveLocalStore();
+    renderMembersTable();
+    renderApprovalsView();
+    renderOverviewApprovals();
+    renderOverview();
+
+    const isLegacy = isLegacyEvent || (app.membership_type === 'LEGACY');
+    if (isLegacy) {
+      const bLegacy = document.getElementById('badgeLegacyCount');
+      if (bLegacy) {
+        const cur = parseInt(bLegacy.textContent, 10) || 0;
+        bLegacy.textContent = cur + 1;
+      }
+      if (typeof loadLegacyApplications === 'function') loadLegacyApplications();
+      if (typeof loadLegacyStats === 'function') loadLegacyStats();
+    }
+
+    playEnlistmentChime();
+    showToast(isLegacy
+      ? `🎖️ Real-Time Legacy Cadre Alert: Veteran dossier received from ${app.full_name || 'Veteran'} (${app.district_name || 'Unit'})!`
+      : `⚡ Real-Time Enlistment Alert: New application received from ${app.full_name || 'Cadet'} (${app.district_name || 'Unit'})!`,
+      "info"
+    );
+  }
+
+  // 1. Live Membership Applications from Website (SSE + BroadcastChannel)
   window.SSDRealtime.on('membership:apply', (app) => {
-    if (app && app.id) {
-      if (!Array.isArray(adminData.membership_applications)) adminData.membership_applications = [];
+    ingestLiveApplication(app, false);
+  });
+
+  window.SSDRealtime.on('legacy:apply', (app) => {
+    ingestLiveApplication(app, true);
+  });
+
+  // Workflow updates (review, recommend, corrections)
+  window.SSDRealtime.on('membership:workflow', (app) => {
+    if (app && app.id && Array.isArray(adminData.membership_applications)) {
       const idx = adminData.membership_applications.findIndex(a => a.id === app.id);
       if (idx !== -1) {
         adminData.membership_applications[idx] = { ...adminData.membership_applications[idx], ...app };
-      } else {
-        adminData.membership_applications.unshift(app);
+        saveLocalStore();
+        renderApprovalsView();
+        renderOverviewApprovals();
       }
-      saveLocalStore();
-      renderMembersTable();
-      renderApprovalsView();
-      renderOverviewApprovals();
-      renderOverview();
-      showToast(`⚡ Real-Time Enlistment Alert: New application received from ${app.full_name || 'Cadet'} (${app.district_name || 'Unit'})!`, "info");
     }
   });
+
+  // 1B. Supabase Realtime WebSocket Connection
+  if (window.initSupabaseClient) {
+    window.initSupabaseClient().then(supa => {
+      if (supa && supa.channel) {
+        try {
+          supa.channel('admin-enlistment-live-sync')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'membership_applications' }, (payload) => {
+              if (payload && payload.new) {
+                ingestLiveApplication(payload.new, payload.new.membership_type === 'LEGACY');
+              }
+            })
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'membership_applications' }, (payload) => {
+              if (payload && payload.new && Array.isArray(adminData.membership_applications)) {
+                const idx = adminData.membership_applications.findIndex(a => a.id === payload.new.id);
+                if (idx !== -1) {
+                  adminData.membership_applications[idx] = { ...adminData.membership_applications[idx], ...payload.new };
+                  saveLocalStore();
+                  renderApprovalsView();
+                  renderOverviewApprovals();
+                }
+              }
+            })
+            .subscribe((status) => {
+              console.log('⚡ [Admin Realtime] Supabase WebSocket status:', status);
+            });
+        } catch (e) {
+          console.warn('[Admin Realtime] Supabase channel error:', e);
+        }
+      }
+    }).catch(() => {});
+  }
+
+  // 1C. Resilient 5-Second Heartbeat Polling Fallback (Guarantees Real-Time on Vercel Serverless)
+  setInterval(async () => {
+    if (document.hidden) return;
+    const token = await ensureAuthToken();
+    if (!token) return;
+
+    try {
+      const res = await fetch('/api/membership/applications', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.applications)) {
+          if (!Array.isArray(adminData.membership_applications)) adminData.membership_applications = [];
+          const curMap = new Map(adminData.membership_applications.map(a => [a.id, a]));
+          let freshFound = false;
+          let latestItem = null;
+
+          for (const sApp of data.applications) {
+            if (!curMap.has(sApp.id)) {
+              adminData.membership_applications.unshift(sApp);
+              freshFound = true;
+              latestItem = sApp;
+            } else {
+              const ex = curMap.get(sApp.id);
+              if (ex.status !== sApp.status) {
+                Object.assign(ex, sApp);
+                freshFound = true;
+              }
+            }
+          }
+
+          if (freshFound) {
+            saveLocalStore();
+            renderMembersTable();
+            renderApprovalsView();
+            renderOverviewApprovals();
+            renderOverview();
+            if (typeof loadLegacyApplications === 'function') loadLegacyApplications();
+            if (typeof loadLegacyStats === 'function') loadLegacyStats();
+            if (latestItem) {
+              const isLeg = (latestItem.membership_type === 'LEGACY');
+              playEnlistmentChime();
+              showToast(isLeg
+                ? `🎖️ Real-Time Legacy Cadre Alert: Veteran dossier from ${latestItem.full_name || 'Cadet'} (${latestItem.district_name || 'Unit'})!`
+                : `⚡ Real-Time Enlistment Alert: New application received from ${latestItem.full_name || 'Cadet'} (${latestItem.district_name || 'Unit'})!`,
+                "info"
+              );
+            }
+          }
+        }
+      }
+    } catch (e) {}
+  }, 5000);
 
   // 2. Real-Time Donations
   window.SSDRealtime.on('donation:new', (don) => {
@@ -1530,25 +1684,53 @@ function collectAllPendingItems() {
   // 6. Cadet Enlistment Applications (/membership queue)
   (adminData.membership_applications || []).forEach(app => {
     const s = (app.status || '').toUpperCase();
-    if (s === 'SUBMITTED' || s === 'UNDER_REVIEW' || s === 'RECOMMENDED' || s === 'PENDING' || s === 'CORRECTION_REQUIRED') {
-      let stageLabel = 'Cadet Enlistment';
-      if (s === 'UNDER_REVIEW') stageLabel = 'Cadet (Under Review)';
-      if (s === 'RECOMMENDED') stageLabel = 'Cadet (Recommended)';
+    if (s === 'SUBMITTED' || s === 'LEGACY_SUBMITTED' || s === 'DATE_VERIFICATION_PENDING' || s === 'BATCH_PENDING' || s === 'UNDER_REVIEW' || s === 'UNDER_VERIFICATION' || s === 'RECOMMENDED' || s === 'PENDING' || s === 'CORRECTION_REQUIRED' || s.includes('PENDING') || s.includes('SUBMITTED') || s.includes('REVIEW') || s.includes('VERIF')) {
+      const isLegacy = Boolean(app.is_legacy || app.isLegacy || (app.membership_type === 'LEGACY') || (app.verification_type === 'LEGACY') || s.includes('LEGACY'));
+      let stageLabel = isLegacy ? 'Legacy Veteran Cadre' : 'Cadet Enlistment';
+      if (s === 'UNDER_REVIEW') stageLabel = isLegacy ? 'Legacy (Under Review)' : 'Cadet (Under Review)';
+      if (s === 'RECOMMENDED') stageLabel = isLegacy ? 'Legacy (Recommended)' : 'Cadet (Recommended)';
       if (s === 'CORRECTION_REQUIRED') stageLabel = 'Correction Requested';
+      if (s === 'DATE_VERIFICATION_PENDING') stageLabel = 'Legacy (Date Verification)';
+      if (s === 'BATCH_PENDING') stageLabel = 'Legacy (Batch Verification)';
+      if (s === 'UNDER_VERIFICATION') stageLabel = 'Legacy (Under Verification)';
 
       pending.push({
         id: app.id,
-        type: 'enlistment',
+        type: isLegacy ? 'legacy' : 'enlistment',
         typeLabel: stageLabel,
         title: `${app.full_name || 'Cadet Applicant'} (${app.id})`,
         submittedBy: `${app.full_name || 'Cadet'} (Applicant)`,
         submittedAt: app.created_at ? new Date(app.created_at).getTime() : Date.now(),
-        summary: `Wing: ${app.wing_name || 'Central Cadet Corps'} | ${app.district_name || ''}, ${app.state_name || ''} | Tel: ${app.mobile || 'N/A'}`,
+        summary: `Wing: ${app.wing_name || 'Central Cadet Corps'} | ${app.district_name || ''}, ${app.state_name || ''} | Tel: ${app.mobile || 'N/A'}${isLegacy ? ' | Veteran Record' : ''}`,
         approvalStatus: 'pending',
         applicationData: app
       });
     }
   });
+
+  // 6b. Legacy Applications List (if loaded in legacy view)
+  const legacyList = window.legacyApplicationsList || (typeof legacyApplicationsList !== 'undefined' ? legacyApplicationsList : null);
+  if (Array.isArray(legacyList)) {
+    legacyList.forEach(app => {
+      const s = (app.status || '').toUpperCase();
+      if (s === 'SUBMITTED' || s === 'LEGACY_SUBMITTED' || s === 'DATE_VERIFICATION_PENDING' || s === 'BATCH_PENDING' || s === 'UNDER_REVIEW' || s === 'UNDER_VERIFICATION' || s === 'RECOMMENDED' || s === 'PENDING' || s.includes('PENDING') || s.includes('SUBMITTED') || s.includes('VERIF')) {
+        const alreadyAdded = pending.some(p => p.id === app.id || (p.applicationData && p.applicationData.id === app.id));
+        if (!alreadyAdded) {
+          pending.push({
+            id: app.id,
+            type: 'legacy',
+            typeLabel: 'Legacy Veteran Cadre',
+            title: `${app.full_name || 'Veteran Cadet'} (${app.id})`,
+            submittedBy: `${app.full_name || 'Veteran'} (Applicant)`,
+            submittedAt: app.created_at ? new Date(app.created_at).getTime() : Date.now(),
+            summary: `Joining Year: ${app.joining_year || 'Historical'} | Batch: ${app.batch_name || 'General'} | State: ${app.state_name || ''} | Tel: ${app.mobile || 'N/A'}`,
+            approvalStatus: 'pending',
+            applicationData: app
+          });
+        }
+      }
+    });
+  }
 
   // 7. Members Table Fallback for any pending registrations
   Object.entries(adminData.members || {}).forEach(([id, m]) => {
@@ -1855,20 +2037,23 @@ function renderOverviewApprovals() {
 }
 
 function updateApprovalsCounters(count) {
+  const officer = (typeof getActiveOfficer === 'function') ? getActiveOfficer() : {};
+  const role = officer.role || 'super_admin';
   const isSuper = isSuperAdmin();
+  const isApprover = isSuper || role === "enlistment_officer" || role === "enlistment_admin" || role === "central_admin" || role === "state_official" || role === "regional_official" || role === "district_official" || role === "taluka_official" || role === "chapter_official" || role === "executive";
   const badge = document.getElementById("badgeApprovalsCount");
   const topbarCount = document.getElementById("topbarApprovalsCount");
   const topbarBtn = document.getElementById("topbarApprovalsBtn");
 
   if (badge) {
     badge.textContent = count;
-    badge.style.display = (isSuper && count > 0) ? "inline-flex" : "none";
+    badge.style.display = (isApprover && count > 0) ? "inline-flex" : "none";
   }
   if (topbarCount) {
     topbarCount.textContent = count;
   }
   if (topbarBtn) {
-    topbarBtn.style.display = (isSuper && count > 0) ? "inline-flex" : "none";
+    topbarBtn.style.display = (isApprover && count > 0) ? "inline-flex" : "none";
   }
 }
 
