@@ -8,6 +8,7 @@ import { authenticate } from '../middleware/auth.js';
 import { requireRole, enforceJurisdiction, canAccessRecord } from '../middleware/rbac.js';
 import { computeBatchCode } from './batches.js';
 import { broadcastRealtimeEvent } from '../utils/realtime.js';
+import { allocateSainikId } from '../utils/sainikIdGenerator.js';
 
 const router = express.Router();
 
@@ -40,16 +41,14 @@ const STATE_CODE_MAP = {
   'haryana': 'HR'
 };
 
-function generateLegacySainikId(stateInput = 'MH', joiningYear = '2026') {
-  const num = Math.floor(1000 + Math.random() * 9000);
-  const normalized = (stateInput || '').toLowerCase().trim();
-  const stateCode = STATE_CODE_MAP[normalized] || (stateInput.length === 2 ? stateInput.toUpperCase() : 'MH');
+export async function generateLegacySainikId(stateInput = 'MH', joiningYear = '2026') {
   let yr = '2026';
   if (joiningYear) {
     const m = String(joiningYear).match(/\b(19\d{2}|20\d{2})\b/);
     if (m) yr = m[1];
   }
-  return `SSD-${stateCode}-${yr}-${num}`;
+  const alloc = await allocateSainikId(yr);
+  return alloc.sainikId;
 }
 
 // Helper to check duplicates (Acceptance Test 8: Duplicate membership records are detected)
@@ -249,6 +248,8 @@ router.post('/applications/:id/verify-date', authenticate, requireRole('super_ad
     // Update joining date verification
     const oldDate = app.original_joining_date;
     app.original_joining_date = finalDate;
+    const yrMatch = String(finalDate).match(/\b(19\d{2}|20\d{2})\b/);
+    app.verified_joining_year = yrMatch ? parseInt(yrMatch[1], 10) : 2026;
     app.joining_date_precision = precision || app.joining_date_precision || 'EXACT_DATE';
     app.joining_date_verified = true;
     app.joining_date_verified_by = req.user.full_name || req.user.email;
@@ -479,8 +480,13 @@ router.post('/applications/:id/approve', authenticate, requireRole('super_admin'
     }
 
     // Generate Official Sainik ID
-    const yr = app.original_joining_date ? app.original_joining_date.slice(0, 4) : '2026';
-    const sainikId = generateLegacySainikId(app.state_name || 'MH', yr);
+    const yr = app.verified_joining_year || (app.original_joining_date ? String(app.original_joining_date).slice(0, 4) : '2026');
+    const alloc = await allocateSainikId(yr, {
+      assignedBy: req.user.full_name || req.user.email,
+      applicationId: app.id,
+      membershipType: 'LEGACY'
+    });
+    const sainikId = alloc.sainikId;
     const memberId = 'mem_legacy_' + Date.now();
     const qrToken = 'qr_' + sainikId.toLowerCase().replace(/[^a-z0-9]/g, '_');
 
@@ -488,6 +494,8 @@ router.post('/applications/:id/approve', authenticate, requireRole('super_admin'
     app.status = 'ACTIVE';
     app.legacy_verification_status = 'ACTIVE';
     app.sainik_id = sainikId;
+    app.verified_joining_year = parseInt(yr, 10);
+    app.sainik_id_generated_at = alloc.generatedAt;
     app.updated_at = new Date().toISOString();
 
     // Create Official Member Record
@@ -523,6 +531,10 @@ router.post('/applications/:id/approve', authenticate, requireRole('super_admin'
       designation: designation || app.current_designation || 'Veteran Sainik',
       original_joining_date: app.original_joining_date,
       originalJoiningDate: app.original_joining_date,
+      verified_joining_year: parseInt(yr, 10),
+      verifiedJoiningYear: parseInt(yr, 10),
+      joining_year: parseInt(yr, 10),
+      joiningYear: parseInt(yr, 10),
       joining_date_precision: app.joining_date_precision || 'EXACT_DATE',
       portal_registration_date: app.portal_registration_date || app.created_at,
       portalRegistrationDate: app.portal_registration_date || app.created_at,
@@ -531,6 +543,8 @@ router.post('/applications/:id/approve', authenticate, requireRole('super_admin'
       joining_date_verified_by: app.joining_date_verified_by,
       joining_date_verified_at: app.joining_date_verified_at,
       joining_date_verification_notes: app.joining_date_verification_notes,
+      sainik_id_generated_at: alloc.generatedAt,
+      sainikIdGeneratedAt: alloc.generatedAt,
       batch_id: app.batch_id,
       batch_code: app.batch_code,
       batch_no: app.batch_code,

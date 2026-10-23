@@ -2,7 +2,7 @@
 // SAMATA SAINIK DAL (SSD) - END-TO-END AUTOMATED TEST SUITE
 // ==========================================================================
 
-import { initDb, embeddedStore } from '../db/index.js';
+import { initDb, embeddedStore, saveEmbeddedStore } from '../db/index.js';
 import { runMigration } from '../db/migrate.js';
 import app from '../../server.js';
 
@@ -19,7 +19,7 @@ async function runTests() {
   // Purge any transient records from prior test runs to ensure complete idempotency
   const testMobiles = [
     '9422111222', '9422955555', '9422133444', '9422233333', '9422344444',
-    '9822399999', '9822388888', '9822377777'
+    '9822399999', '9822388888', '9822377777', '9422911212', '9422915151', '9422999001'
   ];
   function isTestRecord(entity) {
     if (!entity) return false;
@@ -27,7 +27,7 @@ async function runTests() {
     for (const tm of testMobiles) {
       if (mob.endsWith(tm) || mob === tm) return true;
     }
-    if (entity.full_name && (entity.full_name.includes('Rambhau') || entity.full_name.includes('Pune Sainik') || entity.full_name.includes('Veteran D. G. Kamble') || entity.full_name.includes('Duplicate Mobile') || entity.full_name.includes('Imposter'))) {
+    if (entity.full_name && (entity.full_name.includes('Rambhau') || entity.full_name.includes('Pune Sainik') || entity.full_name.includes('Veteran D. G. Kamble') || entity.full_name.includes('Duplicate Mobile') || entity.full_name.includes('Imposter') || entity.full_name.includes('Second 2012') || entity.full_name.includes('2015 Cadet') || entity.full_name.includes('Unverified Date'))) {
       return true;
     }
     if (entity.legacy_sainik_id === 'LEGACY-MH-1998' || entity.existing_sainik_id === 'LEGACY-MH-1998') return true;
@@ -49,6 +49,7 @@ async function runTests() {
         }
       }
     }
+    saveEmbeddedStore();
   }
 
   let passed = 0;
@@ -884,7 +885,265 @@ async function runTests() {
     }
   });
 
-  console.log(`\n==========================================================================`);
+  // ==========================================================================
+  // FEATURE ACCEPTANCE TESTS: SAINIK ID NUMBERING BASED ON ORIGINAL JOINING YEAR
+  // ==========================================================================
+  console.log(`\n--- FEATURE ACCEPTANCE TESTS: SAINIK ID NUMBERING (ORIGINAL JOINING YEAR) ---`);
+
+  // 1. A Sainik who joined in 2012 but registers in 2026 receives an ID beginning with SSD-2012-
+  await assert('Acceptance 1: Sainik who joined in 2012 receives an ID beginning with SSD-2012- without letter V', async () => {
+    if (!legacySainikId.startsWith('SSD-2012-')) {
+      throw new Error(`Expected ID starting with SSD-2012-, got ${legacySainikId}`);
+    }
+    if (legacySainikId.includes('V')) {
+      throw new Error(`Critical Rule Violation: Letter V found in Sainik ID: ${legacySainikId}`);
+    }
+    if (!/^SSD-2012-\d{4}$/.test(legacySainikId)) {
+      throw new Error(`Format violation: Expected SSD-2012-0001 format, got ${legacySainikId}`);
+    }
+  });
+
+  // 2. The next eligible member in the same joining-year category receives the next available number
+  let next2012SainikId = '';
+  await assert('Acceptance 2: Next eligible member in 2012 category receives next sequential number', async () => {
+    const appRes = await fetch('http://localhost:3000/api/membership/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        membershipType: 'LEGACY',
+        fullName: 'Veteran Second 2012 Member',
+        mobile: '+91 94229 11212',
+        email: 'second.2012@example.org',
+        stateId: 'state_mh',
+        stateName: 'Maharashtra',
+        districtId: 'dist_mh_nagpur',
+        districtName: 'Nagpur',
+        originalJoiningDate: '2012-11-20',
+        solemnPledge: true,
+        applicantAttestation: true
+      })
+    });
+    const appData = await appRes.json();
+    if (!appData.success) throw new Error('Application creation failed: ' + JSON.stringify(appData));
+
+    // Verify date
+    await fetch(`http://localhost:3000/api/legacy/applications/${appData.applicationId}/verify-date`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authTokenSuper}` },
+      body: JSON.stringify({ verifiedDate: '2012-11-20', precision: 'EXACT_DATE', notes: 'Verified 2012 rally roster' })
+    });
+
+    // Approve
+    const approveRes = await fetch(`http://localhost:3000/api/legacy/applications/${appData.applicationId}/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authTokenSuper}` },
+      body: JSON.stringify({ designation: 'Veteran Sainik', remarks: 'Approved' })
+    });
+    const approveData = await approveRes.json();
+    if (!approveData.success || !approveData.sainikId) throw new Error('Approval failed: ' + JSON.stringify(approveData));
+    next2012SainikId = approveData.sainikId;
+
+    if (!next2012SainikId.startsWith('SSD-2012-')) {
+      throw new Error(`Expected ID starting with SSD-2012-, got ${next2012SainikId}`);
+    }
+    if (next2012SainikId.includes('V')) {
+      throw new Error(`Letter V found in next 2012 Sainik ID: ${next2012SainikId}`);
+    }
+    const prevSeq = parseInt(legacySainikId.split('-')[2], 10);
+    const nextSeq = parseInt(next2012SainikId.split('-')[2], 10);
+    if (nextSeq <= prevSeq) {
+      throw new Error(`Sequence not incremented: prevSeq=${prevSeq}, nextSeq=${nextSeq}`);
+    }
+  });
+
+  // 3. A Sainik who joined in 2015 receives an ID beginning with SSD-2015-
+  let sainik2015Id = '';
+  await assert('Acceptance 3: Sainik who joined in 2015 receives an ID beginning with SSD-2015-', async () => {
+    const appRes = await fetch('http://localhost:3000/api/membership/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        membershipType: 'LEGACY',
+        fullName: 'Veteran 2015 Cadet',
+        mobile: '+91 94229 15151',
+        email: 'cadet.2015@example.org',
+        stateId: 'state_mh',
+        stateName: 'Maharashtra',
+        districtId: 'dist_mh_nagpur',
+        districtName: 'Nagpur',
+        originalJoiningDate: '2015-06-15',
+        solemnPledge: true,
+        applicantAttestation: true
+      })
+    });
+    const appData = await appRes.json();
+    if (!appData.success) throw new Error('Application creation failed: ' + JSON.stringify(appData));
+
+    // Verify date
+    await fetch(`http://localhost:3000/api/legacy/applications/${appData.applicationId}/verify-date`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authTokenSuper}` },
+      body: JSON.stringify({ verifiedDate: '2015-06-15', precision: 'EXACT_DATE', notes: 'Verified 2015 records' })
+    });
+
+    // Approve
+    const approveRes = await fetch(`http://localhost:3000/api/legacy/applications/${appData.applicationId}/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authTokenSuper}` },
+      body: JSON.stringify({ designation: 'Veteran Sainik', remarks: 'Approved' })
+    });
+    const approveData = await approveRes.json();
+    if (!approveData.success || !approveData.sainikId) throw new Error('Approval failed: ' + JSON.stringify(approveData));
+    sainik2015Id = approveData.sainikId;
+
+    if (!sainik2015Id.startsWith('SSD-2015-')) {
+      throw new Error(`Expected ID starting with SSD-2015-, got ${sainik2015Id}`);
+    }
+    if (sainik2015Id.includes('V')) {
+      throw new Error(`Letter V found in 2015 Sainik ID: ${sainik2015Id}`);
+    }
+  });
+
+  // 4. New members follow the separately configured ID policy
+  await assert('Acceptance 4: New members follow separately configured policy (SSD-MH-2026-)', async () => {
+    if (!testSainikId.startsWith('SSD-MH-2026-')) {
+      throw new Error(`Standard recruit ID policy mismatch: Expected SSD-MH-2026-, got ${testSainikId}`);
+    }
+  });
+
+  // 5. Unverified joining dates cannot generate permanent IDs
+  await assert('Acceptance 5: Unverified joining dates cannot generate permanent IDs', async () => {
+    const unverifiedAppRes = await fetch('http://localhost:3000/api/membership/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        membershipType: 'LEGACY',
+        fullName: 'Unverified Date Sainik',
+        mobile: '+91 94229 99001',
+        email: 'unverified.sainik@example.org',
+        stateId: 'state_mh',
+        stateName: 'Maharashtra',
+        districtId: 'dist_mh_nagpur',
+        districtName: 'Nagpur',
+        originalJoiningDate: '2018-09-01',
+        solemnPledge: true,
+        applicantAttestation: true
+      })
+    });
+    const unverifiedAppData = await unverifiedAppRes.json();
+    const uAppId = unverifiedAppData.applicationId;
+
+    // Direct approval without date verification MUST fail with 400
+    const prematureApproveRes = await fetch(`http://localhost:3000/api/legacy/applications/${uAppId}/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authTokenSuper}` },
+      body: JSON.stringify({ designation: 'Veteran Sainik', remarks: 'Attempt premature approval' })
+    });
+    if (prematureApproveRes.status !== 400) {
+      throw new Error(`Expected 400 Bad Request for unverified date approval, got ${prematureApproveRes.status}`);
+    }
+  });
+
+  // 6. Duplicate IDs cannot be created
+  await assert('Acceptance 6: Duplicate IDs cannot be created (Global Uniqueness Constraint)', async () => {
+    const existsInMembers = Array.from(embeddedStore.members.values()).some(m => m.sainik_id === legacySainikId);
+    if (!existsInMembers) {
+      throw new Error(`Existing ID ${legacySainikId} not found in members registry`);
+    }
+    const { allocateSainikId } = await import('../utils/sainikIdGenerator.js');
+    const alloc1 = await allocateSainikId(2012);
+    if (alloc1.sainikId === legacySainikId || alloc1.sainikId === next2012SainikId) {
+      throw new Error(`Counter collided with existing ID: ${alloc1.sainikId}`);
+    }
+  });
+
+  // 7. Concurrent registrations cannot generate duplicate sequence numbers
+  await assert('Acceptance 7: Concurrent requests cannot generate duplicate sequence numbers (Atomic Allocation)', async () => {
+    const { allocateSainikId } = await import('../utils/sainikIdGenerator.js');
+    const promises = [];
+    for (let i = 0; i < 5; i++) {
+      promises.push(allocateSainikId(2017, { applicationId: `app_concur_${i}`, membershipType: 'LEGACY' }));
+    }
+    const allocResults = await Promise.all(promises);
+    const generatedIds = allocResults.map(r => r.sainikId);
+    const uniqueIds = new Set(generatedIds);
+
+    if (uniqueIds.size !== generatedIds.length) {
+      throw new Error(`Concurrency Race Condition: Generated duplicate IDs: ${JSON.stringify(generatedIds)}`);
+    }
+    for (const gid of generatedIds) {
+      if (!gid.startsWith('SSD-2017-')) throw new Error(`Generated ID does not start with SSD-2017-: ${gid}`);
+      if (gid.includes('V')) throw new Error(`Generated ID contains letter V: ${gid}`);
+    }
+  });
+
+  // 8. Unauthorized users cannot modify official IDs
+  await assert('Acceptance 8: Unauthorized users cannot modify official IDs', async () => {
+    const updateRes = await fetch(`http://localhost:3000/api/members/${legacySainikId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer INVALID_OR_NON_ADMIN_TOKEN'
+      },
+      body: JSON.stringify({
+        sainik_id: 'SSD-TAMPERED-ID'
+      })
+    });
+    if (updateRes.status !== 401 && updateRes.status !== 403) {
+      throw new Error(`Expected 401 or 403 when unauthorized user attempts to modify ID, got ${updateRes.status}`);
+    }
+  });
+
+  // 9. Existing IDs remain unchanged during normal profile updates
+  await assert('Acceptance 9: Existing IDs remain unchanged during normal profile updates', async () => {
+    const updateRes = await fetch(`http://localhost:3000/api/members/${legacySainikId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: JSON.stringify({
+        sainik_id: 'SSD-TRY-RENUMBER', // Attempt to renumber
+        blood_group: 'AB+',
+        phone: '+91 94221 11222'
+      })
+    });
+    const updateData = await updateRes.json();
+    if (!updateData.success) throw new Error('Profile update failed: ' + JSON.stringify(updateData));
+
+    // Verify official ID remained unchanged
+    const verifyMemRes = await fetch(`http://localhost:3000/api/members/card/${legacySainikId}`);
+    const verifyMemData = await verifyMemRes.json();
+    if (!verifyMemData.success || !verifyMemData.cardData) {
+      throw new Error('Member lookup failed after profile update');
+    }
+    if (verifyMemData.cardData.sainikId !== legacySainikId) {
+      throw new Error(`ID was changed! Expected ${legacySainikId}, got ${verifyMemData.cardData.sainikId}`);
+    }
+  });
+
+  // 10. QR verification displays the correct authorized information
+  await assert('Acceptance 10: QR verification displays authorized public information without PII leakage', async () => {
+    const qrRes = await fetch(`http://localhost:3000/api/verify/${legacySainikId}`);
+    const qrData = await qrRes.json();
+    if (!qrData.verified || !qrData.member) {
+      throw new Error('QR verification failed for legacy member: ' + JSON.stringify(qrData));
+    }
+    const mem = qrData.member;
+    if (mem.sainikId !== legacySainikId) {
+      throw new Error(`Sainik ID mismatch in verification: Expected ${legacySainikId}, got ${mem.sainikId}`);
+    }
+    if (mem.joiningYear !== 2012) {
+      throw new Error(`Joining year mismatch in verification: Expected 2012, got ${mem.joiningYear}`);
+    }
+    if (!mem.fullName || !mem.chapter || !mem.designation || !mem.status) {
+      throw new Error('Authorized public fields missing from verification response');
+    }
+    // Check no private PII leaks
+    if (mem.mobile || mem.phone || mem.email || mem.address || mem.aadhar) {
+      throw new Error('Security Violation: Private PII (mobile/email/address) leaked in public QR verification!');
+    }
+  });
   console.log(` 🏁 TEST SUITE SUMMARY: ${passed} PASSED, ${failed} FAILED`);
   console.log(`==========================================================================\n`);
 

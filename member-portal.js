@@ -104,6 +104,12 @@ async function resolvePortalRecord(inputId) {
             chapter: supaMember.chapter_name || `${supaMember.district_name || 'Nagpur'} Central Unit`,
             bloodGroup: supaMember.blood_group || 'N/A',
             joiningDate: supaMember.approved_at || supaMember.created_at || new Date().toISOString(),
+            originalJoiningDate: supaMember.original_joining_date || null,
+            joiningYear: supaMember.verified_joining_year || supaMember.joining_year || (supaMember.original_joining_date ? parseInt(String(supaMember.original_joining_date).slice(0, 4), 10) : null),
+            verifiedJoiningYear: supaMember.verified_joining_year || null,
+            membershipType: supaMember.membership_type || (supaMember.original_joining_date ? 'LEGACY' : 'STANDARD'),
+            joiningDateVerified: supaMember.joining_date_verified || false,
+            portalRegistrationDate: supaMember.portal_registration_date || null,
             batchNo: supaMember.batch_no || 'BATCH-2026/Q3',
             status: 'ACTIVE',
             isApproved: true,
@@ -191,6 +197,12 @@ async function resolvePortalRecord(inputId) {
               chapter: matchMem.chapter || matchMem.chapter_name || `${matchMem.district || 'Nagpur'} Central Unit`,
               bloodGroup: matchMem.bloodGroup || matchMem.blood_group || 'N/A',
               joiningDate: matchMem.joiningDate || matchMem.approved_at || matchMem.created_at || new Date().toISOString(),
+              originalJoiningDate: matchMem.originalJoiningDate || matchMem.original_joining_date || null,
+              joiningYear: matchMem.verifiedJoiningYear || matchMem.verified_joining_year || matchMem.joiningYear || matchMem.joining_year || (matchMem.originalJoiningDate ? parseInt(String(matchMem.originalJoiningDate).slice(0, 4), 10) : null),
+              verifiedJoiningYear: matchMem.verifiedJoiningYear || matchMem.verified_joining_year || null,
+              membershipType: matchMem.membershipType || matchMem.membership_type || (matchMem.originalJoiningDate || matchMem.original_joining_date ? 'LEGACY' : 'STANDARD'),
+              joiningDateVerified: matchMem.joiningDateVerified !== undefined ? matchMem.joiningDateVerified : (matchMem.joining_date_verified || false),
+              portalRegistrationDate: matchMem.portalRegistrationDate || matchMem.portal_registration_date || null,
               batchNo: matchMem.batchNo || matchMem.batch_no || 'BATCH-2026/Q3',
               status: matchMem.status || 'ACTIVE',
               isApproved: true,
@@ -276,6 +288,12 @@ async function resolvePortalRecord(inputId) {
             chapter: match.chapter || match.chapter_name || `${match.district || 'Nagpur'} Central Unit`,
             bloodGroup: match.bloodGroup || match.blood_group || 'N/A',
             joiningDate: match.joiningDate || match.approved_at || match.created_at || new Date().toISOString(),
+            originalJoiningDate: match.originalJoiningDate || match.original_joining_date || null,
+            joiningYear: match.verifiedJoiningYear || match.verified_joining_year || match.joiningYear || match.joining_year || (match.originalJoiningDate ? parseInt(String(match.originalJoiningDate).slice(0, 4), 10) : null),
+            verifiedJoiningYear: match.verifiedJoiningYear || match.verified_joining_year || null,
+            membershipType: match.membershipType || match.membership_type || (match.originalJoiningDate || match.original_joining_date ? 'LEGACY' : 'STANDARD'),
+            joiningDateVerified: match.joiningDateVerified !== undefined ? match.joiningDateVerified : (match.joining_date_verified || false),
+            portalRegistrationDate: match.portalRegistrationDate || match.portal_registration_date || null,
             batchNo: match.batchNo || match.batch_no || 'BATCH-2026/Q3',
             status: match.status || 'ACTIVE',
             isApproved: true,
@@ -392,14 +410,16 @@ function displayMemberDashboard(card) {
     verifyLink.textContent = vUrl;
   }
 
+  const joiningYr = card.verifiedJoiningYear || card.joiningYear || (card.originalJoiningDate ? String(card.originalJoiningDate).split('-')[0] : '');
   document.getElementById('portalUnitDetails').innerHTML = `
-    <strong>Membership Cadre:</strong> ${isLegacy ? '<span style="color:#b45309; font-weight:700;">🎖️ Legacy Veteran (Seniority Preserved)</span>' : 'Standard Enlisted Cadet'}<br>
-    ${isLegacy && card.originalJoiningDate ? `<strong>Original SSD Joining Date:</strong> ${card.originalJoiningDate} ${card.joiningDateVerified ? '<span style="color:#16a34a; font-weight:700;">[Verified Official]</span>' : ''}<br>` : ''}
-    ${isLegacy && card.portalRegistrationDate ? `<strong>Portal Enlistment Date:</strong> ${new Date(card.portalRegistrationDate).toLocaleDateString('en-IN')}<br>` : ''}
+    <strong>Membership Cadre:</strong> ${isLegacy ? '<span style="color:#b45309; font-weight:700;">🎖️ Veteran / Senior Cadre</span>' : 'Standard Enlisted Cadet'}<br>
+    ${card.originalJoiningDate ? `<strong>Original Joining Date:</strong> ${card.originalJoiningDate} ${card.joiningDateVerified ? '<span style="color:#16a34a; font-weight:700;">[Verified Official]</span>' : ''}<br>` : ''}
+    ${joiningYr ? `<strong>Joining Year:</strong> ${joiningYr}<br>` : ''}
+    ${card.portalRegistrationDate ? `<strong>Portal Registration Date:</strong> ${new Date(card.portalRegistrationDate).toLocaleDateString('en-IN')}<br>` : ''}
     <strong>State Chapter:</strong> ${card.state}<br>
     <strong>District Command:</strong> ${card.district}<br>
     <strong>Unit / Chapter:</strong> ${card.chapter || (card.district + ' Central Unit')}<br>
-    <strong>Batch Allotment:</strong> ${card.batchNo || 'BATCH-2026/Q3'}<br>
+    <strong>Batch Number:</strong> ${card.batchNo || (joiningYr ? 'SSD-BATCH-' + joiningYr : 'BATCH-2026/Q3')}<br>
     <strong>Blood Group:</strong> ${card.bloodGroup || 'N/A'}<br>
     <strong>Date of Commission:</strong> ${new Date(card.joiningDate || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
   `;
@@ -732,13 +752,18 @@ function renderIdCardCanvas(card, back = false) {
 
     // Header Title
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 20px Cinzel, serif';
+    ctx.font = 'bold 18px Cinzel, serif';
     ctx.textAlign = 'left';
-    ctx.fillText('SAMATA SAINIK DAL (SSD)', 30, 44);
+    ctx.fillText('SAMATA SAINIK DAL', 30, 42);
+
+    ctx.fillStyle = '#FF6B00';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.fillText('DIGITAL SAINIK ID', 30, 58);
 
     ctx.fillStyle = '#c5a059';
-    ctx.font = 'bold 10px sans-serif';
-    ctx.fillText('ARMY OF EQUALITY • ESTD. 1927 BY DR. B.R. AMBEDKAR', 30, 60);
+    ctx.font = 'bold 9.5px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('ARMY OF EQUALITY • ESTD. 1927', w - 30, 48);
 
     // Divider Line
     ctx.strokeStyle = '#c5a059';
@@ -750,7 +775,7 @@ function renderIdCardCanvas(card, back = false) {
 
     // Photo Container Box
     const photoX = 30;
-    const photoY = 90;
+    const photoY = 88;
     const photoW = 110;
     const photoH = 140;
 
@@ -787,29 +812,34 @@ function renderIdCardCanvas(card, back = false) {
 
     // Sainik Metadata (Right Column)
     const textX = 160;
-    const isLegacy = (card.membershipType === 'LEGACY' || card.membership_type === 'LEGACY');
+    const isLegacy = (card.membershipType === 'LEGACY' || card.membership_type === 'LEGACY' || (card.sainikId && /^SSD-(19\d{2}|20\d{2})-\d+$/i.test(card.sainikId)) || !!card.originalJoiningDate);
+    const yr = card.verifiedJoiningYear || card.joiningYear || (card.originalJoiningDate ? String(card.originalJoiningDate).split('-')[0] : '');
+
     ctx.fillStyle = isLegacy ? '#FFB800' : '#FF6B00';
     ctx.font = 'bold 13px monospace';
-    ctx.fillText(`SAINIK ID: ${card.sainikId || 'SSD-CADET-2026'}${isLegacy ? '  [VETERAN]' : ''}`, textX, 108);
+    ctx.textAlign = 'left';
+    ctx.fillText(`Sainik ID: ${card.sainikId || 'SSD-CADET-2026'}`, textX, 106);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 18px sans-serif';
-    ctx.fillText(card.fullName || 'Sainik Cadet', textX, 136);
+    ctx.font = 'bold 17px sans-serif';
+    ctx.fillText(`Name: ${card.fullName || 'Sainik Cadet'}`, textX, 130);
 
     ctx.fillStyle = '#cbd5e1';
-    ctx.font = '12px sans-serif';
-    ctx.fillText(`Rank/Designation: ${card.designation || 'Cadet Sainik'}`, textX, 158);
-    ctx.fillText(`Wing: ${card.wing || 'Central Cadet Corps'}`, textX, 178);
-    ctx.fillText(`Chapter: ${card.district || 'Nagpur'}, ${card.state || 'Maharashtra'}`, textX, 198);
-    
-    if (isLegacy && card.originalJoiningDate) {
-      const yr = String(card.originalJoiningDate).split('-')[0] || card.originalJoiningDate;
+    ctx.font = '11.5px sans-serif';
+    ctx.fillText(`Designation: ${card.designation || 'Cadet Sainik'} • Wing: ${card.wing || 'Central Cadet Corps'}`, textX, 152);
+    ctx.fillText(`Chapter: ${card.district || 'Nagpur'}, ${card.state || 'Maharashtra'}`, textX, 172);
+
+    if (isLegacy || card.originalJoiningDate || yr) {
       ctx.fillStyle = '#fde047';
-      ctx.fillText(`Cadre Seniority: Since ${card.originalJoiningDate} (${yr}) • Verified`, textX, 218);
+      ctx.fillText(`Original Joining Date: ${card.originalJoiningDate || (yr ? '15 August ' + yr : 'Archival Verified')}`, textX, 194);
+      ctx.fillText(`Joining Year: ${yr || 'Verified'}`, textX, 214);
       ctx.fillStyle = '#cbd5e1';
-      ctx.fillText(`Blood: ${card.bloodGroup || 'O+'}  •  Batch: ${card.batchNo || 'SSD-BATCH-' + yr}`, textX, 238);
+      ctx.fillText(`Batch Number: ${card.batchNo || (yr ? 'SSD-BATCH-' + yr : 'SSD-POLICY')}`, textX, 234);
+      ctx.fillText(`Status: ${card.status || 'ACTIVE'} • Blood: ${card.bloodGroup || 'O+'}`, textX, 254);
     } else {
-      ctx.fillText(`Blood: ${card.bloodGroup || 'O+'}  •  Batch: ${card.batchNo || 'BATCH-2026/Q3'}`, textX, 218);
+      ctx.fillText(`Batch Number: ${card.batchNo || 'BATCH-2026/Q3'}`, textX, 194);
+      ctx.fillText(`Enlistment: ${card.joiningDate ? new Date(card.joiningDate).toLocaleDateString('en-IN') : 'Active Cadre'}`, textX, 214);
+      ctx.fillText(`Status: ${card.status || 'ACTIVE'} • Blood: ${card.bloodGroup || 'O+'}`, textX, 234);
     }
 
     // Bottom Verification Seal
@@ -818,7 +848,7 @@ function renderIdCardCanvas(card, back = false) {
 
     ctx.fillStyle = isLegacy ? '#f59e0b' : '#16a34a';
     ctx.font = 'bold 11.5px sans-serif';
-    ctx.fillText(isLegacy ? '★ OFFICIALLY VERIFIED LEGACY VETERAN' : '● OFFICIALLY VERIFIED ACTIVE CADRE', 30, h - 22);
+    ctx.fillText(isLegacy ? '★ OFFICIALLY VERIFIED LEGACY CADRE' : '● OFFICIALLY VERIFIED ACTIVE CADRE', 30, h - 22);
 
     ctx.fillStyle = '#94a3b8';
     ctx.font = '10px sans-serif';

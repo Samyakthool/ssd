@@ -444,6 +444,8 @@
               designation: raw.designation || 'Cadet Sainik',
               membershipType: raw.membershipType || raw.membership_type || (raw.original_joining_date ? 'LEGACY' : 'STANDARD'),
               originalJoiningDate: raw.originalJoiningDate || raw.original_joining_date || null,
+              joiningYear: raw.joiningYear || raw.joining_year || raw.verifiedJoiningYear || raw.verified_joining_year || (raw.originalJoiningDate ? parseInt(String(raw.originalJoiningDate).slice(0, 4), 10) : (raw.original_joining_date ? parseInt(String(raw.original_joining_date).slice(0, 4), 10) : null)),
+              verifiedJoiningYear: raw.verifiedJoiningYear || raw.verified_joining_year || null,
               joiningDateVerified: raw.joiningDateVerified !== undefined ? raw.joiningDateVerified : (raw.joining_date_verified || false),
               wing: raw.wing || raw.wing_name || 'Central Cadet Corps',
               state: raw.state || raw.state_name || 'Maharashtra',
@@ -478,6 +480,8 @@
                 designation: c.designation || 'Cadet Sainik',
                 membershipType: c.membershipType || c.membership_type || (c.originalJoiningDate ? 'LEGACY' : 'STANDARD'),
                 originalJoiningDate: c.originalJoiningDate || c.original_joining_date || null,
+                joiningYear: c.joiningYear || c.joining_year || c.verifiedJoiningYear || c.verified_joining_year || (c.originalJoiningDate ? parseInt(String(c.originalJoiningDate).slice(0, 4), 10) : (c.original_joining_date ? parseInt(String(c.original_joining_date).slice(0, 4), 10) : null)),
+                verifiedJoiningYear: c.verifiedJoiningYear || c.verified_joining_year || null,
                 joiningDateVerified: c.joiningDateVerified !== undefined ? c.joiningDateVerified : (c.joining_date_verified || false),
                 wing: c.wing || c.wing_name || 'Central Cadet Corps',
                 state: c.state || c.state_name || 'Maharashtra',
@@ -801,7 +805,7 @@
 
         if (result && result.verified && result.v) {
           const v = result.v;
-          const isLegacy = (v.membershipType === 'LEGACY');
+          const isLegacy = (v.membershipType === 'LEGACY' || (v.sainikId && /^SSD-(19\d{2}|20\d{2})-\d+$/i.test(v.sainikId)) || !!v.originalJoiningDate || !!v.joiningYear);
 
           if (isLegacy) {
             badge.className = 'verify-badge-status';
@@ -844,12 +848,18 @@
             </div>
 
             <div class="verify-details-grid">
-              ${isLegacy ? `
+              ${isLegacy || v.originalJoiningDate || v.joiningYear ? `
               <div class="detail-item" style="background: #fffdf5; border-color: #fde68a;">
                 <div class="detail-label" style="color: #b45309;"><i class="fa-solid fa-calendar-check"></i> Original SSD Joining Date</div>
                 <div class="detail-value" style="color: #92400e; font-weight: 700;">
-                  ${joiningDateStr || 'Archival Verified'}
+                  ${joiningDateStr || (v.joiningYear ? 'Year ' + v.joiningYear : 'Archival Verified')}
                   ${v.joiningDateVerified ? ' <span style="color: #16a34a; font-size: 11px;"><i class="fa-solid fa-check-double"></i> Verified</span>' : ''}
+                </div>
+              </div>
+              <div class="detail-item" style="background: #fffdf5; border-color: #fde68a;">
+                <div class="detail-label" style="color: #b45309;"><i class="fa-solid fa-calendar-days"></i> Verified Joining Year</div>
+                <div class="detail-value" style="color: #92400e; font-weight: 700;">
+                  ${v.verifiedJoiningYear || v.joiningYear || (v.originalJoiningDate ? String(v.originalJoiningDate).split('-')[0] : 'Historical')}
                 </div>
               </div>
               <div class="detail-item" style="background: #fffdf5; border-color: #fde68a;">

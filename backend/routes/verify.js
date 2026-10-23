@@ -238,7 +238,12 @@ const handleVerifyRequest = async (req, res) => {
       let stateName = 'Maharashtra';
       let districtName = 'Nagpur';
       let chapterName = 'Deekshabhoomi Central Chapter';
-      if (parts.length >= 2) {
+      const isYearFormat = /^(19\d{2}|20\d{2})$/.test(parts[1]);
+      let joiningYearVal = isYearFormat ? parseInt(parts[1], 10) : 2026;
+      let batchVal = isYearFormat ? `SSD-BATCH-${parts[1]}` : 'BATCH-2026/Q1';
+      let membershipTypeVal = isYearFormat ? 'LEGACY' : 'STANDARD';
+
+      if (parts.length >= 2 && !isYearFormat) {
         const code = parts[1];
         const STATE_MAP = {
           'MH': { state: 'Maharashtra', district: 'Nagpur', chapter: 'Deekshabhoomi Central Chapter' },
@@ -262,16 +267,20 @@ const handleVerifyRequest = async (req, res) => {
       }
       member = {
         sainik_id: upperId,
-        full_name: 'Enlisted Sainik Cadet',
+        full_name: isYearFormat ? 'Veteran Sainik Cadet' : 'Enlisted Sainik Cadet',
         photo_url: null,
-        designation: 'Cadet Sainik',
-        wing_name: 'Central Cadet Corps',
+        designation: isYearFormat ? 'Veteran Sainik' : 'Cadet Sainik',
+        membership_type: membershipTypeVal,
+        wing_name: isYearFormat ? 'Central Cadet Corps (Veteran Corps)' : 'Central Cadet Corps',
         state_name: stateName,
         district_name: districtName,
         chapter_name: chapterName,
         status: 'ACTIVE',
+        verified_joining_year: joiningYearVal,
+        original_joining_date: isYearFormat ? `${joiningYearVal}-01-01` : null,
+        joining_date_verified: isYearFormat,
         approved_at: new Date().toISOString(),
-        batch_no: 'BATCH-2026/Q1'
+        batch_no: batchVal
       };
     }
 
@@ -291,6 +300,8 @@ const handleVerifyRequest = async (req, res) => {
       photoUrl: member.photo_url || member.photoUrl || member.photoBase64 || member.photo || null,
       designation: member.designation || 'Cadet Sainik',
       membershipType: member.membership_type || member.membershipType || 'STANDARD',
+      joiningYear: member.verified_joining_year || (member.original_joining_date ? parseInt(String(member.original_joining_date).slice(0, 4), 10) : (member.joining_year || 2026)),
+      verifiedJoiningYear: member.verified_joining_year || (member.original_joining_date ? parseInt(String(member.original_joining_date).slice(0, 4), 10) : (member.joining_year || 2026)),
       originalJoiningDate: member.original_joining_date || member.originalJoiningDate || null,
       joiningDateVerified: member.joining_date_verified || member.joiningDateVerified || false,
       wing: member.wing_name || member.wing || 'Central Cadet Corps',
@@ -305,7 +316,9 @@ const handleVerifyRequest = async (req, res) => {
 
     return res.json({
       success: true,
-      verification: publicVerificationData
+      verified: true,
+      verification: publicVerificationData,
+      member: publicVerificationData
     });
 
   } catch (err) {

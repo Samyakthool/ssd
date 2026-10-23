@@ -179,12 +179,15 @@ CREATE TABLE IF NOT EXISTS membership_applications (
     -- Legacy & Historical Registration
     membership_type VARCHAR(30) NOT NULL DEFAULT 'NEW', -- 'NEW' or 'LEGACY'
     original_joining_date DATE,
+    verified_joining_year INT,
     joining_date_precision VARCHAR(30) DEFAULT 'EXACT', -- EXACT, YEAR_MONTH, YEAR_ONLY, APPROXIMATE_UNKNOWN
     portal_registration_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     joining_date_verified BOOLEAN DEFAULT FALSE,
     joining_date_verified_by VARCHAR(100),
     joining_date_verified_at TIMESTAMP WITH TIME ZONE,
     joining_date_verification_notes TEXT,
+    sainik_id VARCHAR(64) UNIQUE,
+    sainik_id_generated_at TIMESTAMP WITH TIME ZONE,
     batch_id VARCHAR(100),
     batch_code VARCHAR(100),
     batch_assignment_status VARCHAR(50) DEFAULT 'PENDING',
@@ -242,17 +245,26 @@ CREATE TABLE IF NOT EXISTS members (
     status VARCHAR(30) DEFAULT 'ACTIVE', -- ACTIVE, SUSPENDED, RETIRED
     membership_type VARCHAR(30) NOT NULL DEFAULT 'NEW', -- 'NEW' or 'LEGACY'
     original_joining_date DATE,
+    verified_joining_year INT,
     joining_date_precision VARCHAR(30) DEFAULT 'EXACT',
     portal_registration_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     joining_date_verified BOOLEAN DEFAULT FALSE,
     joining_date_verified_by VARCHAR(100),
     joining_date_verified_at TIMESTAMP WITH TIME ZONE,
+    sainik_id_generated_at TIMESTAMP WITH TIME ZONE,
     existing_sainik_id VARCHAR(100),
     historical_notes TEXT,
     qr_token VARCHAR(255) UNIQUE NOT NULL,
     approved_by VARCHAR(64) REFERENCES users(id),
     approved_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9B. TRANSACTION-SAFE SAINIK ID SEQUENTIAL COUNTERS TABLE
+CREATE TABLE IF NOT EXISTS sainik_id_counters (
+    joining_year INT PRIMARY KEY,
+    last_sequence INT NOT NULL DEFAULT 0,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -4,7 +4,7 @@
 
 import express from 'express';
 import QRCode from 'qrcode';
-import { query, embeddedStore, supabase } from '../db/index.js';
+import { query, embeddedStore, saveEmbeddedStore, supabase } from '../db/index.js';
 import { authenticate, optionalAuth } from '../middleware/auth.js';
 import { enforceJurisdiction, canAccessRecord } from '../middleware/rbac.js';
 
@@ -417,6 +417,8 @@ router.get('/card/:sainikId', async (req, res) => {
       district: member.district_name || member.district || 'Nagpur',
       chapter: member.chapter_name || member.chapter || `${member.district_name || 'Nagpur'} Central Unit`,
       bloodGroup: member.blood_group || member.bloodGroup || 'N/A',
+      joiningYear: member.verified_joining_year || (member.original_joining_date ? parseInt(String(member.original_joining_date).slice(0, 4), 10) : (member.joining_year || 2026)),
+      verifiedJoiningYear: member.verified_joining_year || (member.original_joining_date ? parseInt(String(member.original_joining_date).slice(0, 4), 10) : (member.joining_year || 2026)),
       joiningDate: member.original_joining_date || member.approved_at || member.created_at || new Date().toISOString(),
       batchNo: member.batch_code || member.batch_no || member.batchNo || 'BATCH-2026/Q3',
       status: member.status || 'ACTIVE',
@@ -427,6 +429,50 @@ router.get('/card/:sainikId', async (req, res) => {
     };
 
     return res.json({ success: true, cardData: cardData });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 5. MEMBER PROFILE UPDATE (IMMUTABLE OFFICIAL ID & JOINING DATE)
+// Acceptance Test 8 & 9:
+// - Unauthorized users cannot modify official IDs
+// - Existing IDs remain unchanged during normal profile updates
+router.put('/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    let member = embeddedStore.members.get(id);
+    if (!member) {
+      for (const m of embeddedStore.members.values()) {
+        if (m.id === id || m.sainik_id === id) { member = m; break; }
+      }
+    }
+    if (!member) {
+      return res.status(404).json({ success: false, error: 'Member not found.' });
+    }
+
+    // Security check: Unauthorized users cannot modify official IDs
+    if (req.body.sainik_id && req.body.sainik_id !== member.sainik_id) {
+      if (req.user.role_id !== 'super_admin') {
+        return res.status(403).json({ success: false, error: 'Unauthorized: Official Sainik IDs cannot be modified.' });
+      }
+    }
+
+    // Normal profile updates: preserve official Sainik ID, verified joining year, and verification flags
+    const allowedFields = ['mobile', 'phone', 'email', 'address', 'education', 'occupation', 'blood_group', 'bloodGroup', 'photo_url', 'photoUrl'];
+    for (const f of allowedFields) {
+      if (req.body[f] !== undefined) {
+        member[f] = req.body[f];
+      }
+    }
+    member.updated_at = new Date().toISOString();
+    saveEmbeddedStore();
+
+    return res.json({
+      success: true,
+      message: 'Member profile updated successfully. Official Sainik ID preserved unchanged.',
+      member: normalizeMemberOutput(member)
+    });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }

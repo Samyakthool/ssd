@@ -100,7 +100,8 @@ const embeddedStore = {
   content_approvals: new Map(),
   batches: new Map(),
   batch_history: new Map(),
-  batch_config: new Map()
+  batch_config: new Map(),
+  sainik_id_counters: new Map()
 };
 
 // Persistence file for embedded storage (using /tmp on Vercel)
