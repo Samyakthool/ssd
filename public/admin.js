@@ -8950,7 +8950,7 @@ async function loadCmsHomepageData() {
       if (elHead && hero.headline) elHead.value = hero.headline;
       if (elSub && hero.subheadline) elSub.value = hero.subheadline;
       if (elPText && hero.cta_primary) elPText.value = hero.cta_primary.text || "Explore SSD";
-      if (elPLink && hero.cta_primary) elPLink.value = hero.cta_primary.link || "#about";
+      if (elPLink && hero.cta_primary) elPLink.value = hero.cta_primary.link || "#about-ssd";
       if (elSText && hero.cta_secondary) elSText.value = hero.cta_secondary.text || "Become a Sainik";
       if (elSLink && hero.cta_secondary) elSLink.value = hero.cta_secondary.link || "#join";
       if (elTText && hero.cta_tertiary) elTText.value = hero.cta_tertiary.text || "Explore Digital Library";
@@ -8971,7 +8971,7 @@ async function handleSaveCmsHero(e) {
       background_image: document.getElementById("cmsHeroBg")?.value || "",
       cta_primary: {
         text: document.getElementById("cmsHeroPrimaryText")?.value || "Explore SSD",
-        link: document.getElementById("cmsHeroPrimaryLink")?.value || "#about"
+        link: document.getElementById("cmsHeroPrimaryLink")?.value || "#about-ssd"
       },
       cta_secondary: {
         text: document.getElementById("cmsHeroSecondaryText")?.value || "Become a Sainik",

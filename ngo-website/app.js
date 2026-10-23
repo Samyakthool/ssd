@@ -4660,6 +4660,26 @@ async function initHomepageCms() {
   }
 }
 
+function scrollToAboutSection(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const target = document.getElementById('about-ssd') || document.getElementById('about');
+  if (target) {
+    const nav = document.querySelector('.header-main') || document.querySelector('.header-wrapper') || document.querySelector('.navbar');
+    const navHeight = nav ? nav.offsetHeight : 80;
+    const targetY = target.getBoundingClientRect().top + window.pageYOffset - navHeight - 15;
+    window.scrollTo({
+      top: Math.max(0, targetY),
+      behavior: 'smooth'
+    });
+    if (window.history && window.history.pushState) {
+      window.history.pushState(null, null, '#about-ssd');
+    }
+  } else {
+    window.location.href = 'index.html#about-ssd';
+  }
+}
+window.scrollToAboutSection = scrollToAboutSection;
+
 function applyHomepageCms(hp) {
   if (!hp) return;
   if (hp.hero) {
@@ -4668,10 +4688,15 @@ function applyHomepageCms(hp) {
     const sub = document.getElementById('heroSubheadline');
     if (sub && hp.hero.subheadline) sub.innerText = hp.hero.subheadline;
     const pCta = document.getElementById('heroPrimaryCta');
-    if (pCta && hp.hero.primaryCtaText) {
-      const span = pCta.querySelector('span');
-      if (span) span.innerText = hp.hero.primaryCtaText;
-      if (hp.hero.primaryCtaLink) pCta.href = hp.hero.primaryCtaLink;
+    if (pCta) {
+      if (hp.hero.primaryCtaText) {
+        const span = pCta.querySelector('span');
+        if (span) span.innerText = hp.hero.primaryCtaText;
+      }
+      if (hp.hero.primaryCtaLink) {
+        pCta.href = (hp.hero.primaryCtaLink === '#about' || hp.hero.primaryCtaLink === '#about-ssd') ? '#about-ssd' : hp.hero.primaryCtaLink;
+      }
+      pCta.onclick = scrollToAboutSection;
     }
     const sCta = document.getElementById('heroSecondaryCta');
     if (sCta && hp.hero.secondaryCtaText) {
@@ -4692,7 +4717,23 @@ function applyHomepageCms(hp) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', initHomepageCms);
+function checkInitialHashScroll() {
+  const hash = window.location.hash;
+  if (hash === '#about' || hash === '#about-ssd') {
+    setTimeout(() => {
+      scrollToAboutSection();
+    }, 250);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initHomepageCms();
+  const pCta = document.getElementById('heroPrimaryCta');
+  if (pCta) pCta.onclick = scrollToAboutSection;
+  checkInitialHashScroll();
+});
+
+window.addEventListener('load', checkInitialHashScroll);
 
 
 

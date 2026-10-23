@@ -920,7 +920,7 @@ export const defaultSeedData = {
       headline: "DEFENDERS OF EQUALITY, LIBERTY & FRATERNITY",
       subheadline: "Founded on 24th December 1927 at Mahad by Bodhisattva Dr. B.R. Ambedkar, Samata Sainik Dal is the premier non-violent volunteer corps dedicated to constitutional literacy, disciplined social defense, and universal brotherhood.",
       primaryCtaText: "Explore SSD",
-      primaryCtaLink: "#about",
+      primaryCtaLink: "#about-ssd",
       secondaryCtaText: "Become a Sainik",
       secondaryCtaLink: "membership.html",
       tertiaryCtaText: "Explore Digital Library",

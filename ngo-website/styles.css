@@ -26,6 +26,17 @@
   --container-width: min(1680px, 94vw);
 }
 
+/* Global Smooth Scroll & Anchor Offsets */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 85px;
+}
+
+section[id],
+div[id] {
+  scroll-margin-top: 85px;
+}
+
 /* High Contrast Mode */
 body.high-contrast {
   --dark-navy: #000000;
