@@ -4581,12 +4581,561 @@ function handleDatePrecisionChange(val) {
   }
 }
 
+// ==========================================================================
+// NEW SAINIK ENLISTMENT QUESTIONNAIRE 8-STEP WIZARD ENGINE
+// ==========================================================================
+let currentWizardStep = 1;
+
+function updateWizardUI(step) {
+  currentWizardStep = step;
+  for (let s = 1; s <= 8; s++) {
+    const stepEl = document.getElementById("step" + s);
+    if (stepEl) {
+      stepEl.style.display = (s === step) ? "block" : "none";
+    }
+    const nodeEl = document.getElementById("wizardNode" + s);
+    if (nodeEl) {
+      nodeEl.classList.remove("active", "completed");
+      if (s === step) {
+        nodeEl.classList.add("active");
+      } else if (s < step) {
+        nodeEl.classList.add("completed");
+      }
+    }
+  }
+
+  const progressBar = document.getElementById("wizardProgressBar");
+  if (progressBar) {
+    const pct = Math.min(Math.round((step / 8) * 100), 100);
+    progressBar.style.width = pct + "%";
+  }
+
+  const wrapper = document.getElementById("wizardProgressWrapper");
+  if (wrapper && typeof wrapper.scrollIntoView === "function") {
+    wrapper.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function wizardGoToStep(targetStep) {
+  if (targetStep < currentWizardStep) {
+    updateWizardUI(targetStep);
+  } else if (targetStep > currentWizardStep) {
+    wizardNextStep(targetStep);
+  }
+}
+
+function wizardPrevStep(targetStep) {
+  const prev = targetStep || Math.max(1, currentWizardStep - 1);
+  updateWizardUI(prev);
+}
+
+function wizardNextStep(targetStep) {
+  const current = currentWizardStep;
+  const isLegacy = (document.getElementById("membershipType")?.value === "LEGACY");
+
+  // Step 1 Validation: Personal Information
+  if (current === 1) {
+    const name = document.getElementById("memberName")?.value.trim();
+    const phone = document.getElementById("memberPhone")?.value.trim();
+    const dob = document.getElementById("memberDob")?.value;
+    const gender = document.getElementById("memberGender")?.value;
+    const blood = document.getElementById("memberBloodGroup")?.value;
+    const edu = document.getElementById("memberQualification")?.value.trim();
+    const occ = document.getElementById("memberOccupation")?.value;
+    const state = document.getElementById("memberState")?.value;
+    const city = document.getElementById("memberCity")?.value.trim();
+    const addr = document.getElementById("memberAddress")?.value.trim();
+    const email = document.getElementById("memberEmail")?.value.trim();
+
+    if (!name) { showToast("Full Legal Name is required.", "warning"); document.getElementById("memberName")?.focus(); return; }
+    if (!isLegacy && !email) { showToast("Valid Email Address is required for new enlistment.", "warning"); document.getElementById("memberEmail")?.focus(); return; }
+    if (!phone) { showToast("Mobile / WhatsApp number is required.", "warning"); document.getElementById("memberPhone")?.focus(); return; }
+    if (!dob) { showToast("Date of Birth is required.", "warning"); document.getElementById("memberDob")?.focus(); return; }
+    if (!gender) { showToast("Please select your gender.", "warning"); document.getElementById("memberGender")?.focus(); return; }
+    if (!blood) { showToast("Blood group is required.", "warning"); document.getElementById("memberBloodGroup")?.focus(); return; }
+    if (!edu) { showToast("Educational qualification is required.", "warning"); document.getElementById("memberQualification")?.focus(); return; }
+    if (!occ) { showToast("Please select your occupation.", "warning"); document.getElementById("memberOccupation")?.focus(); return; }
+    if (!state) { showToast("Please select your State Chapter.", "warning"); document.getElementById("memberState")?.focus(); return; }
+    if (!city) { showToast("District Command is required.", "warning"); document.getElementById("memberCity")?.focus(); return; }
+    if (!addr) { showToast("Residential address is required.", "warning"); document.getElementById("memberAddress")?.focus(); return; }
+  }
+
+  // Step 2 Validation: Organizational Background
+  if (current === 2) {
+    const wing = document.getElementById("memberWing")?.value;
+    if (!wing) {
+      showToast("Please select your preferred SSD Wing / Division.", "warning");
+      document.getElementById("memberWing")?.focus();
+      return;
+    }
+
+    if (isLegacy) {
+      const legacyAttestation = document.getElementById("legacyAttestation")?.checked;
+      const legacyPrecision = document.getElementById("legacyDatePrecision")?.value;
+      const legacyJoiningDate = document.getElementById("legacyJoiningDate")?.value;
+
+      if (!legacyAttestation) {
+        showToast("Please check the Applicant Seniority Attestation checkbox.", "warning");
+        document.getElementById("legacyAttestation")?.focus();
+        return;
+      }
+      if (legacyPrecision !== "APPROXIMATE_UNKNOWN" && !legacyJoiningDate) {
+        showToast("Please select your original SSD joining date.", "warning");
+        document.getElementById("legacyJoiningDate")?.focus();
+        return;
+      }
+    }
+  }
+
+  // Step 4 Validation: Social Service Conditional
+  if (current === 4) {
+    const q6Val = document.getElementById("q6_social_service")?.value;
+    if ((q6Val === "Yes, regularly." || q6Val === "Yes, occasionally.")) {
+      const q6a = document.getElementById("q6a_details")?.value.trim();
+      if (!q6a) {
+        showToast("Please provide details of your social-service activities in Q6(a).", "warning");
+        document.getElementById("q6a_details")?.focus();
+        return;
+      }
+    }
+  }
+
+  // Step 5 Validation: Civic Participation Conditional
+  if (current === 5) {
+    const q10Val = document.getElementById("q10_civic_political")?.value;
+    if ((q10Val === "Yes, actively." || q10Val === "Yes, occasionally.")) {
+      const q10a = document.getElementById("q10a_details")?.value.trim();
+      if (!q10a) {
+        showToast("Please describe the nature of your civic/social involvement in Q10(a).", "warning");
+        document.getElementById("q10a_details")?.focus();
+        return;
+      }
+    }
+
+    const q12Val = document.getElementById("q12_other_org")?.value;
+    if (q12Val === "Yes.") {
+      const q12Name = document.getElementById("q12a_name")?.value.trim();
+      if (!q12Name) {
+        showToast("Please provide the organization name for Q12(a).", "warning");
+        document.getElementById("q12a_name")?.focus();
+        return;
+      }
+    }
+
+    const q15Val = document.getElementById("q15_public_events")?.value;
+    if (q15Val === "Yes.") {
+      const q15a = document.getElementById("q15a_details")?.value.trim();
+      if (!q15a) {
+        showToast("Please describe the public events or training camps in Q15(a).", "warning");
+        document.getElementById("q15a_details")?.focus();
+        return;
+      }
+    }
+  }
+
+  // Advancing to Step 7: Render Review Dossier
+  if (current === 6) {
+    renderWizardReviewSummary();
+  }
+
+  // Step 7 Validation: Declarations
+  if (current === 7) {
+    const pledge = document.getElementById("memberConsent")?.checked;
+    const decl = document.getElementById("enlistmentDeclaration")?.checked;
+
+    if (!pledge) {
+      showToast("Please accept the Solemn Sainik Pledge to proceed.", "warning");
+      document.getElementById("memberConsent")?.focus();
+      return;
+    }
+    if (!decl) {
+      showToast("Please accept the Section F Official Enlistment Questionnaire Declaration to proceed.", "warning");
+      document.getElementById("enlistmentDeclaration")?.focus();
+      return;
+    }
+  }
+
+  const next = targetStep || Math.min(8, current + 1);
+  updateWizardUI(next);
+  saveEnlistmentDraft(false); // auto-save on successful step transition
+}
+
+// Conditional Toggle Handlers
+function handleQ6Change(val) {
+  const box = document.getElementById("q6aContainer");
+  if (box) {
+    box.style.display = (val === "Yes, regularly." || val === "Yes, occasionally.") ? "block" : "none";
+  }
+}
+
+function handleQ10Change(val) {
+  const box = document.getElementById("q10aContainer");
+  if (box) {
+    box.style.display = (val === "Yes, actively." || val === "Yes, occasionally.") ? "block" : "none";
+  }
+}
+
+function handleQ12Change(val) {
+  const box = document.getElementById("q12aContainer");
+  if (box) {
+    box.style.display = (val === "Yes.") ? "block" : "none";
+  }
+}
+
+function handleQ15Change(val) {
+  const box = document.getElementById("q15aContainer");
+  if (box) {
+    box.style.display = (val === "Yes.") ? "block" : "none";
+  }
+}
+
+// Repeatable Organization Cards (Q13)
+let orgCardCounter = 0;
+function addRepeatableOrgCard(initialData = null) {
+  orgCardCounter++;
+  const cardId = "org_card_" + orgCardCounter + "_" + Date.now();
+  const container = document.getElementById("repeatableOrgsList");
+  if (!container) return;
+
+  const card = document.createElement("div");
+  card.className = "repeatable-org-card";
+  card.id = cardId;
+  card.innerHTML = `
+    <div class="repeatable-org-header">
+      <strong style="color: #001f3f; font-size: 13px;"><i class="fa-solid fa-building-flag"></i> Organization Record #${container.children.length + 1}</strong>
+      <button type="button" class="btn btn-sm" style="color: #dc2626; background: #fef2f2; border: 1px solid #fecaca; border-radius: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer;" onclick="removeRepeatableOrgCard('${cardId}')">
+        <i class="fa-solid fa-trash"></i> Remove
+      </button>
+    </div>
+    <div class="form-grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 10px;">
+      <div>
+        <label style="font-size: 11px; font-weight: 700; color: #64748b;">ORGANIZATION NAME *</label>
+        <input type="text" class="form-control org-input-name" placeholder="e.g. Ambedkar Study Circle" value="${initialData?.org_name || ''}">
+      </div>
+      <div>
+        <label style="font-size: 11px; font-weight: 700; color: #64748b;">ORGANIZATION TYPE *</label>
+        <select class="form-control org-input-type">
+          <option value="Social" ${initialData?.org_type === 'Social' ? 'selected' : ''}>Social</option>
+          <option value="Educational" ${initialData?.org_type === 'Educational' ? 'selected' : ''}>Educational</option>
+          <option value="Cultural" ${initialData?.org_type === 'Cultural' ? 'selected' : ''}>Cultural</option>
+          <option value="Community service" ${initialData?.org_type === 'Community service' ? 'selected' : ''}>Community service</option>
+          <option value="Civic" ${initialData?.org_type === 'Civic' ? 'selected' : ''}>Civic</option>
+          <option value="Political" ${initialData?.org_type === 'Political' ? 'selected' : ''}>Political</option>
+          <option value="Youth" ${initialData?.org_type === 'Youth' ? 'selected' : ''}>Youth</option>
+          <option value="Professional" ${initialData?.org_type === 'Professional' ? 'selected' : ''}>Professional</option>
+          <option value="Other" ${initialData?.org_type === 'Other' ? 'selected' : ''}>Other</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size: 11px; font-weight: 700; color: #64748b;">ROLE / DESIGNATION</label>
+        <input type="text" class="form-control org-input-role" placeholder="e.g. Volunteer / Coordinator" value="${initialData?.role_designation || ''}">
+      </div>
+    </div>
+    <div class="form-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+      <div>
+        <label style="font-size: 11px; font-weight: 700; color: #64748b;">FROM YEAR / START DATE</label>
+        <input type="text" class="form-control org-input-start" placeholder="e.g. 2018 or 01/2018" value="${initialData?.start_year || ''}">
+      </div>
+      <div>
+        <label style="font-size: 11px; font-weight: 700; color: #64748b;">TO YEAR / CURRENT STATUS</label>
+        <input type="text" class="form-control org-input-end" placeholder="e.g. 2022 or Currently Active" value="${initialData?.end_year || ''}">
+      </div>
+    </div>
+    <div style="margin-bottom: 10px;">
+      <label style="font-size: 11px; font-weight: 700; color: #64748b;">MAJOR RESPONSIBILITIES</label>
+      <textarea class="form-control org-input-resp" rows="2" placeholder="Describe key responsibilities...">${initialData?.responsibilities || ''}</textarea>
+    </div>
+    <div>
+      <label style="font-size: 11px; font-weight: 700; color: #64748b;">SIGNIFICANT CONTRIBUTIONS</label>
+      <textarea class="form-control org-input-contrib" rows="2" placeholder="Key achievements or programs coordinated...">${initialData?.contributions || ''}</textarea>
+    </div>
+  `;
+  container.appendChild(card);
+}
+
+function removeRepeatableOrgCard(cardId) {
+  const card = document.getElementById(cardId);
+  if (card && card.parentNode) {
+    card.parentNode.removeChild(card);
+  }
+}
+
+function getRepeatableOrganizationsData() {
+  const container = document.getElementById("repeatableOrgsList");
+  if (!container) return [];
+  const cards = container.querySelectorAll(".repeatable-org-card");
+  const orgs = [];
+  cards.forEach(card => {
+    const name = card.querySelector(".org-input-name")?.value.trim() || "";
+    const type = card.querySelector(".org-input-type")?.value || "Social";
+    const role = card.querySelector(".org-input-role")?.value.trim() || "";
+    const start = card.querySelector(".org-input-start")?.value.trim() || "";
+    const end = card.querySelector(".org-input-end")?.value.trim() || "";
+    const resp = card.querySelector(".org-input-resp")?.value.trim() || "";
+    const contrib = card.querySelector(".org-input-contrib")?.value.trim() || "";
+    if (name) {
+      orgs.push({
+        org_name: name,
+        org_type: type,
+        role_designation: role,
+        start_year: start,
+        end_year: end,
+        responsibilities: resp,
+        contributions: contrib,
+        question_ref: "Q13"
+      });
+    }
+  });
+  return orgs;
+}
+
+// Live Review Dossier Renderer (Step 7)
+function renderWizardReviewSummary() {
+  const container = document.getElementById("wizardReviewSummary");
+  if (!container) return;
+
+  const name = document.getElementById("memberName")?.value.trim() || "N/A";
+  const email = document.getElementById("memberEmail")?.value.trim() || "N/A";
+  const phone = document.getElementById("memberPhone")?.value.trim() || "N/A";
+  const dob = document.getElementById("memberDob")?.value || "N/A";
+  const gender = document.getElementById("memberGender")?.value || "N/A";
+  const blood = document.getElementById("memberBloodGroup")?.value || "N/A";
+  const edu = document.getElementById("memberQualification")?.value.trim() || "N/A";
+  const occ = document.getElementById("memberOccupation")?.value || "N/A";
+  const state = document.getElementById("memberState")?.value || "N/A";
+  const city = document.getElementById("memberCity")?.value.trim() || "N/A";
+  const wing = document.getElementById("memberWing")?.value || "N/A";
+
+  const q1 = document.getElementById("q1_aim")?.value.trim() || "Not provided";
+  const q2 = document.getElementById("q2_motto")?.value.trim() || "Not provided";
+  const q3 = document.getElementById("q3_reasons")?.value.trim() || "Not provided";
+  const q6 = document.getElementById("q6_social_service")?.value || "Not selected";
+  const q7 = document.getElementById("q7_ssd_role")?.value.trim() || "Not provided";
+  const q10 = document.getElementById("q10_civic_political")?.value || "Not selected";
+  const q17 = document.getElementById("q17_time_commitment")?.value || "Not selected";
+
+  const q8Boxes = Array.from(document.querySelectorAll('input[name="q8_areas"]:checked')).map(cb => cb.value);
+  const q16Boxes = Array.from(document.querySelectorAll('input[name="q16_wings"]:checked')).map(cb => cb.value);
+  const q18Boxes = Array.from(document.querySelectorAll('input[name="q18_skills"]:checked')).map(cb => cb.value);
+  const orgs = getRepeatableOrganizationsData();
+
+  container.innerHTML = `
+    <div class="wizard-review-section">
+      <h5><i class="fa-solid fa-user-check"></i> 1. Personal & Contact Information</h5>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+        <div class="wizard-review-item"><span class="wizard-review-item-label">Full Name</span><span class="wizard-review-item-val">${name}</span></div>
+        <div class="wizard-review-item"><span class="wizard-review-item-label">Email</span><span class="wizard-review-item-val">${email}</span></div>
+        <div class="wizard-review-item"><span class="wizard-review-item-label">Phone</span><span class="wizard-review-item-val">${phone}</span></div>
+        <div class="wizard-review-item"><span class="wizard-review-item-label">DOB / Gender</span><span class="wizard-review-item-val">${dob} (${gender})</span></div>
+        <div class="wizard-review-item"><span class="wizard-review-item-label">Blood Group</span><span class="wizard-review-item-val">${blood}</span></div>
+        <div class="wizard-review-item"><span class="wizard-review-item-label">Location</span><span class="wizard-review-item-val">${city}, ${state}</span></div>
+        <div class="wizard-review-item"><span class="wizard-review-item-label">Qualification / Occupation</span><span class="wizard-review-item-val">${edu} &bull; ${occ}</span></div>
+        <div class="wizard-review-item"><span class="wizard-review-item-label">Selected Wing</span><span class="wizard-review-item-val" style="color: #001f3f;">${wing}</span></div>
+      </div>
+    </div>
+
+    <div class="wizard-review-section">
+      <h5><i class="fa-solid fa-book-bookmark"></i> 2. Section A: Understanding of SSD</h5>
+      <div class="wizard-review-item"><span class="wizard-review-item-label">Q1. Official Aim Understanding</span><span class="wizard-review-item-val">${q1}</span></div>
+      <div class="wizard-review-item" style="margin-top: 6px;"><span class="wizard-review-item-label">Q2. Motto & Meaning</span><span class="wizard-review-item-val">${q2}</span></div>
+      <div class="wizard-review-item" style="margin-top: 6px;"><span class="wizard-review-item-label">Q3. Motivation to Join</span><span class="wizard-review-item-val">${q3}</span></div>
+    </div>
+
+    <div class="wizard-review-section">
+      <h5><i class="fa-solid fa-hand-holding-heart"></i> 3. Section B: Social Service & Nation-Building</h5>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+        <div class="wizard-review-item"><span class="wizard-review-item-label">Q6. Participation Level</span><span class="wizard-review-item-val">${q6}</span></div>
+        <div class="wizard-review-item"><span class="wizard-review-item-label">Q8. Areas of Interest (${q8Boxes.length})</span><span class="wizard-review-item-val">${q8Boxes.length ? q8Boxes.join(', ') : 'None selected'}</span></div>
+      </div>
+      <div class="wizard-review-item" style="margin-top: 6px;"><span class="wizard-review-item-label">Q7. Role in Nation-Building</span><span class="wizard-review-item-val">${q7}</span></div>
+    </div>
+
+    <div class="wizard-review-section">
+      <h5><i class="fa-solid fa-landmark"></i> 4. Section C & D: Civic Background & Previous Organizations</h5>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+        <div class="wizard-review-item"><span class="wizard-review-item-label">Q10. Civic Participation</span><span class="wizard-review-item-val">${q10}</span></div>
+        <div class="wizard-review-item"><span class="wizard-review-item-label">Q13. Recorded Organizations</span><span class="wizard-review-item-val">${orgs.length} record(s) attached</span></div>
+        <div class="wizard-review-item"><span class="wizard-review-item-label">Q16. Preferred Activity Areas</span><span class="wizard-review-item-val">${q16Boxes.length ? q16Boxes.join(', ') : 'Central Cadet Corps'}</span></div>
+      </div>
+      ${orgs.length ? `
+        <div style="margin-top: 8px; font-size: 11.5px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px;">
+          ${orgs.map((o, idx) => `<div><strong>${idx + 1}. ${o.org_name}</strong> (${o.org_type}) &mdash; ${o.role_designation || 'Member'} [${o.start_year || 'N/A'} - ${o.end_year || 'N/A'}]</div>`).join('')}
+        </div>
+      ` : ''}
+    </div>
+
+    <div class="wizard-review-section">
+      <h5><i class="fa-solid fa-clock"></i> 5. Section E: Time Commitment & Skills</h5>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+        <div class="wizard-review-item"><span class="wizard-review-item-label">Q17. Available Time Commitment</span><span class="wizard-review-item-val">${q17}</span></div>
+        <div class="wizard-review-item"><span class="wizard-review-item-label">Q18. Skills Contributed (${q18Boxes.length})</span><span class="wizard-review-item-val">${q18Boxes.length ? q18Boxes.join(', ') : 'None selected'}</span></div>
+      </div>
+    </div>
+  `;
+}
+
+// Draft Save & Resume Logic
+function saveEnlistmentDraft(showToastNotice = true) {
+  try {
+    const draft = {
+      timestamp: Date.now(),
+      currentStep: currentWizardStep,
+      membershipType: document.getElementById("membershipType")?.value || "STANDARD",
+      personal: {
+        memberName: document.getElementById("memberName")?.value || "",
+        memberEmail: document.getElementById("memberEmail")?.value || "",
+        memberPhone: document.getElementById("memberPhone")?.value || "",
+        memberDob: document.getElementById("memberDob")?.value || "",
+        memberGender: document.getElementById("memberGender")?.value || "",
+        memberBloodGroup: document.getElementById("memberBloodGroup")?.value || "",
+        memberQualification: document.getElementById("memberQualification")?.value || "",
+        memberOccupation: document.getElementById("memberOccupation")?.value || "",
+        memberState: document.getElementById("memberState")?.value || "",
+        memberRegion: document.getElementById("memberRegion")?.value || "",
+        memberCity: document.getElementById("memberCity")?.value || "",
+        memberTaluka: document.getElementById("memberTaluka")?.value || "",
+        memberAddress: document.getElementById("memberAddress")?.value || "",
+        memberWing: document.getElementById("memberWing")?.value || "",
+        memberMessage: document.getElementById("memberMessage")?.value || ""
+      },
+      legacy: {
+        legacyJoiningDate: document.getElementById("legacyJoiningDate")?.value || "",
+        legacyDatePrecision: document.getElementById("legacyDatePrecision")?.value || "EXACT_DATE",
+        legacyExistingId: document.getElementById("legacyExistingId")?.value || "",
+        legacyCurrentDesignation: document.getElementById("legacyCurrentDesignation")?.value || "",
+        legacyChapter: document.getElementById("legacyChapter")?.value || "",
+        legacyPreviousResponsibilities: document.getElementById("legacyPreviousResponsibilities")?.value || "",
+        legacyRecommendingOfficial: document.getElementById("legacyRecommendingOfficial")?.value || "",
+        legacyHistoricalNotes: document.getElementById("legacyHistoricalNotes")?.value || "",
+        legacyAttestation: document.getElementById("legacyAttestation")?.checked || false
+      },
+      questionnaire: {
+        q1_aim: document.getElementById("q1_aim")?.value || "",
+        q2_motto: document.getElementById("q2_motto")?.value || "",
+        q3_reasons: document.getElementById("q3_reasons")?.value || "",
+        q4_responsibilities: document.getElementById("q4_responsibilities")?.value || "",
+        q5_history_principles: document.getElementById("q5_history_principles")?.value || "",
+        q6_social_service: document.getElementById("q6_social_service")?.value || "",
+        q6a_details: document.getElementById("q6a_details")?.value || "",
+        q7_ssd_role: document.getElementById("q7_ssd_role")?.value || "",
+        q8_areas: Array.from(document.querySelectorAll('input[name="q8_areas"]:checked')).map(cb => cb.value),
+        q9_community_contribution: document.getElementById("q9_community_contribution")?.value || "",
+        q10_civic_political: document.getElementById("q10_civic_political")?.value || "",
+        q10a_details: document.getElementById("q10a_details")?.value || "",
+        q11_leadership: document.getElementById("q11_leadership")?.value || "",
+        q12_other_org: document.getElementById("q12_other_org")?.value || "",
+        q12a_name: document.getElementById("q12a_name")?.value || "",
+        q12a_type: document.getElementById("q12a_type")?.value || "",
+        q12a_role: document.getElementById("q12a_role")?.value || "",
+        q14_previous_skills: document.getElementById("q14_previous_skills")?.value || "",
+        q15_public_events: document.getElementById("q15_public_events")?.value || "",
+        q15a_details: document.getElementById("q15a_details")?.value || "",
+        q16_wings: Array.from(document.querySelectorAll('input[name="q16_wings"]:checked')).map(cb => cb.value),
+        q17_time_commitment: document.getElementById("q17_time_commitment")?.value || "",
+        q18_skills: Array.from(document.querySelectorAll('input[name="q18_skills"]:checked')).map(cb => cb.value),
+        q19_additional_info: document.getElementById("q19_additional_info")?.value || ""
+      },
+      organizations: getRepeatableOrganizationsData()
+    };
+
+    localStorage.setItem("ssd_enlistment_draft", JSON.stringify(draft));
+    const statusText = document.getElementById("draftStatusText");
+    if (statusText) {
+      statusText.innerHTML = `<i class="fa-solid fa-check"></i> Draft Saved (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
+    }
+    if (showToastNotice) {
+      showToast("Enlistment draft saved securely on this device.", "success");
+    }
+  } catch (err) {
+    console.warn("Could not save draft:", err.message);
+  }
+}
+
+function checkSavedEnlistmentDraft() {
+  try {
+    const raw = localStorage.getItem("ssd_enlistment_draft");
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    const resumeBtn = document.getElementById("btnResumeDraft");
+    const statusText = document.getElementById("draftStatusText");
+    if (resumeBtn) resumeBtn.style.display = "inline-flex";
+    if (statusText && draft.timestamp) {
+      const dt = new Date(draft.timestamp);
+      statusText.innerHTML = `<i class="fa-solid fa-circle-info" style="color: #2563eb;"></i> Saved draft available (${dt.toLocaleDateString()} ${dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
+    }
+  } catch (e) {}
+}
+
+function restoreEnlistmentDraft() {
+  try {
+    const raw = localStorage.getItem("ssd_enlistment_draft");
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+
+    if (draft.membershipType && typeof setRegistrationMode === "function") {
+      setRegistrationMode(draft.membershipType);
+    }
+
+    if (draft.personal) {
+      for (const [k, v] of Object.entries(draft.personal)) {
+        const el = document.getElementById(k);
+        if (el && v !== undefined) el.value = v;
+      }
+    }
+
+    if (draft.legacy) {
+      for (const [k, v] of Object.entries(draft.legacy)) {
+        const el = document.getElementById(k);
+        if (el) {
+          if (el.type === "checkbox") el.checked = !!v;
+          else el.value = v;
+        }
+      }
+    }
+
+    if (draft.questionnaire) {
+      const q = draft.questionnaire;
+      for (const [k, v] of Object.entries(q)) {
+        if (Array.isArray(v)) {
+          const boxes = document.querySelectorAll(`input[name="${k}"]`);
+          boxes.forEach(cb => { cb.checked = v.includes(cb.value); });
+        } else {
+          const el = document.getElementById(k);
+          if (el) el.value = v;
+        }
+      }
+
+      handleQ6Change(q.q6_social_service);
+      handleQ10Change(q.q10_civic_political);
+      handleQ12Change(q.q12_other_org);
+      handleQ15Change(q.q15_public_events);
+    }
+
+    if (Array.isArray(draft.organizations)) {
+      const container = document.getElementById("repeatableOrgsList");
+      if (container) container.innerHTML = "";
+      draft.organizations.forEach(o => addRepeatableOrgCard(o));
+    }
+
+    if (draft.currentStep && draft.currentStep >= 1 && draft.currentStep <= 8) {
+      updateWizardUI(draft.currentStep);
+    }
+
+    showToast("Enlistment draft restored successfully!", "success");
+    const resumeBtn = document.getElementById("btnResumeDraft");
+    if (resumeBtn) resumeBtn.style.display = "none";
+  } catch (err) {
+    showToast("Could not restore draft: " + err.message, "error");
+  }
+}
+
+// Full Form Submission Handler
 async function handleEnhancedMemberRegistration(e) {
   e.preventDefault();
   const form = document.getElementById("memberRegistrationForm");
   const submitBtn = document.getElementById("memberSubmitBtn");
-  const btnText = submitBtn.querySelector(".btn-text");
-  const btnSpinner = submitBtn.querySelector(".btn-spinner");
+  const btnText = submitBtn ? submitBtn.querySelector(".btn-text") : null;
+  const btnSpinner = submitBtn ? submitBtn.querySelector(".btn-spinner") : null;
 
   const membershipType = document.getElementById("membershipType") ? document.getElementById("membershipType").value : "STANDARD";
   const isLegacy = (membershipType === "LEGACY");
@@ -4606,7 +5155,30 @@ async function handleEnhancedMemberRegistration(e) {
   const taluka = document.getElementById("memberTaluka") ? document.getElementById("memberTaluka").value.trim() : "";
   const address = document.getElementById("memberAddress") ? document.getElementById("memberAddress").value.trim() : "";
   const message = document.getElementById("memberMessage") ? document.getElementById("memberMessage").value.trim() : "";
-  const pledgeAccepted = document.getElementById("memberConsent") ? document.getElementById("memberConsent").checked : true;
+  const pledgeAccepted = document.getElementById("memberConsent") ? document.getElementById("memberConsent").checked : false;
+
+  // SECTION F DECLARATION (REQUIRED)
+  const declCheckbox = document.getElementById("enlistmentDeclaration");
+  const declarationAccepted = declCheckbox ? declCheckbox.checked : true;
+
+  if (!declarationAccepted) {
+    showToast("Declaration required: Please read and accept the Section F Official Enlistment Questionnaire Declaration before submitting.", "warning");
+    if (declCheckbox) {
+      updateWizardUI(7);
+      declCheckbox.focus();
+    }
+    return;
+  }
+
+  if (!pledgeAccepted) {
+    showToast("Please accept the Solemn Sainik Pledge before submitting.", "warning");
+    const plEl = document.getElementById("memberConsent");
+    if (plEl) {
+      updateWizardUI(7);
+      plEl.focus();
+    }
+    return;
+  }
 
   // Legacy fields
   let legacyJoiningDate = "";
@@ -4645,10 +5217,45 @@ async function handleEnhancedMemberRegistration(e) {
     }
   }
 
+  // Questionnaire Structure Fields
+  const q8Boxes = Array.from(document.querySelectorAll('input[name="q8_areas"]:checked')).map(cb => cb.value);
+  const q16Boxes = Array.from(document.querySelectorAll('input[name="q16_wings"]:checked')).map(cb => cb.value);
+  const q18Boxes = Array.from(document.querySelectorAll('input[name="q18_skills"]:checked')).map(cb => cb.value);
+  const repeatableOrgs = getRepeatableOrganizationsData();
+
+  const questionnairePayload = {
+    q1_aim: document.getElementById("q1_aim")?.value.trim() || "",
+    q2_motto: document.getElementById("q2_motto")?.value.trim() || "",
+    q3_reasons: document.getElementById("q3_reasons")?.value.trim() || "",
+    q4_responsibilities: document.getElementById("q4_responsibilities")?.value.trim() || "",
+    q5_history_principles: document.getElementById("q5_history_principles")?.value.trim() || "",
+    q6_social_service_participation: document.getElementById("q6_social_service")?.value || "",
+    q6a_social_service_details: document.getElementById("q6a_details")?.value.trim() || "",
+    q7_ssd_role_nation_building: document.getElementById("q7_ssd_role")?.value.trim() || "",
+    q8_areas_of_interest: q8Boxes,
+    q9_community_contribution: document.getElementById("q9_community_contribution")?.value.trim() || "",
+    q10_civic_political_participation: document.getElementById("q10_civic_political")?.value || "",
+    q10a_civic_political_details: document.getElementById("q10a_details")?.value.trim() || "",
+    q11_held_leadership_role: document.getElementById("q11_leadership")?.value || "",
+    q12_currently_involved_other_org: document.getElementById("q12_other_org")?.value || "",
+    q12a_other_org_name: document.getElementById("q12a_name")?.value.trim() || "",
+    q12a_other_org_type: document.getElementById("q12a_type")?.value.trim() || "",
+    q12a_other_org_role: document.getElementById("q12a_role")?.value.trim() || "",
+    q14_previous_experience_skills: document.getElementById("q14_previous_skills")?.value.trim() || "",
+    q15_organized_public_events: document.getElementById("q15_public_events")?.value || "",
+    q15a_public_events_details: document.getElementById("q15a_details")?.value.trim() || "",
+    q16_preferred_wings: q16Boxes,
+    q17_time_commitment: document.getElementById("q17_time_commitment")?.value || "",
+    q18_skills_contribution: q18Boxes,
+    q19_additional_info: document.getElementById("q19_additional_info")?.value.trim() || "",
+    declaration_accepted: true,
+    organizations: repeatableOrgs
+  };
+
   const photoFileInput = document.getElementById("memberPhotoFile");
   const photoFile = photoFileInput && photoFileInput.files ? photoFileInput.files[0] : null;
 
-  submitBtn.disabled = true;
+  if (submitBtn) submitBtn.disabled = true;
   if (btnText) btnText.style.display = "none";
   if (btnSpinner) btnSpinner.style.display = "inline-flex";
 
@@ -4675,6 +5282,19 @@ async function handleEnhancedMemberRegistration(e) {
     formData.append("address", address);
     formData.append("specialSkills", message);
     formData.append("solemnPledge", pledgeAccepted);
+    formData.append("declarationAccepted", "true");
+    formData.append("declaration_accepted", "true");
+
+    // Questionnaire and Repeatable Organizations
+    formData.append("questionnaire", JSON.stringify(questionnairePayload));
+    formData.append("organizations", JSON.stringify(repeatableOrgs));
+
+    // Top-level mapped fields for direct DB sync
+    for (const [k, v] of Object.entries(questionnairePayload)) {
+      if (k !== "organizations") {
+        formData.append(k, Array.isArray(v) ? JSON.stringify(v) : v);
+      }
+    }
 
     if (isLegacy) {
       formData.append("originalJoiningDate", legacyJoiningDate);
@@ -4705,9 +5325,16 @@ async function handleEnhancedMemberRegistration(e) {
     if (data.success && data.applicationId) {
       showToast(isLegacy 
         ? `Legacy Registration Registered! Verification Dossier: ${data.applicationId}` 
-        : `Enlistment Application registered! Reference: ${data.applicationId}`, 
+        : `Enlistment Application & Questionnaire Registered! Reference: ${data.applicationId}`, 
         "success"
       );
+
+      // Clear local draft upon confirmed registration
+      try {
+        localStorage.removeItem("ssd_enlistment_draft");
+        const statusText = document.getElementById("draftStatusText");
+        if (statusText) statusText.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Draft Auto-Save Ready';
+      } catch (e) {}
 
       // Real-Time Cross-Client & Broadcast Notification
       const appRecord = {
@@ -4732,6 +5359,7 @@ async function handleEnhancedMemberRegistration(e) {
         existing_sainik_id: legacyExistingId,
         chapter_name: legacyChapter,
         status: isLegacy ? 'LEGACY_SUBMITTED' : 'SUBMITTED',
+        has_questionnaire: true,
         created_at: new Date().toISOString()
       };
 
@@ -4760,9 +5388,12 @@ async function handleEnhancedMemberRegistration(e) {
       // Populate and Show Confirmation Modal
       const modal = document.getElementById("appConfirmModal");
       if (modal) {
-        document.getElementById("confirmAppId").textContent = data.applicationId;
-        document.getElementById("confirmApplicantName").textContent = data.applicantName || fullName;
-        document.getElementById("confirmDistrictName").textContent = `${district}, ${state}`;
+        const confirmAppEl = document.getElementById("confirmAppId");
+        if (confirmAppEl) confirmAppEl.textContent = data.applicationId;
+        const confirmNameEl = document.getElementById("confirmApplicantName");
+        if (confirmNameEl) confirmNameEl.textContent = data.applicantName || fullName;
+        const confirmDistEl = document.getElementById("confirmDistrictName");
+        if (confirmDistEl) confirmDistEl.textContent = `${district}, ${state}`;
         const portalBtn = document.getElementById("confirmPortalBtn");
         if (portalBtn) {
           portalBtn.href = `/member-portal.html?id=${data.applicationId}`;
@@ -4774,6 +5405,9 @@ async function handleEnhancedMemberRegistration(e) {
       uploadedPhotoBase64 = null;
       const previewContainer = document.getElementById("photoPreviewContainer");
       if (previewContainer) previewContainer.style.display = "none";
+      const orgContainer = document.getElementById("repeatableOrgsList");
+      if (orgContainer) orgContainer.innerHTML = "";
+      updateWizardUI(8);
 
     } else {
       showToast(data.error || "Submission failed. Please check your details.", "error");
@@ -4783,7 +5417,7 @@ async function handleEnhancedMemberRegistration(e) {
     console.error("Application submission error:", err);
     showToast("Network error submitting application to Central Command: " + err.message, "error");
   } finally {
-    submitBtn.disabled = false;
+    if (submitBtn) submitBtn.disabled = false;
     if (btnText) btnText.style.display = "inline-flex";
     if (btnSpinner) btnSpinner.style.display = "none";
   }
@@ -4800,9 +5434,22 @@ window.handleEnhancedMemberRegistration = handleEnhancedMemberRegistration;
 window.closeConfirmModal = closeConfirmModal;
 window.previewPhotoUpload = previewPhotoUpload;
 window.handleStateChange = handleStateChange;
-window.closeConfirmModal = closeConfirmModal;
 window.handleDropdownToggle = handleDropdownToggle;
 window.toggleMobileDropdown = toggleMobileDropdown;
+
+// Wizard & Questionnaire Exports
+window.wizardGoToStep = wizardGoToStep;
+window.wizardNextStep = wizardNextStep;
+window.wizardPrevStep = wizardPrevStep;
+window.handleQ6Change = handleQ6Change;
+window.handleQ10Change = handleQ10Change;
+window.handleQ12Change = handleQ12Change;
+window.handleQ15Change = handleQ15Change;
+window.addRepeatableOrgCard = addRepeatableOrgCard;
+window.removeRepeatableOrgCard = removeRepeatableOrgCard;
+window.saveEnlistmentDraft = saveEnlistmentDraft;
+window.restoreEnlistmentDraft = restoreEnlistmentDraft;
+window.checkSavedEnlistmentDraft = checkSavedEnlistmentDraft;
 
 // ==========================================================================
 // DYNAMIC HOMEPAGE CMS HYDRATION & REALTIME UPDATES

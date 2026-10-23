@@ -226,139 +226,126 @@
             </div>
           </div>
 
+          <!-- ENLISTMENT QUESTIONNAIRE 8-STEP WIZARD PROGRESS TRACK -->
+          <div class="wizard-progress-wrapper" id="wizardProgressWrapper">
+            <div class="wizard-steps-track" id="wizardStepsTrack">
+              <div class="wizard-step-node active" id="wizardNode1" onclick="wizardGoToStep(1)">
+                <div class="wizard-step-circle">1</div>
+                <div class="wizard-step-label">Personal Info</div>
+              </div>
+              <div class="wizard-step-node" id="wizardNode2" onclick="wizardGoToStep(2)">
+                <div class="wizard-step-circle">2</div>
+                <div class="wizard-step-label">Org Background</div>
+              </div>
+              <div class="wizard-step-node" id="wizardNode3" onclick="wizardGoToStep(3)">
+                <div class="wizard-step-circle">3</div>
+                <div class="wizard-step-label">Aim & Motto</div>
+              </div>
+              <div class="wizard-step-node" id="wizardNode4" onclick="wizardGoToStep(4)">
+                <div class="wizard-step-circle">4</div>
+                <div class="wizard-step-label">Social Service</div>
+              </div>
+              <div class="wizard-step-node" id="wizardNode5" onclick="wizardGoToStep(5)">
+                <div class="wizard-step-circle">5</div>
+                <div class="wizard-step-label">Experience</div>
+              </div>
+              <div class="wizard-step-node" id="wizardNode6" onclick="wizardGoToStep(6)">
+                <div class="wizard-step-circle">6</div>
+                <div class="wizard-step-label">Skills & Time</div>
+              </div>
+              <div class="wizard-step-node" id="wizardNode7" onclick="wizardGoToStep(7)">
+                <div class="wizard-step-circle">7</div>
+                <div class="wizard-step-label">Review & Pledge</div>
+              </div>
+              <div class="wizard-step-node" id="wizardNode8" onclick="wizardGoToStep(8)">
+                <div class="wizard-step-circle">8</div>
+                <div class="wizard-step-label">Submit</div>
+              </div>
+            </div>
+            <div class="wizard-progress-bar-bg">
+              <div class="wizard-progress-bar-fill" id="wizardProgressBar" style="width: 12.5%;"></div>
+            </div>
+            <div class="wizard-draft-bar" id="wizardDraftBar">
+              <span id="draftStatusText"><i class="fa-solid fa-cloud-arrow-up"></i> Draft Auto-Save Ready</span>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn btn-sm" style="font-size: 11.5px; padding: 4px 10px; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; border-radius: 4px;" onclick="saveEnlistmentDraft(true)">
+                  <i class="fa-regular fa-floppy-disk"></i> Save Draft
+                </button>
+                <button type="button" id="btnResumeDraft" class="btn btn-sm" style="display: none; font-size: 11.5px; padding: 4px 10px; background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; border-radius: 4px;" onclick="restoreEnlistmentDraft()">
+                  <i class="fa-solid fa-rotate-left"></i> Resume Saved Draft
+                </button>
+              </div>
+            </div>
+          </div>
+
           <form id="memberRegistrationForm" onsubmit="handleEnhancedMemberRegistration(event)">
             <input type="hidden" id="membershipType" value="STANDARD">
 
-            <!-- LEGACY EXCLUSIVE FIELDS CONTAINER -->
-            <div id="legacyFieldsContainer" style="display: none; background: #fdfaf3; border: 1px solid #f2e2c4; border-radius: 10px; padding: 20px; margin-bottom: 24px;">
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid #f2e2c4; padding-bottom: 10px;">
-                <i class="fa-solid fa-clock-rotate-left" style="color: #c5a059; font-size: 18px;"></i>
-                <h4 style="margin: 0; color: #001f3f; font-size: 15px; font-weight: 800;">Historical Membership & Seniority Details</h4>
+            <!-- ============================================================
+                 STEP 1: PERSONAL INFORMATION
+                 ============================================================ -->
+            <div class="wizard-step-content" id="step1">
+              <div style="margin-bottom: 18px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                <h4 style="margin: 0; color: #001f3f; font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                  <i class="fa-solid fa-id-card-clip" style="color: #c5a059;"></i>
+                  Step 1 — Personal & Contact Information (वैयक्तिक माहिती)
+                </h4>
+                <p style="margin: 4px 0 0; font-size: 12.5px; color: #64748b;">Please enter your official legal identity and residence details.</p>
               </div>
 
               <div class="form-grid-2">
                 <div class="form-group">
-                  <label for="legacyJoiningDate">Original SSD Joining Date <span class="req" id="legacyDateReq">*</span></label>
-                  <input type="date" id="legacyJoiningDate" class="form-control" style="background: #ffffff;">
-                  <div style="font-size: 11.5px; color: #64748b; margin-top: 4px;">The historical date you originally joined Samata Sainik Dal.</div>
+                  <label for="memberName">Full Legal Name <span class="req">*</span></label>
+                  <input type="text" id="memberName" class="form-control" placeholder="e.g. Rahul B. Meshram" required>
                 </div>
-
                 <div class="form-group">
-                  <label for="legacyDatePrecision">Joining Date Precision / Certainty <span class="req">*</span></label>
-                  <select id="legacyDatePrecision" class="form-control" onchange="handleDatePrecisionChange(this.value)" style="background: #ffffff;">
-                    <option value="EXACT_DATE">Exact Date Known (Day, Month & Year)</option>
-                    <option value="YEAR_ONLY">Approximate Year Known (Exact day to be archival verified)</option>
-                    <option value="APPROXIMATE_UNKNOWN">Exact Date Unknown (Requires Archival Verification)</option>
+                  <label for="memberEmail">Email Address <span class="req" id="memberEmailReq">*</span></label>
+                  <input type="email" id="memberEmail" class="form-control" placeholder="e.g. rahul.meshram@example.com" required>
+                </div>
+              </div>
+
+              <div class="form-grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                <div class="form-group">
+                  <label for="memberPhone">Mobile / WhatsApp <span class="req">*</span></label>
+                  <input type="tel" id="memberPhone" class="form-control" placeholder="+91 98765 43210" required>
+                </div>
+                <div class="form-group">
+                  <label for="memberDob">Date of Birth <span class="req">*</span></label>
+                  <input type="date" id="memberDob" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label for="memberGender">Gender <span class="req">*</span></label>
+                  <select id="memberGender" class="form-control" required>
+                    <option value="">-- Select Gender --</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
                   </select>
-                  <div id="datePrecisionHelp" style="font-size: 11.5px; color: #64748b; margin-top: 4px;">If your exact joining date is unknown, select verification needed — do not invent a date.</div>
                 </div>
               </div>
 
-              <div class="form-grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+              <div class="form-grid-2">
                 <div class="form-group">
-                  <label for="legacyExistingId">Existing Sainik ID / Card No. (If Available)</label>
-                  <input type="text" id="legacyExistingId" class="form-control" placeholder="e.g. MH/NGP/VET-1994" style="background: #ffffff;">
-                </div>
-                <div class="form-group">
-                  <label for="legacyCurrentDesignation">Current Designation / Rank (If Applicable)</label>
-                  <input type="text" id="legacyCurrentDesignation" class="form-control" placeholder="e.g. Senior Dalpati / Zonal Organizer" style="background: #ffffff;">
-                </div>
-                <div class="form-group">
-                  <label for="legacyChapter">SSD Chapter / Local Shakha <span class="req">*</span></label>
-                  <input type="text" id="legacyChapter" class="form-control" placeholder="e.g. Deekshabhoomi Shakha #1" style="background: #ffffff;">
-                </div>
-              </div>
-
-              <div class="form-group" style="margin-top: 15px;">
-                <label for="legacyPreviousResponsibilities">Previous Organizational Responsibilities & Significant Service</label>
-                <textarea id="legacyPreviousResponsibilities" class="form-control" rows="2" placeholder="Detail past rallies, drill camps, chapter leadership roles, or memorial coordination (e.g. 1997 Mahad Satyagraha March lead)..." style="background: #ffffff;"></textarea>
-              </div>
-
-              <div class="form-grid-2" style="margin-top: 15px;">
-                <div class="form-group">
-                  <label for="legacyRecommendingOfficial">Recommending Senior Official / Chapter Head</label>
-                  <input type="text" id="legacyRecommendingOfficial" class="form-control" placeholder="Name, Designation, and Contact of Officer who can attest" style="background: #ffffff;">
+                  <label for="memberBloodGroup">Blood Group <span class="req">*</span></label>
+                  <select id="memberBloodGroup" class="form-control" required>
+                    <option value="">-- Select Blood Group --</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                  </select>
                 </div>
                 <div class="form-group">
-                  <label for="legacyHistoricalNotes">Additional Archival Proof / Citations</label>
-                  <input type="text" id="legacyHistoricalNotes" class="form-control" placeholder="Mention badge numbers, camp certificates, or gazette references" style="background: #ffffff;">
+                  <label for="memberQualification">Educational Qualification <span class="req">*</span></label>
+                  <input type="text" id="memberQualification" class="form-control" placeholder="e.g. Graduate / B.A. / B.Tech / LL.B." required>
                 </div>
               </div>
 
-              <div class="form-disclaimer" style="margin-top: 16px; background: #ffffff; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px;">
-                <input type="checkbox" id="legacyAttestation">
-                <label for="legacyAttestation" style="font-size: 12.5px; color: #1e293b;">
-                  <strong>Applicant Seniority Attestation:</strong> "I solemnly confirm that the submitted joining date reflects my original organizational joining date with Samata Sainik Dal. I understand that official batch assignment and active status require authorized verification."
-                </label>
-              </div>
-            </div>
-
-            <!-- STANDARD APPLICANT FIELDS -->
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label for="memberName">Full Legal Name <span class="req">*</span></label>
-                <input type="text" id="memberName" class="form-control" placeholder="e.g. Rahul B. Meshram" required>
-              </div>
-              <div class="form-group">
-                <label for="memberEmail">Email Address <span class="req" id="memberEmailReq">*</span></label>
-                <input type="email" id="memberEmail" class="form-control" placeholder="e.g. rahul.meshram@example.com" required>
-              </div>
-            </div>
-
-            <div class="form-grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px;">
-              <div class="form-group">
-                <label for="memberPhone">Mobile / WhatsApp <span class="req">*</span></label>
-                <input type="tel" id="memberPhone" class="form-control" placeholder="+91 98765 43210" required>
-              </div>
-              <div class="form-group">
-                <label for="memberDob">Date of Birth <span class="req">*</span></label>
-                <input type="date" id="memberDob" class="form-control" required>
-              </div>
-              <div class="form-group">
-                <label for="memberGender">Gender <span class="req">*</span></label>
-                <select id="memberGender" class="form-control" required>
-                  <option value="">-- Select Gender --</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label for="memberWing">Preferred SSD Wing / Division <span class="req">*</span></label>
-                <select id="memberWing" class="form-control" required>
-                  <option value="">-- Select Wing / Division --</option>
-                  <option value="Central Cadet Corps (Sainik Wing)">Central Cadet Corps (Sainik Wing)</option>
-                  <option value="Mahila Samata Sainik Dal (Women Wing)">Mahila Samata Sainik Dal (Women Wing)</option>
-                  <option value="Constitutional Rights & Legal Cell">Constitutional Rights & Legal Cell</option>
-                  <option value="Youth & Student Front">Youth & Student Front</option>
-                  <option value="Community Sewa & Relief Force">Community Sewa & Relief Force</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="memberBloodGroup">Blood Group <span class="req">*</span></label>
-                <select id="memberBloodGroup" class="form-control" required>
-                  <option value="">-- Select Blood Group --</option>
-                  <option value="O+">O+</option>
-                  <option value="O-">O-</option>
-                  <option value="A+">A+</option>
-                  <option value="A-">A-</option>
-                  <option value="B+">B+</option>
-                  <option value="B-">B-</option>
-                  <option value="AB+">AB+</option>
-                  <option value="AB-">AB-</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label for="memberQualification">Educational Qualification <span class="req">*</span></label>
-                <input type="text" id="memberQualification" class="form-control" placeholder="e.g. Graduate / B.A. / B.Tech / LL.B." required>
-              </div>
-              <div class="form-group">
+              <div class="form-group" style="margin-bottom: 15px;">
                 <label for="memberOccupation">Occupation / Profession <span class="req">*</span></label>
                 <select id="memberOccupation" class="form-control" required>
                   <option value="">-- Select Occupation --</option>
@@ -374,73 +361,712 @@
                   <option value="Other">Other</option>
                 </select>
               </div>
+
+              <div class="form-grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                <div class="form-group">
+                  <label for="memberState">State Chapter <span class="req">*</span></label>
+                  <select id="memberState" class="form-control" required onchange="handleStateChange(this.value)">
+                    <option value="">-- Select State --</option>
+                    <option value="Maharashtra">Maharashtra (महाराष्ट्र)</option>
+                    <option value="Delhi NCR">Delhi NCR (दिल्ली एनसीआर)</option>
+                    <option value="Uttar Pradesh">Uttar Pradesh (उत्तर प्रदेश)</option>
+                    <option value="Madhya Pradesh">Madhya Pradesh (मध्य प्रदेश)</option>
+                    <option value="Bihar">Bihar (बिहार)</option>
+                    <option value="Karnataka">Karnataka (कर्नाटक)</option>
+                    <option value="Rajasthan">Rajasthan (राजस्थान)</option>
+                    <option value="Punjab">Punjab (पंजाब)</option>
+                    <option value="Gujarat">Gujarat (गुजरात)</option>
+                    <option value="Telangana">Telangana (तेलंगाना)</option>
+                    <option value="Andhra Pradesh">Andhra Pradesh (आंध्र प्रदेश)</option>
+                    <option value="Tamil Nadu">Tamil Nadu (तमिलनाडु)</option>
+                    <option value="West Bengal">West Bengal (पश्चिम बंगाल)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="memberRegion">Region / Division</label>
+                  <input type="text" id="memberRegion" class="form-control" placeholder="e.g. Vidarbha / Western MH">
+                </div>
+                <div class="form-group">
+                  <label for="memberCity">District Command <span class="req">*</span></label>
+                  <input type="text" id="memberCity" class="form-control" placeholder="e.g. Nagpur / Pune / Mumbai" required>
+                </div>
+              </div>
+
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label for="memberTaluka">Taluka / Sub-District</label>
+                  <input type="text" id="memberTaluka" class="form-control" placeholder="e.g. Nagpur Urban / Haveli">
+                </div>
+                <div class="form-group">
+                  <label for="memberAddress">Residential Address <span class="req">*</span></label>
+                  <input type="text" id="memberAddress" class="form-control" placeholder="House/Plot No, Street, Landmark" required>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 16px;">
+                <label for="memberPhotoFile">Passport-Size Photograph <span class="req">*</span></label>
+                <input type="file" id="memberPhotoFile" class="form-control" accept="image/jpeg,image/png,image/webp" onchange="previewPhotoUpload(event)">
+                <div style="font-size: 11.5px; color: #64748b; margin-top: 4px;">JPG, PNG or WEBP (Max 5MB). Professional or clear front-facing portrait photo.</div>
+                <div id="photoPreviewContainer" style="margin-top: 10px; display: none;">
+                  <img id="photoPreviewImg" src="" alt="Passport Photo Preview" style="width: 80px; height: 95px; border-radius: 6px; border: 2px solid #001f3f; object-fit: cover;">
+                </div>
+              </div>
+
+              <div class="wizard-nav-row">
+                <div></div>
+                <div style="display: flex; gap: 10px;">
+                  <button type="button" class="btn btn-outline" onclick="saveEnlistmentDraft(true)">
+                    <i class="fa-regular fa-floppy-disk"></i> Save Draft
+                  </button>
+                  <button type="button" class="btn btn-primary" onclick="wizardNextStep(2)">
+                    Continue to Step 2 <i class="fa-solid fa-arrow-right"></i>
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div class="form-grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px;">
+            <!-- ============================================================
+                 STEP 2: ORGANIZATIONAL BACKGROUND & WING PREFERENCE
+                 ============================================================ -->
+            <div class="wizard-step-content" id="step2" style="display: none;">
+              <div style="margin-bottom: 18px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                <h4 style="margin: 0; color: #001f3f; font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                  <i class="fa-solid fa-shield-halved" style="color: #c5a059;"></i>
+                  Step 2 — Organizational Background & Wing Affiliation (संघटनात्मक पार्श्वभूमी)
+                </h4>
+                <p style="margin: 4px 0 0; font-size: 12.5px; color: #64748b;">Specify your intended division of service and any legacy seniority credentials.</p>
+              </div>
+
+              <!-- LEGACY EXCLUSIVE FIELDS CONTAINER -->
+              <div id="legacyFieldsContainer" style="display: none; background: #fdfaf3; border: 1px solid #f2e2c4; border-radius: 10px; padding: 20px; margin-bottom: 24px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid #f2e2c4; padding-bottom: 10px;">
+                  <i class="fa-solid fa-clock-rotate-left" style="color: #c5a059; font-size: 18px;"></i>
+                  <h4 style="margin: 0; color: #001f3f; font-size: 15px; font-weight: 800;">Historical Membership & Seniority Details</h4>
+                </div>
+
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label for="legacyJoiningDate">Original SSD Joining Date <span class="req" id="legacyDateReq">*</span></label>
+                    <input type="date" id="legacyJoiningDate" class="form-control" style="background: #ffffff;">
+                    <div style="font-size: 11.5px; color: #64748b; margin-top: 4px;">The historical date you originally joined Samata Sainik Dal.</div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="legacyDatePrecision">Joining Date Precision / Certainty <span class="req">*</span></label>
+                    <select id="legacyDatePrecision" class="form-control" onchange="handleDatePrecisionChange(this.value)" style="background: #ffffff;">
+                      <option value="EXACT_DATE">Exact Date Known (Day, Month & Year)</option>
+                      <option value="YEAR_ONLY">Approximate Year Known (Exact day to be archival verified)</option>
+                      <option value="APPROXIMATE_UNKNOWN">Exact Date Unknown (Requires Archival Verification)</option>
+                    </select>
+                    <div id="datePrecisionHelp" style="font-size: 11.5px; color: #64748b; margin-top: 4px;">If your exact joining date is unknown, select verification needed — do not invent a date.</div>
+                  </div>
+                </div>
+
+                <div class="form-grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                  <div class="form-group">
+                    <label for="legacyExistingId">Existing Sainik ID / Card No. (If Available)</label>
+                    <input type="text" id="legacyExistingId" class="form-control" placeholder="e.g. MH/NGP/VET-1994" style="background: #ffffff;">
+                  </div>
+                  <div class="form-group">
+                    <label for="legacyCurrentDesignation">Current Designation / Rank (If Applicable)</label>
+                    <input type="text" id="legacyCurrentDesignation" class="form-control" placeholder="e.g. Senior Dalpati / Zonal Organizer" style="background: #ffffff;">
+                  </div>
+                  <div class="form-group">
+                    <label for="legacyChapter">SSD Chapter / Local Shakha <span class="req">*</span></label>
+                    <input type="text" id="legacyChapter" class="form-control" placeholder="e.g. Deekshabhoomi Shakha #1" style="background: #ffffff;">
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                  <label for="legacyPreviousResponsibilities">Previous Organizational Responsibilities & Significant Service</label>
+                  <textarea id="legacyPreviousResponsibilities" class="form-control" rows="2" placeholder="Detail past rallies, drill camps, chapter leadership roles, or memorial coordination (e.g. 1997 Mahad Satyagraha March lead)..." style="background: #ffffff;"></textarea>
+                </div>
+
+                <div class="form-grid-2" style="margin-top: 15px;">
+                  <div class="form-group">
+                    <label for="legacyRecommendingOfficial">Recommending Senior Official / Chapter Head</label>
+                    <input type="text" id="legacyRecommendingOfficial" class="form-control" placeholder="Name, Designation, and Contact of Officer who can attest" style="background: #ffffff;">
+                  </div>
+                  <div class="form-group">
+                    <label for="legacyHistoricalNotes">Additional Archival Proof / Citations</label>
+                    <input type="text" id="legacyHistoricalNotes" class="form-control" placeholder="Mention badge numbers, camp certificates, or gazette references" style="background: #ffffff;">
+                  </div>
+                </div>
+
+                <div class="form-disclaimer" style="margin-top: 16px; background: #ffffff; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px;">
+                  <input type="checkbox" id="legacyAttestation">
+                  <label for="legacyAttestation" style="font-size: 12.5px; color: #1e293b;">
+                    <strong>Applicant Seniority Attestation:</strong> "I solemnly confirm that the submitted joining date reflects my original organizational joining date with Samata Sainik Dal. I understand that official batch assignment and active status require authorized verification."
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 20px;">
+                <label for="memberWing">Preferred SSD Wing / Division <span class="req">*</span></label>
+                <select id="memberWing" class="form-control" required>
+                  <option value="">-- Select Wing / Division --</option>
+                  <option value="Central Cadet Corps (Sainik Wing)">Central Cadet Corps (Sainik Wing)</option>
+                  <option value="Mahila Samata Sainik Dal (Women Wing)">Mahila Samata Sainik Dal (Women Wing)</option>
+                  <option value="Constitutional Rights & Legal Cell">Constitutional Rights & Legal Cell</option>
+                  <option value="Youth & Student Front">Youth & Student Front</option>
+                  <option value="Community Sewa & Relief Force">Community Sewa & Relief Force</option>
+                </select>
+                <div style="font-size: 11.5px; color: #64748b; margin-top: 4px;">Final wing assignment will be confirmed by Central Command based on eligibility and training.</div>
+              </div>
+
               <div class="form-group">
-                <label for="memberState">State Chapter <span class="req">*</span></label>
-                <select id="memberState" class="form-control" required onchange="handleStateChange(this.value)">
-                  <option value="">-- Select State --</option>
-                  <option value="Maharashtra">Maharashtra (महाराष्ट्र)</option>
-                  <option value="Delhi NCR">Delhi NCR (दिल्ली एनसीआर)</option>
-                  <option value="Uttar Pradesh">Uttar Pradesh (उत्तर प्रदेश)</option>
-                  <option value="Madhya Pradesh">Madhya Pradesh (मध्य प्रदेश)</option>
-                  <option value="Bihar">Bihar (बिहार)</option>
-                  <option value="Karnataka">Karnataka (कर्नाटक)</option>
-                  <option value="Rajasthan">Rajasthan (राजस्थान)</option>
-                  <option value="Punjab">Punjab (पंजाब)</option>
-                  <option value="Gujarat">Gujarat (गुजरात)</option>
-                  <option value="Telangana">Telangana (तेलंगाना)</option>
-                  <option value="Andhra Pradesh">Andhra Pradesh (आंध्र प्रदेश)</option>
-                  <option value="Tamil Nadu">Tamil Nadu (तमिलनाडु)</option>
-                  <option value="West Bengal">West Bengal (पश्चिम बंगाल)</option>
+                <label for="memberMessage">Prior Service or Special Skills (Optional)</label>
+                <textarea id="memberMessage" class="form-control" rows="3" placeholder="Mention experience in drill training, legal aid, first-aid, event management, or community organizing..."></textarea>
+              </div>
+
+              <div class="wizard-nav-row">
+                <button type="button" class="btn btn-outline" onclick="wizardPrevStep(1)">
+                  <i class="fa-solid fa-arrow-left"></i> Back to Step 1
+                </button>
+                <div style="display: flex; gap: 10px;">
+                  <button type="button" class="btn btn-outline" onclick="saveEnlistmentDraft(true)">
+                    <i class="fa-regular fa-floppy-disk"></i> Save Draft
+                  </button>
+                  <button type="button" class="btn btn-primary" onclick="wizardNextStep(3)">
+                    Continue to Step 3 <i class="fa-solid fa-arrow-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ============================================================
+                 STEP 3: SECTION A — UNDERSTANDING OF SSD
+                 ============================================================ -->
+            <div class="wizard-step-content" id="step3" style="display: none;">
+              <div style="margin-bottom: 18px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                <h4 style="margin: 0; color: #001f3f; font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                  <i class="fa-solid fa-book-open-reader" style="color: #c5a059;"></i>
+                  Step 3 — Section A: Understanding of Samata Sainik Dal (ध्येय व तत्त्वांची समज)
+                </h4>
+                <p style="margin: 4px 0 0; font-size: 12.5px; color: #64748b;">Help us understand your perspective on SSD's foundational purpose, aim, and motto.</p>
+              </div>
+
+              <div class="questionnaire-card">
+                <span class="questionnaire-q-badge">QUESTION 1</span>
+                <div class="questionnaire-q-title">Q1. What is your understanding of the official aim of Samata Sainik Dal?</div>
+                <div class="questionnaire-q-hint">समता सैनिक दलाच्या अधिकृत ध्येयाबद्दल आपली काय समज आहे? (Response type: Long text)</div>
+                <textarea id="q1_aim" class="form-control" rows="3" placeholder="Explain how you perceive SSD's mission to safeguard constitutional values, equality, and social defense..."></textarea>
+              </div>
+
+              <div class="questionnaire-card">
+                <span class="questionnaire-q-badge">QUESTION 2</span>
+                <div class="questionnaire-q-title">Q2. What is the official motto of Samata Sainik Dal, and what does it mean to you?</div>
+                <div class="questionnaire-q-hint">समता सैनिक दलाचे अधिकृत ब्रीदवाक्य काय आहे आणि त्याचा आपल्यासाठी काय अर्थ आहे? (Response type: Long text)</div>
+                <textarea id="q2_motto" class="form-control" rows="3" placeholder="Reflect on the motto 'Self-Respect, Equality, Peace' and its application in personal and community conduct..."></textarea>
+              </div>
+
+              <div class="questionnaire-card">
+                <span class="questionnaire-q-badge">QUESTION 3</span>
+                <div class="questionnaire-q-title">Q3. Why do you want to become a Sainik of Samata Sainik Dal?</div>
+                <div class="questionnaire-q-hint">आपण समता सैनिक दलाचे सैनिक का होऊ इच्छिता? (Response type: Long text)</div>
+                <textarea id="q3_reasons" class="form-control" rows="3" placeholder="Describe your personal motivation, inspiration from Dr. B.R. Ambedkar, and vision for joining..."></textarea>
+              </div>
+
+              <div class="questionnaire-card">
+                <span class="questionnaire-q-badge">QUESTION 4</span>
+                <div class="questionnaire-q-title">Q4. What responsibilities do you believe a Sainik should fulfil toward the organization and society?</div>
+                <div class="questionnaire-q-hint">एका सैनिकाने संघटना आणि समाजाप्रती कोणती कर्तव्ये पार पाडली पाहिजेत? (Response type: Long text)</div>
+                <textarea id="q4_responsibilities" class="form-control" rows="3" placeholder="Detail your thoughts on discipline, community vigilance, volunteer service, and solidarity..."></textarea>
+              </div>
+
+              <div class="questionnaire-card">
+                <span class="questionnaire-q-badge">QUESTION 5</span>
+                <div class="questionnaire-q-title">Q5. What do you understand about SSD’s history, principles, and organizational discipline?</div>
+                <div class="questionnaire-q-hint">दलाचा इतिहास (१९२७ स्थापना), तत्त्वे आणि शिस्तीबद्दल आपले काय मत आहे? (Response type: Long text)</div>
+                <textarea id="q5_history_principles" class="form-control" rows="3" placeholder="Mention historical context (e.g. Mahad Satyagraha 1927, social defense corps) and uniform code..."></textarea>
+              </div>
+
+              <div class="wizard-nav-row">
+                <button type="button" class="btn btn-outline" onclick="wizardPrevStep(2)">
+                  <i class="fa-solid fa-arrow-left"></i> Back to Step 2
+                </button>
+                <div style="display: flex; gap: 10px;">
+                  <button type="button" class="btn btn-outline" onclick="saveEnlistmentDraft(true)">
+                    <i class="fa-regular fa-floppy-disk"></i> Save Draft
+                  </button>
+                  <button type="button" class="btn btn-primary" onclick="wizardNextStep(4)">
+                    Continue to Step 4 <i class="fa-solid fa-arrow-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ============================================================
+                 STEP 4: SECTION B — SOCIAL SERVICE & NATION BUILDING
+                 ============================================================ -->
+            <div class="wizard-step-content" id="step4" style="display: none;">
+              <div style="margin-bottom: 18px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                <h4 style="margin: 0; color: #001f3f; font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                  <i class="fa-solid fa-hand-holding-heart" style="color: #c5a059;"></i>
+                  Step 4 — Section B: Social Service & Contribution to the Nation (समाजसेवा आणि राष्ट्रउभारणी)
+                </h4>
+                <p style="margin: 4px 0 0; font-size: 12.5px; color: #64748b;">Tell us about your community work experience and social interests.</p>
+              </div>
+
+              <div class="questionnaire-card">
+                <span class="questionnaire-q-badge">QUESTION 6</span>
+                <div class="questionnaire-q-title">Q6. Have you participated in any social-service or community-development activities?</div>
+                <div class="questionnaire-q-hint">आपण कोणत्याही समाजसेवा किंवा समुदाय-विकास कार्यात सहभागी झाला आहात का? (Single choice)</div>
+                <select id="q6_social_service" class="form-control" onchange="handleQ6Change(this.value)">
+                  <option value="">-- Select Participation Level --</option>
+                  <option value="Yes, regularly.">Yes, regularly.</option>
+                  <option value="Yes, occasionally.">Yes, occasionally.</option>
+                  <option value="Not yet, but I am interested.">Not yet, but I am interested.</option>
+                  <option value="No.">No.</option>
+                </select>
+
+                <!-- Conditional Q6(a) -->
+                <div id="q6aContainer" style="display: none; margin-top: 14px; background: #fdfaf3; border: 1px solid #f2e2c4; padding: 14px; border-radius: 8px;">
+                  <div style="font-weight: 700; font-size: 13px; color: #001f3f; margin-bottom: 4px;">
+                    Q6(a). Describe the activities you participated in, your responsibilities, and the approximate period of involvement:
+                  </div>
+                  <textarea id="q6a_details" class="form-control" rows="3" placeholder="Specify nature of work (e.g. food drives, education camps, blood donation), your responsibilities, and timeframe..."></textarea>
+                </div>
+              </div>
+
+              <div class="questionnaire-card">
+                <span class="questionnaire-q-badge">QUESTION 7</span>
+                <div class="questionnaire-q-title">Q7. In your opinion, what role can SSD play in social development and nation-building?</div>
+                <div class="questionnaire-q-hint">आपल्या मते, राष्ट्रउभारणी आणि सामाजिक विकासात समता सैनिक दल कोणती भूमिका बजावू शकते? (Long text)</div>
+                <textarea id="q7_ssd_role" class="form-control" rows="3" placeholder="Share your perspective on constitutional literacy, youth empowerment, casteless unity, and disciplined civic service..."></textarea>
+              </div>
+
+              <div class="questionnaire-card">
+                <span class="questionnaire-q-badge">QUESTION 8</span>
+                <div class="questionnaire-q-title">Q8. Which areas of social work interest you most? (Select all that apply)</div>
+                <div class="questionnaire-q-hint">कोणत्या सामाजिक कार्यात आपल्याला सर्वाधिक रुची आहे? (Multiple choice)</div>
+                <div class="questionnaire-chip-grid">
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q8_areas" value="Education and awareness.">
+                    <span>Education and awareness</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q8_areas" value="Community service.">
+                    <span>Community service</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q8_areas" value="Disaster relief and humanitarian assistance.">
+                    <span>Disaster relief & humanitarian aid</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q8_areas" value="Youth development.">
+                    <span>Youth development</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q8_areas" value="Women’s empowerment.">
+                    <span>Women’s empowerment</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q8_areas" value="Constitutional awareness and civic education.">
+                    <span>Constitutional & civic awareness</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q8_areas" value="Public health and sanitation.">
+                    <span>Public health & sanitation</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q8_areas" value="Environmental activities.">
+                    <span>Environmental activities</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q8_areas" value="Organizational training and discipline.">
+                    <span>Organizational drill & discipline</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q8_areas" value="Other.">
+                    <span>Other specialized areas</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="questionnaire-card">
+                <span class="questionnaire-q-badge">QUESTION 9</span>
+                <div class="questionnaire-q-title">Q9. How would you contribute to your local community as a Sainik?</div>
+                <div class="questionnaire-q-hint">एक सैनिक म्हणून आपण आपल्या स्थानिक वस्ती/परिसरात कशा प्रकारे योगदान द्याल? (Long text)</div>
+                <textarea id="q9_community_contribution" class="form-control" rows="3" placeholder="Describe grassroots initiatives you would undertake in your ward, village, or shakha..."></textarea>
+              </div>
+
+              <div class="wizard-nav-row">
+                <button type="button" class="btn btn-outline" onclick="wizardPrevStep(3)">
+                  <i class="fa-solid fa-arrow-left"></i> Back to Step 3
+                </button>
+                <div style="display: flex; gap: 10px;">
+                  <button type="button" class="btn btn-outline" onclick="saveEnlistmentDraft(true)">
+                    <i class="fa-regular fa-floppy-disk"></i> Save Draft
+                  </button>
+                  <button type="button" class="btn btn-primary" onclick="wizardNextStep(5)">
+                    Continue to Step 5 <i class="fa-solid fa-arrow-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ============================================================
+                 STEP 5: SECTION C & D — CIVIC, POLITICAL & PREVIOUS EXPERIENCE
+                 ============================================================ -->
+            <div class="wizard-step-content" id="step5" style="display: none;">
+              <div style="margin-bottom: 18px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                <h4 style="margin: 0; color: #001f3f; font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                  <i class="fa-solid fa-users-viewfinder" style="color: #c5a059;"></i>
+                  Step 5 — Sections C & D: Civic Participation & Organizational History
+                </h4>
+                <p style="margin: 4px 0 0; font-size: 12.5px; color: #64748b;">Disclose prior organizational experience and volunteer leadership.</p>
+              </div>
+
+              <!-- SENSITIVE PERSONAL DATA NOTICE -->
+              <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #2563eb; border-radius: 8px; padding: 12px 16px; margin-bottom: 18px; font-size: 12.5px; color: #1e3a8a;">
+                <i class="fa-solid fa-lock" style="color: #2563eb; margin-right: 6px;"></i>
+                <strong>Sensitive Personal Data Notice (DPDP Act Compliance):</strong> Civic, social, and political participation disclosures are classified as sensitive personal information. They are gathered solely to understand your volunteer background and will never be shared publicly or used as automatic grounds for rejection.
+              </div>
+
+              <div class="questionnaire-card">
+                <span class="questionnaire-q-badge">QUESTION 10</span>
+                <div class="questionnaire-q-title">Q10. Have you participated in any social movements, civic initiatives, public campaigns, or political activities?</div>
+                <div class="questionnaire-q-hint">आपण कोणत्याही सामाजिक चळवळी, नागरी उपक्रम, सार्वजनिक मोहिमा किंवा राजकीय उपक्रमात भाग घेतला आहे का?</div>
+                <select id="q10_civic_political" class="form-control" onchange="handleQ10Change(this.value)">
+                  <option value="">-- Select Participation Level --</option>
+                  <option value="Yes, actively.">Yes, actively.</option>
+                  <option value="Yes, occasionally.">Yes, occasionally.</option>
+                  <option value="No.">No.</option>
+                  <option value="Prefer not to disclose.">Prefer not to disclose.</option>
+                </select>
+
+                <!-- Conditional Q10(a) -->
+                <div id="q10aContainer" style="display: none; margin-top: 14px; background: #fdfaf3; border: 1px solid #f2e2c4; padding: 14px; border-radius: 8px;">
+                  <div style="font-weight: 700; font-size: 13px; color: #001f3f; margin-bottom: 4px;">
+                    Q10(a). Please describe the nature of your involvement, your role, and the approximate period:
+                  </div>
+                  <textarea id="q10a_details" class="form-control" rows="3" placeholder="Provide context regarding the initiative, your responsibilities, and timeframe..."></textarea>
+                </div>
+              </div>
+
+              <div class="questionnaire-card">
+                <span class="questionnaire-q-badge">QUESTION 11</span>
+                <div class="questionnaire-q-title">Q11. Have you held any organizational responsibility, leadership position, or volunteer role in a social, civic, political, educational, or community organization?</div>
+                <select id="q11_leadership" class="form-control">
+                  <option value="">-- Select Option --</option>
+                  <option value="Yes.">Yes.</option>
+                  <option value="No.">No.</option>
+                  <option value="Prefer not to disclose.">Prefer not to disclose.</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label for="memberRegion">Region / Division</label>
-                <input type="text" id="memberRegion" class="form-control" placeholder="e.g. Vidarbha / Western MH">
+
+              <div class="questionnaire-card">
+                <span class="questionnaire-q-badge">QUESTION 12</span>
+                <div class="questionnaire-q-title">Q12. Are you currently involved with any other organization, association, movement, or political party?</div>
+                <div class="questionnaire-q-hint">Involvement in another organization is not automatically incompatible with SSD membership.</div>
+                <select id="q12_other_org" class="form-control" onchange="handleQ12Change(this.value)">
+                  <option value="">-- Select Option --</option>
+                  <option value="Yes.">Yes.</option>
+                  <option value="No.">No.</option>
+                  <option value="Prefer not to disclose.">Prefer not to disclose.</option>
+                </select>
+
+                <!-- Conditional Q12(a) -->
+                <div id="q12aContainer" style="display: none; margin-top: 14px; background: #fdfaf3; border: 1px solid #f2e2c4; padding: 14px; border-radius: 8px;">
+                  <div style="font-weight: 700; font-size: 13px; color: #001f3f; margin-bottom: 8px;">
+                    Q12(a). Provide details of current organizational association:
+                  </div>
+                  <div class="form-grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                    <div>
+                      <label style="font-size: 11px; font-weight: 700; color: #64748b;">ORGANIZATION NAME</label>
+                      <input type="text" id="q12a_name" class="form-control" placeholder="Organization name">
+                    </div>
+                    <div>
+                      <label style="font-size: 11px; font-weight: 700; color: #64748b;">TYPE OF INVOLVEMENT</label>
+                      <input type="text" id="q12a_type" class="form-control" placeholder="e.g. Member / Volunteer / Advisor">
+                    </div>
+                    <div>
+                      <label style="font-size: 11px; font-weight: 700; color: #64748b;">YOUR ROLE / DESIGNATION</label>
+                      <input type="text" id="q12a_role" class="form-control" placeholder="e.g. Secretary / Cadre">
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="form-group">
-                <label for="memberCity">District Command <span class="req">*</span></label>
-                <input type="text" id="memberCity" class="form-control" placeholder="e.g. Nagpur / Pune / Mumbai" required>
+
+              <!-- Q13: REPEATABLE ORGANIZATIONAL EXPERIENCE -->
+              <div class="questionnaire-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                  <div>
+                    <span class="questionnaire-q-badge">QUESTION 13 (REPEATABLE)</span>
+                    <div class="questionnaire-q-title">Q13. List the organizations in which you have previously worked, volunteered, or held responsibilities:</div>
+                    <div class="questionnaire-q-hint">Add structured records for each organization (Social, Educational, Cultural, Civic, Youth, etc.)</div>
+                  </div>
+                  <button type="button" class="btn btn-sm btn-outline" onclick="addRepeatableOrgCard()" style="font-size: 12px; padding: 6px 12px; border-color: #001f3f; color: #001f3f;">
+                    <i class="fa-solid fa-plus"></i> Add Organization Record
+                  </button>
+                </div>
+
+                <div id="repeatableOrgsList">
+                  <!-- Dynamically populated cards -->
+                </div>
+              </div>
+
+              <div class="questionnaire-card">
+                <span class="questionnaire-q-badge">QUESTION 14</span>
+                <div class="questionnaire-q-title">Q14. What experience or skills from your previous organizational work could you contribute to SSD?</div>
+                <textarea id="q14_previous_skills" class="form-control" rows="3" placeholder="e.g. Parade coordination, public speaking, legal counseling, IT & digital media, medical first aid..."></textarea>
+              </div>
+
+              <div class="questionnaire-card">
+                <span class="questionnaire-q-badge">QUESTION 15</span>
+                <div class="questionnaire-q-title">Q15. Have you organized or participated in public events, training camps, awareness programmes, marches, relief activities, or community initiatives?</div>
+                <select id="q15_public_events" class="form-control" onchange="handleQ15Change(this.value)">
+                  <option value="">-- Select Option --</option>
+                  <option value="Yes.">Yes.</option>
+                  <option value="No.">No.</option>
+                </select>
+
+                <!-- Conditional Q15(a) -->
+                <div id="q15aContainer" style="display: none; margin-top: 14px; background: #fdfaf3; border: 1px solid #f2e2c4; padding: 14px; border-radius: 8px;">
+                  <div style="font-weight: 700; font-size: 13px; color: #001f3f; margin-bottom: 4px;">
+                    Q15(a). Please describe the public events, camps, or community initiatives:
+                  </div>
+                  <textarea id="q15a_details" class="form-control" rows="3" placeholder="Provide event titles, locations, your role, and approximate dates..."></textarea>
+                </div>
+              </div>
+
+              <div class="questionnaire-card">
+                <span class="questionnaire-q-badge">QUESTION 16</span>
+                <div class="questionnaire-q-title">Q16. Which SSD wing or area of activity would you prefer to contribute to? (Select all that apply)</div>
+                <div class="questionnaire-chip-grid">
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q16_wings" value="Cadet Corps.">
+                    <span>Cadet Corps (Physical drill & discipline)</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q16_wings" value="Mahila Dal, where applicable.">
+                    <span>Mahila Dal (Women wing)</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q16_wings" value="Youth Wing.">
+                    <span>Youth Wing (Student mobilizations)</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q16_wings" value="Legal Cell, where applicable.">
+                    <span>Legal Cell (Constitutional rights)</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q16_wings" value="Sewa Relief.">
+                    <span>Sewa Relief (Humanitarian & health)</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q16_wings" value="Public awareness and education.">
+                    <span>Public awareness & education</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q16_wings" value="Digital media and communications.">
+                    <span>Digital media & communications</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q16_wings" value="Organizational administration.">
+                    <span>Organizational administration</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q16_wings" value="Other.">
+                    <span>Other</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="wizard-nav-row">
+                <button type="button" class="btn btn-outline" onclick="wizardPrevStep(4)">
+                  <i class="fa-solid fa-arrow-left"></i> Back to Step 4
+                </button>
+                <div style="display: flex; gap: 10px;">
+                  <button type="button" class="btn btn-outline" onclick="saveEnlistmentDraft(true)">
+                    <i class="fa-regular fa-floppy-disk"></i> Save Draft
+                  </button>
+                  <button type="button" class="btn btn-primary" onclick="wizardNextStep(6)">
+                    Continue to Step 6 <i class="fa-solid fa-arrow-right"></i>
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label for="memberTaluka">Taluka / Sub-District</label>
-                <input type="text" id="memberTaluka" class="form-control" placeholder="e.g. Nagpur Urban / Haveli">
+            <!-- ============================================================
+                 STEP 6: SECTION E — COMMITMENT & PERSONAL CONTRIBUTION
+                 ============================================================ -->
+            <div class="wizard-step-content" id="step6" style="display: none;">
+              <div style="margin-bottom: 18px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                <h4 style="margin: 0; color: #001f3f; font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                  <i class="fa-solid fa-stopwatch" style="color: #c5a059;"></i>
+                  Step 6 — Section E: Time Commitment & Skill Contributions (वेळ आणि कौशल्य योगदान)
+                </h4>
+                <p style="margin: 4px 0 0; font-size: 12.5px; color: #64748b;">Specify your available time commitment and skills you bring to Samata Sainik Dal.</p>
               </div>
-              <div class="form-group">
-                <label for="memberAddress">Residential Address <span class="req">*</span></label>
-                <input type="text" id="memberAddress" class="form-control" placeholder="House/Plot No, Street, Landmark" required>
+
+              <div class="questionnaire-card">
+                <span class="questionnaire-q-badge">QUESTION 17</span>
+                <div class="questionnaire-q-title">Q17. How much time can you reasonably contribute to organizational activities?</div>
+                <div class="questionnaire-q-hint">आपण संघटनात्मक उपक्रमांसाठी किती वेळ देऊ शकता? (Single choice)</div>
+                <select id="q17_time_commitment" class="form-control">
+                  <option value="">-- Select Time Availability --</option>
+                  <option value="Several hours each week.">Several hours each week.</option>
+                  <option value="A few hours each month.">A few hours each month.</option>
+                  <option value="Mainly during scheduled events.">Mainly during scheduled events.</option>
+                  <option value="Availability varies.">Availability varies.</option>
+                  <option value="To be discussed with the local unit.">To be discussed with the local unit.</option>
+                </select>
+              </div>
+
+              <div class="questionnaire-card">
+                <span class="questionnaire-q-badge">QUESTION 18</span>
+                <div class="questionnaire-q-title">Q18. What skills could you contribute to SSD? (Select all that apply)</div>
+                <div class="questionnaire-chip-grid">
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q18_skills" value="Leadership and coordination.">
+                    <span>Leadership & coordination</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q18_skills" value="Public speaking.">
+                    <span>Public speaking / Oratory</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q18_skills" value="Teaching and training.">
+                    <span>Teaching & cadet training</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q18_skills" value="Event management.">
+                    <span>Event & parade management</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q18_skills" value="Research and documentation.">
+                    <span>Research & documentation</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q18_skills" value="Digital technology.">
+                    <span>Digital technology / IT</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q18_skills" value="Graphic design and media.">
+                    <span>Graphic design & media</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q18_skills" value="Legal knowledge, where qualified.">
+                    <span>Legal counsel / Rights aid</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q18_skills" value="Community outreach.">
+                    <span>Community outreach & mobilization</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q18_skills" value="First aid or disaster-relief training, where qualified.">
+                    <span>First aid & disaster rescue</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q18_skills" value="Administration.">
+                    <span>Administration & chapter records</span>
+                  </label>
+                  <label class="questionnaire-chip-label">
+                    <input type="checkbox" name="q18_skills" value="Other.">
+                    <span>Other specialized skills</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="questionnaire-card">
+                <span class="questionnaire-q-badge">QUESTION 19</span>
+                <div class="questionnaire-q-title">Q19. Is there anything else you would like the SSD authorities to know about your experience, interests, or motivation?</div>
+                <div class="questionnaire-q-hint">Optional long text. Share any personal thoughts or context with Central Command.</div>
+                <textarea id="q19_additional_info" class="form-control" rows="3" placeholder="Any additional details or special requests..."></textarea>
+              </div>
+
+              <div class="wizard-nav-row">
+                <button type="button" class="btn btn-outline" onclick="wizardPrevStep(5)">
+                  <i class="fa-solid fa-arrow-left"></i> Back to Step 5
+                </button>
+                <div style="display: flex; gap: 10px;">
+                  <button type="button" class="btn btn-outline" onclick="saveEnlistmentDraft(true)">
+                    <i class="fa-regular fa-floppy-disk"></i> Save Draft
+                  </button>
+                  <button type="button" class="btn btn-primary" onclick="wizardNextStep(7)">
+                    Review & Declarations <i class="fa-solid fa-arrow-right"></i>
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 16px;">
-              <label for="memberPhotoFile">Passport-Size Photograph <span class="req">*</span></label>
-              <input type="file" id="memberPhotoFile" class="form-control" accept="image/jpeg,image/png,image/webp" onchange="previewPhotoUpload(event)">
-              <div style="font-size: 11.5px; color: #64748b; margin-top: 4px;">JPG, PNG or WEBP (Max 5MB). Professional or clear front-facing portrait photo.</div>
-              <div id="photoPreviewContainer" style="margin-top: 10px; display: none;">
-                <img id="photoPreviewImg" src="" alt="Passport Photo Preview" style="width: 80px; height: 95px; border-radius: 6px; border: 2px solid #001f3f; object-fit: cover;">
+            <!-- ============================================================
+                 STEP 7: SECTION F — REVIEW & STATUTORY DECLARATION
+                 ============================================================ -->
+            <div class="wizard-step-content" id="step7" style="display: none;">
+              <div style="margin-bottom: 18px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                <h4 style="margin: 0; color: #001f3f; font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                  <i class="fa-solid fa-clipboard-check" style="color: #c5a059;"></i>
+                  Step 7 — Review Dossier & Section F Declaration (अंतिम तपासणी व घोषणापत्र)
+                </h4>
+                <p style="margin: 4px 0 0; font-size: 12.5px; color: #64748b;">Please review your complete enlistment dossier before signing the official declaration.</p>
+              </div>
+
+              <!-- LIVE APPLICATION REVIEW DOSSIER -->
+              <div id="wizardReviewSummary" style="margin-bottom: 24px;">
+                <!-- Populated dynamically via renderWizardReviewSummary() -->
+              </div>
+
+              <!-- STATUTORY SOLEMN PLEDGE -->
+              <div class="form-disclaimer" style="margin-bottom: 16px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 14px;">
+                <input type="checkbox" id="memberConsent" required>
+                <label for="memberConsent" style="font-size: 13px; color: #0f172a; line-height: 1.5;">
+                  <strong>Solemn Sainik Pledge:</strong> "I solemnly pledge to uphold the values of Liberty, Equality, and Fraternity, maintain iron discipline, resist all forms of caste discrimination, and dedicate myself to the social defense movement founded by Dr. B.R. Ambedkar."
+                </label>
+              </div>
+
+              <!-- SECTION F ENLISTMENT QUESTIONNAIRE DECLARATION (REQUIRED & SEPARATE) -->
+              <div class="form-disclaimer" style="margin-bottom: 24px; background: #fffbeb; border: 1.5px solid #fde68a; border-left: 5px solid #d97706; border-radius: 8px; padding: 16px;">
+                <input type="checkbox" id="enlistmentDeclaration" required>
+                <label for="enlistmentDeclaration" style="font-size: 13px; color: #92400e; line-height: 1.5;">
+                  <strong>Section F — Official Enlistment Questionnaire Declaration:</strong>
+                  "I confirm that the information provided in this enlistment questionnaire is accurate to the best of my knowledge. I understand that SSD may verify relevant membership information in accordance with its approved policies. I understand that submission of this questionnaire does not itself guarantee membership approval."
+                </label>
+              </div>
+
+              <div class="wizard-nav-row">
+                <button type="button" class="btn btn-outline" onclick="wizardPrevStep(6)">
+                  <i class="fa-solid fa-arrow-left"></i> Back to Step 6
+                </button>
+                <div style="display: flex; gap: 10px;">
+                  <button type="button" class="btn btn-outline" onclick="saveEnlistmentDraft(true)">
+                    <i class="fa-regular fa-floppy-disk"></i> Save Draft
+                  </button>
+                  <button type="button" class="btn btn-primary" onclick="wizardNextStep(8)">
+                    Proceed to Submit <i class="fa-solid fa-arrow-right"></i>
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div class="form-group">
-              <label for="memberMessage">Prior Service or Special Skills (Optional)</label>
-              <textarea id="memberMessage" class="form-control" placeholder="Mention experience in drill training, legal aid, first-aid, event management, or community organizing..."></textarea>
-            </div>
+            <!-- ============================================================
+                 STEP 8: SUBMIT APPLICATION
+                 ============================================================ -->
+            <div class="wizard-step-content" id="step8" style="display: none;">
+              <div style="text-align: center; padding: 30px 20px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 20px;">
+                <div style="width: 70px; height: 70px; background: #eff6ff; color: #1d4ed8; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 16px;">
+                  <i class="fa-solid fa-shield-cat"></i>
+                </div>
+                <h3 style="margin: 0 0 8px; color: #001f3f; font-size: 20px;">Ready to Submit Official Enlistment Dossier</h3>
+                <p style="margin: 0 auto 20px; max-width: 520px; font-size: 13.5px; color: #64748b; line-height: 1.5;">
+                  All 7 stages of your questionnaire and personal details are complete. Upon submission, your application will receive a tracking dossier ID and be routed to your assigned District Command for official verification.
+                </p>
 
-            <div class="form-disclaimer">
-              <input type="checkbox" id="memberConsent" required>
-              <label for="memberConsent"><strong>Solemn Sainik Pledge:</strong> "I solemnly pledge to uphold the values of Liberty, Equality, and Fraternity, maintain iron discipline, resist all forms of caste discrimination, and dedicate myself to the social defense movement founded by Dr. B.R. Ambedkar."</label>
-            </div>
+                <div class="form-submit-row" style="max-width: 420px; margin: 0 auto;">
+                  <button type="submit" id="memberSubmitBtn" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-size: 15px;">
+                    <span class="btn-text"><i class="fa-solid fa-user-shield"></i> Confirm and Submit Enlistment Application</span>
+                    <span class="btn-spinner" style="display: none;"><i class="fa-solid fa-circle-notch fa-spin"></i> Submitting to Central Command...</span>
+                  </button>
+                </div>
+              </div>
 
-            <div class="form-submit-row">
-              <button type="submit" id="memberSubmitBtn" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;">
-                <span class="btn-text"><i class="fa-solid fa-user-shield"></i> Submit Enlistment Application</span>
-                <span class="btn-spinner" style="display: none;"><i class="fa-solid fa-circle-notch fa-spin"></i> Submitting to Central Command...</span>
-              </button>
+              <div class="wizard-nav-row" style="border-top: none; margin-top: 10px;">
+                <button type="button" class="btn btn-outline" onclick="wizardPrevStep(7)">
+                  <i class="fa-solid fa-arrow-left"></i> Review Declarations
+                </button>
+              </div>
             </div>
           </form>
         </div>

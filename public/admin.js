@@ -8484,6 +8484,8 @@ async function openReviewDecisionModal(appId) {
     if (data.success && data.application) {
       app = data.application;
       history = data.approvalHistory || [];
+      app.questionnaire = data.questionnaire || null;
+      app.organizations = data.organizations || [];
     }
   } catch (e) {}
 
@@ -8517,6 +8519,22 @@ async function openReviewDecisionModal(appId) {
   if (!app) {
     showToast("Unable to fetch application details.", "error");
     return;
+  }
+
+  // Ensure questionnaire is fetched if not present
+  if (!app.questionnaire) {
+    try {
+      const qRes = await fetch(`/api/membership/applications/${encodeURIComponent(appId)}/questionnaire`, {
+        headers: token ? { "Authorization": `Bearer ${token}` } : {}
+      });
+      if (qRes.ok) {
+        const qData = await qRes.json();
+        if (qData.success) {
+          app.questionnaire = qData.questionnaire || null;
+          app.organizations = qData.organizations || [];
+        }
+      }
+    } catch (e) {}
   }
 
   currentSelectedApplication = app;
@@ -8639,7 +8657,402 @@ async function openReviewDecisionModal(appId) {
 
   const remarksInput = document.getElementById("reviewActionRemarks");
   if (remarksInput) remarksInput.value = "";
+
+  // Render Enlistment Questionnaire Scrutiny Panel
+  renderQuestionnaireScrutiny(app.questionnaire, app.organizations, app);
+
   openAdminModal("modalReviewDecision");
+}
+
+// ==========================================================================
+// ENLISTMENT QUESTIONNAIRE SCRUTINY PANEL HELPERS
+// ==========================================================================
+
+function toggleQuestionnaireScrutinyCollapse() {
+  const content = document.getElementById('questionnaireScrutinyContent');
+  const icon = document.getElementById('iconToggleQuestionnaireScrutiny');
+  const text = document.getElementById('textToggleQuestionnaireScrutiny');
+  if (!content) return;
+
+  const isHidden = content.style.display === 'none' || !content.style.display;
+  if (isHidden) {
+    content.style.display = 'block';
+    if (icon) icon.className = 'fa-solid fa-chevron-up';
+    if (text) text.textContent = 'Hide Details';
+  } else {
+    content.style.display = 'none';
+    if (icon) icon.className = 'fa-solid fa-chevron-down';
+    if (text) text.textContent = 'View Responses';
+  }
+}
+
+function renderQuestionnaireScrutiny(q, orgs, app) {
+  const badge = document.getElementById("questionnaireScrutinyStatusBadge");
+  const body = document.getElementById("questionnaireSectionsBody");
+  const remarksTextarea = document.getElementById("questionnaireInternalRemarks");
+  const saveBtn = document.getElementById("btnSaveQuestionnaireRemarks");
+  const meta = document.getElementById("questionnaireLastReviewedMeta");
+
+  if (!body) return;
+
+  if (!q) {
+    if (badge) {
+      badge.textContent = "NOT SUBMITTED";
+      badge.className = "badge-status badge-rejected";
+      badge.style.background = "#f1f5f9";
+      badge.style.color = "#64748b";
+      badge.style.borderColor = "#cbd5e1";
+    }
+    body.innerHTML = `
+      <div style="padding: 16px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; text-align: center; color: #64748b; font-size: 13px;">
+        <i class="fa-solid fa-circle-info" style="color: #0284c7; margin-right: 6px;"></i>
+        No enlistment questionnaire on record for this applicant (legacy or basic registration).
+      </div>
+    `;
+    if (remarksTextarea) {
+      remarksTextarea.value = "";
+      remarksTextarea.disabled = true;
+      remarksTextarea.placeholder = "Questionnaire not submitted for this application.";
+    }
+    if (saveBtn) saveBtn.disabled = true;
+    if (meta) meta.textContent = "";
+    return;
+  }
+
+  // Questionnaire exists
+  if (remarksTextarea) {
+    remarksTextarea.disabled = false;
+    remarksTextarea.placeholder = "Enter internal background check remarks, territorial verification notes, or vetting observations...";
+    remarksTextarea.value = q.internal_review_remarks || "";
+  }
+  if (saveBtn) saveBtn.disabled = false;
+
+  if (q.internal_review_remarks) {
+    if (badge) {
+      badge.textContent = "SCRUTINIZED";
+      badge.className = "badge-status badge-approved";
+      badge.style.background = "";
+      badge.style.color = "";
+      badge.style.borderColor = "";
+    }
+    if (meta) {
+      const dt = q.reviewed_at ? new Date(q.reviewed_at).toLocaleDateString('en-IN', {
+        day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      }) : 'Recently';
+      meta.textContent = `Reviewed by ${escapeHtml(q.reviewed_by || 'Enlistment Officer')} on ${dt}`;
+      meta.style.color = "#16a34a";
+    }
+  } else {
+    if (badge) {
+      badge.textContent = "PENDING SCRUTINY";
+      badge.className = "badge-status badge-pending";
+      badge.style.background = "";
+      badge.style.color = "";
+      badge.style.borderColor = "";
+    }
+    if (meta) {
+      meta.textContent = "Awaiting internal officer scrutiny";
+      meta.style.color = "#9a3412";
+    }
+  }
+
+  const isYes = (val) => val === true || val === 'yes' || val === 'true';
+
+  const formatList = (val) => {
+    if (!val) return '<span style="color: #94a3b8;">None specified</span>';
+    let arr = [];
+    if (Array.isArray(val)) arr = val;
+    else if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) arr = parsed;
+        else arr = [val];
+      } catch (e) {
+        arr = val.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+    if (arr.length === 0) return '<span style="color: #94a3b8;">None specified</span>';
+    return arr.map(item => `
+      <span style="display: inline-block; background: #e0e7ff; color: #3730a3; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin: 2px;">
+        ${escapeHtml(String(item).replace(/_/g, ' '))}
+      </span>
+    `).join(' ');
+  };
+
+  const renderBadgeYesNo = (val) => {
+    return isYes(val) 
+      ? '<span class="badge-status badge-approved" style="font-size: 11px;"><i class="fa-solid fa-check"></i> YES</span>'
+      : '<span class="badge-status badge-rejected" style="font-size: 11px;"><i class="fa-solid fa-xmark"></i> NO</span>';
+  };
+
+  // Organizations Table
+  const orgList = Array.isArray(orgs) ? orgs : [];
+  let orgsHtml = '';
+  if (orgList.length === 0) {
+    orgsHtml = '<div style="font-size: 12px; color: #64748b; font-style: italic; padding: 8px 0;">No previous organizational affiliations reported by applicant.</div>';
+  } else {
+    orgsHtml = `
+      <div style="overflow-x: auto; margin-top: 8px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+          <thead>
+            <tr style="background: #f1f5f9; border-bottom: 1.5px solid #cbd5e1; text-align: left;">
+              <th style="padding: 6px 8px;">Organization</th>
+              <th style="padding: 6px 8px;">Role / Designation</th>
+              <th style="padding: 6px 8px;">Nature of Work</th>
+              <th style="padding: 6px 8px;">Duration</th>
+              <th style="padding: 6px 8px;">Current Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${orgList.map(o => `
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 6px 8px; font-weight: 600; color: var(--navy-dark);">${escapeHtml(o.organization_name || '-')}</td>
+                <td style="padding: 6px 8px;">${escapeHtml(o.role_title || '-')}</td>
+                <td style="padding: 6px 8px;">${escapeHtml(o.nature_of_work || '-')}</td>
+                <td style="padding: 6px 8px; font-family: monospace;">${escapeHtml(o.period_from || '')} &rarr; ${escapeHtml(o.period_to || 'Present')}</td>
+                <td style="padding: 6px 8px;">
+                  <span style="font-size: 10.5px; padding: 2px 6px; border-radius: 4px; ${o.current_status === 'active' ? 'background: #dcfce7; color: #166534;' : 'background: #f1f5f9; color: #475569;'} font-weight: 600;">
+                    ${escapeHtml(o.current_status || 'Past')}
+                  </span>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // Legal proceedings alert if Yes
+  const proceedingsAlert = isYes(q.q12_pending_proceedings) ? `
+    <div style="background: #fef2f2; border: 1.5px solid #ef4444; border-radius: 6px; padding: 10px 12px; margin-top: 8px;">
+      <div style="display: flex; align-items: center; gap: 8px; color: #991b1b; font-weight: 700; font-size: 12.5px;">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size: 16px;"></i>
+        <span>SCRUTINY ALERT: Applicant Disclosed Pending Proceedings</span>
+      </div>
+      <div style="font-size: 12px; color: #7f1d1d; margin-top: 4px; padding-left: 24px;">
+        <strong>Details:</strong> ${escapeHtml(q.q12a_pending_proceedings_details || 'No details provided')}
+      </div>
+    </div>
+  ` : '';
+
+  // Political office details if Yes
+  const politicalDetails = isYes(q.q10_political_office_held) ? `
+    <div style="margin-top: 6px; padding: 8px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 4px; font-size: 12px; color: #92400e;">
+      <strong>Political Role Details:</strong> ${escapeHtml(q.q10a_political_office_details || 'None provided')}
+    </div>
+  ` : '';
+
+  // Disagreement departure if Yes
+  const departureDetails = isYes(q.q15_disagreement_departure) ? `
+    <div style="margin-top: 6px; padding: 8px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 4px; font-size: 12px; color: #92400e;">
+      <strong>Circumstances of Departure:</strong> ${escapeHtml(q.q15a_departure_circumstances || 'None provided')}
+    </div>
+  ` : '';
+
+  // Social work details if Yes
+  const socialWorkDetails = isYes(q.q6_social_work_experience) ? `
+    <div style="margin-top: 6px; padding: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 12px; color: #334155;">
+      <strong>Experience Details:</strong> ${escapeHtml(q.q6a_social_work_details || 'None provided')}
+    </div>
+  ` : '';
+
+  body.innerHTML = `
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      
+      <!-- Section A: Understanding of SSD -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px;">
+        <div style="font-weight: 700; font-size: 13px; color: var(--navy-dark); border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-compass" style="color: var(--primary-orange);"></i> Section A: Understanding of Samata Sainik Dal
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;">
+          <div><strong style="color: #475569;">Q1. Official Aim of SSD:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q1_official_aim || 'N/A')}</div></div>
+          <div><strong style="color: #475569;">Q2. Official Motto & Personal Meaning:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q2_official_motto_meaning || 'N/A')}</div></div>
+          <div><strong style="color: #475569;">Q3. Reasons for Wanting to Join:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q3_reasons_for_joining || 'N/A')}</div></div>
+          <div><strong style="color: #475569;">Q4. Understanding of Sainik Responsibilities:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q4_sainik_responsibilities || 'N/A')}</div></div>
+          <div><strong style="color: #475569;">Q5. Historical Events & Principles Inspiring Applicant:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q5_historical_inspiration || 'N/A')}</div></div>
+        </div>
+      </div>
+
+      <!-- Section B: Social Service & Nation-Building -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px;">
+        <div style="font-weight: 700; font-size: 13px; color: var(--navy-dark); border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-hand-holding-heart" style="color: var(--primary-orange);"></i> Section B: Social Service & Nation-Building
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="color: #475569;">Q6. Prior Social / Community Work:</strong>
+              ${renderBadgeYesNo(q.q6_social_work_experience)}
+            </div>
+            ${socialWorkDetails}
+          </div>
+          <div><strong style="color: #475569;">Q7. Service Areas of Interest:</strong><div style="margin-top: 4px;">${formatList(q.q7_service_areas_interest)}</div></div>
+          <div><strong style="color: #475569;">Q8. Emergency Relief Availability:</strong> <span style="font-weight: 600; color: #0f172a;">${escapeHtml(String(q.q8_emergency_relief_preparedness || 'N/A').replace(/_/g, ' '))}</span></div>
+          <div><strong style="color: #475569;">Q9. Experience Organizing Welfare / Community Programs:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q9_community_programs_experience || 'None')}</div></div>
+        </div>
+      </div>
+
+      <!-- Section C: Civic, Social & Political Disclosures -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px;">
+        <div style="font-weight: 700; font-size: 13px; color: var(--navy-dark); border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-landmark" style="color: var(--primary-orange);"></i> Section C: Civic, Social & Political Disclosures
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="color: #475569;">Q10. Political Party Office / Active Role:</strong>
+              ${renderBadgeYesNo(q.q10_political_office_held)}
+            </div>
+            ${politicalDetails}
+          </div>
+          <div><strong style="color: #475569;">Q11. Non-Partisan Ethos Understanding:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q11_non_partisan_understanding || 'N/A')}</div></div>
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="color: #475569;">Q12. Pending Legal / Criminal Proceedings:</strong>
+              ${isYes(q.q12_pending_proceedings) 
+                ? '<span class="badge-status badge-rejected" style="font-size: 11px; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;"><i class="fa-solid fa-triangle-exclamation"></i> YES (DECLARED)</span>' 
+                : '<span class="badge-status badge-approved" style="font-size: 11px;"><i class="fa-solid fa-check"></i> NO (CLEAR)</span>'}
+            </div>
+            ${proceedingsAlert}
+          </div>
+        </div>
+      </div>
+
+      <!-- Section D: Previous Organizational Experience -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px;">
+        <div style="font-weight: 700; font-size: 13px; color: var(--navy-dark); border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-sitemap" style="color: var(--primary-orange);"></i> Section D: Previous Organizational Experience
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;">
+          <div>
+            <strong style="color: #475569;">Q13. Prior Organizations:</strong>
+            ${orgsHtml}
+          </div>
+          <div style="margin-top: 6px;"><strong style="color: #475569;">Q14. Leadership & Organizational Lessons Learned:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q14_leadership_lessons || 'N/A')}</div></div>
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="color: #475569;">Q15. Left Organization Due to Disagreement:</strong>
+              ${renderBadgeYesNo(q.q15_disagreement_departure)}
+            </div>
+            ${departureDetails}
+          </div>
+          <div><strong style="color: #475569;">Q16. Preferred SSD Wings:</strong><div style="margin-top: 4px;">${formatList(q.q16_ssd_wings_interest)}</div></div>
+        </div>
+      </div>
+
+      <!-- Section E: Personal Commitment & Contributions -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px;">
+        <div style="font-weight: 700; font-size: 13px; color: var(--navy-dark); border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-award" style="color: var(--primary-orange);"></i> Section E: Commitment & Contributions
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;">
+          <div><strong style="color: #475569;">Q17. Dedicated Time Commitment:</strong> <span style="font-weight: 600; color: #0f172a; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px;">${escapeHtml(String(q.q17_time_commitment || 'N/A').replace(/_/g, ' '))}</span></div>
+          <div><strong style="color: #475569;">Q18. Key Skills & Expertise to Contribute:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q18_skills_contribution || 'None')}</div></div>
+          <div><strong style="color: #475569;">Q19. Additional Statement of Purpose:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q19_additional_info || 'None')}</div></div>
+        </div>
+      </div>
+
+      <!-- Section F: Enlistment Declaration -->
+      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 12.5px;">
+        <div>
+          <div style="font-weight: 700; color: #166534; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-signature"></i> Section F: Applicant Enlistment Declaration
+          </div>
+          <div style="color: #15803d; font-size: 11.5px; margin-top: 2px;">
+            Applicant confirmed accuracy of all questionnaire disclosures under solemn declaration.
+          </div>
+        </div>
+        <span class="badge-status badge-approved" style="font-size: 11px;">
+          <i class="fa-solid fa-circle-check"></i> CONFIRMED
+        </span>
+      </div>
+
+    </div>
+  `;
+}
+
+async function saveQuestionnaireReviewRemarks() {
+  const app = currentSelectedApplication;
+  if (!app) {
+    showToast("No application selected.", "error");
+    return;
+  }
+  const appId = app.id || app.sainik_id || app.sainikId;
+  const remarksEl = document.getElementById("questionnaireInternalRemarks");
+  const remarks = remarksEl ? remarksEl.value.trim() : "";
+
+  if (!remarks) {
+    showToast("Please enter scrutiny remarks before saving.", "warning");
+    if (remarksEl) remarksEl.focus();
+    return;
+  }
+
+  const btn = document.getElementById("btnSaveQuestionnaireRemarks");
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+  }
+
+  try {
+    let token = await ensureAuthToken();
+    let res = await fetch(`/api/membership/applications/${encodeURIComponent(appId)}/questionnaire/review`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ remarks })
+    });
+
+    if (res.status === 401) {
+      token = await ensureAuthToken(true);
+      res = await fetch(`/api/membership/applications/${encodeURIComponent(appId)}/questionnaire/review`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ remarks })
+      });
+    }
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || "Failed to save scrutiny remarks");
+    }
+
+    if (app.questionnaire) {
+      app.questionnaire.internal_review_remarks = remarks;
+      app.questionnaire.reviewed_by = data.review?.reviewed_by || 'Enlistment Officer';
+      app.questionnaire.reviewed_at = data.review?.reviewed_at || new Date().toISOString();
+    }
+
+    const badge = document.getElementById("questionnaireScrutinyStatusBadge");
+    if (badge) {
+      badge.textContent = "SCRUTINIZED";
+      badge.className = "badge-status badge-approved";
+      badge.style.background = "";
+      badge.style.color = "";
+      badge.style.borderColor = "";
+    }
+
+    const meta = document.getElementById("questionnaireLastReviewedMeta");
+    if (meta) {
+      meta.textContent = `Reviewed by ${escapeHtml(data.review?.reviewed_by || 'Enlistment Officer')} just now`;
+      meta.style.color = "#16a34a";
+    }
+
+    showToast("Enlistment scrutiny remarks saved successfully.", "success");
+
+  } catch (err) {
+    showToast(err.message || "Failed to save review remarks.", "error");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Scrutiny Remark';
+    }
+  }
 }
 
 // ==========================================================================
@@ -9035,6 +9448,9 @@ async function submitReviewDecision(actionType) {
 window.ensureAuthToken = ensureAuthToken;
 window.loadAuditLogsView = loadAuditLogsView;
 window.openReviewDecisionModal = openReviewDecisionModal;
+window.toggleQuestionnaireScrutinyCollapse = toggleQuestionnaireScrutinyCollapse;
+window.renderQuestionnaireScrutiny = renderQuestionnaireScrutiny;
+window.saveQuestionnaireReviewRemarks = saveQuestionnaireReviewRemarks;
 window.submitReviewDecision = submitReviewDecision;
 window.calculateAssessmentScore = calculateAssessmentScore;
 window.quickSetAssessment = quickSetAssessment;

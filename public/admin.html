@@ -3110,6 +3110,49 @@
           <!-- Dynamically populated -->
         </div>
 
+        <!-- Enlistment Questionnaire & Background Scrutiny Panel -->
+        <div id="questionnaireScrutinyContainer" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 18px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h4 style="margin: 0 0 3px; font-size: 15px; color: var(--navy-dark); display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-clipboard-question" style="color: var(--primary-orange);"></i>
+                Enlistment Questionnaire & Background Scrutiny
+              </h4>
+              <span style="font-size: 11.5px; color: #64748b; font-weight: 500;">Comprehensive 19-Question Ideological, Civic & Service Record</span>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span id="questionnaireScrutinyStatusBadge" class="badge-status badge-pending" style="font-size: 11px;">PENDING SCRUTINY</span>
+              <button type="button" class="btn-admin btn-admin-outline" style="font-size: 11.5px; padding: 4px 10px;" onclick="toggleQuestionnaireScrutinyCollapse()" id="btnToggleQuestionnaireScrutiny">
+                <i class="fa-solid fa-chevron-down" id="iconToggleQuestionnaireScrutiny"></i> <span id="textToggleQuestionnaireScrutiny">View Responses</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Collapsible Scrutiny Details -->
+          <div id="questionnaireScrutinyContent" style="display: none;">
+            <div id="questionnaireSectionsBody">
+              <!-- Dynamically populated by renderQuestionnaireScrutiny() -->
+            </div>
+
+            <!-- Officer Internal Scrutiny Remarks & Actions -->
+            <div style="margin-top: 18px; padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                <label for="questionnaireInternalRemarks" style="font-weight: 700; font-size: 12.5px; color: var(--navy-dark); margin: 0; display: flex; align-items: center; gap: 6px;">
+                  <i class="fa-solid fa-user-shield" style="color: var(--primary-orange);"></i> Officer Internal Scrutiny Remarks (Non-Mutating)
+                </label>
+                <span id="questionnaireLastReviewedMeta" style="font-size: 11.5px; color: #64748b; font-weight: 500;"></span>
+              </div>
+              <textarea id="questionnaireInternalRemarks" rows="2" style="width: 100%; font-size: 12.5px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box;" placeholder="Enter internal background check remarks, territorial verification notes, or vetting observations..."></textarea>
+              <div style="margin-top: 8px; display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" class="btn-admin btn-admin-primary" style="font-size: 12px; padding: 6px 14px;" id="btnSaveQuestionnaireRemarks" onclick="saveQuestionnaireReviewRemarks()">
+                  <i class="fa-solid fa-floppy-disk"></i> Save Scrutiny Remark
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Sainik Cadre Assessment & Evaluation Rubric (SSD-STD-1927) -->
         <div style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 18px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">

@@ -346,7 +346,175 @@ router.post('/apply', applicationRateLimiter, upload.single('photo'), async (req
       updated_at: new Date().toISOString()
     };
 
+    // Parse and Validate Enlistment Questionnaire if provided
+    let questionnaireData = null;
+    if (req.body.questionnaire) {
+      try {
+        questionnaireData = typeof req.body.questionnaire === 'string' ? JSON.parse(req.body.questionnaire) : req.body.questionnaire;
+      } catch (e) {
+        questionnaireData = req.body.questionnaire;
+      }
+    } else if (
+      req.body.q1_aim || req.body.q1_official_aim || req.body.q2_motto || req.body.q2_official_motto_meaning ||
+      req.body.q3_reasons || req.body.q3_reasons_for_joining || req.body.q4_responsibilities || req.body.q4_sainik_responsibilities ||
+      req.body.q5_history_principles || req.body.q5_historical_inspiration || req.body.q6_social_service_participation ||
+      req.body.q6_social_work_experience !== undefined || req.body.q10_civic_political_participation ||
+      req.body.q10_political_office_held !== undefined || req.body.q12_pending_proceedings !== undefined ||
+      req.body.q17_time_commitment || req.body.declaration_accepted !== undefined || req.body.declarationAccepted !== undefined ||
+      req.body.enlistment_declaration_accepted !== undefined || req.body.enlistmentDeclarationAccepted !== undefined ||
+      req.body.repeatableOrganizations || req.body.organizations
+    ) {
+      questionnaireData = req.body;
+    }
+
+    if (questionnaireData) {
+      const isDeclAccepted = questionnaireData.declaration_accepted === true ||
+                             questionnaireData.declaration_accepted === 'true' ||
+                             questionnaireData.declarationAccepted === true ||
+                             questionnaireData.declarationAccepted === 'true' ||
+                             questionnaireData.enlistment_declaration_accepted === true ||
+                             questionnaireData.enlistment_declaration_accepted === 'true' ||
+                             questionnaireData.enlistmentDeclarationAccepted === true ||
+                             questionnaireData.enlistmentDeclarationAccepted === 'true' ||
+                             req.body.declaration_accepted === true ||
+                             req.body.declaration_accepted === 'true' ||
+                             req.body.declarationAccepted === true ||
+                             req.body.declarationAccepted === 'true' ||
+                             req.body.enlistment_declaration_accepted === true ||
+                             req.body.enlistment_declaration_accepted === 'true' ||
+                             req.body.enlistmentDeclarationAccepted === true ||
+                             req.body.enlistmentDeclarationAccepted === 'true';
+
+      if (!isDeclAccepted) {
+        return res.status(400).json({
+          success: false,
+          error: 'Declaration required: You must confirm the accuracy of your questionnaire responses under Section F.'
+        });
+      }
+    }
+
     embeddedStore.membership_applications.set(appId, newApp);
+
+    if (questionnaireData) {
+      const parseJsonArray = (val) => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val;
+        try {
+          const p = JSON.parse(val);
+          return Array.isArray(p) ? p : [String(p)];
+        } catch (e) {
+          return [String(val)];
+        }
+      };
+
+      const qRecord = {
+        id: 'q_' + appId,
+        application_id: appId,
+        // Canonical Q1 - Q19 fields supporting both naming conventions
+        q1_official_aim: questionnaireData.q1_official_aim || questionnaireData.q1_aim || null,
+        q1_aim: questionnaireData.q1_aim || questionnaireData.q1_official_aim || null,
+        q2_official_motto_meaning: questionnaireData.q2_official_motto_meaning || questionnaireData.q2_motto || null,
+        q2_motto: questionnaireData.q2_motto || questionnaireData.q2_official_motto_meaning || null,
+        q3_reasons_for_joining: questionnaireData.q3_reasons_for_joining || questionnaireData.q3_reasons || null,
+        q3_reasons: questionnaireData.q3_reasons || questionnaireData.q3_reasons_for_joining || null,
+        q4_sainik_responsibilities: questionnaireData.q4_sainik_responsibilities || questionnaireData.q4_responsibilities || null,
+        q4_responsibilities: questionnaireData.q4_responsibilities || questionnaireData.q4_sainik_responsibilities || null,
+        q5_historical_inspiration: questionnaireData.q5_historical_inspiration || questionnaireData.q5_history_principles || null,
+        q5_history_principles: questionnaireData.q5_history_principles || questionnaireData.q5_historical_inspiration || null,
+        q6_social_work_experience: questionnaireData.q6_social_work_experience !== undefined ? questionnaireData.q6_social_work_experience : (questionnaireData.q6_social_service_participation === 'yes' || questionnaireData.q6_social_service_participation === true),
+        q6_social_service_participation: questionnaireData.q6_social_service_participation || (questionnaireData.q6_social_work_experience !== undefined ? String(questionnaireData.q6_social_work_experience) : null),
+        q6a_social_work_details: questionnaireData.q6a_social_work_details || questionnaireData.q6a_social_service_details || null,
+        q6a_social_service_details: questionnaireData.q6a_social_service_details || questionnaireData.q6a_social_work_details || null,
+        q7_service_areas_interest: parseJsonArray(questionnaireData.q7_service_areas_interest || questionnaireData.q8_areas_of_interest),
+        q7_ssd_role_nation_building: questionnaireData.q7_ssd_role_nation_building || null,
+        q8_emergency_relief_preparedness: questionnaireData.q8_emergency_relief_preparedness || 'immediate',
+        q8_areas_of_interest: parseJsonArray(questionnaireData.q8_areas_of_interest || questionnaireData.q7_service_areas_interest),
+        q9_community_programs_experience: questionnaireData.q9_community_programs_experience || questionnaireData.q9_community_contribution || null,
+        q9_community_contribution: questionnaireData.q9_community_contribution || questionnaireData.q9_community_programs_experience || null,
+        q10_political_office_held: questionnaireData.q10_political_office_held !== undefined ? questionnaireData.q10_political_office_held : (questionnaireData.q10_civic_political_participation === 'yes' || questionnaireData.q10_civic_political_participation === true),
+        q10_civic_political_participation: questionnaireData.q10_civic_political_participation || (questionnaireData.q10_political_office_held !== undefined ? String(questionnaireData.q10_political_office_held) : null),
+        q10a_political_office_details: questionnaireData.q10a_political_office_details || questionnaireData.q10a_civic_political_details || null,
+        q10a_civic_political_details: questionnaireData.q10a_civic_political_details || questionnaireData.q10a_political_office_details || null,
+        q11_non_partisan_understanding: questionnaireData.q11_non_partisan_understanding || questionnaireData.q11_held_leadership_role || null,
+        q11_held_leadership_role: questionnaireData.q11_held_leadership_role || questionnaireData.q11_non_partisan_understanding || null,
+        q12_pending_proceedings: questionnaireData.q12_pending_proceedings !== undefined ? questionnaireData.q12_pending_proceedings : (questionnaireData.q12_currently_involved_other_org === 'yes' || questionnaireData.q12_currently_involved_other_org === true),
+        q12_currently_involved_other_org: questionnaireData.q12_currently_involved_other_org || (questionnaireData.q12_pending_proceedings !== undefined ? String(questionnaireData.q12_pending_proceedings) : null),
+        q12a_pending_proceedings_details: questionnaireData.q12a_pending_proceedings_details || questionnaireData.q12a_other_org_name || null,
+        q12a_other_org_name: questionnaireData.q12a_other_org_name || questionnaireData.q12a_pending_proceedings_details || null,
+        q12a_other_org_type: questionnaireData.q12a_other_org_type || null,
+        q12a_other_org_role: questionnaireData.q12a_other_org_role || null,
+        q14_leadership_lessons: questionnaireData.q14_leadership_lessons || questionnaireData.q14_previous_experience_skills || null,
+        q14_previous_experience_skills: questionnaireData.q14_previous_experience_skills || questionnaireData.q14_leadership_lessons || null,
+        q15_disagreement_departure: questionnaireData.q15_disagreement_departure !== undefined ? questionnaireData.q15_disagreement_departure : (questionnaireData.q15_organized_public_events === 'yes' || questionnaireData.q15_organized_public_events === true),
+        q15_organized_public_events: questionnaireData.q15_organized_public_events || (questionnaireData.q15_disagreement_departure !== undefined ? String(questionnaireData.q15_disagreement_departure) : null),
+        q15a_departure_circumstances: questionnaireData.q15a_departure_circumstances || questionnaireData.q15a_public_events_details || null,
+        q15a_public_events_details: questionnaireData.q15a_public_events_details || questionnaireData.q15a_departure_circumstances || null,
+        q16_ssd_wings_interest: parseJsonArray(questionnaireData.q16_ssd_wings_interest || questionnaireData.q16_preferred_wings),
+        q16_preferred_wings: parseJsonArray(questionnaireData.q16_preferred_wings || questionnaireData.q16_ssd_wings_interest),
+        q17_time_commitment: questionnaireData.q17_time_commitment || null,
+        q18_skills_contribution: parseJsonArray(questionnaireData.q18_skills_contribution),
+        q19_additional_info: questionnaireData.q19_additional_info || null,
+        declaration_accepted: true,
+        declaration_timestamp: new Date().toISOString(),
+        internal_review_remarks: null,
+        reviewed_by: null,
+        reviewed_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      embeddedStore.enlistment_questionnaires.set(qRecord.id, qRecord);
+      newApp.has_questionnaire = true;
+      newApp.questionnaire_id = qRecord.id;
+
+      // Repeatable organizations (Q11a and Q13)
+      let orgs = [];
+      if (req.body.repeatableOrganizations) {
+        try {
+          orgs = typeof req.body.repeatableOrganizations === 'string' ? JSON.parse(req.body.repeatableOrganizations) : req.body.repeatableOrganizations;
+        } catch (e) {
+          orgs = [];
+        }
+      } else if (req.body.organizations) {
+        try {
+          orgs = typeof req.body.organizations === 'string' ? JSON.parse(req.body.organizations) : req.body.organizations;
+        } catch (e) {
+          orgs = [];
+        }
+      } else if (questionnaireData.repeatableOrganizations) {
+        orgs = questionnaireData.repeatableOrganizations;
+      } else if (questionnaireData.organizations) {
+        orgs = questionnaireData.organizations;
+      }
+
+      if (Array.isArray(orgs)) {
+        orgs.forEach((org, idx) => {
+          const orgName = (org.organization_name || org.organizationName || org.org_name || org.name || '').trim();
+          if (org && orgName) {
+            const orgRecord = {
+              id: `org_${appId}_${idx + 1}`,
+              application_id: appId,
+              question_ref: org.question_ref || org.ref || 'Q13',
+              organization_name: orgName,
+              org_name: orgName,
+              org_type: org.org_type || org.type || 'Social',
+              role_title: (org.role_title || org.roleTitle || org.role_designation || org.role || '').trim(),
+              role_designation: org.role_designation || org.role_title || org.roleTitle || org.role || null,
+              nature_of_work: (org.nature_of_work || org.natureOfWork || org.responsibilities || '').trim(),
+              period_from: org.period_from || org.periodFrom || org.start_year || '',
+              period_to: org.period_to || org.periodTo || org.end_year || '',
+              current_status: org.current_status || org.currentStatus || 'past',
+              responsibilities: org.responsibilities || org.nature_of_work || org.natureOfWork || null,
+              contributions: org.contributions || null,
+              supporting_documents: parseJsonArray(org.supporting_documents || org.documents),
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+            embeddedStore.applicant_organizations.set(orgRecord.id, orgRecord);
+          }
+        });
+      }
+    }
 
     // Record First Approval Action
     const actionId = 'act_' + appId + '_init';
@@ -619,12 +787,130 @@ router.get('/applications/:id', authenticate, async (req, res) => {
       .filter(a => a.application_id === app.id || a.application_id === id)
       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
+    // Fetch Enlistment Questionnaire & Repeatable Organizations
+    const questionnaire = Array.from(embeddedStore.enlistment_questionnaires.values())
+      .find(q => q.application_id === app.id || q.application_id === id) || null;
+    const organizations = Array.from(embeddedStore.applicant_organizations.values())
+      .filter(o => o.application_id === app.id || o.application_id === id);
+
     return res.json({
       success: true,
       application: app,
+      questionnaire,
+      organizations,
       approvalHistory: actions
     });
 
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 4B. GET APPLICATION QUESTIONNAIRE & ORGANIZATIONS
+router.get('/applications/:id/questionnaire', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const found = findApplicationOrMemberRecord(id);
+
+    if (!found) {
+      return res.status(404).json({ success: false, error: 'Application not found.' });
+    }
+    const app = found.record;
+
+    // Verify Officer Jurisdiction Access
+    if (!canAccessRecord(req.user, app)) {
+      return res.status(403).json({
+        success: false,
+        error: `Access Denied: Application ${id} belongs outside your assigned jurisdiction.`
+      });
+    }
+
+    const questionnaire = Array.from(embeddedStore.enlistment_questionnaires.values())
+      .find(q => q.application_id === app.id || q.application_id === id) || null;
+    const organizations = Array.from(embeddedStore.applicant_organizations.values())
+      .filter(o => o.application_id === app.id || o.application_id === id);
+
+    return res.json({
+      success: true,
+      applicationId: app.id,
+      questionnaire,
+      organizations
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 4C. RECORD OFFICER INTERNAL SCRUTINY REMARK ON QUESTIONNAIRE
+router.post('/applications/:id/questionnaire/review', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { remarks } = req.body;
+
+    if (!remarks || !remarks.trim()) {
+      return res.status(400).json({ success: false, error: 'Review remarks are required.' });
+    }
+
+    const found = findApplicationOrMemberRecord(id);
+    if (!found) {
+      return res.status(404).json({ success: false, error: 'Application not found.' });
+    }
+    const app = found.record;
+
+    // Verify Officer Jurisdiction Access
+    if (!canAccessRecord(req.user, app)) {
+      return res.status(403).json({
+        success: false,
+        error: `Access Denied: Application ${id} belongs outside your assigned jurisdiction.`
+      });
+    }
+
+    let questionnaire = Array.from(embeddedStore.enlistment_questionnaires.values())
+      .find(q => q.application_id === app.id || q.application_id === id);
+
+    if (!questionnaire) {
+      questionnaire = {
+        id: 'q_' + app.id,
+        application_id: app.id,
+        declaration_accepted: true,
+        created_at: new Date().toISOString()
+      };
+      embeddedStore.enlistment_questionnaires.set(questionnaire.id, questionnaire);
+    }
+
+    // Preserve original applicant responses; record official scrutiny remark
+    questionnaire.internal_review_remarks = remarks.trim();
+    questionnaire.reviewed_by = req.user.fullName || req.user.name || 'Enlistment Officer';
+    questionnaire.reviewed_by_role = req.user.role_id;
+    questionnaire.reviewed_at = new Date().toISOString();
+    questionnaire.updated_at = new Date().toISOString();
+    embeddedStore.enlistment_questionnaires.set(questionnaire.id, questionnaire);
+
+    // Record Action in Approval History
+    const actionId = 'act_' + app.id + '_qrev_' + Date.now();
+    embeddedStore.approval_actions.set(actionId, {
+      id: actionId,
+      application_id: app.id,
+      step_id: app.current_step_id || 'step_1_district',
+      official_id: req.user.id,
+      official_name: req.user.fullName,
+      official_role: req.user.role_id,
+      jurisdiction_summary: `${app.district_name || 'District'}, ${app.state_name || 'State'}`,
+      action: 'QUESTIONNAIRE_REVIEW',
+      previous_status: app.status,
+      new_status: app.status,
+      remarks: `Officer Scrutiny Remark on Questionnaire: ${remarks.trim()}`,
+      created_at: new Date().toISOString()
+    });
+
+    saveEmbeddedStore();
+
+    return res.json({
+      success: true,
+      message: 'Questionnaire scrutiny remarks recorded successfully.',
+      questionnaire,
+      review: questionnaire
+    });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }
