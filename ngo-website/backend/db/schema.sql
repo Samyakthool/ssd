@@ -176,10 +176,28 @@ CREATE TABLE IF NOT EXISTS membership_applications (
     current_step_order INT DEFAULT 1,
     assigned_role VARCHAR(50),
     
-    correction_remarks TEXT,
-    rejection_reason TEXT,
-    escalation_reason TEXT,
-    
+    -- Legacy & Historical Registration
+    membership_type VARCHAR(30) NOT NULL DEFAULT 'NEW', -- 'NEW' or 'LEGACY'
+    original_joining_date DATE,
+    joining_date_precision VARCHAR(30) DEFAULT 'EXACT', -- EXACT, YEAR_MONTH, YEAR_ONLY, APPROXIMATE_UNKNOWN
+    portal_registration_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    joining_date_verified BOOLEAN DEFAULT FALSE,
+    joining_date_verified_by VARCHAR(100),
+    joining_date_verified_at TIMESTAMP WITH TIME ZONE,
+    joining_date_verification_notes TEXT,
+    batch_id VARCHAR(100),
+    batch_code VARCHAR(100),
+    batch_assignment_status VARCHAR(50) DEFAULT 'PENDING',
+    batch_assigned_by VARCHAR(100),
+    batch_assigned_at TIMESTAMP WITH TIME ZONE,
+    legacy_verification_status VARCHAR(50) DEFAULT 'NOT_APPLICABLE',
+    existing_sainik_id VARCHAR(100),
+    current_designation VARCHAR(100),
+    previous_responsibilities TEXT,
+    recommending_official TEXT,
+    historical_notes TEXT,
+    verification_tier VARCHAR(50) DEFAULT 'LOCAL',
+
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -220,11 +238,67 @@ CREATE TABLE IF NOT EXISTS members (
     wing_name VARCHAR(150),
     designation VARCHAR(150) DEFAULT 'Cadet Sainik',
     batch_no VARCHAR(50) DEFAULT 'BATCH-2026/Q3',
+    batch_id VARCHAR(100),
     status VARCHAR(30) DEFAULT 'ACTIVE', -- ACTIVE, SUSPENDED, RETIRED
+    membership_type VARCHAR(30) NOT NULL DEFAULT 'NEW', -- 'NEW' or 'LEGACY'
+    original_joining_date DATE,
+    joining_date_precision VARCHAR(30) DEFAULT 'EXACT',
+    portal_registration_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    joining_date_verified BOOLEAN DEFAULT FALSE,
+    joining_date_verified_by VARCHAR(100),
+    joining_date_verified_at TIMESTAMP WITH TIME ZONE,
+    existing_sainik_id VARCHAR(100),
+    historical_notes TEXT,
     qr_token VARCHAR(255) UNIQUE NOT NULL,
     approved_by VARCHAR(64) REFERENCES users(id),
     approved_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9B. BATCH MANAGEMENT TABLES
+CREATE TABLE IF NOT EXISTS batches (
+    id VARCHAR(64) PRIMARY KEY,
+    batch_code VARCHAR(100) UNIQUE NOT NULL, -- e.g. SSD-BATCH-2012, SSD-MH-2012-B001
+    batch_name VARCHAR(255) NOT NULL,
+    year INT NOT NULL,
+    start_date DATE,
+    end_date DATE,
+    scope VARCHAR(50) DEFAULT 'NATIONAL', -- 'NATIONAL' or 'STATE'
+    state_id VARCHAR(50) REFERENCES states(id),
+    state_name VARCHAR(100),
+    allocation_rule VARCHAR(100) DEFAULT 'JOINING_YEAR_NATIONAL',
+    format_template VARCHAR(100) DEFAULT 'SSD-BATCH-{YEAR}',
+    total_members INT DEFAULT 0,
+    status VARCHAR(30) DEFAULT 'ACTIVE', -- 'ACTIVE', 'ARCHIVED', 'LOCKED'
+    created_by VARCHAR(64) REFERENCES users(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS batch_history (
+    id VARCHAR(64) PRIMARY KEY,
+    member_id VARCHAR(64),
+    application_id VARCHAR(64),
+    previous_batch_code VARCHAR(100),
+    new_batch_code VARCHAR(100) NOT NULL,
+    assigned_by VARCHAR(64) NOT NULL,
+    assigned_by_name VARCHAR(255) NOT NULL,
+    assigned_by_role VARCHAR(50) NOT NULL,
+    assigned_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    reason TEXT NOT NULL,
+    ip_address VARCHAR(50)
+);
+
+CREATE TABLE IF NOT EXISTS batch_config (
+    id VARCHAR(64) PRIMARY KEY,
+    format_template VARCHAR(100) NOT NULL DEFAULT 'SSD-BATCH-{YEAR}',
+    allowed_formats JSONB DEFAULT '["SSD-BATCH-{YEAR}", "SSD-{YEAR}-B{SEQ}", "SSD-{STATE}-{YEAR}-B{SEQ}"]'::jsonb,
+    allocation_rule VARCHAR(100) NOT NULL DEFAULT 'JOINING_YEAR_NATIONAL',
+    period_type VARCHAR(50) NOT NULL DEFAULT 'YEARLY',
+    default_scope VARCHAR(50) NOT NULL DEFAULT 'NATIONAL',
+    require_date_verification BOOLEAN DEFAULT TRUE,
+    updated_by VARCHAR(64),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -2,7 +2,7 @@
 // SAMATA SAINIK DAL (SSD) - END-TO-END AUTOMATED TEST SUITE
 // ==========================================================================
 
-import { initDb } from '../db/index.js';
+import { initDb, embeddedStore } from '../db/index.js';
 import { runMigration } from '../db/migrate.js';
 import app from '../../server.js';
 
@@ -15,6 +15,41 @@ async function runTests() {
   console.log('\n==========================================================================');
   console.log(' 🧪 RUNNING SSD DIGITAL COMMAND PLATFORM AUTOMATED TEST SUITE');
   console.log('==========================================================================\n');
+
+  // Purge any transient records from prior test runs to ensure complete idempotency
+  const testMobiles = [
+    '9422111222', '9422955555', '9422133444', '9422233333', '9422344444',
+    '9822399999', '9822388888', '9822377777'
+  ];
+  function isTestRecord(entity) {
+    if (!entity) return false;
+    const mob = entity.mobile ? String(entity.mobile).replace(/\D/g, '') : '';
+    for (const tm of testMobiles) {
+      if (mob.endsWith(tm) || mob === tm) return true;
+    }
+    if (entity.full_name && (entity.full_name.includes('Rambhau') || entity.full_name.includes('Pune Sainik') || entity.full_name.includes('Veteran D. G. Kamble') || entity.full_name.includes('Duplicate Mobile') || entity.full_name.includes('Imposter'))) {
+      return true;
+    }
+    if (entity.legacy_sainik_id === 'LEGACY-MH-1998' || entity.existing_sainik_id === 'LEGACY-MH-1998') return true;
+    return false;
+  }
+
+  if (embeddedStore) {
+    if (embeddedStore.members) {
+      for (const [id, m] of Array.from(embeddedStore.members.entries())) {
+        if (isTestRecord(m)) {
+          embeddedStore.members.delete(id);
+        }
+      }
+    }
+    if (embeddedStore.membership_applications) {
+      for (const [id, a] of Array.from(embeddedStore.membership_applications.entries())) {
+        if (isTestRecord(a)) {
+          embeddedStore.membership_applications.delete(id);
+        }
+      }
+    }
+  }
 
   let passed = 0;
   let failed = 0;
@@ -519,6 +554,333 @@ async function runTests() {
     const acceptData = await acceptRes.json();
     if (acceptRes.status !== 200 || !acceptData.success || !acceptData.recordId) {
       throw new Error('Failed to record user statutory terms acceptance');
+    }
+  });
+
+  // ==========================================================================
+  // 12 ACCEPTANCE TESTS: LEGACY SAINIK REGISTRATION & BATCH MANAGEMENT
+  // ==========================================================================
+  let legacyTestAppId = '';
+  let legacySainikId = '';
+
+  // 1 & 3 & 4. LEGACY REGISTRATION: 2012 JOINING DATE VS 2026 PORTAL DATE & BATCH LOCK
+  await assert('Acceptance 1, 3, 4: 2012 Joining Date Retained, 2026 Portal Date Immutable & Batch Attempt Nullified', async () => {
+    const res = await fetch('http://localhost:3000/api/membership/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        membershipType: 'LEGACY',
+        fullName: 'Veteran Rambhau S. Wankhede',
+        mobile: '+91 94221 11222',
+        email: 'rambhau.wankhede@example.org',
+        stateId: 'state_mh',
+        stateName: 'Maharashtra',
+        districtId: 'dist_mh_nagpur',
+        districtName: 'Nagpur',
+        chapter: 'Deekshabhoomi Central Unit',
+        originalJoiningDate: '2012-08-15',
+        joiningDatePrecision: 'EXACT_DATE',
+        existingSainikId: 'LEGACY-MH-1998',
+        currentDesignation: 'Senior Dalpati',
+        previousResponsibilities: 'Nagpur Zonal Drill Coordinator (2012-2018)',
+        batchNo: 'SSD-MY-CUSTOM-BATCH', // Attempt to choose custom batch!
+        solemnPledge: true,
+        applicantAttestation: true
+      })
+    });
+    const data = await res.json();
+    if (!data.success || !data.applicationId) throw new Error('Legacy application creation failed: ' + JSON.stringify(data));
+    legacyTestAppId = data.applicationId;
+
+    // Verify 1: Original joining date retained as 2012-08-15
+    if (data.originalJoiningDate !== '2012-08-15') {
+      throw new Error(`Original joining date mismatch: Expected 2012-08-15, got ${data.originalJoiningDate}`);
+    }
+
+    // Verify 3: Portal registration date is 2026
+    const regDate = new Date(data.portalRegistrationDate);
+    if (regDate.getFullYear() !== 2026 && !data.portalRegistrationDate.includes('2026')) {
+      throw new Error(`Portal registration date must be 2026: got ${data.portalRegistrationDate}`);
+    }
+
+    // Verify 4: Batch cannot be chosen by applicant
+    const checkApp = await fetch(`http://localhost:3000/api/legacy/applications/${legacyTestAppId}`, {
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const checkData = await checkApp.json();
+    if (checkData.application.batch_code !== null) {
+      throw new Error('Security Breach: Applicant was able to assign their own batch number!');
+    }
+    if (checkData.application.joining_date_verified !== false) {
+      throw new Error('Security Breach: Legacy joining date was auto-verified without official verification!');
+    }
+  });
+
+  // 11. DIGITAL ID CANNOT BE GENERATED BEFORE APPROVAL
+  await assert('Acceptance 11: Digital Sainik ID cannot be generated before authorized approval', async () => {
+    const res = await fetch(`http://localhost:3000/api/members/card/${legacyTestAppId}`);
+    if (res.status !== 403 && res.status !== 404) {
+      throw new Error(`Expected 403 Forbidden for unapproved candidate digital ID, got ${res.status}`);
+    }
+    const data = await res.json();
+    if (data.success) throw new Error('Unapproved applicant received official digital ID!');
+  });
+
+  // 5. UNVERIFIED JOINING DATE CANNOT BE TREATED AS VERIFIED (BATCH ALLOCATION BLOCKED)
+  await assert('Acceptance 5: Unverified joining date cannot be treated as verified (Batch allocation blocked)', async () => {
+    const res = await fetch(`http://localhost:3000/api/legacy/applications/${legacyTestAppId}/assign-batch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: JSON.stringify({ reason: 'Premature allocation attempt' })
+    });
+    const data = await res.json();
+    if (res.status !== 400 || data.success) {
+      throw new Error('Batch allocation succeeded before joining date verification was performed!');
+    }
+  });
+
+  // 6. UNAUTHORIZED OFFICIAL CANNOT MODIFY JOINING DATE
+  await assert('Acceptance 6: Unauthorized official cannot modify or verify joining date', async () => {
+    const res = await fetch(`http://localhost:3000/api/legacy/applications/${legacyTestAppId}/verify-date`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer BAD_OR_UNAUTHORIZED_TOKEN`
+      },
+      body: JSON.stringify({ verifiedDate: '2010-01-01', reason: 'Unauthorized edit' })
+    });
+    if (res.status !== 401 && res.status !== 403) {
+      throw new Error(`Expected 401/403 for unauthorized date verification attempt, got ${res.status}`);
+    }
+  });
+
+  // 7. JURISDICTION RESTRICTION: OFFICIAL CANNOT ACCESS RECORDS OUTSIDE ASSIGNED TERRITORY
+  await assert('Acceptance 7: Official cannot access legacy records outside assigned jurisdiction', async () => {
+    // Create an application in Pune (outside Nagpur)
+    const puneAppRes = await fetch('http://localhost:3000/api/membership/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        membershipType: 'LEGACY',
+        fullName: 'Veteran Pune Sainik',
+        mobile: '+91 94221 33444',
+        email: 'pune.sainik@example.org',
+        stateId: 'state_mh',
+        stateName: 'Maharashtra',
+        districtId: 'dist_mh_pune',
+        districtName: 'Pune',
+        originalJoiningDate: '2015-01-26',
+        solemnPledge: true,
+        applicantAttestation: true
+      })
+    });
+    const puneAppData = await puneAppRes.json();
+    const puneAppId = puneAppData.applicationId;
+
+    // Attempt to access Pune record using Nagpur District Official token
+    const res = await fetch(`http://localhost:3000/api/legacy/applications/${puneAppId}`, {
+      headers: { 'Authorization': `Bearer ${authTokenNagpur}` }
+    });
+    if (res.status !== 403) {
+      throw new Error(`Jurisdiction violation: Nagpur official was able to inspect Pune record! Status: ${res.status}`);
+    }
+  });
+
+  // 8. DUPLICATE MEMBERSHIP RECORDS ARE DETECTED
+  await assert('Acceptance 8: Duplicate legacy membership records are detected and rejected', async () => {
+    const dupRes = await fetch('http://localhost:3000/api/membership/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        membershipType: 'LEGACY',
+        fullName: 'Imposter or Duplicate Registration',
+        mobile: '+91 94221 11222', // Duplicate mobile
+        stateName: 'Maharashtra',
+        districtName: 'Nagpur',
+        originalJoiningDate: '2012-08-15',
+        solemnPledge: true,
+        applicantAttestation: true
+      })
+    });
+    const dupData = await dupRes.json();
+    if (dupRes.status !== 409 || dupData.success) {
+      throw new Error(`Expected 409 Conflict for duplicate record, got ${dupRes.status}`);
+    }
+  });
+
+  // JOINING DATE OFFICIAL VERIFICATION STEP (BY SUPER ADMIN)
+  await assert('Authorized Official verifies original joining date with recorded reason', async () => {
+    const res = await fetch(`http://localhost:3000/api/legacy/applications/${legacyTestAppId}/verify-date`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: JSON.stringify({
+        verifiedDate: '2012-08-15',
+        precision: 'EXACT_DATE',
+        notes: 'Verified against 2012 Deekshabhoomi National Rally Archival Registry (Entry #1048).'
+      })
+    });
+    const data = await res.json();
+    if (!data.success || !data.joiningDateVerified) {
+      throw new Error('Date verification failed: ' + JSON.stringify(data));
+    }
+    if (data.status !== 'BATCH_PENDING') {
+      throw new Error(`Expected status BATCH_PENDING, got ${data.status}`);
+    }
+  });
+
+  // 2. BATCH NUMBER IS DETERMINED BY APPROVED BATCH POLICY
+  await assert('Acceptance 2: Batch number is determined by approved batch policy (SSD-BATCH-2012)', async () => {
+    const res = await fetch(`http://localhost:3000/api/legacy/applications/${legacyTestAppId}/assign-batch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: JSON.stringify({
+        reason: 'Auto-allocation based on verified 2012 joining date under national calendar year batch policy.'
+      })
+    });
+    const data = await res.json();
+    if (!data.success || data.batchCode !== 'SSD-BATCH-2012') {
+      throw new Error(`Batch assignment failed: Expected 'SSD-BATCH-2012', got '${data.batchCode}'`);
+    }
+  });
+
+  // FINAL APPROVAL & COMMISSIONING (DIGITAL ID GENERATION)
+  await assert('Acceptance 11 (Cont.): Digital ID is generated after required approvals with verified badges', async () => {
+    const approveRes = await fetch(`http://localhost:3000/api/legacy/applications/${legacyTestAppId}/approve`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: JSON.stringify({
+        designation: 'Senior Veteran Dalpati',
+        remarks: 'Commissioned under Legacy Veteran Protocol.'
+      })
+    });
+    const approveData = await approveRes.json();
+    if (!approveData.success || !approveData.sainikId) {
+      throw new Error('Legacy approval failed: ' + JSON.stringify(approveData));
+    }
+    legacySainikId = approveData.sainikId;
+
+    // Fetch Digital ID Card now that approval is complete
+    const cardRes = await fetch(`http://localhost:3000/api/members/card/${legacySainikId}`);
+    const cardData = await cardRes.json();
+    if (!cardData.success || !cardData.cardData) {
+      throw new Error('Digital ID card retrieval failed after approval!');
+    }
+    if (cardData.cardData.membershipType !== 'LEGACY') {
+      throw new Error('Membership type on digital ID is not LEGACY');
+    }
+    if (cardData.cardData.originalJoiningDate !== '2012-08-15') {
+      throw new Error('Original joining date missing or incorrect on digital ID');
+    }
+    if (cardData.cardData.batchNo !== 'SSD-BATCH-2012') {
+      throw new Error(`Batch number on digital ID mismatch: Expected SSD-BATCH-2012, got ${cardData.cardData.batchNo}`);
+    }
+  });
+
+  // 9 & 10. BATCH CORRECTION CREATES AUDIT RECORD & TRACEABILITY
+  await assert('Acceptance 9 & 10: Authorized batch correction creates immutable audit record in history', async () => {
+    const correctRes = await fetch('http://localhost:3000/api/batches/correct', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: JSON.stringify({
+        memberId: legacySainikId,
+        newBatchCode: 'SSD-2012-SENIOR',
+        reason: 'Authorized reallocation under Central Command Seniority Directive #2026/04.'
+      })
+    });
+    const correctData = await correctRes.json();
+    if (!correctData.success || !correctData.auditRecord) {
+      throw new Error('Batch correction failed: ' + JSON.stringify(correctData));
+    }
+
+    // Verify Audit Trail in History Endpoint
+    const histRes = await fetch(`http://localhost:3000/api/batches/history?memberId=${legacySainikId}`, {
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const histData = await histRes.json();
+    if (!histData.success || histData.history.length === 0) {
+      throw new Error('Audit trail is empty! Batch correction was not recorded in history.');
+    }
+    const auditRecord = histData.history.find(h => h.new_batch_code === 'SSD-2012-SENIOR');
+    if (!auditRecord) {
+      throw new Error('Audit record for SSD-2012-SENIOR not found in batch history!');
+    }
+    if (!auditRecord.reason || !auditRecord.reason.includes('Directive #2026/04')) {
+      throw new Error('Audit record does not preserve the required justification reason.');
+    }
+  });
+
+  // 12. EXISTING NEW-MEMBER REGISTRATION CONTINUES TO WORK
+  await assert('Acceptance 12: Existing new-member registration continues to work without disruption', async () => {
+    const res = await fetch('http://localhost:3000/api/membership/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        membershipType: 'STANDARD',
+        fullName: 'New Recruit Amit M. Moon',
+        dob: '2004-11-20',
+        gender: 'Male',
+        mobile: '+91 98223 77777',
+        email: 'amit.moon@example.com',
+        stateId: 'state_mh',
+        stateName: 'Maharashtra',
+        districtId: 'dist_mh_nagpur',
+        districtName: 'Nagpur',
+        wingId: 'wing_cadet',
+        wingName: 'Central Cadet Corps (Sainik Wing)',
+        solemnPledge: true
+      })
+    });
+    const data = await res.json();
+    if (!data.success || !data.applicationId || data.status !== 'SUBMITTED') {
+      throw new Error('Standard new enlistment failed: ' + JSON.stringify(data));
+    }
+  });
+
+  // BONUS: BULK IMPORT FOR HISTORICAL RECORDS QUEUES FOR REVIEW
+  await assert('Historical records bulk import creates unverified queue with duplicate protection', async () => {
+    const res = await fetch('http://localhost:3000/api/legacy/bulk-import', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: JSON.stringify({
+        records: [
+          {
+            fullName: 'Veteran D. G. Kamble',
+            mobile: '+91 94229 55555',
+            originalJoiningDate: '1970-10-14',
+            stateName: 'Maharashtra',
+            districtName: 'Nagpur'
+          },
+          {
+            fullName: 'Duplicate Mobile Record',
+            mobile: '+91 94221 11222', // Existing duplicate
+            originalJoiningDate: '2012-08-15',
+            stateName: 'Maharashtra',
+            districtName: 'Nagpur'
+          }
+        ]
+      })
+    });
+    const data = await res.json();
+    if (!data.success || data.importedCount !== 1 || data.duplicateCount !== 1) {
+      throw new Error(`Bulk import validation failed: Expected 1 imported and 1 duplicate, got ${JSON.stringify(data)}`);
     }
   });
 

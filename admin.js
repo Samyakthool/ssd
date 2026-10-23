@@ -2402,7 +2402,8 @@ const viewMetadata = {
   admins: { title: "Authorized Command Officers", sub: "Multi-user authentication, roles & access permissions" },
   contacts: { title: "Grievance Desk & Public Inquiries", sub: "Respond to incoming state command queries" },
   stats: { title: "Public Portal Live Counters", sub: "Update homepage live counters directly in Supabase Cloud" },
-  settings: { title: "Database Tools & Backups", sub: "Export JSON backups and seed verified datasets" }
+  settings: { title: "Database Tools & Backups", sub: "Export JSON backups and seed verified datasets" },
+  legacy: { title: "Legacy Sainik Verification & Batch Management Desk", sub: "Preserve historical seniority, verify original joining dates, manage batch allocation schemes, and audit veteran credentials" }
 };
 
 function switchView(viewKey) {
@@ -2454,6 +2455,8 @@ function switchView(viewKey) {
   if (viewKey === 'approvals') {
     loadEnlistmentApplications();
     renderApprovalsView();
+  } else if (viewKey === 'legacy') {
+    loadLegacyView();
   } else if (viewKey === 'admins') {
     renderAdminsTable();
   } else if (viewKey === 'members') {
@@ -3759,27 +3762,37 @@ function renderAdminIdCardCanvas(card, back = false) {
     }
 
     const textX = 160;
-    ctx.fillStyle = '#FF6B00';
+    const isLegacy = (card.membershipType === 'LEGACY' || card.membership_type === 'LEGACY');
+    ctx.fillStyle = isLegacy ? '#FFB800' : '#FF6B00';
     ctx.font = 'bold 13px monospace';
-    ctx.fillText(`SAINIK ID: ${card.sainikId || 'SSD-CADET-2026'}`, textX, 108);
+    ctx.fillText(`SAINIK ID: ${card.sainikId || 'SSD-CADET-2026'}${isLegacy ? '  [VETERAN]' : ''}`, textX, 108);
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 18px sans-serif';
     ctx.fillText(card.fullName || 'Sainik Cadet', textX, 136);
 
     ctx.fillStyle = '#cbd5e1';
-    ctx.font = '12.5px sans-serif';
-    ctx.fillText(`Rank/Designation: ${card.designation || 'Cadet Sainik'}`, textX, 162);
-    ctx.fillText(`Wing: ${card.wing || 'Central Cadet Corps'}`, textX, 184);
-    ctx.fillText(`Chapter: ${card.district || 'Nagpur'}, ${card.state || 'Maharashtra'}`, textX, 206);
-    ctx.fillText(`Blood: ${card.bloodGroup || 'O+'}  •  Batch: ${card.batchNo || 'BATCH-2026/Q3'}`, textX, 228);
+    ctx.font = '12px sans-serif';
+    ctx.fillText(`Rank/Designation: ${card.designation || 'Cadet Sainik'}`, textX, 158);
+    ctx.fillText(`Wing: ${card.wing || 'Central Cadet Corps'}`, textX, 178);
+    ctx.fillText(`Chapter: ${card.district || 'Nagpur'}, ${card.state || 'Maharashtra'}`, textX, 198);
+
+    if (isLegacy && card.originalJoiningDate) {
+      const yr = String(card.originalJoiningDate).split('-')[0] || card.originalJoiningDate;
+      ctx.fillStyle = '#fde047';
+      ctx.fillText(`Cadre Seniority: Since ${card.originalJoiningDate} (${yr}) • Verified`, textX, 218);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillText(`Blood: ${card.bloodGroup || 'O+'}  •  Batch: ${card.batchNo || 'SSD-BATCH-' + yr}`, textX, 238);
+    } else {
+      ctx.fillText(`Blood: ${card.bloodGroup || 'O+'}  •  Batch: ${card.batchNo || 'BATCH-2026/Q3'}`, textX, 218);
+    }
 
     ctx.fillStyle = '#000e1c';
     ctx.fillRect(4, h - 50, w - 8, 46);
 
-    ctx.fillStyle = '#16a34a';
+    ctx.fillStyle = isLegacy ? '#f59e0b' : '#16a34a';
     ctx.font = 'bold 11.5px sans-serif';
-    ctx.fillText('● OFFICIALLY VERIFIED ACTIVE CADRE', 30, h - 22);
+    ctx.fillText(isLegacy ? '★ OFFICIALLY VERIFIED LEGACY VETERAN' : '● OFFICIALLY VERIFIED ACTIVE CADRE', 30, h - 22);
 
     ctx.fillStyle = '#94a3b8';
     ctx.font = '10px sans-serif';
@@ -9584,4 +9597,802 @@ window.openAddLibraryModal = openAddLibraryModal;
 window.openEditLibraryModal = openEditLibraryModal;
 window.handleSaveCmsLibrary = handleSaveCmsLibrary;
 window.deleteCmsLibrary = deleteCmsLibrary;
+
+// ==========================================================================
+// LEGACY SAINIK VERIFICATION & BATCH MANAGEMENT CONTROLLER
+// ==========================================================================
+let legacyApplicationsList = [];
+let legacyBatchesList = [];
+let legacyActiveBatchConfig = null;
+
+async function loadLegacyView() {
+  await loadLegacyStats();
+  await loadLegacyApplications();
+  await loadBatchesDesk();
+}
+
+async function loadLegacyStats() {
+  try {
+    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const res = await fetch('/api/legacy/stats', {
+      headers: token ? { "Authorization": `Bearer ${token}` } : {}
+    });
+    const data = await res.json();
+    if (data.success && data.stats) {
+      const s = data.stats;
+      const setEl = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+      };
+      setEl('kpiLegacyTotal', s.totalLegacy || 0);
+      setEl('kpiLegacyPending', s.awaitingVerification || 0);
+      setEl('kpiLegacyDatesPending', s.datesAwaitingConfirmation || 0);
+      setEl('kpiLegacyBatchPending', s.batchPending || 0);
+      setEl('kpiLegacyApproved', s.approvedActive || 0);
+      setEl('kpiLegacyDisputed', s.rejectedDisputed || 0);
+
+      const badge = document.getElementById('badgeLegacyCount');
+      if (badge) {
+        badge.textContent = s.awaitingVerification + s.datesAwaitingConfirmation + s.batchPending;
+      }
+    }
+  } catch (err) {
+    console.warn("Legacy stats fetch notice:", err.message);
+  }
+}
+
+function switchLegacySubtab(tabKey) {
+  const tabs = ['queue', 'batches', 'audit'];
+  tabs.forEach(t => {
+    const btn = document.getElementById(`subtabLegacy${t.charAt(0).toUpperCase() + t.slice(1)}`);
+    const panel = document.getElementById(`legacySubpanel${t.charAt(0).toUpperCase() + t.slice(1)}`);
+    if (btn) {
+      if (t === tabKey) {
+        btn.classList.add('active');
+        btn.style.borderBottomColor = '#001f3f';
+        btn.style.color = '#001f3f';
+      } else {
+        btn.classList.remove('active');
+        btn.style.borderBottomColor = 'transparent';
+        btn.style.color = '#64748b';
+      }
+    }
+    if (panel) {
+      panel.style.display = (t === tabKey) ? 'block' : 'none';
+    }
+  });
+
+  if (tabKey === 'queue') {
+    loadLegacyApplications();
+  } else if (tabKey === 'batches') {
+    loadBatchesDesk();
+  } else if (tabKey === 'audit') {
+    loadBatchHistory();
+  }
+}
+
+async function loadLegacyApplications() {
+  const tbody = document.getElementById('legacyApplicationsTableBody');
+  if (tbody) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 25px;"><i class="fa-solid fa-spinner fa-spin"></i> Querying legacy verification queue...</td></tr>';
+  }
+
+  try {
+    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const searchVal = document.getElementById('legacySearchInput') ? document.getElementById('legacySearchInput').value.trim() : '';
+    const statusVal = document.getElementById('legacyStatusFilter') ? document.getElementById('legacyStatusFilter').value : 'ALL';
+    const stateVal = document.getElementById('legacyStateFilter') ? document.getElementById('legacyStateFilter').value : 'ALL';
+    const yearVal = document.getElementById('legacyYearFilter') ? document.getElementById('legacyYearFilter').value.trim() : '';
+    const batchVal = document.getElementById('legacyBatchFilter') ? document.getElementById('legacyBatchFilter').value.trim() : '';
+
+    const params = new URLSearchParams();
+    if (searchVal) params.append('search', searchVal);
+    if (statusVal && statusVal !== 'ALL') params.append('status', statusVal);
+    if (stateVal && stateVal !== 'ALL') params.append('state', stateVal);
+    if (yearVal) params.append('joiningYear', yearVal);
+    if (batchVal) params.append('batch', batchVal);
+
+    const res = await fetch(`/api/legacy/applications?${params.toString()}`, {
+      headers: token ? { "Authorization": `Bearer ${token}` } : {}
+    });
+
+    if (res.status === 403) {
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #dc2626; padding: 25px;"><i class="fa-solid fa-lock"></i> Access Restricted: You do not have jurisdictional clearance to inspect legacy records in this sector.</td></tr>';
+      return;
+    }
+
+    const data = await res.json();
+    if (data.success && Array.isArray(data.applications)) {
+      legacyApplicationsList = data.applications;
+      renderLegacyTable(legacyApplicationsList);
+    } else {
+      if (tbody) tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #dc2626; padding: 25px;">${escapeHtml(data.error || 'Failed to load legacy applications.')}</td></tr>`;
+    }
+  } catch (err) {
+    if (tbody) tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #dc2626; padding: 25px;">Network Error: ${escapeHtml(err.message)}</td></tr>`;
+  }
+}
+
+function renderLegacyTable(apps) {
+  const tbody = document.getElementById('legacyApplicationsTableBody');
+  if (!tbody) return;
+
+  if (!apps || apps.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 35px; color: #64748b;"><i class="fa-solid fa-folder-open" style="font-size: 24px; margin-bottom: 8px; display: block; opacity: 0.5;"></i>No legacy applications matching your criteria.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = apps.map(a => {
+    const photo = a.photo_url || a.photoBase64 || 'logo.png';
+    const status = a.status || a.legacy_verification_status || 'LEGACY_SUBMITTED';
+    const isVerified = a.joining_date_verified === true;
+    const dateBadge = isVerified 
+      ? '<span style="color: #047857; font-weight: 700; font-size: 11px;"><i class="fa-solid fa-circle-check"></i> Verified</span>'
+      : '<span style="color: #b45309; font-weight: 700; font-size: 11px;"><i class="fa-solid fa-clock"></i> Unverified</span>';
+
+    let statusClass = 'badge-pending';
+    if (status === 'ACTIVE' || status === 'APPROVED') statusClass = 'badge-active';
+    else if (status === 'REJECTED') statusClass = 'badge-inactive';
+    else if (status === 'BATCH_PENDING' || status === 'DATE_VERIFICATION_PENDING') statusClass = 'badge-pending';
+
+    const regDate = a.portal_registration_date || a.created_at || 'N/A';
+    const regDateFormatted = regDate !== 'N/A' ? regDate.slice(0, 10) : 'N/A';
+
+    return `
+      <tr>
+        <td>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="${escapeHtml(photo)}" alt="Candidate" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1.5px solid #001f3f;">
+            <div>
+              <div style="font-weight: 700; color: #001f3f;">${escapeHtml(a.full_name || 'Cadet')}</div>
+              <div style="font-size: 11px; color: #64748b; font-family: monospace;">${escapeHtml(a.id || '')}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div style="font-weight: 700; color: #0f172a;">${escapeHtml(a.original_joining_date || 'UNKNOWN / REQUIRES VERIFICATION')}</div>
+          <div>${dateBadge} <span style="font-size: 10.5px; color: #64748b;">(${escapeHtml(a.joining_date_precision || 'EXACT_DATE')})</span></div>
+        </td>
+        <td>
+          <div style="font-family: monospace; font-size: 12px; color: #475569;">${escapeHtml(regDateFormatted)}</div>
+          <div style="font-size: 10px; color: #94a3b8;">Server Timestamp</div>
+        </td>
+        <td>
+          <div style="font-weight: 600;">${escapeHtml(a.district_name || 'Nagpur')}, ${escapeHtml(a.state_name || 'MH')}</div>
+          <div style="font-size: 11px; color: #64748b;">${escapeHtml(a.chapter || a.chapter_name || 'Central Unit')}</div>
+        </td>
+        <td>
+          <div style="font-size: 12px; font-weight: 600;">${escapeHtml(a.current_designation || 'Veteran Sainik')}</div>
+          <div style="font-size: 11px; color: #64748b;">ID: ${escapeHtml(a.existing_sainik_id || 'None')}</div>
+        </td>
+        <td>
+          <span class="badge-status ${statusClass}">${escapeHtml(status)}</span>
+        </td>
+        <td>
+          <span style="font-family: monospace; font-weight: 800; color: #001f3f; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #cbd5e1;">
+            ${escapeHtml(a.batch_code || a.batch_no || 'PENDING')}
+          </span>
+        </td>
+        <td style="text-align: right;">
+          <button type="button" class="btn-admin btn-admin-primary" style="padding: 5px 12px; font-size: 12px;" onclick="openLegacyReviewModal('${escapeHtml(a.id)}')">
+            <i class="fa-solid fa-magnifying-glass"></i> Inspect & Verify
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+let legacySearchTimer = null;
+function handleLegacySearch() {
+  clearTimeout(legacySearchTimer);
+  legacySearchTimer = setTimeout(() => {
+    loadLegacyApplications();
+  }, 300);
+}
+
+function resetLegacyFilters() {
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+  setVal('legacySearchInput', '');
+  setVal('legacyStatusFilter', 'ALL');
+  setVal('legacyStateFilter', 'ALL');
+  setVal('legacyYearFilter', '');
+  setVal('legacyBatchFilter', '');
+  loadLegacyApplications();
+}
+
+async function openLegacyReviewModal(appId) {
+  try {
+    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const res = await fetch(`/api/legacy/applications/${appId}`, {
+      headers: token ? { "Authorization": `Bearer ${token}` } : {}
+    });
+
+    if (res.status === 403) {
+      showToast("Access Denied: Jurisdictional boundary exceeded. You cannot inspect records outside your assigned territory.", "error");
+      return;
+    }
+
+    const data = await res.json();
+    if (!data.success || !data.application) {
+      showToast(data.error || "Failed to load application details.", "error");
+      return;
+    }
+
+    const app = data.application;
+    const actions = data.approvalActions || [];
+
+    document.getElementById('currentReviewAppId').value = app.id;
+    document.getElementById('reviewApplicantNameTitle').textContent = `Legacy Verification: ${app.full_name}`;
+    document.getElementById('reviewAppIdSubtitle').textContent = `Application ID: ${app.id} | Membership Type: LEGACY`;
+
+    document.getElementById('reviewPhoto').src = app.photo_url || app.photoBase64 || 'logo.png';
+    document.getElementById('reviewFullName').textContent = app.full_name || 'Candidate';
+    document.getElementById('reviewMobile').textContent = app.mobile || 'N/A';
+    document.getElementById('reviewEmail').textContent = app.email || 'N/A';
+    document.getElementById('reviewJurisdiction').textContent = `${app.district_name || 'Nagpur'}, ${app.state_name || 'Maharashtra'}`;
+    document.getElementById('reviewChapter').textContent = app.chapter || app.chapter_name || `${app.district_name} Chapter`;
+    document.getElementById('reviewExistingId').textContent = app.existing_sainik_id || 'None';
+    document.getElementById('reviewDesignation').textContent = app.current_designation || 'Veteran Sainik';
+    document.getElementById('reviewPortalDate').textContent = app.portal_registration_date || app.created_at || 'N/A';
+    document.getElementById('reviewBatchCode').textContent = app.batch_code || app.batch_no || 'UNASSIGNED';
+
+    const statusBadge = document.getElementById('reviewStatusBadge');
+    if (statusBadge) {
+      statusBadge.textContent = app.status || 'LEGACY_SUBMITTED';
+      statusBadge.className = `badge-status ${(app.status === 'ACTIVE' || app.status === 'APPROVED') ? 'badge-active' : 'badge-pending'}`;
+    }
+
+    document.getElementById('reviewResponsibilities').textContent = app.previous_responsibilities || 'None recorded.';
+    document.getElementById('reviewRecommender').textContent = app.recommending_official || 'None recorded.';
+    document.getElementById('reviewHistoricalNotes').textContent = app.historical_notes || 'None recorded.';
+
+    // Populate action form fields
+    const dateVerifiedPill = document.getElementById('reviewDateVerifiedStatus');
+    if (dateVerifiedPill) {
+      if (app.joining_date_verified) {
+        dateVerifiedPill.textContent = 'VERIFIED';
+        dateVerifiedPill.style.background = '#dcfce7';
+        dateVerifiedPill.style.color = '#15803d';
+      } else {
+        dateVerifiedPill.textContent = 'UNVERIFIED';
+        dateVerifiedPill.style.background = '#fee2e2';
+        dateVerifiedPill.style.color = '#b91c1c';
+      }
+    }
+
+    const batchStatusPill = document.getElementById('reviewBatchStatusPill');
+    if (batchStatusPill) {
+      if (app.batch_code) {
+        batchStatusPill.textContent = `ASSIGNED (${app.batch_code})`;
+        batchStatusPill.style.background = '#dcfce7';
+        batchStatusPill.style.color = '#15803d';
+      } else {
+        batchStatusPill.textContent = 'BATCH PENDING';
+        batchStatusPill.style.background = '#fee2e2';
+        batchStatusPill.style.color = '#b91c1c';
+      }
+    }
+
+    document.getElementById('actionVerifiedDate').value = app.original_joining_date ? app.original_joining_date.slice(0, 10) : '';
+    document.getElementById('actionDatePrecision').value = app.joining_date_precision || 'EXACT_DATE';
+    document.getElementById('actionDateReason').value = app.joining_date_verification_notes || '';
+    document.getElementById('actionBatchCode').value = app.batch_code || '';
+    document.getElementById('actionCommissionDesignation').value = app.current_designation || 'Veteran Sainik';
+
+    // Populate audit timeline
+    const tbody = document.getElementById('reviewAuditTimelineBody');
+    if (tbody) {
+      if (actions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #64748b;">No verification actions recorded yet.</td></tr>';
+      } else {
+        tbody.innerHTML = actions.map(act => `
+          <tr>
+            <td style="font-family: monospace;">${escapeHtml((act.created_at || '').slice(0, 19).replace('T', ' '))}</td>
+            <td><strong style="color: #001f3f;">${escapeHtml(act.action)}</strong></td>
+            <td>${escapeHtml(act.official_name || 'System')} <span style="font-size: 10px; color: #64748b;">(${escapeHtml(act.official_role || 'Officer')})</span></td>
+            <td>${escapeHtml(act.remarks || '')}</td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    openAdminModal('modalLegacyReview');
+  } catch (err) {
+    showToast("Error inspecting dossier: " + err.message, "error");
+  }
+}
+
+async function submitLegacyDateVerification() {
+  const appId = document.getElementById('currentReviewAppId').value;
+  const verifiedDate = document.getElementById('actionVerifiedDate').value;
+  const precision = document.getElementById('actionDatePrecision').value;
+  const reason = document.getElementById('actionDateReason').value.trim();
+
+  if (!verifiedDate) {
+    showToast("Please enter or select the verified original SSD joining date.", "warning");
+    return;
+  }
+  if (!reason) {
+    showToast("Mandatory: Please record the archival citation or reason for verifying this joining date.", "warning");
+    return;
+  }
+
+  try {
+    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const res = await fetch(`/api/legacy/applications/${appId}/verify-date`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ verifiedDate, precision, reason, notes: reason })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      showToast("Original joining date verified successfully!", "success");
+      openLegacyReviewModal(appId);
+      loadLegacyStats();
+      loadLegacyApplications();
+    } else {
+      showToast(data.error || "Failed to verify joining date.", "error");
+    }
+  } catch (err) {
+    showToast("Error verifying date: " + err.message, "error");
+  }
+}
+
+async function previewPolicyBatch() {
+  const verifiedDate = document.getElementById('actionVerifiedDate').value;
+  if (!verifiedDate) {
+    showToast("Please specify the original joining date first.", "warning");
+    return;
+  }
+
+  try {
+    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const res = await fetch('/api/batches/calculate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ originalJoiningDate: verifiedDate, stateCode: 'MH' })
+    });
+    const data = await res.json();
+    if (data.success && data.calculatedBatchCode) {
+      document.getElementById('actionBatchCode').value = data.calculatedBatchCode;
+      showToast(`Calculated Batch: ${data.calculatedBatchCode} (Policy: ${data.allocationRule})`, "info");
+    }
+  } catch (err) {
+    showToast("Calculation error: " + err.message, "error");
+  }
+}
+
+async function submitLegacyBatchAssignment() {
+  const appId = document.getElementById('currentReviewAppId').value;
+  const batchCode = document.getElementById('actionBatchCode').value.trim();
+  const reason = document.getElementById('actionBatchReason').value.trim();
+
+  try {
+    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const res = await fetch(`/api/legacy/applications/${appId}/assign-batch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ batchCode, reason })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      showToast(`Batch ${data.batchCode} allocated successfully!`, "success");
+      openLegacyReviewModal(appId);
+      loadLegacyStats();
+      loadLegacyApplications();
+    } else {
+      showToast(data.error || "Failed to assign batch.", "error");
+    }
+  } catch (err) {
+    showToast("Error assigning batch: " + err.message, "error");
+  }
+}
+
+async function submitLegacyFinalApproval() {
+  const appId = document.getElementById('currentReviewAppId').value;
+  const designation = document.getElementById('actionCommissionDesignation').value.trim();
+  const remarks = document.getElementById('actionCommissionRemarks') ? document.getElementById('actionCommissionRemarks').value.trim() : '';
+
+  try {
+    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const res = await fetch(`/api/legacy/applications/${appId}/approve`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ designation, remarks })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      showToast(`Legacy Veteran officially commissioned! Sainik ID: ${data.sainikId}`, "success");
+      closeAdminModal('modalLegacyReview');
+      loadLegacyStats();
+      loadLegacyApplications();
+      renderMembersTable();
+    } else {
+      showToast(data.error || "Failed to commission legacy veteran.", "error");
+    }
+  } catch (err) {
+    showToast("Error approving legacy member: " + err.message, "error");
+  }
+}
+
+async function submitLegacyCorrection() {
+  const appId = document.getElementById('currentReviewAppId').value;
+  const remarks = document.getElementById('actionCorrectionRemarks').value.trim();
+  if (!remarks) {
+    showToast("Please state the specific correction or missing evidence required.", "warning");
+    return;
+  }
+
+  try {
+    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const res = await fetch(`/api/legacy/applications/${appId}/correction`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ remarks })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast("Correction request recorded.", "info");
+      openLegacyReviewModal(appId);
+      loadLegacyApplications();
+    } else {
+      showToast(data.error || "Failed to record correction.", "error");
+    }
+  } catch (err) {
+    showToast("Error: " + err.message, "error");
+  }
+}
+
+async function submitLegacyRejection() {
+  const appId = document.getElementById('currentReviewAppId').value;
+  const reason = document.getElementById('actionRejectionReason').value.trim();
+  if (!reason) {
+    showToast("Please specify a reason for rejecting the legacy application.", "warning");
+    return;
+  }
+
+  try {
+    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const res = await fetch(`/api/legacy/applications/${appId}/reject`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ reason })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast("Application rejected.", "info");
+      openLegacyReviewModal(appId);
+      loadLegacyApplications();
+    } else {
+      showToast(data.error || "Failed to reject application.", "error");
+    }
+  } catch (err) {
+    showToast("Error: " + err.message, "error");
+  }
+}
+
+// BATCH MANAGEMENT
+async function loadBatchesDesk() {
+  const tbody = document.getElementById('batchesTableBody');
+  if (tbody) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 25px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading batches...</td></tr>';
+  }
+
+  try {
+    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    
+    // 1. Fetch Config
+    const cfgRes = await fetch('/api/batches/config', {
+      headers: token ? { "Authorization": `Bearer ${token}` } : {}
+    });
+    const cfgData = await cfgRes.json();
+    if (cfgData.success && cfgData.config) {
+      legacyActiveBatchConfig = cfgData.config;
+      const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      setEl('policyFormatPattern', cfgData.config.format_pattern || 'SSD-BATCH-{YEAR}');
+      setEl('policyAllocationRule', cfgData.config.allocation_rule || 'CALENDAR_YEAR');
+      setEl('policyScope', cfgData.config.active_scope || 'NATIONAL');
+      setEl('policyHistoricalMapping', cfgData.config.historical_mapping_enabled ? 'Active' : 'Disabled');
+    }
+
+    // 2. Fetch Batches
+    const res = await fetch('/api/batches', {
+      headers: token ? { "Authorization": `Bearer ${token}` } : {}
+    });
+    const data = await res.json();
+    if (data.success && Array.isArray(data.batches)) {
+      legacyBatchesList = data.batches;
+      renderBatchesTable(legacyBatchesList);
+    } else {
+      if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">${escapeHtml(data.error || 'Failed to load batches.')}</td></tr>`;
+    }
+  } catch (err) {
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">Error: ${escapeHtml(err.message)}</td></tr>`;
+  }
+}
+
+function renderBatchesTable(batches) {
+  const tbody = document.getElementById('batchesTableBody');
+  if (!tbody) return;
+
+  if (!batches || batches.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 25px; color: #64748b;">No batches registered yet.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = batches.map(b => `
+    <tr>
+      <td>
+        <span style="font-family: monospace; font-weight: 800; color: #001f3f; background: #f1f5f9; padding: 3px 8px; border-radius: 4px; border: 1px solid #cbd5e1;">
+          ${escapeHtml(b.batch_code)}
+        </span>
+      </td>
+      <td style="font-weight: 700; color: #0f172a;">${escapeHtml(b.batch_name || '')}</td>
+      <td style="font-size: 12px; color: #475569;">${escapeHtml(b.start_date || 'N/A')} to ${escapeHtml(b.end_date || 'N/A')}</td>
+      <td><span class="badge-status badge-active" style="background: rgba(0,31,63,0.1); color: #001f3f;">${escapeHtml(b.scope || 'NATIONAL')}</span></td>
+      <td><span style="font-size: 12px; font-weight: 600; color: #047857;">${escapeHtml(b.allocation_rule || 'CALENDAR_YEAR')}</span></td>
+      <td><span class="badge-status badge-active">${escapeHtml(b.status || 'ACTIVE')}</span></td>
+      <td style="font-size: 11.5px; color: #64748b;">${escapeHtml(b.created_by || 'System')}</td>
+    </tr>
+  `).join('');
+}
+
+function openBatchConfigModal() {
+  if (legacyActiveBatchConfig) {
+    const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+    setVal('cfgFormatPattern', legacyActiveBatchConfig.format_pattern || 'SSD-BATCH-{YEAR}');
+    setVal('cfgAllocationRule', legacyActiveBatchConfig.allocation_rule || 'CALENDAR_YEAR');
+    setVal('cfgScope', legacyActiveBatchConfig.active_scope || 'NATIONAL');
+    setVal('cfgNotes', legacyActiveBatchConfig.notes || '');
+  }
+  openAdminModal('modalBatchConfig');
+}
+
+async function handleSaveBatchConfig(e) {
+  e.preventDefault();
+  const formatPattern = document.getElementById('cfgFormatPattern').value.trim();
+  const allocationRule = document.getElementById('cfgAllocationRule').value;
+  const activeScope = document.getElementById('cfgScope').value;
+  const notes = document.getElementById('cfgNotes').value.trim();
+
+  try {
+    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const res = await fetch('/api/batches/config', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ formatPattern, allocationRule, activeScope, notes })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast("Batch allocation policy updated successfully!", "success");
+      closeAdminModal('modalBatchConfig');
+      loadBatchesDesk();
+    } else {
+      showToast(data.error || "Failed to update configuration.", "error");
+    }
+  } catch (err) {
+    showToast("Error updating config: " + err.message, "error");
+  }
+}
+
+async function handleCreateBatch(e) {
+  e.preventDefault();
+  const batchCode = document.getElementById('newBatchCode').value.trim();
+  const batchName = document.getElementById('newBatchName').value.trim();
+  const startDate = document.getElementById('newBatchStart').value;
+
+  try {
+    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const res = await fetch('/api/batches', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ batchCode, batchName, startDate })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`Batch ${data.batch.batch_code} registered successfully!`, "success");
+      document.getElementById('createBatchForm').reset();
+      loadBatchesDesk();
+    } else {
+      showToast(data.error || "Failed to create batch.", "error");
+    }
+  } catch (err) {
+    showToast("Error creating batch: " + err.message, "error");
+  }
+}
+
+function openBatchCorrectionModal(memberId = '') {
+  const idInput = document.getElementById('correctMemberId');
+  if (idInput && memberId) idInput.value = memberId;
+  openAdminModal('modalBatchCorrection');
+}
+
+async function handleBatchCorrection(e) {
+  e.preventDefault();
+  const memberId = document.getElementById('correctMemberId').value.trim();
+  const newBatchCode = document.getElementById('correctNewBatchCode').value.trim();
+  const reason = document.getElementById('correctReason').value.trim();
+
+  if (!reason) {
+    showToast("Mandatory Audit Requirement: An authorized justification or directive must be provided.", "warning");
+    return;
+  }
+
+  try {
+    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const res = await fetch('/api/batches/correct', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ memberId, newBatchCode, reason })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || "Batch successfully corrected and recorded in history.", "success");
+      closeAdminModal('modalBatchCorrection');
+      document.getElementById('batchCorrectionForm').reset();
+      loadBatchesDesk();
+      loadBatchHistory();
+      renderMembersTable();
+    } else {
+      showToast(data.error || "Failed to execute batch correction.", "error");
+    }
+  } catch (err) {
+    showToast("Error correcting batch: " + err.message, "error");
+  }
+}
+
+async function loadBatchHistory() {
+  const tbody = document.getElementById('batchHistoryTableBody');
+  if (tbody) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 25px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading immutable batch audit trail...</td></tr>';
+  }
+
+  try {
+    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const res = await fetch('/api/batches/history', {
+      headers: token ? { "Authorization": `Bearer ${token}` } : {}
+    });
+    const data = await res.json();
+    if (data.success && Array.isArray(data.history)) {
+      renderBatchHistoryTable(data.history);
+    } else {
+      if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">${escapeHtml(data.error || 'Failed to load history.')}</td></tr>`;
+    }
+  } catch (err) {
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">Error: ${escapeHtml(err.message)}</td></tr>`;
+  }
+}
+
+function renderBatchHistoryTable(history) {
+  const tbody = document.getElementById('batchHistoryTableBody');
+  if (!tbody) return;
+
+  if (!history || history.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 25px; color: #64748b;">No batch reallocations or corrections recorded.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = history.map(h => `
+    <tr>
+      <td style="font-family: monospace; font-size: 11.5px;">${escapeHtml((h.created_at || '').slice(0, 19).replace('T', ' '))}</td>
+      <td style="font-weight: 700; color: #001f3f;">${escapeHtml(h.sainik_id || h.member_id || '')}</td>
+      <td><span style="font-family: monospace; color: #b91c1c; background: #fee2e2; padding: 2px 6px; border-radius: 4px;">${escapeHtml(h.previous_batch_code || 'NONE')}</span></td>
+      <td><span style="font-family: monospace; color: #047857; background: #dcfce7; padding: 2px 6px; border-radius: 4px; font-weight: 800;">${escapeHtml(h.new_batch_code || '')}</span></td>
+      <td><span class="badge-status badge-active" style="font-size: 10px;">${escapeHtml(h.change_type || 'CHANGE')}</span></td>
+      <td style="font-size: 12.5px; color: #334155;">${escapeHtml(h.reason || 'N/A')}</td>
+      <td style="font-size: 11.5px; color: #475569;">
+        ${escapeHtml(h.changed_by || 'System')} <span style="font-size: 10px; color: #64748b;">(${escapeHtml(h.changed_by_role || 'Officer')})</span>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openLegacyBulkImportModal() {
+  document.getElementById('bulkImportResultsBox').style.display = 'none';
+  openAdminModal('modalLegacyBulkImport');
+}
+
+async function handleLegacyBulkImport(e) {
+  e.preventDefault();
+  const rawText = document.getElementById('bulkImportJsonText').value.trim();
+  if (!rawText) {
+    showToast("Please paste the JSON array of historical member records.", "warning");
+    return;
+  }
+
+  let records = null;
+  try {
+    records = JSON.parse(rawText);
+    if (!Array.isArray(records)) throw new Error("Root must be a JSON array [ ... ]");
+  } catch (err) {
+    showToast("Invalid JSON format: " + err.message, "error");
+    return;
+  }
+
+  try {
+    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const res = await fetch('/api/legacy/bulk-import', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ records })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`Bulk import processed: ${data.importedCount} records queued for verification.`, "success");
+      const resultsBox = document.getElementById('bulkImportResultsBox');
+      const statsSummary = document.getElementById('bulkImportStatsSummary');
+      if (resultsBox && statsSummary) {
+        resultsBox.style.display = 'block';
+        statsSummary.innerHTML = `
+          <div style="color: #047857; font-weight: 700;">✅ ${data.importedCount} unverified records indexed into the verification queue.</div>
+          <div style="color: #d97706; font-weight: 700; margin-top: 4px;">⚠️ ${data.duplicateCount} duplicate records detected and skipped.</div>
+          ${data.errorCount > 0 ? `<div style="color: #dc2626; font-weight: 700; margin-top: 4px;">❌ ${data.errorCount} records with validation errors.</div>` : ''}
+        `;
+      }
+      loadLegacyStats();
+      loadLegacyApplications();
+    } else {
+      showToast(data.error || "Failed to process bulk import.", "error");
+    }
+  } catch (err) {
+    showToast("Import error: " + err.message, "error");
+  }
+}
+
+// Bind Legacy Window Exports
+window.loadLegacyView = loadLegacyView;
+window.switchLegacySubtab = switchLegacySubtab;
+window.loadLegacyApplications = loadLegacyApplications;
+window.handleLegacySearch = handleLegacySearch;
+window.resetLegacyFilters = resetLegacyFilters;
+window.openLegacyReviewModal = openLegacyReviewModal;
+window.submitLegacyDateVerification = submitLegacyDateVerification;
+window.previewPolicyBatch = previewPolicyBatch;
+window.submitLegacyBatchAssignment = submitLegacyBatchAssignment;
+window.submitLegacyFinalApproval = submitLegacyFinalApproval;
+window.submitLegacyCorrection = submitLegacyCorrection;
+window.submitLegacyRejection = submitLegacyRejection;
+window.loadBatchesDesk = loadBatchesDesk;
+window.openBatchConfigModal = openBatchConfigModal;
+window.handleSaveBatchConfig = handleSaveBatchConfig;
+window.handleCreateBatch = handleCreateBatch;
+window.openBatchCorrectionModal = openBatchCorrectionModal;
+window.handleBatchCorrection = handleBatchCorrection;
+window.loadBatchHistory = loadBatchHistory;
+window.openLegacyBulkImportModal = openLegacyBulkImportModal;
+window.handleLegacyBulkImport = handleLegacyBulkImport;
 

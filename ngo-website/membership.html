@@ -184,18 +184,123 @@
         <!-- FORM BOX -->
         <div class="form-container-box" id="membershipForm">
           <div class="form-header-box">
-            <h3>Official Sainik Application Form</h3>
-            <p>Please enter accurate details for administrative registration and multi-tier hierarchical identity verification.</p>
+            <h3>Official Sainik Registration Portal</h3>
+            <p>Select your registration path below. Existing veterans and new applicants are processed through distinct workflows.</p>
+          </div>
+
+          <!-- TWO REGISTRATION PATHS SELECTOR -->
+          <div class="registration-mode-selector" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; background: #f8fafc; padding: 6px; border-radius: 12px; border: 1px solid #cbd5e1;">
+            <button type="button" id="tabNewSainik" class="mode-tab-btn active" onclick="setRegistrationMode('STANDARD')" style="padding: 14px 16px; border-radius: 8px; border: 2px solid transparent; font-weight: 700; font-size: 13.5px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: #001f3f; color: #ffffff;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-user-plus"></i>
+                <span>New Sainik Registration</span>
+              </div>
+              <span style="font-size: 11px; font-weight: 500; opacity: 0.85;">First-Time Enlistment Workflow</span>
+            </button>
+            <button type="button" id="tabLegacySainik" class="mode-tab-btn" onclick="setRegistrationMode('LEGACY')" style="padding: 14px 16px; border-radius: 8px; border: 2px solid transparent; font-weight: 700; font-size: 13.5px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: #ffffff; color: #334155; border-color: #e2e8f0;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-award" style="color: #c5a059;"></i>
+                <span>Existing Sainik — Legacy Registration</span>
+              </div>
+              <span style="font-size: 11px; font-weight: 600; color: #b45309;">Veterans, Senior Cadre & Pre-Portal Members</span>
+            </button>
+          </div>
+
+          <!-- LEGACY NOTICE BANNER -->
+          <div id="legacyNoticeBanner" style="display: none; background: #fffbeb; border: 1px solid #fde68a; border-left: 5px solid #d97706; border-radius: 10px; padding: 18px; margin-bottom: 24px;">
+            <div style="display: flex; gap: 14px; align-items: flex-start;">
+              <div style="background: #fef3c7; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fa-solid fa-medal" style="color: #b45309; font-size: 20px;"></i>
+              </div>
+              <div>
+                <h4 style="margin: 0 0 6px; color: #92400e; font-size: 15px; font-weight: 800;">Official Legacy Veteran Registration System</h4>
+                <p style="margin: 0 0 8px; font-size: 13px; color: #78350f; line-height: 1.5;">
+                  This dedicated portal path is reserved for long-serving Samata Sainik Dal members who joined prior to the launch of our digital portal. Your <strong>original organizational joining date</strong>, <strong>seniority</strong>, and <strong>historical batch allocation</strong> will be verified and permanently preserved in the central registry.
+                </p>
+                <div style="display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; font-weight: 700; color: #b45309;">
+                  <span><i class="fa-solid fa-check"></i> Distinct Portal Registration Date vs Joining Date</span>
+                  <span><i class="fa-solid fa-check"></i> Multi-Tier Chapter Verification</span>
+                  <span><i class="fa-solid fa-check"></i> Official Digital Sainik ID Issued Upon Verification</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <form id="memberRegistrationForm" onsubmit="handleEnhancedMemberRegistration(event)">
+            <input type="hidden" id="membershipType" value="STANDARD">
+
+            <!-- LEGACY EXCLUSIVE FIELDS CONTAINER -->
+            <div id="legacyFieldsContainer" style="display: none; background: #fdfaf3; border: 1px solid #f2e2c4; border-radius: 10px; padding: 20px; margin-bottom: 24px;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid #f2e2c4; padding-bottom: 10px;">
+                <i class="fa-solid fa-clock-rotate-left" style="color: #c5a059; font-size: 18px;"></i>
+                <h4 style="margin: 0; color: #001f3f; font-size: 15px; font-weight: 800;">Historical Membership & Seniority Details</h4>
+              </div>
+
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label for="legacyJoiningDate">Original SSD Joining Date <span class="req" id="legacyDateReq">*</span></label>
+                  <input type="date" id="legacyJoiningDate" class="form-control" style="background: #ffffff;">
+                  <div style="font-size: 11.5px; color: #64748b; margin-top: 4px;">The historical date you originally joined Samata Sainik Dal.</div>
+                </div>
+
+                <div class="form-group">
+                  <label for="legacyDatePrecision">Joining Date Precision / Certainty <span class="req">*</span></label>
+                  <select id="legacyDatePrecision" class="form-control" onchange="handleDatePrecisionChange(this.value)" style="background: #ffffff;">
+                    <option value="EXACT_DATE">Exact Date Known (Day, Month & Year)</option>
+                    <option value="YEAR_ONLY">Approximate Year Known (Exact day to be archival verified)</option>
+                    <option value="APPROXIMATE_UNKNOWN">Exact Date Unknown (Requires Archival Verification)</option>
+                  </select>
+                  <div id="datePrecisionHelp" style="font-size: 11.5px; color: #64748b; margin-top: 4px;">If your exact joining date is unknown, select verification needed — do not invent a date.</div>
+                </div>
+              </div>
+
+              <div class="form-grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                <div class="form-group">
+                  <label for="legacyExistingId">Existing Sainik ID / Card No. (If Available)</label>
+                  <input type="text" id="legacyExistingId" class="form-control" placeholder="e.g. MH/NGP/VET-1994" style="background: #ffffff;">
+                </div>
+                <div class="form-group">
+                  <label for="legacyCurrentDesignation">Current Designation / Rank (If Applicable)</label>
+                  <input type="text" id="legacyCurrentDesignation" class="form-control" placeholder="e.g. Senior Dalpati / Zonal Organizer" style="background: #ffffff;">
+                </div>
+                <div class="form-group">
+                  <label for="legacyChapter">SSD Chapter / Local Shakha <span class="req">*</span></label>
+                  <input type="text" id="legacyChapter" class="form-control" placeholder="e.g. Deekshabhoomi Shakha #1" style="background: #ffffff;">
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top: 15px;">
+                <label for="legacyPreviousResponsibilities">Previous Organizational Responsibilities & Significant Service</label>
+                <textarea id="legacyPreviousResponsibilities" class="form-control" rows="2" placeholder="Detail past rallies, drill camps, chapter leadership roles, or memorial coordination (e.g. 1997 Mahad Satyagraha March lead)..." style="background: #ffffff;"></textarea>
+              </div>
+
+              <div class="form-grid-2" style="margin-top: 15px;">
+                <div class="form-group">
+                  <label for="legacyRecommendingOfficial">Recommending Senior Official / Chapter Head</label>
+                  <input type="text" id="legacyRecommendingOfficial" class="form-control" placeholder="Name, Designation, and Contact of Officer who can attest" style="background: #ffffff;">
+                </div>
+                <div class="form-group">
+                  <label for="legacyHistoricalNotes">Additional Archival Proof / Citations</label>
+                  <input type="text" id="legacyHistoricalNotes" class="form-control" placeholder="Mention badge numbers, camp certificates, or gazette references" style="background: #ffffff;">
+                </div>
+              </div>
+
+              <div class="form-disclaimer" style="margin-top: 16px; background: #ffffff; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px;">
+                <input type="checkbox" id="legacyAttestation">
+                <label for="legacyAttestation" style="font-size: 12.5px; color: #1e293b;">
+                  <strong>Applicant Seniority Attestation:</strong> "I solemnly confirm that the submitted joining date reflects my original organizational joining date with Samata Sainik Dal. I understand that official batch assignment and active status require authorized verification."
+                </label>
+              </div>
+            </div>
+
+            <!-- STANDARD APPLICANT FIELDS -->
             <div class="form-grid-2">
               <div class="form-group">
                 <label for="memberName">Full Legal Name <span class="req">*</span></label>
                 <input type="text" id="memberName" class="form-control" placeholder="e.g. Rahul B. Meshram" required>
               </div>
               <div class="form-group">
-                <label for="memberEmail">Email Address <span class="req">*</span></label>
+                <label for="memberEmail">Email Address <span class="req" id="memberEmailReq">*</span></label>
                 <input type="email" id="memberEmail" class="form-control" placeholder="e.g. rahul.meshram@example.com" required>
               </div>
             </div>

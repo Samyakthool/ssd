@@ -38,6 +38,8 @@ import cmsRoutes from './backend/routes/cms.js';
 import constitutionRoutes from './backend/routes/constitution.js';
 import libraryRoutes from './backend/routes/library.js';
 import legalRoutes from './backend/routes/legal.js';
+import batchRoutes from './backend/routes/batches.js';
+import legacyRoutes from './backend/routes/legacy.js';
 import { initRealtimeRoutes } from './backend/utils/realtime.js';
 import { sendEmailHandler } from './backend/utils/mailer.js';
 
@@ -143,6 +145,8 @@ app.use('/api/cms', cmsRoutes);
 app.use('/api/constitution', constitutionRoutes);
 app.use('/api/library', libraryRoutes);
 app.use('/api/legal', legalRoutes);
+app.use('/api/batches', batchRoutes);
+app.use('/api/legacy', legacyRoutes);
 app.all('/api/send-email', sendEmailHandler);
 
 // Initialize Real-Time SSE Event Stream & Broadcast Engine

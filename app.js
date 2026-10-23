@@ -4489,6 +4489,81 @@ function handleStateChange(stateValue) {
   }
 }
 
+function setRegistrationMode(mode) {
+  const hiddenType = document.getElementById("membershipType");
+  if (hiddenType) hiddenType.value = mode;
+
+  const tabNew = document.getElementById("tabNewSainik");
+  const tabLegacy = document.getElementById("tabLegacySainik");
+  const banner = document.getElementById("legacyNoticeBanner");
+  const legacyContainer = document.getElementById("legacyFieldsContainer");
+  const emailReq = document.getElementById("memberEmailReq");
+  const emailInput = document.getElementById("memberEmail");
+  const submitBtn = document.getElementById("memberSubmitBtn");
+  const btnText = submitBtn ? submitBtn.querySelector(".btn-text") : null;
+
+  if (mode === "LEGACY") {
+    if (tabNew) {
+      tabNew.classList.remove("active");
+      tabNew.style.background = "#ffffff";
+      tabNew.style.color = "#334155";
+      tabNew.style.borderColor = "#e2e8f0";
+    }
+    if (tabLegacy) {
+      tabLegacy.classList.add("active");
+      tabLegacy.style.background = "#001f3f";
+      tabLegacy.style.color = "#ffffff";
+      tabLegacy.style.borderColor = "#c5a059";
+    }
+    if (banner) banner.style.display = "block";
+    if (legacyContainer) legacyContainer.style.display = "block";
+    if (emailReq) emailReq.style.display = "none";
+    if (emailInput) emailInput.removeAttribute("required");
+    if (btnText) btnText.innerHTML = '<i class="fa-solid fa-award"></i> Submit Legacy Sainik Verification Dossier';
+  } else {
+    if (tabNew) {
+      tabNew.classList.add("active");
+      tabNew.style.background = "#001f3f";
+      tabNew.style.color = "#ffffff";
+      tabNew.style.borderColor = "transparent";
+    }
+    if (tabLegacy) {
+      tabLegacy.classList.remove("active");
+      tabLegacy.style.background = "#ffffff";
+      tabLegacy.style.color = "#334155";
+      tabLegacy.style.borderColor = "#e2e8f0";
+    }
+    if (banner) banner.style.display = "none";
+    if (legacyContainer) legacyContainer.style.display = "none";
+    if (emailReq) emailReq.style.display = "inline";
+    if (emailInput) emailInput.setAttribute("required", "required");
+    if (btnText) btnText.innerHTML = '<i class="fa-solid fa-user-shield"></i> Submit Enlistment Application';
+  }
+}
+
+function handleDatePrecisionChange(val) {
+  const dateInput = document.getElementById("legacyJoiningDate");
+  const reqSpan = document.getElementById("legacyDateReq");
+  const helpText = document.getElementById("datePrecisionHelp");
+
+  if (val === "APPROXIMATE_UNKNOWN") {
+    if (reqSpan) reqSpan.style.display = "none";
+    if (dateInput) {
+      dateInput.removeAttribute("required");
+      dateInput.value = "";
+    }
+    if (helpText) helpText.innerHTML = '<span style="color: #b45309; font-weight: 600;"><i class="fa-solid fa-circle-info"></i> Archival Verification Queue:</span> Your original joining date will be verified and established by the Chapter / District command verifiers without forcing you to guess.';
+  } else if (val === "YEAR_ONLY") {
+    if (reqSpan) reqSpan.style.display = "inline";
+    if (dateInput) dateInput.setAttribute("required", "required");
+    if (helpText) helpText.innerHTML = '<span style="color: #0284c7; font-weight: 600;"><i class="fa-solid fa-calendar-check"></i> Year-Level Precision:</span> Enter January 1st of your joining year or best known estimate; the exact date will be verified.';
+  } else {
+    if (reqSpan) reqSpan.style.display = "inline";
+    if (dateInput) dateInput.setAttribute("required", "required");
+    if (helpText) helpText.innerHTML = 'Enter the exact date you joined Samata Sainik Dal.';
+  }
+}
+
 async function handleEnhancedMemberRegistration(e) {
   e.preventDefault();
   const form = document.getElementById("memberRegistrationForm");
@@ -4496,12 +4571,15 @@ async function handleEnhancedMemberRegistration(e) {
   const btnText = submitBtn.querySelector(".btn-text");
   const btnSpinner = submitBtn.querySelector(".btn-spinner");
 
+  const membershipType = document.getElementById("membershipType") ? document.getElementById("membershipType").value : "STANDARD";
+  const isLegacy = (membershipType === "LEGACY");
+
   const fullName = document.getElementById("memberName") ? document.getElementById("memberName").value.trim() : "";
   const email = document.getElementById("memberEmail") ? document.getElementById("memberEmail").value.trim() : "";
   const phone = document.getElementById("memberPhone") ? document.getElementById("memberPhone").value.trim() : "";
   const dob = document.getElementById("memberDob") ? document.getElementById("memberDob").value : "";
   const gender = document.getElementById("memberGender") ? document.getElementById("memberGender").value : "Unspecified";
-  const wing = document.getElementById("memberWing") ? document.getElementById("memberWing").value : "Central Cadet Corps (Sainik Wing)";
+  const wing = document.getElementById("memberWing") ? document.getElementById("memberWing").value : (isLegacy ? "Central Cadet Corps (Veteran Corps)" : "Central Cadet Corps (Sainik Wing)");
   const bloodGroup = document.getElementById("memberBloodGroup") ? document.getElementById("memberBloodGroup").value : "O+";
   const qualification = document.getElementById("memberQualification") ? document.getElementById("memberQualification").value.trim() : "";
   const occupation = document.getElementById("memberOccupation") ? document.getElementById("memberOccupation").value : "Citizen";
@@ -4512,6 +4590,43 @@ async function handleEnhancedMemberRegistration(e) {
   const address = document.getElementById("memberAddress") ? document.getElementById("memberAddress").value.trim() : "";
   const message = document.getElementById("memberMessage") ? document.getElementById("memberMessage").value.trim() : "";
   const pledgeAccepted = document.getElementById("memberConsent") ? document.getElementById("memberConsent").checked : true;
+
+  // Legacy fields
+  let legacyJoiningDate = "";
+  let legacyDatePrecision = "EXACT_DATE";
+  let legacyExistingId = "";
+  let legacyCurrentDesignation = "";
+  let legacyChapter = "";
+  let legacyPreviousResponsibilities = "";
+  let legacyRecommendingOfficial = "";
+  let legacyHistoricalNotes = "";
+  let legacyAttestation = false;
+
+  if (isLegacy) {
+    legacyJoiningDate = document.getElementById("legacyJoiningDate") ? document.getElementById("legacyJoiningDate").value : "";
+    legacyDatePrecision = document.getElementById("legacyDatePrecision") ? document.getElementById("legacyDatePrecision").value : "EXACT_DATE";
+    legacyExistingId = document.getElementById("legacyExistingId") ? document.getElementById("legacyExistingId").value.trim() : "";
+    legacyCurrentDesignation = document.getElementById("legacyCurrentDesignation") ? document.getElementById("legacyCurrentDesignation").value.trim() : "";
+    legacyChapter = document.getElementById("legacyChapter") ? document.getElementById("legacyChapter").value.trim() : "";
+    legacyPreviousResponsibilities = document.getElementById("legacyPreviousResponsibilities") ? document.getElementById("legacyPreviousResponsibilities").value.trim() : "";
+    legacyRecommendingOfficial = document.getElementById("legacyRecommendingOfficial") ? document.getElementById("legacyRecommendingOfficial").value.trim() : "";
+    legacyHistoricalNotes = document.getElementById("legacyHistoricalNotes") ? document.getElementById("legacyHistoricalNotes").value.trim() : "";
+    legacyAttestation = document.getElementById("legacyAttestation") ? document.getElementById("legacyAttestation").checked : false;
+
+    if (!legacyAttestation) {
+      showToast("Please check the Applicant Seniority Attestation checkbox confirming your joining date.", "warning");
+      const attEl = document.getElementById("legacyAttestation");
+      if (attEl) attEl.focus();
+      return;
+    }
+
+    if (legacyDatePrecision !== "APPROXIMATE_UNKNOWN" && !legacyJoiningDate) {
+      showToast("Please select your original SSD joining date, or choose 'Exact Date Unknown' if you need archival verification.", "warning");
+      const dateEl = document.getElementById("legacyJoiningDate");
+      if (dateEl) dateEl.focus();
+      return;
+    }
+  }
 
   const photoFileInput = document.getElementById("memberPhotoFile");
   const photoFile = photoFileInput && photoFileInput.files ? photoFileInput.files[0] : null;
@@ -4526,6 +4641,7 @@ async function handleEnhancedMemberRegistration(e) {
     }
 
     const formData = new FormData();
+    formData.append("membershipType", membershipType);
     formData.append("fullName", fullName);
     formData.append("email", email);
     formData.append("mobile", phone);
@@ -4543,6 +4659,18 @@ async function handleEnhancedMemberRegistration(e) {
     formData.append("specialSkills", message);
     formData.append("solemnPledge", pledgeAccepted);
 
+    if (isLegacy) {
+      formData.append("originalJoiningDate", legacyJoiningDate);
+      formData.append("joiningDatePrecision", legacyDatePrecision);
+      formData.append("existingSainikId", legacyExistingId);
+      formData.append("chapter", legacyChapter);
+      formData.append("currentDesignation", legacyCurrentDesignation);
+      formData.append("previousResponsibilities", legacyPreviousResponsibilities);
+      formData.append("recommendingOfficial", legacyRecommendingOfficial);
+      formData.append("historicalNotes", legacyHistoricalNotes);
+      formData.append("applicantAttestation", legacyAttestation);
+    }
+
     if (photoFile) {
       formData.append("photo", photoFile);
     }
@@ -4558,41 +4686,12 @@ async function handleEnhancedMemberRegistration(e) {
     const data = await res.json();
 
     if (data.success && data.applicationId) {
-      showToast(`Enlistment Application registered! Reference: ${data.applicationId}`, "success");
+      showToast(isLegacy 
+        ? `Legacy Registration Registered! Verification Dossier: ${data.applicationId}` 
+        : `Enlistment Application registered! Reference: ${data.applicationId}`, 
+        "success"
+      );
 
-      const appRecord = {
-        id: data.applicationId,
-        full_name: fullName,
-        email: email,
-        mobile: phone,
-        dob: dob,
-        gender: gender,
-        wing_name: wing,
-        blood_group: bloodGroup,
-        education: qualification,
-        occupation: occupation,
-        state_name: state,
-        region_name: region,
-        district_name: district,
-        taluka_name: taluka,
-        address: address,
-        special_skills: message,
-        photo_url: uploadedPhotoBase64 || null,
-        status: 'SUBMITTED',
-        created_at: new Date().toISOString()
-      };
-
-      if (db) {
-        db.ref('membership_applications/' + data.applicationId).set(appRecord).catch(e => console.warn(e));
-        db.ref('members/' + data.applicationId).set({
-          ...appRecord,
-          sainikId: data.applicationId,
-          enlistmentId: data.applicationId,
-          status: 'Pending',
-          timestamp: Date.now()
-        }).catch(e => console.warn(e));
-      }
-      
       // Populate and Show Confirmation Modal
       const modal = document.getElementById("appConfirmModal");
       if (modal) {
@@ -4630,7 +4729,10 @@ function closeConfirmModal() {
   if (modal) modal.style.display = "none";
 }
 
+window.setRegistrationMode = setRegistrationMode;
+window.handleDatePrecisionChange = handleDatePrecisionChange;
 window.handleEnhancedMemberRegistration = handleEnhancedMemberRegistration;
+window.closeConfirmModal = closeConfirmModal;
 window.previewPhotoUpload = previewPhotoUpload;
 window.handleStateChange = handleStateChange;
 window.closeConfirmModal = closeConfirmModal;

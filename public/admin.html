@@ -118,6 +118,14 @@
           <span class="sidebar-badge" id="badgeMembersCount">0</span>
         </a>
 
+        <a class="sidebar-item" onclick="switchView('legacy')" id="nav-legacy">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-award" style="color: #c5a059;"></i>
+            <span>Legacy Sainiks & Batches</span>
+          </div>
+          <span class="sidebar-badge badge-pending" id="badgeLegacyCount" style="background: rgba(197, 160, 89, 0.2); color: #c5a059;">0</span>
+        </a>
+
 
         <a class="sidebar-item" onclick="switchView('leadership')" id="nav-leadership">
           <div class="sidebar-item-left">
@@ -459,6 +467,272 @@
                 </tbody>
               </table>
             </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 1.75: LEGACY SAINIKS & BATCH MANAGEMENT
+             ========================================== -->
+        <section id="viewLegacy" class="view-panel">
+          <!-- KPI Metrics Header -->
+          <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 24px;">
+            <div class="kpi-card" style="border-top: 3px solid #c5a059;">
+              <div class="kpi-info">
+                <span class="label">Total Legacy Registrations</span>
+                <h3 id="kpiLegacyTotal" style="color: #001f3f;">0</h3>
+                <p class="sub"><i class="fa-solid fa-award"></i> Pre-Portal Cadre</p>
+              </div>
+              <div class="kpi-icon-wrap" style="color: #c5a059; background: rgba(197, 160, 89, 0.1);"><i class="fa-solid fa-users-line"></i></div>
+            </div>
+
+            <div class="kpi-card" style="border-top: 3px solid #f59e0b;">
+              <div class="kpi-info">
+                <span class="label">Awaiting Verification</span>
+                <h3 id="kpiLegacyPending" style="color: #d97706;">0</h3>
+                <p class="sub"><i class="fa-solid fa-hourglass-half"></i> Scrutiny Queue</p>
+              </div>
+              <div class="kpi-icon-wrap" style="color: #d97706; background: rgba(245, 158, 11, 0.1);"><i class="fa-solid fa-clipboard-question"></i></div>
+            </div>
+
+            <div class="kpi-card" style="border-top: 3px solid #3b82f6;">
+              <div class="kpi-info">
+                <span class="label">Dates Awaiting Confirmation</span>
+                <h3 id="kpiLegacyDatesPending" style="color: #2563eb;">0</h3>
+                <p class="sub"><i class="fa-solid fa-calendar-check"></i> Archival Research</p>
+              </div>
+              <div class="kpi-icon-wrap" style="color: #2563eb; background: rgba(59, 130, 246, 0.1);"><i class="fa-solid fa-calendar-day"></i></div>
+            </div>
+
+            <div class="kpi-card" style="border-top: 3px solid #8b5cf6;">
+              <div class="kpi-info">
+                <span class="label">Batch Pending</span>
+                <h3 id="kpiLegacyBatchPending" style="color: #7c3aed;">0</h3>
+                <p class="sub"><i class="fa-solid fa-tags"></i> Policy Allocation</p>
+              </div>
+              <div class="kpi-icon-wrap" style="color: #7c3aed; background: rgba(139, 92, 246, 0.1);"><i class="fa-solid fa-layer-group"></i></div>
+            </div>
+
+            <div class="kpi-card" style="border-top: 3px solid #10b981;">
+              <div class="kpi-info">
+                <span class="label">Approved Active Veterans</span>
+                <h3 id="kpiLegacyApproved" style="color: #059669;">0</h3>
+                <p class="sub"><i class="fa-solid fa-certificate"></i> Digital ID Issued</p>
+              </div>
+              <div class="kpi-icon-wrap" style="color: #059669; background: rgba(16, 185, 129, 0.1);"><i class="fa-solid fa-id-badge"></i></div>
+            </div>
+
+            <div class="kpi-card" style="border-top: 3px solid #ef4444;">
+              <div class="kpi-info">
+                <span class="label">Rejected / Disputed</span>
+                <h3 id="kpiLegacyDisputed" style="color: #dc2626;">0</h3>
+                <p class="sub"><i class="fa-solid fa-triangle-exclamation"></i> Corrections / Disputed</p>
+              </div>
+              <div class="kpi-icon-wrap" style="color: #dc2626; background: rgba(239, 68, 68, 0.1);"><i class="fa-solid fa-ban"></i></div>
+            </div>
+          </div>
+
+          <!-- Main Legacy Card Panel -->
+          <div class="card-panel">
+            <div class="card-panel-header" style="flex-wrap: wrap; gap: 16px;">
+              <div class="card-panel-title">
+                <i class="fa-solid fa-award" style="color: #c5a059;"></i>
+                <div>
+                  <h3>Legacy Sainiks & Batch Management Command Desk</h3>
+                  <p style="font-size: 12.5px; color: var(--text-muted); margin: 2px 0 0;">
+                    Preserve historical seniority, verify original joining dates, manage batch allocation schemes, and audit veteran credentials.
+                  </p>
+                </div>
+              </div>
+              
+              <div class="card-panel-actions" style="flex-wrap: wrap; gap: 8px;">
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openLegacyBulkImportModal()">
+                  <i class="fa-solid fa-file-import"></i> Bulk Historical Import
+                </button>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="openBatchConfigModal()">
+                  <i class="fa-solid fa-sliders"></i> Batch Allocation Scheme
+                </button>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="openBatchCorrectionModal()">
+                  <i class="fa-solid fa-pen-to-square"></i> Authorized Batch Correction
+                </button>
+              </div>
+            </div>
+
+            <!-- SUB-TABS -->
+            <div style="display: flex; gap: 10px; border-bottom: 2px solid #e2e8f0; padding: 0 20px; background: #fafbfc;">
+              <button type="button" id="subtabLegacyQueue" class="legacy-subtab active" onclick="switchLegacySubtab('queue')" style="padding: 12px 18px; border: none; background: none; font-weight: 700; font-size: 13.5px; cursor: pointer; border-bottom: 3px solid #001f3f; color: #001f3f;">
+                <i class="fa-solid fa-list-check"></i> Verification Queue
+              </button>
+              <button type="button" id="subtabLegacyBatches" class="legacy-subtab" onclick="switchLegacySubtab('batches')" style="padding: 12px 18px; border: none; background: none; font-weight: 700; font-size: 13.5px; cursor: pointer; border-bottom: 3px solid transparent; color: #64748b;">
+                <i class="fa-solid fa-layer-group"></i> Batch Schemes & Batches
+              </button>
+              <button type="button" id="subtabLegacyAudit" class="legacy-subtab" onclick="switchLegacySubtab('audit')" style="padding: 12px 18px; border: none; background: none; font-weight: 700; font-size: 13.5px; cursor: pointer; border-bottom: 3px solid transparent; color: #64748b;">
+                <i class="fa-solid fa-clock-rotate-left"></i> Batch Assignment History & Audit Trail
+              </button>
+            </div>
+
+            <!-- SUBPANEL 1: VERIFICATION QUEUE -->
+            <div id="legacySubpanelQueue" style="padding: 20px;">
+              <!-- Filters and Search Toolbar -->
+              <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center; justify-content: space-between; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; flex: 1;">
+                  <div style="position: relative; min-width: 240px; flex: 1;">
+                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
+                    <input type="text" id="legacySearchInput" class="filter-input" placeholder="Search by name, ID, mobile, batch, or chapter..." oninput="handleLegacySearch()" style="padding-left: 34px; width: 100%;">
+                  </div>
+                  <select id="legacyStatusFilter" class="filter-select" onchange="loadLegacyApplications()">
+                    <option value="ALL">All Verification Statuses</option>
+                    <option value="LEGACY_SUBMITTED">LEGACY_SUBMITTED</option>
+                    <option value="DATE_VERIFICATION_PENDING">DATE_VERIFICATION_PENDING</option>
+                    <option value="BATCH_PENDING">BATCH_PENDING</option>
+                    <option value="UNDER_VERIFICATION">UNDER_VERIFICATION</option>
+                    <option value="APPROVED">APPROVED</option>
+                    <option value="ACTIVE">ACTIVE (Digital ID Issued)</option>
+                    <option value="CORRECTION_REQUIRED">CORRECTION_REQUIRED</option>
+                    <option value="REJECTED">REJECTED</option>
+                  </select>
+                  <select id="legacyStateFilter" class="filter-select" onchange="loadLegacyApplications()">
+                    <option value="ALL">All States</option>
+                    <option value="Maharashtra">Maharashtra</option>
+                    <option value="Delhi NCR">Delhi NCR</option>
+                    <option value="Uttar Pradesh">Uttar Pradesh</option>
+                    <option value="Madhya Pradesh">Madhya Pradesh</option>
+                    <option value="Bihar">Bihar</option>
+                    <option value="Karnataka">Karnataka</option>
+                  </select>
+                  <input type="text" id="legacyYearFilter" class="filter-input" placeholder="Joining Year (e.g. 2012)" style="width: 150px;" oninput="loadLegacyApplications()">
+                  <input type="text" id="legacyBatchFilter" class="filter-input" placeholder="Batch (e.g. SSD-BATCH-2012)" style="width: 170px;" oninput="loadLegacyApplications()">
+                </div>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="resetLegacyFilters()" title="Reset Filters">
+                  <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
+              </div>
+
+              <!-- Applications Table -->
+              <div class="table-responsive">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Veteran Applicant</th>
+                      <th>Original SSD Joining Date</th>
+                      <th>Website Registration Date</th>
+                      <th>Command Jurisdiction</th>
+                      <th>Existing ID / Designation</th>
+                      <th>Verification Status</th>
+                      <th>Batch Code</th>
+                      <th style="text-align: right;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="legacyApplicationsTableBody">
+                    <tr><td colspan="8" style="text-align: center; padding: 30px;">Loading legacy verification queue...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- SUBPANEL 2: BATCH SCHEMES & BATCHES -->
+            <div id="legacySubpanelBatches" style="display: none; padding: 20px;">
+              <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-bottom: 24px;">
+                <!-- Current Config Card -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h4 style="margin: 0; color: #001f3f; font-size: 14.5px; font-weight: 800;">
+                      <i class="fa-solid fa-sliders" style="color: #c5a059;"></i> Active Batch Policy
+                    </h4>
+                    <button type="button" class="btn-admin btn-admin-outline" style="padding: 4px 10px; font-size: 11.5px;" onclick="openBatchConfigModal()">Edit Policy</button>
+                  </div>
+                  <div style="font-size: 13px; line-height: 1.8;">
+                    <div><span style="color: #64748b; font-weight: 600;">Format Pattern:</span> <span id="policyFormatPattern" style="font-family: monospace; font-weight: 700; color: #001f3f;">SSD-BATCH-{YEAR}</span></div>
+                    <div><span style="color: #64748b; font-weight: 600;">Allocation Rule:</span> <span id="policyAllocationRule" style="font-weight: 700; color: #047857;">CALENDAR_YEAR</span></div>
+                    <div><span style="color: #64748b; font-weight: 600;">Territorial Scope:</span> <span id="policyScope" style="font-weight: 700;">NATIONAL</span></div>
+                    <div><span style="color: #64748b; font-weight: 600;">Historical Mapping:</span> <span id="policyHistoricalMapping" style="font-weight: 700; color: #0284c7;">Active</span></div>
+                  </div>
+                  <div style="margin-top: 14px; font-size: 11.5px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 10px;">
+                    Rule: Members sharing a verified original joining year are mapped to the approved organizational annual batch.
+                  </div>
+                </div>
+
+                <!-- Create Custom Batch -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px;">
+                  <h4 style="margin: 0 0 12px; color: #001f3f; font-size: 14.5px; font-weight: 800;">
+                    <i class="fa-solid fa-plus-circle" style="color: var(--primary-orange);"></i> Register / Pre-Create Cadre Batch
+                  </h4>
+                  <form id="createBatchForm" onsubmit="handleCreateBatch(event)" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: flex-end;">
+                    <div>
+                      <label style="font-size: 11px; font-weight: 700; color: #475569;">Batch Code *</label>
+                      <input type="text" id="newBatchCode" class="filter-input" placeholder="e.g. SSD-BATCH-2012" required style="width: 100%;">
+                    </div>
+                    <div>
+                      <label style="font-size: 11px; font-weight: 700; color: #475569;">Batch Name</label>
+                      <input type="text" id="newBatchName" class="filter-input" placeholder="e.g. 2012 Deekshabhoomi Cadre" style="width: 100%;">
+                    </div>
+                    <div>
+                      <label style="font-size: 11px; font-weight: 700; color: #475569;">Start Year / Date</label>
+                      <input type="date" id="newBatchStart" class="filter-input" style="width: 100%;">
+                    </div>
+                    <button type="submit" class="btn-admin btn-admin-primary" style="height: 38px;">
+                      <i class="fa-solid fa-check"></i> Register Batch
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Registered Batches Table -->
+              <div class="table-responsive">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Batch Code</th>
+                      <th>Batch Name</th>
+                      <th>Effective Period</th>
+                      <th>Scope</th>
+                      <th>Allocation Rule</th>
+                      <th>Status</th>
+                      <th>Created By</th>
+                    </tr>
+                  </thead>
+                  <tbody id="batchesTableBody">
+                    <tr><td colspan="7" style="text-align: center; padding: 30px;">Loading registered batches...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- SUBPANEL 3: BATCH ASSIGNMENT & CORRECTION AUDIT TRAIL -->
+            <div id="legacySubpanelAudit" style="display: none; padding: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div>
+                  <h4 style="margin: 0; color: #001f3f; font-size: 14.5px; font-weight: 800;">
+                    <i class="fa-solid fa-shield-halved" style="color: #047857;"></i> Immutable Batch Assignment & Correction Audit Log
+                  </h4>
+                  <p style="font-size: 12px; color: #64748b; margin: 2px 0 0;">
+                    Every batch allocation, correction, and directive change is permanently recorded with the authorized official's credentials and mandatory justification.
+                  </p>
+                </div>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="loadBatchHistory()">
+                  <i class="fa-solid fa-arrows-rotate"></i> Refresh Audit Trail
+                </button>
+              </div>
+
+              <div class="table-responsive">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Timestamp</th>
+                      <th>Member / Candidate</th>
+                      <th>Previous Batch</th>
+                      <th>Assigned / Corrected Batch</th>
+                      <th>Change Type</th>
+                      <th>Recorded Reason / Directive Citation</th>
+                      <th>Authorized Officer</th>
+                    </tr>
+                  </thead>
+                  <tbody id="batchHistoryTableBody">
+                    <tr><td colspan="7" style="text-align: center; padding: 30px;">Loading batch audit trail...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
         </section>
 
@@ -3186,6 +3460,328 @@
         <div class="admin-modal-footer">
           <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalCmsLibrary')">Cancel</button>
           <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-floppy-disk"></i> Save Archival Resource</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 1: LEGACY SAINIK DOSSIER & VERIFICATION REVIEW
+       ========================================== -->
+  <div id="modalLegacyReview" class="admin-modal" style="display: none;">
+    <div class="admin-modal-dialog" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+      <div class="admin-modal-header" style="background: #001f3f; color: #ffffff; border-radius: 12px 12px 0 0; padding: 18px 24px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="background: rgba(197, 160, 89, 0.2); width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-award" style="color: #c5a059; font-size: 20px;"></i>
+          </div>
+          <div>
+            <h3 style="margin: 0; font-size: 17px; font-weight: 800; color: #ffffff;" id="reviewApplicantNameTitle">Legacy Sainik Verification Dossier</h3>
+            <p style="margin: 2px 0 0; font-size: 12px; color: #94a3b8;" id="reviewAppIdSubtitle">Application ID: SSD-LEGACY-XXXX</p>
+          </div>
+        </div>
+        <button type="button" class="btn-modal-close" onclick="closeAdminModal('modalLegacyReview')" style="color: #cbd5e1; background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+      </div>
+
+      <div class="admin-modal-body" style="padding: 24px;">
+        <!-- Profile Banner -->
+        <div style="display: flex; gap: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 20px; align-items: center;">
+          <img id="reviewPhoto" src="logo.png" alt="Applicant Photo" style="width: 85px; height: 100px; border-radius: 8px; border: 2px solid #001f3f; object-fit: cover;">
+          <div style="flex: 1; font-size: 13px; line-height: 1.6;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <h4 id="reviewFullName" style="margin: 0; font-size: 18px; color: #001f3f; font-weight: 800;">Candidate Name</h4>
+              <span id="reviewStatusBadge" class="badge-status badge-pending">LEGACY_SUBMITTED</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12.5px;">
+              <div><strong>Mobile:</strong> <span id="reviewMobile">+91 ...</span></div>
+              <div><strong>Email:</strong> <span id="reviewEmail">N/A</span></div>
+              <div><strong>State & District:</strong> <span id="reviewJurisdiction">Maharashtra / Nagpur</span></div>
+              <div><strong>SSD Chapter:</strong> <span id="reviewChapter">Deekshabhoomi Unit</span></div>
+              <div><strong>Existing ID:</strong> <span id="reviewExistingId">None</span></div>
+              <div><strong>Current Designation:</strong> <span id="reviewDesignation">Veteran Sainik</span></div>
+              <div><strong>Website Registration Date:</strong> <span id="reviewPortalDate" style="color: #64748b; font-family: monospace;">2026-10-23</span></div>
+              <div><strong>Allocated Batch:</strong> <span id="reviewBatchCode" style="font-weight: 800; color: #047857;">UNASSIGNED</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attestation & Historical Information -->
+        <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 14px; margin-bottom: 20px; font-size: 12.5px; color: #78350f;">
+          <div><strong>Past Service & Responsibilities:</strong> <span id="reviewResponsibilities">None submitted</span></div>
+          <div style="margin-top: 6px;"><strong>Recommending Official:</strong> <span id="reviewRecommender">None</span></div>
+          <div style="margin-top: 6px;"><strong>Archival Notes:</strong> <span id="reviewHistoricalNotes">None</span></div>
+          <div style="margin-top: 6px; font-weight: 700; color: #92400e;">
+            <i class="fa-solid fa-check-double"></i> Applicant Attestation: Verified that candidate confirmed original joining date reflects organizational record.
+          </div>
+        </div>
+
+        <!-- 3-Step Verification Action Desk -->
+        <div style="background: #fafbfc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+          <h4 style="margin: 0 0 16px; color: #001f3f; font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-gavel" style="color: var(--primary-orange);"></i> Official Scrutiny & Multi-Tier Verification Actions
+          </h4>
+
+          <input type="hidden" id="currentReviewAppId">
+
+          <!-- STEP 1: DATE VERIFICATION -->
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <h5 style="margin: 0; font-size: 14px; font-weight: 700; color: #001f3f;">
+                <span style="background: #001f3f; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; margin-right: 6px;">1</span>
+                Step 1: Verify Original SSD Joining Date
+              </h5>
+              <span id="reviewDateVerifiedStatus" style="font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px; background: #fee2e2; color: #b91c1c;">UNVERIFIED</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+              <div>
+                <label style="font-size: 11.5px; font-weight: 700; color: #475569;">Verified Original Joining Date *</label>
+                <input type="date" id="actionVerifiedDate" class="filter-input" style="width: 100%;">
+              </div>
+              <div>
+                <label style="font-size: 11.5px; font-weight: 700; color: #475569;">Precision</label>
+                <select id="actionDatePrecision" class="filter-select" style="width: 100%;">
+                  <option value="EXACT_DATE">EXACT_DATE</option>
+                  <option value="YEAR_ONLY">YEAR_ONLY</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 11.5px; font-weight: 700; color: #475569;">Archival Verification Citation / Recorded Justification *</label>
+              <input type="text" id="actionDateReason" class="filter-input" placeholder="e.g. Verified against 2012 Deekshabhoomi rally archives register entry #1048" style="width: 100%;">
+            </div>
+            <button type="button" class="btn-admin btn-admin-primary" onclick="submitLegacyDateVerification()" style="padding: 7px 16px; font-size: 12.5px;">
+              <i class="fa-solid fa-stamp"></i> Confirm & Record Verified Joining Date
+            </button>
+          </div>
+
+          <!-- STEP 2: BATCH ASSIGNMENT -->
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <h5 style="margin: 0; font-size: 14px; font-weight: 700; color: #001f3f;">
+                <span style="background: #001f3f; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; margin-right: 6px;">2</span>
+                Step 2: Allocate Batch Number (Approved Policy)
+              </h5>
+              <span id="reviewBatchStatusPill" style="font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px; background: #fee2e2; color: #b91c1c;">BATCH PENDING</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 10px;">
+              <div>
+                <label style="font-size: 11.5px; font-weight: 700; color: #475569;">Batch Code</label>
+                <input type="text" id="actionBatchCode" class="filter-input" placeholder="Auto-calculated from policy or custom e.g. SSD-BATCH-2012" style="width: 100%;">
+              </div>
+              <div style="display: flex; align-items: flex-end;">
+                <button type="button" class="btn-admin btn-admin-outline" onclick="previewPolicyBatch()" style="height: 38px; width: 100%; font-size: 11.5px;">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Calculate
+                </button>
+              </div>
+            </div>
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 11.5px; font-weight: 700; color: #475569;">Allocation Authorization Notes</label>
+              <input type="text" id="actionBatchReason" class="filter-input" placeholder="e.g. Allocated per annual national calendar scheme resolution" style="width: 100%;">
+            </div>
+            <button type="button" class="btn-admin btn-admin-primary" onclick="submitLegacyBatchAssignment()" style="padding: 7px 16px; font-size: 12.5px;">
+              <i class="fa-solid fa-layer-group"></i> Assign Official Batch Number
+            </button>
+          </div>
+
+          <!-- STEP 3: FINAL COMMISSION & ACTIVATION -->
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+            <h5 style="margin: 0 0 10px; font-size: 14px; font-weight: 700; color: #001f3f;">
+              <span style="background: #001f3f; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; margin-right: 6px;">3</span>
+              Step 3: Final Commissioning & Digital Sainik ID Issuance
+            </h5>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+              <div>
+                <label style="font-size: 11.5px; font-weight: 700; color: #475569;">Commissioned Rank / Designation</label>
+                <input type="text" id="actionCommissionDesignation" class="filter-input" placeholder="e.g. Senior Veteran Dalpati" style="width: 100%;">
+              </div>
+              <div>
+                <label style="font-size: 11.5px; font-weight: 700; color: #475569;">Approval Remarks</label>
+                <input type="text" id="actionCommissionRemarks" class="filter-input" placeholder="Commissioned under Legacy Veteran Protocol" style="width: 100%;">
+              </div>
+            </div>
+            <button type="button" class="btn-admin btn-admin-primary" onclick="submitLegacyFinalApproval()" style="background: #047857; border-color: #047857; padding: 8px 18px; font-size: 13px;">
+              <i class="fa-solid fa-id-card"></i> Activate Legacy Sainik & Commission Digital ID
+            </button>
+          </div>
+
+          <!-- ALTERNATIVE ACTIONS: CORRECTION & REJECTION -->
+          <div style="display: flex; gap: 12px; border-top: 1px dashed #cbd5e1; padding-top: 14px;">
+            <div style="flex: 1;">
+              <input type="text" id="actionCorrectionRemarks" class="filter-input" placeholder="Correction remarks (e.g. proof document unreadable)..." style="width: 100%; margin-bottom: 6px;">
+              <button type="button" class="btn-admin btn-admin-outline" onclick="submitLegacyCorrection()" style="width: 100%; color: #d97706; border-color: #f59e0b;">
+                <i class="fa-solid fa-pen-ruler"></i> Request Correction from Applicant
+              </button>
+            </div>
+            <div style="flex: 1;">
+              <input type="text" id="actionRejectionReason" class="filter-input" placeholder="Rejection reason..." style="width: 100%; margin-bottom: 6px;">
+              <button type="button" class="btn-admin btn-admin-outline" onclick="submitLegacyRejection()" style="width: 100%; color: #dc2626; border-color: #ef4444;">
+                <i class="fa-solid fa-ban"></i> Reject Application
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Verification Timeline & Audit Trail -->
+        <div>
+          <h4 style="margin: 0 0 10px; font-size: 13.5px; font-weight: 700; color: #001f3f;">Verification Actions Audit Trail</h4>
+          <div class="table-responsive">
+            <table class="admin-table" style="font-size: 12px;">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Action</th>
+                  <th>Reviewing Official</th>
+                  <th>Remarks / Recorded Citations</th>
+                </tr>
+              </thead>
+              <tbody id="reviewAuditTimelineBody">
+                <tr><td colspan="4" style="text-align: center;">No verification actions recorded yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalLegacyReview')">Close Dossier</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 2: BATCH ALLOCATION SCHEME CONFIGURATION
+       ========================================== -->
+  <div id="modalBatchConfig" class="admin-modal" style="display: none;">
+    <div class="admin-modal-dialog" style="max-width: 600px;">
+      <div class="admin-modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fa-solid fa-sliders" style="color: var(--primary-orange); font-size: 18px;"></i>
+          <h3 style="margin: 0; font-size: 16px; font-weight: 800;">Configure Batch Number Generation Policy</h3>
+        </div>
+        <button type="button" class="btn-modal-close" onclick="closeAdminModal('modalBatchConfig')">&times;</button>
+      </div>
+      <form id="batchConfigForm" onsubmit="handleSaveBatchConfig(event)">
+        <div class="admin-modal-body" style="padding: 20px; font-size: 13px;">
+          <p style="color: #64748b; margin-top: 0;">
+            Configure organizational batch allocation rules. Batches are assigned using verified original joining dates and approved scope policies.
+          </p>
+          <div class="form-group-modal" style="margin-bottom: 14px;">
+            <label style="font-weight: 700;">Format Pattern Template *</label>
+            <input type="text" id="cfgFormatPattern" class="filter-input" value="SSD-BATCH-{YEAR}" required style="width: 100%; font-family: monospace;">
+            <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Supported tokens: <code>{YEAR}</code>, <code>{STATE}</code>, <code>{SEQ}</code>. Examples: <code>SSD-BATCH-{YEAR}</code>, <code>SSD-{YEAR}-B{SEQ}</code>.</div>
+          </div>
+          <div class="form-group-modal" style="margin-bottom: 14px;">
+            <label style="font-weight: 700;">Allocation Rule *</label>
+            <select id="cfgAllocationRule" class="filter-select" style="width: 100%;">
+              <option value="CALENDAR_YEAR">CALENDAR_YEAR (Members in same joining year share annual batch)</option>
+              <option value="SEQUENTIAL">SEQUENTIAL (Unique sequential batch per cohort)</option>
+              <option value="STATE_ANNUAL">STATE_ANNUAL (State-scoped annual batch)</option>
+            </select>
+          </div>
+          <div class="form-group-modal" style="margin-bottom: 14px;">
+            <label style="font-weight: 700;">Territorial Scope</label>
+            <select id="cfgScope" class="filter-select" style="width: 100%;">
+              <option value="NATIONAL">NATIONAL (Nationwide Unified Cadre)</option>
+              <option value="STATE_WISE">STATE_WISE (State Directorate Scoped)</option>
+            </select>
+          </div>
+          <div class="form-group-modal" style="margin-bottom: 14px;">
+            <label style="font-weight: 700;">Directive Citation / Resolution Notes</label>
+            <input type="text" id="cfgNotes" class="filter-input" placeholder="e.g. Central Command Executive Directive #2026/01" style="width: 100%;">
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalBatchConfig')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-floppy-disk"></i> Save Batch Policy</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 3: AUTHORIZED BATCH CORRECTION
+       ========================================== -->
+  <div id="modalBatchCorrection" class="admin-modal" style="display: none;">
+    <div class="admin-modal-dialog" style="max-width: 580px;">
+      <div class="admin-modal-header" style="background: #1e293b; color: #fff;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fa-solid fa-pen-to-square" style="color: #f59e0b; font-size: 18px;"></i>
+          <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #fff;">Authorized Batch Correction Desk</h3>
+        </div>
+        <button type="button" class="btn-modal-close" onclick="closeAdminModal('modalBatchCorrection')" style="color: #fff;">&times;</button>
+      </div>
+      <form id="batchCorrectionForm" onsubmit="handleBatchCorrection(event)">
+        <div class="admin-modal-body" style="padding: 20px; font-size: 13px;">
+          <div style="background: #fee2e2; border-left: 4px solid #ef4444; padding: 12px; margin-bottom: 16px; border-radius: 6px; font-size: 12px; color: #991b1b;">
+            <strong>Mandatory Audit Requirement:</strong> Batch corrections modify official seniority records and are permanently recorded in the immutable audit trail. A valid directive or justification is required.
+          </div>
+          <div class="form-group-modal" style="margin-bottom: 14px;">
+            <label style="font-weight: 700;">Member / Application ID *</label>
+            <input type="text" id="correctMemberId" class="filter-input" placeholder="e.g. SSD-MH-2026-XXXX or mem_xxx" required style="width: 100%;">
+          </div>
+          <div class="form-group-modal" style="margin-bottom: 14px;">
+            <label style="font-weight: 700;">New Official Batch Code *</label>
+            <input type="text" id="correctNewBatchCode" class="filter-input" placeholder="e.g. SSD-BATCH-2012" required style="width: 100%;">
+          </div>
+          <div class="form-group-modal" style="margin-bottom: 14px;">
+            <label style="font-weight: 700;">Mandatory Justification / Directive Citation *</label>
+            <textarea id="correctReason" class="filter-input" rows="3" placeholder="State reason for correction e.g. Corrected following Central Command archival verification of 2012 Deekshabhoomi roll" required style="width: 100%;"></textarea>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalBatchCorrection')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary" style="background: #d97706; border-color: #d97706;">
+            <i class="fa-solid fa-check"></i> Execute & Audit Batch Correction
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 4: BULK HISTORICAL MEMBERSHIP IMPORT
+       ========================================== -->
+  <div id="modalLegacyBulkImport" class="admin-modal" style="display: none;">
+    <div class="admin-modal-dialog" style="max-width: 750px;">
+      <div class="admin-modal-header" style="background: #001f3f; color: #ffffff;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fa-solid fa-file-import" style="color: #c5a059; font-size: 18px;"></i>
+          <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #fff;">Bulk Historical Membership Import</h3>
+        </div>
+        <button type="button" class="btn-modal-close" onclick="closeAdminModal('modalLegacyBulkImport')" style="color: #fff;">&times;</button>
+      </div>
+      <form id="legacyBulkImportForm" onsubmit="handleLegacyBulkImport(event)">
+        <div class="admin-modal-body" style="padding: 20px; font-size: 13px;">
+          <div style="background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #f59e0b; padding: 12px; margin-bottom: 16px; border-radius: 6px; font-size: 12px; color: #78350f;">
+            <strong>Important Integrity Rule:</strong> Bulk imported records are indexed as unverified applications in <code>LEGACY_SUBMITTED</code> or <code>DATE_VERIFICATION_PENDING</code> status. They are <strong>NEVER</strong> automatically activated or issued digital IDs without authorized verification.
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <label style="font-weight: 700; display: block; margin-bottom: 4px;">Paste JSON Array of Historical Member Records *</label>
+            <textarea id="bulkImportJsonText" class="filter-input" rows="8" placeholder='[
+  {
+    "fullName": "Veteran Dalpati Ashok Gaikwad",
+    "mobile": "+91 94220 12345",
+    "email": "ashok.gaikwad@example.com",
+    "originalJoiningDate": "1989-10-14",
+    "joiningDatePrecision": "EXACT_DATE",
+    "stateName": "Maharashtra",
+    "districtName": "Nagpur",
+    "chapter": "Deekshabhoomi Central Unit",
+    "designation": "Zonal Commander",
+    "existingSainikId": "VET-MH-1989-01"
+  }
+]' style="width: 100%; font-family: monospace; font-size: 11.5px;"></textarea>
+          </div>
+
+          <div id="bulkImportResultsBox" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; font-size: 12px;">
+            <h5 style="margin: 0 0 6px; color: #001f3f;">Import Summary:</h5>
+            <div id="bulkImportStatsSummary"></div>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalLegacyBulkImport')">Close</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-upload"></i> Process Historical Import</button>
         </div>
       </form>
     </div>

@@ -97,7 +97,10 @@ const embeddedStore = {
   terms_conditions: new Map(),
   privacy_policy: new Map(),
   content_audit_logs: new Map(),
-  content_approvals: new Map()
+  content_approvals: new Map(),
+  batches: new Map(),
+  batch_history: new Map(),
+  batch_config: new Map()
 };
 
 // Persistence file for embedded storage (using /tmp on Vercel)

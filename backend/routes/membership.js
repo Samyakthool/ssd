@@ -11,6 +11,7 @@ import { upload } from '../middleware/upload.js';
 import { applicationRateLimiter } from '../middleware/rateLimiter.js';
 import { sendEnlistmentApprovalEmail } from '../utils/mailer.js';
 import { broadcastRealtimeEvent } from '../utils/realtime.js';
+import { checkDuplicateLegacyMember } from './legacy.js';
 
 const router = express.Router();
 
@@ -198,24 +199,52 @@ function resolveOrHydrateApplication(id, req = null) {
 }
 
 
-// 1. PUBLIC MEMBERSHIP APPLICATION SUBMISSION
+// 1. PUBLIC MEMBERSHIP APPLICATION SUBMISSION (LEGACY & STANDARD NEW ENLISTMENT)
 router.post('/apply', applicationRateLimiter, upload.single('photo'), async (req, res) => {
   try {
     const {
       fullName, dob, gender, mobile, email, address,
       stateId, stateName, regionId, regionName, districtId, districtName,
       talukaId, talukaName, villageCity, education, occupation,
-      bloodGroup, wingId, wingName, specialSkills, solemnPledge
+      bloodGroup, wingId, wingName, specialSkills, solemnPledge,
+      membershipType, originalJoiningDate, joiningDatePrecision,
+      existingSainikId, chapter, currentDesignation, previousResponsibilities,
+      recommendingOfficial, historicalNotes, applicantAttestation
     } = req.body;
 
-    if (!fullName || !mobile || !email || !stateName || !districtName || !wingName) {
+    const isLegacy = (membershipType === 'LEGACY' || req.body.membership_type === 'LEGACY');
+
+    if (!fullName || !mobile || !stateName || !districtName) {
       return res.status(400).json({
         success: false,
-        error: 'Missing mandatory fields: Full Name, Mobile, Email, State, District, and Wing are required.'
+        error: 'Missing mandatory fields: Full Name, Mobile, State, and District are required.'
       });
     }
 
-    const appId = generateApplicationId();
+    if (!isLegacy && (!email || !wingName)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing mandatory fields for new enlistment: Email and Wing are required.'
+      });
+    }
+
+    // Acceptance Test 8: Duplicate membership records are detected
+    if (isLegacy || existingSainikId) {
+      const dupCheck = checkDuplicateLegacyMember({
+        mobile: mobile.trim(),
+        email: email ? email.trim().toLowerCase() : null,
+        existingSainikId: existingSainikId ? existingSainikId.trim() : null
+      });
+
+      if (dupCheck.isDuplicate) {
+        return res.status(409).json({
+          success: false,
+          error: `Integrity Alert: A registration with matching ${dupCheck.field} (${dupCheck.match}) already exists in the registry.`
+        });
+      }
+    }
+
+    const appId = isLegacy ? `SSD-LEGACY-${Math.random().toString(36).substr(2, 6).toUpperCase()}` : generateApplicationId();
     let photoUrl = req.body.photoBase64 || null;
 
     if (!photoUrl && req.file) {
@@ -232,17 +261,35 @@ router.post('/apply', applicationRateLimiter, upload.single('photo'), async (req
       photoUrl = 'logo.png';
     }
 
-    // Assign Default Workflow and First Step (District Executive)
-    const workflowId = 'wf_national_standard';
-    const firstStepId = 'step_1_district';
+    // Determine Status
+    let initialStatus = 'SUBMITTED';
+    let precision = joiningDatePrecision || (originalJoiningDate ? 'EXACT_DATE' : 'APPROXIMATE_UNKNOWN');
 
+    if (isLegacy) {
+      if (precision === 'APPROXIMATE_UNKNOWN' || !originalJoiningDate) {
+        initialStatus = 'DATE_VERIFICATION_PENDING';
+      } else {
+        initialStatus = 'LEGACY_SUBMITTED';
+      }
+    }
+
+    // Assign Default Workflow and First Step
+    const workflowId = isLegacy ? 'wf_legacy_verification' : 'wf_national_standard';
+    const firstStepId = isLegacy ? 'step_legacy_local' : 'step_1_district';
+
+    // Acceptance Test 3 & 4:
+    // - portal_registration_date is generated automatically by server (immutable)
+    // - applicant CANNOT manually assign their official batch number
+    // Acceptance Test 5:
+    // - unverified joining date cannot be treated as verified
     const newApp = {
       id: appId,
+      membership_type: isLegacy ? 'LEGACY' : 'STANDARD',
       full_name: fullName.trim(),
       dob: dob || null,
       gender: gender || 'Unspecified',
       mobile: mobile.trim(),
-      email: email.trim().toLowerCase(),
+      email: email ? email.trim().toLowerCase() : '',
       address: address ? address.trim() : '',
       state_id: stateId || 'state_mh',
       state_name: stateName.trim(),
@@ -253,16 +300,43 @@ router.post('/apply', applicationRateLimiter, upload.single('photo'), async (req
       taluka_id: talukaId || null,
       taluka_name: talukaName || '',
       village_city: villageCity || districtName.trim(),
+      chapter: chapter || `${districtName.trim()} Chapter`,
+      chapter_name: chapter || `${districtName.trim()} Chapter`,
       education: education || 'N/A',
       occupation: occupation || 'General Citizen',
       blood_group: bloodGroup || 'N/A',
-      wing_id: wingId || 'wing_cadet',
-      wing_name: wingName || 'Central Cadet Corps (Sainik Wing)',
+      wing_id: wingId || (isLegacy ? 'wing_veteran' : 'wing_cadet'),
+      wing_name: wingName || (isLegacy ? 'Central Cadet Corps (Veteran Corps)' : 'Central Cadet Corps (Sainik Wing)'),
       photo_url: photoUrl,
       documents_json: [],
       special_skills: specialSkills || '',
       solemn_pledge_accepted: solemnPledge === 'true' || solemnPledge === true,
-      status: 'SUBMITTED',
+      
+      // Legacy Specific Fields
+      original_joining_date: isLegacy ? (originalJoiningDate || null) : null,
+      joining_date_precision: isLegacy ? precision : 'EXACT_DATE',
+      portal_registration_date: new Date().toISOString(),
+      joining_date_verified: false, // Must be verified by authorized official
+      joining_date_verified_by: null,
+      joining_date_verified_at: null,
+      joining_date_verification_notes: null,
+      existing_sainik_id: existingSainikId ? existingSainikId.trim() : null,
+      current_designation: currentDesignation || null,
+      previous_responsibilities: previousResponsibilities || null,
+      recommending_official: recommendingOfficial || null,
+      historical_notes: historicalNotes || null,
+      applicant_attestation: applicantAttestation === true || applicantAttestation === 'true',
+      
+      // Batch fields: strictly locked against applicant self-assignment
+      batch_id: null,
+      batch_code: null,
+      batch_no: null,
+      batch_assignment_status: 'PENDING',
+      batch_assigned_by: null,
+      batch_assigned_at: null,
+
+      status: initialStatus,
+      legacy_verification_status: isLegacy ? initialStatus : null,
       workflow_id: workflowId,
       current_step_id: firstStepId,
       current_step_order: 1,
@@ -282,12 +356,14 @@ router.post('/apply', applicationRateLimiter, upload.single('photo'), async (req
       step_id: firstStepId,
       official_id: null,
       official_name: 'Applicant Self-Registration',
-      official_role: 'Applicant',
+      official_role: isLegacy ? 'Legacy Sainik Applicant' : 'Applicant',
       jurisdiction_summary: `${newApp.district_name}, ${newApp.state_name}`,
-      action: 'SUBMIT',
+      action: isLegacy ? 'SUBMIT_LEGACY' : 'SUBMIT',
       previous_status: null,
-      new_status: 'SUBMITTED',
-      remarks: 'Application submitted successfully via the official online enlistment portal.',
+      new_status: initialStatus,
+      remarks: isLegacy
+        ? 'Legacy Sainik registration submitted for organizational verification, date confirmation, and batch allocation.'
+        : 'Application submitted successfully via the official online enlistment portal.',
       created_at: new Date().toISOString()
     };
     embeddedStore.approval_actions.set(actionId, initialAction);
@@ -298,10 +374,15 @@ router.post('/apply', applicationRateLimiter, upload.single('photo'), async (req
       id: auditId,
       user_id: null,
       user_name: newApp.full_name,
-      user_role: 'Applicant',
-      action: 'APPLICATION_SUBMITTED',
+      user_role: isLegacy ? 'Legacy Sainik' : 'Applicant',
+      action: isLegacy ? 'LEGACY_APPLICATION_SUBMITTED' : 'APPLICATION_SUBMITTED',
       entity_type: 'MEMBERSHIP_APPLICATION',
       entity_id: appId,
+      details: {
+        membershipType: newApp.membership_type,
+        originalJoiningDate: newApp.original_joining_date,
+        portalRegistrationDate: newApp.portal_registration_date
+      },
       jurisdiction_summary: `${newApp.district_name}, ${newApp.state_name}`,
       ip_address: req.ip || '127.0.0.1',
       created_at: new Date().toISOString()
@@ -309,8 +390,8 @@ router.post('/apply', applicationRateLimiter, upload.single('photo'), async (req
 
     saveEmbeddedStore();
 
-    // Broadcast real-time event to all active admins and clients
-    broadcastRealtimeEvent('membership:apply', newApp);
+    // Broadcast real-time event
+    broadcastRealtimeEvent(isLegacy ? 'legacy:apply' : 'membership:apply', newApp);
 
     // Async attempt to persist to Supabase Cloud if configured
     if (supabase) {
@@ -321,10 +402,15 @@ router.post('/apply', applicationRateLimiter, upload.single('photo'), async (req
 
     return res.status(201).json({
       success: true,
-      message: 'Sainik enlistment application submitted successfully.',
+      message: isLegacy
+        ? 'Legacy Sainik registration submitted successfully. Application queued for multi-tier verification.'
+        : 'Sainik enlistment application submitted successfully.',
       applicationId: appId,
+      membershipType: newApp.membership_type,
       applicantName: newApp.full_name,
       assignedDistrict: newApp.district_name,
+      originalJoiningDate: newApp.original_joining_date,
+      portalRegistrationDate: newApp.portal_registration_date,
       status: newApp.status
     });
 

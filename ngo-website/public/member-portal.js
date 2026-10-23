@@ -364,8 +364,14 @@ function displayMemberDashboard(card) {
   const correctionBanner = document.getElementById('correctionBanner');
   if (correctionBanner) correctionBanner.style.display = 'none';
 
+  const isLegacy = (card.membershipType === 'LEGACY' || card.membership_type === 'LEGACY');
+
   document.getElementById('portalUserName').textContent = card.fullName;
-  document.getElementById('portalUserBadge').innerHTML = `<i class="fa-solid fa-shield"></i> SAINIK ID: ${card.sainikId}`;
+  if (isLegacy) {
+    document.getElementById('portalUserBadge').innerHTML = `<i class="fa-solid fa-award" style="color: #f59e0b;"></i> SAINIK ID: ${card.sainikId} <span style="background: linear-gradient(135deg, #FF6B00, #b45309); color: #ffffff; padding: 2px 8px; border-radius: 999px; font-size: 11px; margin-left: 6px; font-weight: 700;">LEGACY VETERAN</span>`;
+  } else {
+    document.getElementById('portalUserBadge').innerHTML = `<i class="fa-solid fa-shield"></i> SAINIK ID: ${card.sainikId}`;
+  }
   document.getElementById('portalUserDesignation').textContent = `${card.designation} | ${card.wing}`;
   document.getElementById('portalStatusPill').textContent = card.status || 'ACTIVE';
   document.getElementById('portalStatusPill').className = 'badge-status badge-approved';
@@ -387,33 +393,56 @@ function displayMemberDashboard(card) {
   }
 
   document.getElementById('portalUnitDetails').innerHTML = `
+    <strong>Membership Cadre:</strong> ${isLegacy ? '<span style="color:#b45309; font-weight:700;">🎖️ Legacy Veteran (Seniority Preserved)</span>' : 'Standard Enlisted Cadet'}<br>
+    ${isLegacy && card.originalJoiningDate ? `<strong>Original SSD Joining Date:</strong> ${card.originalJoiningDate} ${card.joiningDateVerified ? '<span style="color:#16a34a; font-weight:700;">[Verified Official]</span>' : ''}<br>` : ''}
+    ${isLegacy && card.portalRegistrationDate ? `<strong>Portal Enlistment Date:</strong> ${new Date(card.portalRegistrationDate).toLocaleDateString('en-IN')}<br>` : ''}
     <strong>State Chapter:</strong> ${card.state}<br>
     <strong>District Command:</strong> ${card.district}<br>
     <strong>Unit / Chapter:</strong> ${card.chapter || (card.district + ' Central Unit')}<br>
     <strong>Batch Allotment:</strong> ${card.batchNo || 'BATCH-2026/Q3'}<br>
     <strong>Blood Group:</strong> ${card.bloodGroup || 'N/A'}<br>
-    <strong>Date of Commission:</strong> ${new Date(card.joiningDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+    <strong>Date of Commission:</strong> ${new Date(card.joiningDate || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
   `;
 
   // Populate Timeline
   const timeline = document.getElementById('portalTimeline');
-  timeline.innerHTML = `
-    <li class="timeline-step-item">
-      <div class="step-marker done"></div>
-      <div class="step-title">Enlistment Application Submitted</div>
-      <div class="step-desc">Application registered and indexed by District Command.</div>
-    </li>
-    <li class="timeline-step-item">
-      <div class="step-marker done"></div>
-      <div class="step-title">District & State Directorate Recommendation</div>
-      <div class="step-desc">Physical background and constitutional discipline verified.</div>
-    </li>
-    <li class="timeline-step-item">
-      <div class="step-marker done"></div>
-      <div class="step-title">Central Command Final Commission</div>
-      <div class="step-desc">Official Sainik ID <strong>${card.sainikId}</strong> commissioned. Active standing verified.</div>
-    </li>
-  `;
+  if (isLegacy) {
+    timeline.innerHTML = `
+      <li class="timeline-step-item">
+        <div class="step-marker done"></div>
+        <div class="step-title">Historical Enlistment & Cadre Service</div>
+        <div class="step-desc">Original SSD Joining Date: <strong>${card.originalJoiningDate || 'Pre-portal Era'}</strong>. Seniority and chapter standing preserved.</div>
+      </li>
+      <li class="timeline-step-item">
+        <div class="step-marker done"></div>
+        <div class="step-title">Legacy Credential Verification</div>
+        <div class="step-desc">Historical records verified against regional archives and command directory.</div>
+      </li>
+      <li class="timeline-step-item">
+        <div class="step-marker done"></div>
+        <div class="step-title">Batch Allotment & Digital Commission</div>
+        <div class="step-desc">Official Senior Batch <strong>${card.batchNo || 'SSD-BATCH-LEGACY'}</strong> assigned and Digital Sainik ID <strong>${card.sainikId}</strong> commissioned.</div>
+      </li>
+    `;
+  } else {
+    timeline.innerHTML = `
+      <li class="timeline-step-item">
+        <div class="step-marker done"></div>
+        <div class="step-title">Enlistment Application Submitted</div>
+        <div class="step-desc">Application registered and indexed by District Command.</div>
+      </li>
+      <li class="timeline-step-item">
+        <div class="step-marker done"></div>
+        <div class="step-title">District & State Directorate Recommendation</div>
+        <div class="step-desc">Physical background and constitutional discipline verified.</div>
+      </li>
+      <li class="timeline-step-item">
+        <div class="step-marker done"></div>
+        <div class="step-title">Central Command Final Commission</div>
+        <div class="step-desc">Official Sainik ID <strong>${card.sainikId}</strong> commissioned. Active standing verified.</div>
+      </li>
+    `;
+  }
 
   // Draw Canvas ID Card
   renderIdCardCanvas(card, false);
@@ -758,28 +787,38 @@ function renderIdCardCanvas(card, back = false) {
 
     // Sainik Metadata (Right Column)
     const textX = 160;
-    ctx.fillStyle = '#FF6B00';
+    const isLegacy = (card.membershipType === 'LEGACY' || card.membership_type === 'LEGACY');
+    ctx.fillStyle = isLegacy ? '#FFB800' : '#FF6B00';
     ctx.font = 'bold 13px monospace';
-    ctx.fillText(`SAINIK ID: ${card.sainikId || 'SSD-CADET-2026'}`, textX, 108);
+    ctx.fillText(`SAINIK ID: ${card.sainikId || 'SSD-CADET-2026'}${isLegacy ? '  [VETERAN]' : ''}`, textX, 108);
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 18px sans-serif';
     ctx.fillText(card.fullName || 'Sainik Cadet', textX, 136);
 
     ctx.fillStyle = '#cbd5e1';
-    ctx.font = '12.5px sans-serif';
-    ctx.fillText(`Rank/Designation: ${card.designation || 'Cadet Sainik'}`, textX, 162);
-    ctx.fillText(`Wing: ${card.wing || 'Central Cadet Corps'}`, textX, 184);
-    ctx.fillText(`Chapter: ${card.district || 'Nagpur'}, ${card.state || 'Maharashtra'}`, textX, 206);
-    ctx.fillText(`Blood: ${card.bloodGroup || 'O+'}  •  Batch: ${card.batchNo || 'BATCH-2026/Q3'}`, textX, 228);
+    ctx.font = '12px sans-serif';
+    ctx.fillText(`Rank/Designation: ${card.designation || 'Cadet Sainik'}`, textX, 158);
+    ctx.fillText(`Wing: ${card.wing || 'Central Cadet Corps'}`, textX, 178);
+    ctx.fillText(`Chapter: ${card.district || 'Nagpur'}, ${card.state || 'Maharashtra'}`, textX, 198);
+    
+    if (isLegacy && card.originalJoiningDate) {
+      const yr = String(card.originalJoiningDate).split('-')[0] || card.originalJoiningDate;
+      ctx.fillStyle = '#fde047';
+      ctx.fillText(`Cadre Seniority: Since ${card.originalJoiningDate} (${yr}) • Verified`, textX, 218);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillText(`Blood: ${card.bloodGroup || 'O+'}  •  Batch: ${card.batchNo || 'SSD-BATCH-' + yr}`, textX, 238);
+    } else {
+      ctx.fillText(`Blood: ${card.bloodGroup || 'O+'}  •  Batch: ${card.batchNo || 'BATCH-2026/Q3'}`, textX, 218);
+    }
 
     // Bottom Verification Seal
     ctx.fillStyle = '#000e1c';
     ctx.fillRect(4, h - 50, w - 8, 46);
 
-    ctx.fillStyle = '#16a34a';
+    ctx.fillStyle = isLegacy ? '#f59e0b' : '#16a34a';
     ctx.font = 'bold 11.5px sans-serif';
-    ctx.fillText('● OFFICIALLY VERIFIED ACTIVE CADRE', 30, h - 22);
+    ctx.fillText(isLegacy ? '★ OFFICIALLY VERIFIED LEGACY VETERAN' : '● OFFICIALLY VERIFIED ACTIVE CADRE', 30, h - 22);
 
     ctx.fillStyle = '#94a3b8';
     ctx.font = '10px sans-serif';

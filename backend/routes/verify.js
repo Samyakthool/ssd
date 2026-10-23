@@ -290,13 +290,16 @@ const handleVerifyRequest = async (req, res) => {
       fullName: member.full_name || member.fullName || 'Sainik Cadet',
       photoUrl: member.photo_url || member.photoUrl || member.photoBase64 || member.photo || null,
       designation: member.designation || 'Cadet Sainik',
+      membershipType: member.membership_type || member.membershipType || 'STANDARD',
+      originalJoiningDate: member.original_joining_date || member.originalJoiningDate || null,
+      joiningDateVerified: member.joining_date_verified || member.joiningDateVerified || false,
       wing: member.wing_name || member.wing || 'Central Cadet Corps',
       state: member.state_name || member.state || 'Maharashtra',
       district: member.district_name || member.district || 'Nagpur',
       chapter: member.chapter_name || member.chapter || `${member.district_name || 'Nagpur'} Central Unit`,
       status: member.status || 'ACTIVE',
       commissionDate: member.approved_at || member.created_at || new Date().toISOString(),
-      batchNo: member.batch_no || member.batchNo || 'BATCH-2026/Q1',
+      batchNo: member.batch_code || member.batch_no || member.batchNo || 'BATCH-2026/Q1',
       authority: 'National Executive Directorate, Central Command HQ Nagpur'
     };
 

@@ -379,6 +379,14 @@ router.get('/card/:sainikId', async (req, res) => {
     const s = (member.status || '').toUpperCase();
     const isApproved = (s === 'FINAL_APPROVED' || s === 'APPROVED' || s === 'ACTIVE');
 
+    // Acceptance Test 11: The digital ID is generated only after the required approvals
+    if (!isApproved) {
+      return res.status(403).json({
+        success: false,
+        error: 'Digital Sainik ID is generated only after the required approvals and multi-tier verification are complete.'
+      });
+    }
+
     let qrCodeDataUrl = null;
     try {
       qrCodeDataUrl = await QRCode.toDataURL(verifyUrl, {
@@ -400,13 +408,17 @@ router.get('/card/:sainikId', async (req, res) => {
       fullName: extractMemberDisplayName(member),
       photoUrl: member.photo_url || member.photoUrl || member.photoBase64 || member.photo || null,
       designation: member.designation || (isApproved ? 'Cadet Sainik' : 'Enlistment Candidate'),
+      membershipType: member.membership_type || member.membershipType || 'STANDARD',
+      originalJoiningDate: member.original_joining_date || member.originalJoiningDate || null,
+      portalRegistrationDate: member.portal_registration_date || member.portalRegistrationDate || member.created_at || null,
+      joiningDateVerified: member.joining_date_verified || member.joiningDateVerified || false,
       wing: member.wing_name || member.wing || 'Central Cadet Corps',
       state: member.state_name || member.state || 'Maharashtra',
       district: member.district_name || member.district || 'Nagpur',
-      chapter: member.chapter_name || `${member.district_name || 'Nagpur'} Central Unit`,
+      chapter: member.chapter_name || member.chapter || `${member.district_name || 'Nagpur'} Central Unit`,
       bloodGroup: member.blood_group || member.bloodGroup || 'N/A',
-      joiningDate: member.approved_at || member.created_at || new Date().toISOString(),
-      batchNo: member.batch_no || member.batchNo || 'BATCH-2026/Q3',
+      joiningDate: member.original_joining_date || member.approved_at || member.created_at || new Date().toISOString(),
+      batchNo: member.batch_code || member.batch_no || member.batchNo || 'BATCH-2026/Q3',
       status: member.status || 'ACTIVE',
       isApproved: isApproved,
       qrToken: member.qr_token || ('qr_' + sainikCode.toLowerCase().replace(/[^a-z0-9]/g, '_')),

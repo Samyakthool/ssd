@@ -442,13 +442,16 @@
               fullName: raw.fullName || raw.full_name || raw.name || 'Sainik Cadet',
               photoUrl: raw.photoUrl || raw.photo_url || raw.photo || null,
               designation: raw.designation || 'Cadet Sainik',
+              membershipType: raw.membershipType || raw.membership_type || (raw.original_joining_date ? 'LEGACY' : 'STANDARD'),
+              originalJoiningDate: raw.originalJoiningDate || raw.original_joining_date || null,
+              joiningDateVerified: raw.joiningDateVerified !== undefined ? raw.joiningDateVerified : (raw.joining_date_verified || false),
               wing: raw.wing || raw.wing_name || 'Central Cadet Corps',
               state: raw.state || raw.state_name || 'Maharashtra',
               district: raw.district || raw.district_name || 'Nagpur',
               chapter: raw.chapter || raw.chapter_name || `${raw.district_name || raw.district || 'Nagpur'} Central Unit`,
               status: raw.status || 'ACTIVE',
               commissionDate: raw.commissionDate || raw.approved_at || raw.created_at || new Date().toISOString(),
-              batchNo: raw.batchNo || raw.batch_no || 'BATCH-2026/Q1',
+              batchNo: raw.batchNo || raw.batch_no || raw.batch_code || 'BATCH-2026/Q1',
               authority: 'National Executive Directorate, Central Command HQ Nagpur'
             };
             if (data.verified !== false && (v.status === 'ACTIVE' || v.status === 'APPROVED' || v.status === 'FINAL_APPROVED' || data.verified === true)) {
@@ -473,13 +476,16 @@
                 fullName: c.fullName || c.full_name || 'Sainik Cadet',
                 photoUrl: c.photoUrl || c.photo_url || null,
                 designation: c.designation || 'Cadet Sainik',
+                membershipType: c.membershipType || c.membership_type || (c.originalJoiningDate ? 'LEGACY' : 'STANDARD'),
+                originalJoiningDate: c.originalJoiningDate || c.original_joining_date || null,
+                joiningDateVerified: c.joiningDateVerified !== undefined ? c.joiningDateVerified : (c.joining_date_verified || false),
                 wing: c.wing || c.wing_name || 'Central Cadet Corps',
                 state: c.state || c.state_name || 'Maharashtra',
                 district: c.district || c.district_name || 'Nagpur',
                 chapter: c.chapter || c.chapter_name || `${c.district_name || c.district || 'Nagpur'} Central Unit`,
                 status: c.status || 'ACTIVE',
                 commissionDate: c.joiningDate || c.approved_at || c.created_at || new Date().toISOString(),
-                batchNo: c.batchNo || c.batch_no || 'BATCH-2026/Q1',
+                batchNo: c.batchNo || c.batch_no || c.batch_code || 'BATCH-2026/Q1',
                 authority: 'National Executive Directorate, Central Command HQ Nagpur'
               },
               source: 'api_card'
@@ -795,8 +801,21 @@
 
         if (result && result.verified && result.v) {
           const v = result.v;
-          badge.className = 'verify-badge-status';
-          badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Verified Active Sainik';
+          const isLegacy = (v.membershipType === 'LEGACY');
+
+          if (isLegacy) {
+            badge.className = 'verify-badge-status';
+            badge.style.background = '#fffbeb';
+            badge.style.color = '#b45309';
+            badge.style.border = '1px solid #fde68a';
+            badge.innerHTML = '<i class="fa-solid fa-award"></i> Verified Legacy Veteran Cadre';
+          } else {
+            badge.className = 'verify-badge-status';
+            badge.style.background = '#ecfdf5';
+            badge.style.color = '#15803d';
+            badge.style.border = '1px solid #bbf7d0';
+            badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Verified Active Sainik';
+          }
 
           const formattedDate = new Date(v.commissionDate || Date.now()).toLocaleDateString('en-IN', {
             day: 'numeric',
@@ -804,11 +823,20 @@
             year: 'numeric'
           });
 
+          const joiningDateStr = v.originalJoiningDate ? new Date(v.originalJoiningDate).toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+          }) : null;
+
           body.innerHTML = `
             <div class="sainik-profile-row">
               <img src="${v.photoUrl || '/logo.png?v=8.0'}" alt="${v.fullName}" class="sainik-photo" onerror="this.onerror=null; this.src='/logo1.png'">
               <div class="sainik-main-meta">
-                <span class="sainik-id-tag"><i class="fa-solid fa-id-badge"></i> ${v.sainikId}</span>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 6px;">
+                  <span class="sainik-id-tag"><i class="fa-solid fa-id-badge"></i> ${v.sainikId}</span>
+                  ${isLegacy ? `<span style="background: linear-gradient(135deg, #FF6B00, #b45309); color: #ffffff; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-medal"></i> VETERAN CADRE</span>` : ''}
+                </div>
                 <h3>${v.fullName}</h3>
                 <div style="font-size: 13.5px; color: #1e293b; font-weight: 600;">${v.designation}</div>
                 <div style="font-size: 12.5px; color: #64748b;">${v.wing}</div>
@@ -816,6 +844,19 @@
             </div>
 
             <div class="verify-details-grid">
+              ${isLegacy ? `
+              <div class="detail-item" style="background: #fffdf5; border-color: #fde68a;">
+                <div class="detail-label" style="color: #b45309;"><i class="fa-solid fa-calendar-check"></i> Original SSD Joining Date</div>
+                <div class="detail-value" style="color: #92400e; font-weight: 700;">
+                  ${joiningDateStr || 'Archival Verified'}
+                  ${v.joiningDateVerified ? ' <span style="color: #16a34a; font-size: 11px;"><i class="fa-solid fa-check-double"></i> Verified</span>' : ''}
+                </div>
+              </div>
+              <div class="detail-item" style="background: #fffdf5; border-color: #fde68a;">
+                <div class="detail-label" style="color: #b45309;"><i class="fa-solid fa-layer-group"></i> Seniority Batch Allocation</div>
+                <div class="detail-value" style="color: #92400e; font-weight: 700;">${v.batchNo}</div>
+              </div>
+              ` : ''}
               <div class="detail-item">
                 <div class="detail-label">State Directorate</div>
                 <div class="detail-value">${v.state}</div>
@@ -832,12 +873,14 @@
                 <div class="detail-label">Commission Status</div>
                 <div class="detail-value" style="color: #15803d;"><i class="fa-solid fa-shield"></i> ${v.status}</div>
               </div>
+              ${!isLegacy ? `
               <div class="detail-item">
                 <div class="detail-label">Batch Allotment</div>
                 <div class="detail-value">${v.batchNo || 'BATCH-2026/Q1'}</div>
               </div>
+              ` : ''}
               <div class="detail-item">
-                <div class="detail-label">Commission Date</div>
+                <div class="detail-label">${isLegacy ? 'Portal Enlistment Date' : 'Commission Date'}</div>
                 <div class="detail-value">${formattedDate}</div>
               </div>
             </div>
