@@ -49,7 +49,8 @@ const itemsToCopy = [
   'SSD_System_Architecture_and_Workflow.pdf',
   'Dr._Babasaheb_Ambedkar_delivering_speech_about_renouncing_Hinduism_at_Yeola,_Nashik_on_13_Oct,_1935.jpg_01.jpg',
   'dr-ambedkar-founder.jpg',
-  'dr-ambedkar-with-ssd-cadets.jpg'
+  'dr-ambedkar-with-ssd-cadets.jpg',
+  'ssd-cadets-march.jpg'
 ];
 
 for (const item of itemsToCopy) {

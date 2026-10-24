@@ -1448,7 +1448,368 @@ async function runTests() {
       }
     }
   });
-  console.log(` 🏁 TEST SUITE SUMMARY: ${passed} PASSED, ${failed} FAILED`);
+
+  // ==========================================================================
+  // DIGITAL LIBRARY MANAGEMENT SYSTEM - ACCEPTANCE TEST SUITE
+  // ==========================================================================
+  let libraryTestDocId = '';
+  let libraryRestrictedDocId = '';
+  let testCatId = '';
+
+  await assert('Library Acceptance 1: Categories Directory returns all 12 official classifications', async () => {
+    const res = await fetch('http://localhost:3000/api/library/categories?all=true');
+    const data = await res.json();
+    if (res.status !== 200 || !data.success || !Array.isArray(data.categories)) {
+      throw new Error('Failed to retrieve categories: ' + JSON.stringify(data));
+    }
+    if (data.categories.length < 12) {
+      throw new Error(`Expected at least 12 categories, found ${data.categories.length}`);
+    }
+
+    const expectedCategories = [
+      'SSD Constitution and Official Documents',
+      'Historical Documents and Archives',
+      'Books and E-books',
+      'Research Papers and Publications',
+      'Speeches and Lectures',
+      'Circulars and Notices',
+      'Training and Educational Materials',
+      'Social Awareness Resources',
+      'Photographs and Historical Images',
+      'Audio and Video Resources',
+      'Reports and Documentation',
+      'Other Resources'
+    ];
+
+    for (const exp of expectedCategories) {
+      const match = data.categories.find(c => c.name.toLowerCase() === exp.toLowerCase());
+      if (!match) {
+        throw new Error(`Mandatory category '${exp}' missing from categories registry`);
+      }
+    }
+  });
+
+  await assert('Library Acceptance 2: Authorized Category Management (Create, Update & Soft-Deactivate)', async () => {
+    // 1. Create custom category
+    const createRes = await fetch('http://localhost:3000/api/library/categories', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: JSON.stringify({
+        name: 'Centennial Special Memorabilia 2026',
+        icon: 'fa-gem',
+        description: 'Special centenary centenary archives and documents'
+      })
+    });
+    const createData = await createRes.json();
+    if (!createData.success || !createData.category) {
+      throw new Error('Failed to create category: ' + JSON.stringify(createData));
+    }
+    testCatId = createData.category.id;
+
+    // 2. Update category
+    const updateRes = await fetch(`http://localhost:3000/api/library/categories/${testCatId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: JSON.stringify({
+        description: 'Updated centenary centenary description'
+      })
+    });
+    const updateData = await updateRes.json();
+    if (!updateData.success || updateData.category.description !== 'Updated centenary centenary description') {
+      throw new Error('Failed to update category description');
+    }
+
+    // 3. Deactivate category
+    const deactRes = await fetch(`http://localhost:3000/api/library/categories/${testCatId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: JSON.stringify({ is_active: false })
+    });
+    const deactData = await deactRes.json();
+    if (!deactData.success || deactData.category.is_active !== false) {
+      throw new Error('Failed to deactivate category');
+    }
+  });
+
+  await assert('Library Acceptance 3: Upload resource with magic bytes inspection, SHA-256 & official doc fields', async () => {
+    const formData = new FormData();
+    const mockPdfBuffer = Buffer.from('%PDF-1.4\n1 0 obj\n<< /Title (Samata Sainik Dal Vidhan) >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF');
+    const pdfBlob = new Blob([mockPdfBuffer], { type: 'application/pdf' });
+    formData.append('file', pdfBlob, 'ssd-constitution-1927.pdf');
+
+    formData.append('title', 'SSD Constitution & Supreme By-Laws (1927)');
+    formData.append('category_id', 'cat_ssd_constitution_official');
+    formData.append('description', 'Fundamental founding statute, by-laws, and moral charter of Samata Sainik Dal.');
+    formData.append('language', 'English');
+    formData.append('access_level', 'public');
+    formData.append('status', 'draft');
+    formData.append('author', 'Bodhisattva Dr. B. R. Ambedkar');
+    formData.append('publisher', 'Central Command Press');
+    formData.append('year', '1927');
+    formData.append('tags', 'Constitution, Vidhan, ByLaws, Babasaheb');
+    formData.append('official_doc_type', 'Constitution');
+    formData.append('official_doc_number', 'SSD/CONST/1927-V1');
+    formData.append('version', '1.0');
+    formData.append('issuing_authority', 'Supreme Command Council');
+
+    const res = await fetch('http://localhost:3000/api/library/resources', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: formData
+    });
+    const data = await res.json();
+    if ((res.status !== 200 && res.status !== 201) || !data.success || !data.resource) {
+      throw new Error('Upload failed: ' + JSON.stringify(data));
+    }
+
+    libraryTestDocId = data.resource.id;
+    if (!data.resource.sha256_checksum || data.resource.sha256_checksum.length !== 64) {
+      throw new Error('Invalid SHA-256 checksum generated');
+    }
+    if (data.resource.version !== '1.0') {
+      throw new Error('Expected initial version 1.0, got ' + data.resource.version);
+    }
+    if (data.resource.status !== 'draft') {
+      throw new Error('Expected initial status draft, got ' + data.resource.status);
+    }
+  });
+
+  await assert('Library Acceptance 4: Security Rejection of Prohibited Executable Uploads (.exe, script payloads)', async () => {
+    // 1. Extension check rejection (.exe)
+    const exeForm = new FormData();
+    const fakeExeBlob = new Blob(['MZ\x90\x00\x03\x00\x00\x00This is a fake executable'], { type: 'application/octet-stream' });
+    exeForm.append('file', fakeExeBlob, 'malicious_virus.exe');
+    exeForm.append('title', 'Trojan Payload');
+    exeForm.append('category_id', 'cat_other_resources');
+
+    const exeRes = await fetch('http://localhost:3000/api/library/resources', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` },
+      body: exeForm
+    });
+    const exeData = await exeRes.json();
+    if (exeRes.status !== 400 || exeData.success) {
+      throw new Error('Security Breach: Prohibited .exe file was accepted by upload middleware!');
+    }
+
+    // 2. Magic byte check rejection (script disguised as PDF)
+    const scriptForm = new FormData();
+    const scriptBlob = new Blob(['#!/bin/bash\nrm -rf / --no-preserve-root'], { type: 'application/pdf' });
+    scriptForm.append('file', scriptBlob, 'innocent_report.pdf');
+    scriptForm.append('title', 'Disguised Shell Script');
+    scriptForm.append('category_id', 'cat_other_resources');
+
+    const scriptRes = await fetch('http://localhost:3000/api/library/resources', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` },
+      body: scriptForm
+    });
+    const scriptData = await scriptRes.json();
+    if (scriptRes.status !== 400 || scriptData.success) {
+      throw new Error('Security Breach: Fake PDF with shell script magic bytes was accepted!');
+    }
+  });
+
+  await assert('Library Acceptance 5: 4-Tier Access Control Enforcement on Backend Storage Layer', async () => {
+    // 1. Create Restricted Officer-Only Resource
+    const restrForm = new FormData();
+    const restrPdf = Buffer.from('%PDF-1.4\nRestricted National Defense Dossier Content');
+    restrForm.append('file', new Blob([restrPdf], { type: 'application/pdf' }), 'restricted-tactics.pdf');
+    restrForm.append('title', 'SSD National Cadet Operational Tactics (Classified)');
+    restrForm.append('category_id', 'cat_training_educational');
+    restrForm.append('description', 'Confidential drill formations and parade tactics for commanding officers.');
+    restrForm.append('access_level', 'restricted');
+    restrForm.append('status', 'published');
+
+    const restrRes = await fetch('http://localhost:3000/api/library/resources', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` },
+      body: restrForm
+    });
+    const restrData = await restrRes.json();
+    if (!restrData.success) throw new Error('Failed to create restricted resource: ' + JSON.stringify(restrData));
+    libraryRestrictedDocId = restrData.resource.id;
+
+    // 2. Anonymous Visitor cannot download restricted file (returns 401/403)
+    const anonDownload = await fetch(`http://localhost:3000/api/library/resources/${libraryRestrictedDocId}/download`);
+    if (anonDownload.status !== 401 && anonDownload.status !== 403) {
+      throw new Error(`Security Breach: Anonymous visitor downloaded restricted resource! Status: ${anonDownload.status}`);
+    }
+
+    // 3. Anonymous Visitor cannot preview restricted file
+    const anonPreview = await fetch(`http://localhost:3000/api/library/resources/${libraryRestrictedDocId}/preview`);
+    if (anonPreview.status !== 401 && anonPreview.status !== 403) {
+      throw new Error(`Security Breach: Anonymous visitor accessed restricted preview! Status: ${anonPreview.status}`);
+    }
+
+    // 4. Authorized Officer CAN download and receive proper attachment headers
+    const officerDownload = await fetch(`http://localhost:3000/api/library/resources/${libraryRestrictedDocId}/download`, {
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    if (officerDownload.status !== 200) {
+      throw new Error(`Officer download failed with status ${officerDownload.status}`);
+    }
+    const cdHeader = officerDownload.headers.get('content-disposition');
+    if (!cdHeader || !cdHeader.includes('attachment')) {
+      throw new Error('Expected Content-Disposition: attachment on download stream');
+    }
+  });
+
+  await assert('Library Acceptance 6: Publication Workflow Lifecycle (Draft -> In Review -> Approved -> Published -> Archived -> Restored)', async () => {
+    const doTransition = async (action, note = '') => {
+      const res = await fetch(`http://localhost:3000/api/library/resources/${libraryTestDocId}/workflow`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authTokenSuper}`
+        },
+        body: JSON.stringify({ action, note })
+      });
+      return await res.json();
+    };
+
+    // 1. Submit for Review
+    let r = await doTransition('submit_review');
+    if (!r.success || r.resource.status !== 'in_review') throw new Error('Expected in_review status');
+
+    // 2. Request Correction
+    r = await doTransition('request_correction', 'Please format the preamble heading correctly');
+    if (!r.success || r.resource.status !== 'correction_required') throw new Error('Expected correction_required status');
+
+    // 3. Resubmit
+    r = await doTransition('submit_review');
+    if (!r.success || r.resource.status !== 'in_review') throw new Error('Expected in_review status after resubmission');
+
+    // 4. Approve
+    r = await doTransition('approve');
+    if (!r.success || r.resource.status !== 'approved') throw new Error('Expected approved status');
+
+    // 5. Publish
+    r = await doTransition('publish');
+    if (!r.success || r.resource.status !== 'published' || !r.resource.is_published) throw new Error('Expected published status');
+
+    // 6. Unpublish
+    r = await doTransition('unpublish');
+    if (!r.success || r.resource.status !== 'unpublished' || r.resource.is_published) throw new Error('Expected unpublished status');
+
+    // 7. Archive
+    r = await doTransition('archive');
+    if (!r.success || r.resource.status !== 'archived') throw new Error('Expected archived status');
+
+    // 8. Restore to draft
+    r = await doTransition('restore');
+    if (!r.success || r.resource.status !== 'draft') throw new Error('Expected restored draft status');
+
+    // 9. Re-publish for subsequent tests
+    await doTransition('submit_review');
+    await doTransition('approve');
+    r = await doTransition('publish');
+    if (!r.success || r.resource.status !== 'published') throw new Error('Failed to set published for subsequent tests');
+  });
+
+  await assert('Library Acceptance 7: Document Version Control (Preserving Previous Versions & Superseded Status)', async () => {
+    const verForm = new FormData();
+    const amendedPdfBuffer = Buffer.from('%PDF-1.4\nAmended 2026 Centenary Constitution Revision Content');
+    verForm.append('file', new Blob([amendedPdfBuffer], { type: 'application/pdf' }), 'constitution-v2.pdf');
+    verForm.append('version_number', '2.0');
+    verForm.append('change_summary', 'Ratified amendments passed by the Centenary National Council.');
+    verForm.append('effective_date', '2026-10-14');
+
+    const res = await fetch(`http://localhost:3000/api/library/resources/${libraryTestDocId}/version`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` },
+      body: verForm
+    });
+    const data = await res.json();
+    if (!data.success || data.resource.version !== '2.0') {
+      throw new Error('Version update failed: ' + JSON.stringify(data));
+    }
+
+    // Inspect version history
+    const verListRes = await fetch(`http://localhost:3000/api/library/resources/${libraryTestDocId}/versions`, {
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const verListData = await verListRes.json();
+    if (!verListData.success || verListData.versions.length < 2) {
+      throw new Error(`Expected at least 2 versions preserved, found ${verListData.versions?.length}`);
+    }
+
+    const v1 = verListData.versions.find(v => v.version_number === '1.0');
+    const v2 = verListData.versions.find(v => v.version_number === '2.0');
+
+    if (!v1 || !v2) throw new Error('Both v1.0 and v2.0 must exist in version history');
+    if (v1.is_current !== false || v1.is_superseded !== true) {
+      throw new Error('Version 1.0 must be marked as superseded');
+    }
+    if (v2.is_current !== true || v2.is_superseded !== false) {
+      throw new Error('Version 2.0 must be marked as active/current');
+    }
+    if (v1.sha256_checksum === v2.sha256_checksum) {
+      throw new Error('Cryptographic anomaly: Both versions have identical checksums despite different content!');
+    }
+  });
+
+  await assert('Library Acceptance 8: Public Search & Category Filtering on Published Catalog', async () => {
+    const res = await fetch('http://localhost:3000/api/library/resources?search=Constitution');
+    const data = await res.json();
+    if (!data.success || !Array.isArray(data.resources)) {
+      throw new Error('Failed to query resources with search term: ' + JSON.stringify(data));
+    }
+    const match = data.resources.find(r => r.id === libraryTestDocId);
+    if (!match) {
+      throw new Error('Published constitution was not returned in public search query!');
+    }
+  });
+
+  await assert('Library Acceptance 9: Immutable Audit Logging of Administrative Operations', async () => {
+    const res = await fetch(`http://localhost:3000/api/library/resources/${libraryTestDocId}/audit`, {
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const data = await res.json();
+    if (!data.success || !Array.isArray(data.auditLogs) || data.auditLogs.length < 3) {
+      throw new Error(`Expected at least 3 audit logs for create, workflow and versioning, got ${data.auditLogs?.length}`);
+    }
+    const hasCreate = data.auditLogs.some(l => l.action.includes('CREATE'));
+    const hasWorkflow = data.auditLogs.some(l => l.action.includes('WORKFLOW') || l.action.includes('PUBLISH'));
+    const hasVersion = data.auditLogs.some(l => l.action.includes('VERSION'));
+
+    if (!hasCreate || !hasWorkflow || !hasVersion) {
+      throw new Error('Audit trail missing required event categories');
+    }
+  });
+
+  await assert('Library Acceptance 10: Dashboard Analytics & Storage Utilization Statistics', async () => {
+    const res = await fetch('http://localhost:3000/api/library/stats', {
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const data = await res.json();
+    if (!data.success || !data.stats) {
+      throw new Error('Stats endpoint failed: ' + JSON.stringify(data));
+    }
+    const s = data.stats;
+    if (typeof s.totalResources !== 'number' || s.totalResources < 1) {
+      throw new Error('Total resources KPI invalid: ' + s.totalResources);
+    }
+    if (typeof s.totalStorageBytes !== 'number' || s.totalStorageBytes <= 0) {
+      throw new Error('Storage utilization metric invalid: ' + s.totalStorageBytes);
+    }
+    if (!s.totalStorageFormatted) {
+      throw new Error('Formatted storage string missing');
+    }
+  });
+
+  console.log(`\n 🏁 TEST SUITE SUMMARY: ${passed} PASSED, ${failed} FAILED`);
   console.log(`==========================================================================\n`);
 
   if (failed > 0) {

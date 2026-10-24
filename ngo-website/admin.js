@@ -2588,7 +2588,8 @@ const viewMetadata = {
   contacts: { title: "Grievance Desk & Public Inquiries", sub: "Respond to incoming state command queries" },
   stats: { title: "Public Portal Live Counters", sub: "Update homepage live counters directly in Supabase Cloud" },
   settings: { title: "Database Tools & Backups", sub: "Export JSON backups and seed verified datasets" },
-  legacy: { title: "Legacy Sainik Verification & Batch Management Desk", sub: "Preserve historical seniority, verify original joining dates, manage batch allocation schemes, and audit veteran credentials" }
+  legacy: { title: "Legacy Sainik Verification & Batch Management Desk", sub: "Preserve historical seniority, verify original joining dates, manage batch allocation schemes, and audit veteran credentials" },
+  library: { title: "Digital Archival Library & Publications Management", sub: "Upload, organize, review, publish, and version official documents, historical archives, books, and multimedia" }
 };
 
 function switchView(viewKey) {
@@ -2642,6 +2643,8 @@ function switchView(viewKey) {
     renderApprovalsView();
   } else if (viewKey === 'legacy') {
     loadLegacyView();
+  } else if (viewKey === 'library') {
+    loadLibraryView();
   } else if (viewKey === 'admins') {
     renderAdminsTable();
   } else if (viewKey === 'members') {
@@ -8484,6 +8487,8 @@ async function openReviewDecisionModal(appId) {
     if (data.success && data.application) {
       app = data.application;
       history = data.approvalHistory || [];
+      app.questionnaire = data.questionnaire || null;
+      app.organizations = data.organizations || [];
     }
   } catch (e) {}
 
@@ -8517,6 +8522,22 @@ async function openReviewDecisionModal(appId) {
   if (!app) {
     showToast("Unable to fetch application details.", "error");
     return;
+  }
+
+  // Ensure questionnaire is fetched if not present
+  if (!app.questionnaire) {
+    try {
+      const qRes = await fetch(`/api/membership/applications/${encodeURIComponent(appId)}/questionnaire`, {
+        headers: token ? { "Authorization": `Bearer ${token}` } : {}
+      });
+      if (qRes.ok) {
+        const qData = await qRes.json();
+        if (qData.success) {
+          app.questionnaire = qData.questionnaire || null;
+          app.organizations = qData.organizations || [];
+        }
+      }
+    } catch (e) {}
   }
 
   currentSelectedApplication = app;
@@ -8639,7 +8660,402 @@ async function openReviewDecisionModal(appId) {
 
   const remarksInput = document.getElementById("reviewActionRemarks");
   if (remarksInput) remarksInput.value = "";
+
+  // Render Enlistment Questionnaire Scrutiny Panel
+  renderQuestionnaireScrutiny(app.questionnaire, app.organizations, app);
+
   openAdminModal("modalReviewDecision");
+}
+
+// ==========================================================================
+// ENLISTMENT QUESTIONNAIRE SCRUTINY PANEL HELPERS
+// ==========================================================================
+
+function toggleQuestionnaireScrutinyCollapse() {
+  const content = document.getElementById('questionnaireScrutinyContent');
+  const icon = document.getElementById('iconToggleQuestionnaireScrutiny');
+  const text = document.getElementById('textToggleQuestionnaireScrutiny');
+  if (!content) return;
+
+  const isHidden = content.style.display === 'none' || !content.style.display;
+  if (isHidden) {
+    content.style.display = 'block';
+    if (icon) icon.className = 'fa-solid fa-chevron-up';
+    if (text) text.textContent = 'Hide Details';
+  } else {
+    content.style.display = 'none';
+    if (icon) icon.className = 'fa-solid fa-chevron-down';
+    if (text) text.textContent = 'View Responses';
+  }
+}
+
+function renderQuestionnaireScrutiny(q, orgs, app) {
+  const badge = document.getElementById("questionnaireScrutinyStatusBadge");
+  const body = document.getElementById("questionnaireSectionsBody");
+  const remarksTextarea = document.getElementById("questionnaireInternalRemarks");
+  const saveBtn = document.getElementById("btnSaveQuestionnaireRemarks");
+  const meta = document.getElementById("questionnaireLastReviewedMeta");
+
+  if (!body) return;
+
+  if (!q) {
+    if (badge) {
+      badge.textContent = "NOT SUBMITTED";
+      badge.className = "badge-status badge-rejected";
+      badge.style.background = "#f1f5f9";
+      badge.style.color = "#64748b";
+      badge.style.borderColor = "#cbd5e1";
+    }
+    body.innerHTML = `
+      <div style="padding: 16px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; text-align: center; color: #64748b; font-size: 13px;">
+        <i class="fa-solid fa-circle-info" style="color: #0284c7; margin-right: 6px;"></i>
+        No enlistment questionnaire on record for this applicant (legacy or basic registration).
+      </div>
+    `;
+    if (remarksTextarea) {
+      remarksTextarea.value = "";
+      remarksTextarea.disabled = true;
+      remarksTextarea.placeholder = "Questionnaire not submitted for this application.";
+    }
+    if (saveBtn) saveBtn.disabled = true;
+    if (meta) meta.textContent = "";
+    return;
+  }
+
+  // Questionnaire exists
+  if (remarksTextarea) {
+    remarksTextarea.disabled = false;
+    remarksTextarea.placeholder = "Enter internal background check remarks, territorial verification notes, or vetting observations...";
+    remarksTextarea.value = q.internal_review_remarks || "";
+  }
+  if (saveBtn) saveBtn.disabled = false;
+
+  if (q.internal_review_remarks) {
+    if (badge) {
+      badge.textContent = "SCRUTINIZED";
+      badge.className = "badge-status badge-approved";
+      badge.style.background = "";
+      badge.style.color = "";
+      badge.style.borderColor = "";
+    }
+    if (meta) {
+      const dt = q.reviewed_at ? new Date(q.reviewed_at).toLocaleDateString('en-IN', {
+        day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      }) : 'Recently';
+      meta.textContent = `Reviewed by ${escapeHtml(q.reviewed_by || 'Enlistment Officer')} on ${dt}`;
+      meta.style.color = "#16a34a";
+    }
+  } else {
+    if (badge) {
+      badge.textContent = "PENDING SCRUTINY";
+      badge.className = "badge-status badge-pending";
+      badge.style.background = "";
+      badge.style.color = "";
+      badge.style.borderColor = "";
+    }
+    if (meta) {
+      meta.textContent = "Awaiting internal officer scrutiny";
+      meta.style.color = "#9a3412";
+    }
+  }
+
+  const isYes = (val) => val === true || val === 'yes' || val === 'true';
+
+  const formatList = (val) => {
+    if (!val) return '<span style="color: #94a3b8;">None specified</span>';
+    let arr = [];
+    if (Array.isArray(val)) arr = val;
+    else if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) arr = parsed;
+        else arr = [val];
+      } catch (e) {
+        arr = val.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+    if (arr.length === 0) return '<span style="color: #94a3b8;">None specified</span>';
+    return arr.map(item => `
+      <span style="display: inline-block; background: #e0e7ff; color: #3730a3; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin: 2px;">
+        ${escapeHtml(String(item).replace(/_/g, ' '))}
+      </span>
+    `).join(' ');
+  };
+
+  const renderBadgeYesNo = (val) => {
+    return isYes(val) 
+      ? '<span class="badge-status badge-approved" style="font-size: 11px;"><i class="fa-solid fa-check"></i> YES</span>'
+      : '<span class="badge-status badge-rejected" style="font-size: 11px;"><i class="fa-solid fa-xmark"></i> NO</span>';
+  };
+
+  // Organizations Table
+  const orgList = Array.isArray(orgs) ? orgs : [];
+  let orgsHtml = '';
+  if (orgList.length === 0) {
+    orgsHtml = '<div style="font-size: 12px; color: #64748b; font-style: italic; padding: 8px 0;">No previous organizational affiliations reported by applicant.</div>';
+  } else {
+    orgsHtml = `
+      <div style="overflow-x: auto; margin-top: 8px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+          <thead>
+            <tr style="background: #f1f5f9; border-bottom: 1.5px solid #cbd5e1; text-align: left;">
+              <th style="padding: 6px 8px;">Organization</th>
+              <th style="padding: 6px 8px;">Role / Designation</th>
+              <th style="padding: 6px 8px;">Nature of Work</th>
+              <th style="padding: 6px 8px;">Duration</th>
+              <th style="padding: 6px 8px;">Current Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${orgList.map(o => `
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 6px 8px; font-weight: 600; color: var(--navy-dark);">${escapeHtml(o.organization_name || '-')}</td>
+                <td style="padding: 6px 8px;">${escapeHtml(o.role_title || '-')}</td>
+                <td style="padding: 6px 8px;">${escapeHtml(o.nature_of_work || '-')}</td>
+                <td style="padding: 6px 8px; font-family: monospace;">${escapeHtml(o.period_from || '')} &rarr; ${escapeHtml(o.period_to || 'Present')}</td>
+                <td style="padding: 6px 8px;">
+                  <span style="font-size: 10.5px; padding: 2px 6px; border-radius: 4px; ${o.current_status === 'active' ? 'background: #dcfce7; color: #166534;' : 'background: #f1f5f9; color: #475569;'} font-weight: 600;">
+                    ${escapeHtml(o.current_status || 'Past')}
+                  </span>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // Legal proceedings alert if Yes
+  const proceedingsAlert = isYes(q.q12_pending_proceedings) ? `
+    <div style="background: #fef2f2; border: 1.5px solid #ef4444; border-radius: 6px; padding: 10px 12px; margin-top: 8px;">
+      <div style="display: flex; align-items: center; gap: 8px; color: #991b1b; font-weight: 700; font-size: 12.5px;">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size: 16px;"></i>
+        <span>SCRUTINY ALERT: Applicant Disclosed Pending Proceedings</span>
+      </div>
+      <div style="font-size: 12px; color: #7f1d1d; margin-top: 4px; padding-left: 24px;">
+        <strong>Details:</strong> ${escapeHtml(q.q12a_pending_proceedings_details || 'No details provided')}
+      </div>
+    </div>
+  ` : '';
+
+  // Political office details if Yes
+  const politicalDetails = isYes(q.q10_political_office_held) ? `
+    <div style="margin-top: 6px; padding: 8px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 4px; font-size: 12px; color: #92400e;">
+      <strong>Political Role Details:</strong> ${escapeHtml(q.q10a_political_office_details || 'None provided')}
+    </div>
+  ` : '';
+
+  // Disagreement departure if Yes
+  const departureDetails = isYes(q.q15_disagreement_departure) ? `
+    <div style="margin-top: 6px; padding: 8px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 4px; font-size: 12px; color: #92400e;">
+      <strong>Circumstances of Departure:</strong> ${escapeHtml(q.q15a_departure_circumstances || 'None provided')}
+    </div>
+  ` : '';
+
+  // Social work details if Yes
+  const socialWorkDetails = isYes(q.q6_social_work_experience) ? `
+    <div style="margin-top: 6px; padding: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 12px; color: #334155;">
+      <strong>Experience Details:</strong> ${escapeHtml(q.q6a_social_work_details || 'None provided')}
+    </div>
+  ` : '';
+
+  body.innerHTML = `
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      
+      <!-- Section A: Understanding of SSD -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px;">
+        <div style="font-weight: 700; font-size: 13px; color: var(--navy-dark); border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-compass" style="color: var(--primary-orange);"></i> Section A: Understanding of Samata Sainik Dal
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;">
+          <div><strong style="color: #475569;">Q1. Official Aim of SSD:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q1_official_aim || 'N/A')}</div></div>
+          <div><strong style="color: #475569;">Q2. Official Motto & Personal Meaning:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q2_official_motto_meaning || 'N/A')}</div></div>
+          <div><strong style="color: #475569;">Q3. Reasons for Wanting to Join:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q3_reasons_for_joining || 'N/A')}</div></div>
+          <div><strong style="color: #475569;">Q4. Understanding of Sainik Responsibilities:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q4_sainik_responsibilities || 'N/A')}</div></div>
+          <div><strong style="color: #475569;">Q5. Historical Events & Principles Inspiring Applicant:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q5_historical_inspiration || 'N/A')}</div></div>
+        </div>
+      </div>
+
+      <!-- Section B: Social Service & Nation-Building -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px;">
+        <div style="font-weight: 700; font-size: 13px; color: var(--navy-dark); border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-hand-holding-heart" style="color: var(--primary-orange);"></i> Section B: Social Service & Nation-Building
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="color: #475569;">Q6. Prior Social / Community Work:</strong>
+              ${renderBadgeYesNo(q.q6_social_work_experience)}
+            </div>
+            ${socialWorkDetails}
+          </div>
+          <div><strong style="color: #475569;">Q7. Service Areas of Interest:</strong><div style="margin-top: 4px;">${formatList(q.q7_service_areas_interest)}</div></div>
+          <div><strong style="color: #475569;">Q8. Emergency Relief Availability:</strong> <span style="font-weight: 600; color: #0f172a;">${escapeHtml(String(q.q8_emergency_relief_preparedness || 'N/A').replace(/_/g, ' '))}</span></div>
+          <div><strong style="color: #475569;">Q9. Experience Organizing Welfare / Community Programs:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q9_community_programs_experience || 'None')}</div></div>
+        </div>
+      </div>
+
+      <!-- Section C: Civic, Social & Political Disclosures -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px;">
+        <div style="font-weight: 700; font-size: 13px; color: var(--navy-dark); border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-landmark" style="color: var(--primary-orange);"></i> Section C: Civic, Social & Political Disclosures
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="color: #475569;">Q10. Political Party Office / Active Role:</strong>
+              ${renderBadgeYesNo(q.q10_political_office_held)}
+            </div>
+            ${politicalDetails}
+          </div>
+          <div><strong style="color: #475569;">Q11. Non-Partisan Ethos Understanding:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q11_non_partisan_understanding || 'N/A')}</div></div>
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="color: #475569;">Q12. Pending Legal / Criminal Proceedings:</strong>
+              ${isYes(q.q12_pending_proceedings) 
+                ? '<span class="badge-status badge-rejected" style="font-size: 11px; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;"><i class="fa-solid fa-triangle-exclamation"></i> YES (DECLARED)</span>' 
+                : '<span class="badge-status badge-approved" style="font-size: 11px;"><i class="fa-solid fa-check"></i> NO (CLEAR)</span>'}
+            </div>
+            ${proceedingsAlert}
+          </div>
+        </div>
+      </div>
+
+      <!-- Section D: Previous Organizational Experience -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px;">
+        <div style="font-weight: 700; font-size: 13px; color: var(--navy-dark); border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-sitemap" style="color: var(--primary-orange);"></i> Section D: Previous Organizational Experience
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;">
+          <div>
+            <strong style="color: #475569;">Q13. Prior Organizations:</strong>
+            ${orgsHtml}
+          </div>
+          <div style="margin-top: 6px;"><strong style="color: #475569;">Q14. Leadership & Organizational Lessons Learned:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q14_leadership_lessons || 'N/A')}</div></div>
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="color: #475569;">Q15. Left Organization Due to Disagreement:</strong>
+              ${renderBadgeYesNo(q.q15_disagreement_departure)}
+            </div>
+            ${departureDetails}
+          </div>
+          <div><strong style="color: #475569;">Q16. Preferred SSD Wings:</strong><div style="margin-top: 4px;">${formatList(q.q16_ssd_wings_interest)}</div></div>
+        </div>
+      </div>
+
+      <!-- Section E: Personal Commitment & Contributions -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px;">
+        <div style="font-weight: 700; font-size: 13px; color: var(--navy-dark); border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-award" style="color: var(--primary-orange);"></i> Section E: Commitment & Contributions
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;">
+          <div><strong style="color: #475569;">Q17. Dedicated Time Commitment:</strong> <span style="font-weight: 600; color: #0f172a; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px;">${escapeHtml(String(q.q17_time_commitment || 'N/A').replace(/_/g, ' '))}</span></div>
+          <div><strong style="color: #475569;">Q18. Key Skills & Expertise to Contribute:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q18_skills_contribution || 'None')}</div></div>
+          <div><strong style="color: #475569;">Q19. Additional Statement of Purpose:</strong><div style="margin-top: 2px; color: #0f172a; white-space: pre-wrap; background: #f8fafc; padding: 6px 10px; border-radius: 4px;">${escapeHtml(q.q19_additional_info || 'None')}</div></div>
+        </div>
+      </div>
+
+      <!-- Section F: Enlistment Declaration -->
+      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 12.5px;">
+        <div>
+          <div style="font-weight: 700; color: #166534; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-signature"></i> Section F: Applicant Enlistment Declaration
+          </div>
+          <div style="color: #15803d; font-size: 11.5px; margin-top: 2px;">
+            Applicant confirmed accuracy of all questionnaire disclosures under solemn declaration.
+          </div>
+        </div>
+        <span class="badge-status badge-approved" style="font-size: 11px;">
+          <i class="fa-solid fa-circle-check"></i> CONFIRMED
+        </span>
+      </div>
+
+    </div>
+  `;
+}
+
+async function saveQuestionnaireReviewRemarks() {
+  const app = currentSelectedApplication;
+  if (!app) {
+    showToast("No application selected.", "error");
+    return;
+  }
+  const appId = app.id || app.sainik_id || app.sainikId;
+  const remarksEl = document.getElementById("questionnaireInternalRemarks");
+  const remarks = remarksEl ? remarksEl.value.trim() : "";
+
+  if (!remarks) {
+    showToast("Please enter scrutiny remarks before saving.", "warning");
+    if (remarksEl) remarksEl.focus();
+    return;
+  }
+
+  const btn = document.getElementById("btnSaveQuestionnaireRemarks");
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+  }
+
+  try {
+    let token = await ensureAuthToken();
+    let res = await fetch(`/api/membership/applications/${encodeURIComponent(appId)}/questionnaire/review`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ remarks })
+    });
+
+    if (res.status === 401) {
+      token = await ensureAuthToken(true);
+      res = await fetch(`/api/membership/applications/${encodeURIComponent(appId)}/questionnaire/review`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ remarks })
+      });
+    }
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || "Failed to save scrutiny remarks");
+    }
+
+    if (app.questionnaire) {
+      app.questionnaire.internal_review_remarks = remarks;
+      app.questionnaire.reviewed_by = data.review?.reviewed_by || 'Enlistment Officer';
+      app.questionnaire.reviewed_at = data.review?.reviewed_at || new Date().toISOString();
+    }
+
+    const badge = document.getElementById("questionnaireScrutinyStatusBadge");
+    if (badge) {
+      badge.textContent = "SCRUTINIZED";
+      badge.className = "badge-status badge-approved";
+      badge.style.background = "";
+      badge.style.color = "";
+      badge.style.borderColor = "";
+    }
+
+    const meta = document.getElementById("questionnaireLastReviewedMeta");
+    if (meta) {
+      meta.textContent = `Reviewed by ${escapeHtml(data.review?.reviewed_by || 'Enlistment Officer')} just now`;
+      meta.style.color = "#16a34a";
+    }
+
+    showToast("Enlistment scrutiny remarks saved successfully.", "success");
+
+  } catch (err) {
+    showToast(err.message || "Failed to save review remarks.", "error");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Scrutiny Remark';
+    }
+  }
 }
 
 // ==========================================================================
@@ -9035,6 +9451,9 @@ async function submitReviewDecision(actionType) {
 window.ensureAuthToken = ensureAuthToken;
 window.loadAuditLogsView = loadAuditLogsView;
 window.openReviewDecisionModal = openReviewDecisionModal;
+window.toggleQuestionnaireScrutinyCollapse = toggleQuestionnaireScrutinyCollapse;
+window.renderQuestionnaireScrutiny = renderQuestionnaireScrutiny;
+window.saveQuestionnaireReviewRemarks = saveQuestionnaireReviewRemarks;
 window.submitReviewDecision = submitReviewDecision;
 window.calculateAssessmentScore = calculateAssessmentScore;
 window.quickSetAssessment = quickSetAssessment;
@@ -10580,4 +10999,1225 @@ window.handleBatchCorrection = handleBatchCorrection;
 window.loadBatchHistory = loadBatchHistory;
 window.openLegacyBulkImportModal = openLegacyBulkImportModal;
 window.handleLegacyBulkImport = handleLegacyBulkImport;
+
+// ==========================================================================
+// DIGITAL LIBRARY & ARCHIVES MANAGEMENT SYSTEM (ADMIN)
+// ==========================================================================
+let currentLibraryPage = 1;
+let librarySearchTimeout = null;
+let selectedLibraryIds = new Set();
+let cachedLibraryCategories = [];
+
+async function loadLibraryView() {
+  setupLibraryDropZone();
+  await loadLibraryCategories();
+  await loadLibraryStats();
+  await loadLibraryResources(1);
+}
+
+function setupLibraryDropZone() {
+  const dropZone = document.getElementById('libDropZone');
+  if (!dropZone || dropZone.dataset.initialized) return;
+  dropZone.dataset.initialized = 'true';
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropZone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.add('dragover');
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove('dragover');
+    }, false);
+  });
+
+  dropZone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    if (files && files.length > 0) {
+      const input = document.getElementById('libFileInput');
+      if (input) {
+        input.files = files;
+        handleLibraryFileSelected({ target: input });
+      }
+    }
+  }, false);
+}
+
+function handleLibraryFileSelected(event) {
+  const input = event.target;
+  if (!input || !input.files || input.files.length === 0) return;
+  const file = input.files[0];
+
+  // Client-side file size guard (50MB)
+  if (file.size > 50 * 1024 * 1024) {
+    showToast('File exceeds maximum size limit of 50 MB.', 'error');
+    clearLibrarySelectedFile();
+    return;
+  }
+
+  const nameEl = document.getElementById('libFileName');
+  const sizeEl = document.getElementById('libFileSize');
+  const chipEl = document.getElementById('libFileChip');
+  const iconEl = document.getElementById('libFileChipIcon');
+
+  if (nameEl) nameEl.textContent = file.name;
+  if (sizeEl) sizeEl.textContent = formatBytes(file.size);
+
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (iconEl) {
+    if (ext === 'pdf') {
+      iconEl.className = 'fa-solid fa-file-pdf';
+      iconEl.style.color = '#E11D48';
+    } else if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) {
+      iconEl.className = 'fa-solid fa-file-image';
+      iconEl.style.color = '#0284C7';
+    } else if (['mp3', 'wav', 'm4a', 'ogg'].includes(ext)) {
+      iconEl.className = 'fa-solid fa-file-audio';
+      iconEl.style.color = '#D97706';
+    } else if (['mp4', 'webm', 'mov'].includes(ext)) {
+      iconEl.className = 'fa-solid fa-file-video';
+      iconEl.style.color = '#9333EA';
+    } else {
+      iconEl.className = 'fa-solid fa-file-lines';
+      iconEl.style.color = '#64748B';
+    }
+  }
+
+  if (chipEl) chipEl.style.display = 'flex';
+}
+
+function clearLibrarySelectedFile() {
+  const input = document.getElementById('libFileInput');
+  if (input) input.value = '';
+  const chipEl = document.getElementById('libFileChip');
+  if (chipEl) chipEl.style.display = 'none';
+}
+
+function toggleOfficialDocFields(isOfficial) {
+  const sec = document.getElementById('libOfficialDocSection');
+  if (sec) sec.style.display = isOfficial ? 'grid' : 'none';
+}
+
+async function loadLibraryCategories() {
+  try {
+    const res = await fetch('/api/library/categories?all=true');
+    const data = await res.json();
+    if (data.success && Array.isArray(data.categories)) {
+      cachedLibraryCategories = data.categories;
+
+      // Populate filter dropdown
+      const filterSelect = document.getElementById('libFilterCategory');
+      if (filterSelect) {
+        const curVal = filterSelect.value;
+        filterSelect.innerHTML = '<option value="all">All Categories</option>' +
+          data.categories.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)} (${c.resource_count || 0})</option>`).join('');
+        if (curVal) filterSelect.value = curVal;
+      }
+
+      // Populate upload modal select
+      const modalSelect = document.getElementById('libCategorySelect');
+      if (modalSelect) {
+        modalSelect.innerHTML = data.categories
+          .filter(c => c.is_active !== false)
+          .map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('');
+      }
+
+      // Populate categories management table
+      renderCategoriesManagementTable(data.categories);
+    }
+  } catch (err) {
+    console.error('Error loading library categories:', err);
+  }
+}
+
+function renderCategoriesManagementTable(categories) {
+  const tbody = document.getElementById('libraryCategoriesTableBody');
+  if (!tbody) return;
+
+  if (categories.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No categories configured.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = categories.map(cat => `
+    <tr>
+      <td style="font-weight: 700; color: #64748B;">${cat.sort_order || '-'}</td>
+      <td>
+        <strong style="color: var(--dark-navy);">${escapeHtml(cat.name)}</strong>
+        <div style="font-size: 11.5px; color: #64748B;">${escapeHtml(cat.description || '')}</div>
+      </td>
+      <td>
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #334155;">
+          <i class="fa-solid ${escapeHtml(cat.icon || 'fa-book-bookmark')}"></i> ${escapeHtml(cat.icon || '')}
+        </span>
+      </td>
+      <td>
+        <span style="font-weight: 700; color: var(--primary-orange);">${cat.resource_count || 0}</span> items
+      </td>
+      <td>
+        ${cat.is_active !== false 
+          ? '<span style="background: #DCFCE7; color: #15803D; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">ACTIVE</span>'
+          : '<span style="background: #F1F5F9; color: #64748B; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">INACTIVE</span>'}
+      </td>
+      <td style="text-align: right;">
+        <button type="button" class="btn-admin btn-admin-outline" style="padding: 3px 8px; font-size: 11px;" onclick="showAddCategoryForm('${escapeHtml(cat.id)}')">
+          <i class="fa-solid fa-pen"></i> Edit
+        </button>
+        <button type="button" class="btn-admin btn-admin-outline" style="padding: 3px 8px; font-size: 11px; color: ${cat.is_active !== false ? '#DC2626' : '#15803D'};" onclick="toggleCategoryStatus('${escapeHtml(cat.id)}', ${cat.is_active !== false})">
+          ${cat.is_active !== false ? '<i class="fa-solid fa-ban"></i> Deactivate' : '<i class="fa-solid fa-check"></i> Activate'}
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function loadLibraryStats() {
+  try {
+    const token = await ensureAuthToken();
+    const res = await fetch('/api/library/stats', {
+      headers: {
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
+    });
+    const data = await res.json();
+    if (data.success && data.stats) {
+      const s = data.stats;
+      const setText = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+      };
+
+      setText('statLibTotal', s.totalResources || 0);
+      setText('statLibPublished', s.publishedCount || 0);
+      setText('statLibDrafts', s.draftCount || 0);
+      setText('statLibInReview', s.inReviewCount || 0);
+      setText('statLibApproved', s.approvedCount || 0);
+      setText('statLibCorrection', s.correctionCount || 0);
+      setText('statLibArchived', s.archivedCount || 0);
+      setText('statLibStorage', s.totalStorageFormatted || '0 KB');
+
+      const badgeCount = document.getElementById('badgeLibraryCount');
+      if (badgeCount) badgeCount.textContent = s.totalResources || 0;
+    }
+  } catch (err) {
+    console.error('Error loading library stats:', err);
+  }
+}
+
+function debounceLibrarySearch() {
+  clearTimeout(librarySearchTimeout);
+  librarySearchTimeout = setTimeout(() => {
+    loadLibraryResources(1);
+  }, 350);
+}
+
+function resetLibraryFilters() {
+  const search = document.getElementById('libFilterSearch');
+  const cat = document.getElementById('libFilterCategory');
+  const access = document.getElementById('libFilterAccess');
+  const status = document.getElementById('libFilterStatus');
+  const format = document.getElementById('libFilterFormat');
+
+  if (search) search.value = '';
+  if (cat) cat.value = 'all';
+  if (access) access.value = 'all';
+  if (status) status.value = 'all';
+  if (format) format.value = 'all';
+
+  loadLibraryResources(1);
+}
+
+async function loadLibraryResources(page = 1) {
+  currentLibraryPage = page;
+  const tbody = document.getElementById('libraryTableBody');
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="9" style="text-align: center; padding: 40px; color: #64748B;">
+          <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; color: var(--primary-orange); margin-bottom: 8px; display: block;"></i>
+          Filtering archival catalog...
+        </td>
+      </tr>
+    `;
+  }
+
+  try {
+    const token = await ensureAuthToken();
+    const searchVal = document.getElementById('libFilterSearch')?.value || '';
+    const catVal = document.getElementById('libFilterCategory')?.value || 'all';
+    const accessVal = document.getElementById('libFilterAccess')?.value || 'all';
+    const statusVal = document.getElementById('libFilterStatus')?.value || 'all';
+    const formatVal = document.getElementById('libFilterFormat')?.value || 'all';
+
+    const params = new URLSearchParams({
+      all: 'true',
+      page: page,
+      limit: 20
+    });
+
+    if (searchVal.trim()) params.append('search', searchVal.trim());
+    if (catVal !== 'all') params.append('category', catVal);
+    if (accessVal !== 'all') params.append('access_level', accessVal);
+    if (statusVal !== 'all') params.append('status', statusVal);
+    if (formatVal !== 'all') params.append('resource_type', formatVal);
+
+    const res = await fetch(`/api/library/resources?${params.toString()}`, {
+      headers: {
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      renderLibraryTable(data.resources || []);
+      renderLibraryPagination(data.count || 0, data.page || 1, data.totalPages || 1);
+    } else {
+      if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: #DC2626; padding: 24px;">Failed to load resources: ${data.error || 'Server error'}</td></tr>`;
+    }
+  } catch (err) {
+    if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: #DC2626; padding: 24px;">Network Error: ${err.message}</td></tr>`;
+  }
+}
+
+function renderLibraryTable(resources) {
+  const tbody = document.getElementById('libraryTableBody');
+  if (!tbody) return;
+
+  if (resources.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="9" style="text-align: center; padding: 48px 20px;">
+          <i class="fa-solid fa-book-open" style="font-size: 36px; color: #CBD5E1; margin-bottom: 12px; display: block;"></i>
+          <h4 style="margin: 0 0 6px; color: var(--dark-navy);">No Matching Archival Resources Found</h4>
+          <p style="font-size: 13px; color: #64748B; margin: 0 0 16px;">Try adjusting your search criteria or upload a new resource.</p>
+          <button type="button" class="btn-admin btn-admin-primary" onclick="openLibraryUploadModal()">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Upload First Resource
+          </button>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = resources.map(item => {
+    const isSelected = selectedLibraryIds.has(item.id);
+    const accessTier = (item.access_level || item.accessLevel || 'public').toLowerCase();
+    const status = (item.status || (item.is_published ? 'published' : 'draft')).toLowerCase();
+
+    // Access Badge
+    let accessBadgeClass = 'badge-access-public';
+    let accessIcon = 'fa-lock-open';
+    if (accessTier === 'member') { accessBadgeClass = 'badge-access-member'; accessIcon = 'fa-id-badge'; }
+    else if (accessTier === 'restricted') { accessBadgeClass = 'badge-access-restricted'; accessIcon = 'fa-shield-halved'; }
+    else if (accessTier === 'admin') { accessBadgeClass = 'badge-access-admin'; accessIcon = 'fa-user-lock'; }
+
+    // Status Badge
+    let statusBadgeClass = `badge-status-${status}`;
+    let statusLabel = status.replace(/_/g, ' ');
+
+    // Category Label
+    const catObj = cachedLibraryCategories.find(c => c.id === item.category_id || c.slug === item.category);
+    const catName = catObj ? catObj.name : (item.category || 'General');
+
+    // Cover Thumbnail
+    const coverUrl = item.thumbnail_path 
+      ? `/uploads/library/thumbnails/${item.thumbnail_path}` 
+      : (item.cover_image || 'logo.png');
+
+    // Short Checksum
+    const checksumShort = item.sha256_checksum 
+      ? `${item.sha256_checksum.substr(0, 8)}...${item.sha256_checksum.substr(-6)}` 
+      : 'N/A';
+
+    return `
+      <tr class="${isSelected ? 'selected-row' : ''}">
+        <td style="text-align: center;">
+          <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleLibraryResourceSelect('${item.id}', this.checked)">
+        </td>
+        <td>
+          <img src="${escapeHtml(coverUrl)}" alt="Cover" style="width: 44px; height: 56px; object-fit: cover; border-radius: 4px; border: 1px solid #CBD5E1; background: #001F3F;" onerror="this.src='logo.png';">
+        </td>
+        <td>
+          <div style="font-weight: 700; color: var(--dark-navy); font-size: 13.5px; line-height: 1.35; margin-bottom: 4px;">
+            ${escapeHtml(item.title)}
+          </div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 11.5px;">
+            ${item.document_number || item.official_doc_number ? `<span style="background: #EFF6FF; color: #1D4ED8; font-weight: 700; padding: 2px 6px; border-radius: 4px;"><i class="fa-solid fa-stamp"></i> ${escapeHtml(item.document_number || item.official_doc_number)}</span>` : ''}
+            <span style="background: #F1F5F9; color: #475569; font-weight: 700; padding: 2px 6px; border-radius: 4px;">v${escapeHtml(item.version || '1.0')}</span>
+            <span style="color: #64748B;"><i class="fa-solid fa-pen-nib"></i> ${escapeHtml(item.author || 'SSD')}</span>
+          </div>
+        </td>
+        <td>
+          <div style="font-weight: 600; font-size: 12.5px; color: #1E293B;">${escapeHtml(catName)}</div>
+          <div style="font-size: 11.5px; color: #64748B;"><i class="fa-solid fa-language"></i> ${escapeHtml(item.language || 'English')} &bull; ${escapeHtml(item.year || '')}</div>
+        </td>
+        <td>
+          <span class="${accessBadgeClass}"><i class="fa-solid ${accessIcon}"></i> ${accessTier}</span>
+        </td>
+        <td>
+          <span class="${statusBadgeClass}">${statusLabel}</span>
+        </td>
+        <td>
+          <div style="font-size: 12px; font-weight: 600; color: #1E293B;">${escapeHtml(item.file_size_formatted || '0 KB')}</div>
+          <div style="font-size: 10.5px; color: #64748B; font-family: monospace;" title="SHA-256 Checksum: ${item.sha256_checksum}">
+            <i class="fa-solid fa-fingerprint"></i> ${checksumShort}
+          </div>
+        </td>
+        <td>
+          <div style="font-size: 11.5px; color: #334155;"><i class="fa-regular fa-calendar"></i> ${(item.created_at || '').substr(0, 10)}</div>
+          <div style="font-size: 11px; color: #64748B;"><i class="fa-solid fa-user-shield"></i> ${escapeHtml(item.uploaded_by || 'Officer')}</div>
+        </td>
+        <td style="text-align: right; white-space: nowrap;">
+          <div style="display: inline-flex; gap: 4px;">
+            <button type="button" class="btn-admin btn-admin-outline" style="padding: 4px 8px; font-size: 11.5px;" onclick="openLibraryPreviewModal('${item.id}')" title="Preview Document">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+            <button type="button" class="btn-admin btn-admin-outline" style="padding: 4px 8px; font-size: 11.5px;" onclick="downloadLibraryResource('${item.id}')" title="Download Authenticated Stream">
+              <i class="fa-solid fa-download"></i>
+            </button>
+            <button type="button" class="btn-admin btn-admin-outline" style="padding: 4px 8px; font-size: 11.5px;" onclick="openLibraryUploadModal('${item.id}')" title="Edit Metadata">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button type="button" class="btn-admin btn-admin-outline" style="padding: 4px 8px; font-size: 11.5px;" onclick="openLibraryNewVersionModal('${item.id}')" title="Upload Replacement Version">
+              <i class="fa-solid fa-code-branch"></i>
+            </button>
+            <button type="button" class="btn-admin btn-admin-outline" style="padding: 4px 8px; font-size: 11.5px;" onclick="openLibraryVersionsModal('${item.id}')" title="Version History">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+            </button>
+            <button type="button" class="btn-admin btn-admin-outline" style="padding: 4px 8px; font-size: 11.5px;" onclick="openLibraryAuditModal('${item.id}')" title="Immutable Audit Trail">
+              <i class="fa-solid fa-list-check"></i>
+            </button>
+            <button type="button" class="btn-admin btn-admin-outline" style="padding: 4px 8px; font-size: 11.5px; color: #DC2626; border-color: #FECACA;" onclick="deleteLibraryResource('${item.id}')" title="Delete Resource">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+
+          <!-- WORKFLOW STATE ACTIONS -->
+          <div style="margin-top: 6px;">
+            ${status === 'draft' ? `
+              <button type="button" class="btn-admin btn-admin-outline" style="padding: 2px 6px; font-size: 10px;" onclick="handleLibraryWorkflowAction('${item.id}', 'submit_review')">
+                <i class="fa-solid fa-paper-plane"></i> Submit for Review
+              </button>
+            ` : ''}
+            ${status === 'in_review' ? `
+              <button type="button" class="btn-admin btn-admin-outline" style="padding: 2px 6px; font-size: 10px; color: #15803D; border-color: #86EFAC;" onclick="handleLibraryWorkflowAction('${item.id}', 'approve')">
+                <i class="fa-solid fa-check"></i> Approve
+              </button>
+              <button type="button" class="btn-admin btn-admin-outline" style="padding: 2px 6px; font-size: 10px; color: #C2410C; border-color: #FDBA74;" onclick="handleLibraryWorkflowAction('${item.id}', 'request_correction')">
+                <i class="fa-solid fa-triangle-exclamation"></i> Correction
+              </button>
+            ` : ''}
+            ${status === 'approved' ? `
+              <button type="button" class="btn-admin btn-admin-primary" style="padding: 2px 6px; font-size: 10px;" onclick="handleLibraryWorkflowAction('${item.id}', 'publish')">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Publish Live
+              </button>
+            ` : ''}
+            ${status === 'published' ? `
+              <button type="button" class="btn-admin btn-admin-outline" style="padding: 2px 6px; font-size: 10px;" onclick="handleLibraryWorkflowAction('${item.id}', 'unpublish')">
+                <i class="fa-solid fa-eye-slash"></i> Unpublish
+              </button>
+              <button type="button" class="btn-admin btn-admin-outline" style="padding: 2px 6px; font-size: 10px;" onclick="handleLibraryWorkflowAction('${item.id}', 'archive')">
+                <i class="fa-solid fa-box-archive"></i> Archive
+              </button>
+            ` : ''}
+            ${status === 'archived' ? `
+              <button type="button" class="btn-admin btn-admin-outline" style="padding: 2px 6px; font-size: 10px;" onclick="handleLibraryWorkflowAction('${item.id}', 'restore')">
+                <i class="fa-solid fa-arrow-rotate-left"></i> Restore to Draft
+              </button>
+            ` : ''}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderLibraryPagination(totalCount, currentPage, totalPages) {
+  const infoEl = document.getElementById('libPageInfo');
+  if (infoEl) infoEl.textContent = totalCount;
+
+  const wrap = document.getElementById('libPaginationWrap');
+  if (!wrap) return;
+
+  if (totalPages <= 1) {
+    wrap.innerHTML = '';
+    return;
+  }
+
+  let html = '';
+  html += `<button type="button" class="btn-admin btn-admin-outline" style="padding: 4px 10px; font-size: 12px;" ${currentPage <= 1 ? 'disabled' : ''} onclick="loadLibraryResources(${currentPage - 1})"><i class="fa-solid fa-angle-left"></i> Prev</button>`;
+  html += `<span style="font-size: 12px; font-weight: 700; color: var(--dark-navy);">Page ${currentPage} of ${totalPages}</span>`;
+  html += `<button type="button" class="btn-admin btn-admin-outline" style="padding: 4px 10px; font-size: 12px;" ${currentPage >= totalPages ? 'disabled' : ''} onclick="loadLibraryResources(${currentPage + 1})">Next <i class="fa-solid fa-angle-right"></i></button>`;
+
+  wrap.innerHTML = html;
+}
+
+function toggleSelectAllLibraryResources(checked) {
+  const checkboxes = document.querySelectorAll('#libraryTableBody input[type="checkbox"]');
+  checkboxes.forEach(cb => {
+    cb.checked = checked;
+    const row = cb.closest('tr');
+    if (checked) {
+      if (row) row.classList.add('selected-row');
+    } else {
+      if (row) row.classList.remove('selected-row');
+    }
+  });
+
+  if (checked) {
+    // Select all currently loaded
+    const rows = document.querySelectorAll('#libraryTableBody tr');
+    rows.forEach(r => {
+      const cb = r.querySelector('input[type="checkbox"]');
+      if (cb) {
+        const onclickAttr = cb.getAttribute('onchange') || '';
+        const match = onclickAttr.match(/'([^']+)'/);
+        if (match && match[1]) selectedLibraryIds.add(match[1]);
+      }
+    });
+  } else {
+    selectedLibraryIds.clear();
+  }
+
+  updateBulkBar();
+}
+
+function toggleLibraryResourceSelect(id, checked) {
+  if (checked) {
+    selectedLibraryIds.add(id);
+  } else {
+    selectedLibraryIds.delete(id);
+  }
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  const bulkBar = document.getElementById('libBulkBar');
+  const countEl = document.getElementById('libBulkCount');
+  if (countEl) countEl.textContent = selectedLibraryIds.size;
+  if (bulkBar) {
+    bulkBar.style.display = selectedLibraryIds.size > 0 ? 'inline-flex' : 'none';
+  }
+}
+
+async function handleBulkLibraryAction(action) {
+  if (selectedLibraryIds.size === 0) return;
+  if (!confirm(`Are you sure you want to bulk ${action} ${selectedLibraryIds.size} selected resource(s)?`)) return;
+
+  try {
+    const token = await ensureAuthToken();
+    const res = await fetch('/api/library/bulk', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({
+        action,
+        ids: Array.from(selectedLibraryIds)
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || `Bulk ${action} succeeded.`, 'success');
+      selectedLibraryIds.clear();
+      updateBulkBar();
+      loadLibraryStats();
+      loadLibraryResources(currentLibraryPage);
+    } else {
+      showToast(data.error || `Bulk ${action} failed.`, 'error');
+    }
+  } catch (err) {
+    showToast('Bulk action error: ' + err.message, 'error');
+  }
+}
+
+async function openLibraryUploadModal(editId = null) {
+  const form = document.getElementById('formLibraryUpload');
+  if (form) form.reset();
+  clearLibrarySelectedFile();
+
+  const idInput = document.getElementById('libResourceId');
+  const titleHeading = document.getElementById('modalLibraryUploadTitle');
+  const progressWrap = document.getElementById('libProgressWrap');
+  const progressText = document.getElementById('libProgressText');
+  if (progressWrap) progressWrap.style.display = 'none';
+  if (progressText) progressText.style.display = 'none';
+
+  if (editId) {
+    if (idInput) idInput.value = editId;
+    if (titleHeading) titleHeading.innerHTML = '<i class="fa-solid fa-pen-to-square" style="color: var(--primary-orange);"></i> Edit Archival Resource Metadata';
+
+    try {
+      const token = await ensureAuthToken();
+      const res = await fetch(`/api/library/resources/${editId}`, {
+        headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+      });
+      const data = await res.json();
+      if (data.success && data.resource) {
+        const r = data.resource;
+        const setVal = (id, val) => {
+          const el = document.getElementById(id);
+          if (el && val !== undefined && val !== null) el.value = val;
+        };
+
+        setVal('libTitle', r.title);
+        setVal('libCategorySelect', r.category_id || r.category);
+        setVal('libLanguage', r.language);
+        setVal('libAccessLevel', r.access_level || r.accessLevel);
+        setVal('libStatus', r.status);
+        setVal('libDescription', r.description);
+        setVal('libAuthor', r.author);
+        setVal('libPublisher', r.publisher);
+        setVal('libPubDate', r.publication_date);
+        setVal('libYear', r.year);
+        setVal('libTags', Array.isArray(r.tags) ? r.tags.join(', ') : (r.tags || ''));
+        setVal('libProvenance', r.provenance);
+        setVal('libRelatedEntity', r.related_entity);
+        setVal('libCopyrightHolder', r.copyright_holder);
+        setVal('libUsagePermissions', r.usage_permissions);
+        setVal('libRefUrl', r.reference_url);
+        setVal('libCoverImage', r.cover_image);
+        setVal('libReviewerNotes', r.reviewer_notes);
+
+        const isOfficial = !!(r.official_doc_type || r.official_doc_number || r.document_number);
+        const officialCheckbox = document.getElementById('libIsOfficialDoc');
+        if (officialCheckbox) {
+          officialCheckbox.checked = isOfficial;
+          toggleOfficialDocFields(isOfficial);
+        }
+        setVal('libOfficialDocType', r.official_doc_type);
+        setVal('libOfficialDocNumber', r.official_doc_number || r.document_number);
+        setVal('libVersion', r.version);
+        setVal('libIssuingAuthority', r.issuing_authority);
+        setVal('libApprovalDate', r.approval_date);
+        setVal('libEffectiveDate', r.effective_date);
+        setVal('libSupersededRef', r.superseded_ref);
+      }
+    } catch (err) {
+      showToast('Error loading resource data: ' + err.message, 'error');
+    }
+  } else {
+    if (idInput) idInput.value = '';
+    if (titleHeading) titleHeading.innerHTML = '<i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary-orange);"></i> Upload Archival Resource';
+    const officialCheckbox = document.getElementById('libIsOfficialDoc');
+    if (officialCheckbox) {
+      officialCheckbox.checked = false;
+      toggleOfficialDocFields(false);
+    }
+  }
+
+  const modal = document.getElementById('modalLibraryUpload');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+  }
+}
+
+async function handleSaveLibraryResource(event) {
+  event.preventDefault();
+  const editId = document.getElementById('libResourceId')?.value;
+  const token = await ensureAuthToken();
+
+  const fileInput = document.getElementById('libFileInput');
+  const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+
+  if (!editId && !hasFile) {
+    showToast('Please select or drag-and-drop a file to upload.', 'error');
+    return;
+  }
+
+  const formData = new FormData();
+  if (hasFile) {
+    formData.append('file', fileInput.files[0]);
+  }
+
+  const fields = [
+    'title', 'category_id', 'description', 'language', 'access_level', 'status',
+    'author', 'publisher', 'publication_date', 'year', 'tags', 'provenance',
+    'related_entity', 'copyright_holder', 'usage_permissions', 'reference_url',
+    'cover_image', 'reviewer_notes', 'official_doc_type', 'official_doc_number',
+    'version', 'issuing_authority', 'approval_date', 'effective_date', 'superseded_ref'
+  ];
+
+  const mapFieldToInput = {
+    'title': 'libTitle',
+    'category_id': 'libCategorySelect',
+    'description': 'libDescription',
+    'language': 'libLanguage',
+    'access_level': 'libAccessLevel',
+    'status': 'libStatus',
+    'author': 'libAuthor',
+    'publisher': 'libPublisher',
+    'publication_date': 'libPubDate',
+    'year': 'libYear',
+    'tags': 'libTags',
+    'provenance': 'libProvenance',
+    'related_entity': 'libRelatedEntity',
+    'copyright_holder': 'libCopyrightHolder',
+    'usage_permissions': 'libUsagePermissions',
+    'reference_url': 'libRefUrl',
+    'cover_image': 'libCoverImage',
+    'reviewer_notes': 'libReviewerNotes',
+    'official_doc_type': 'libOfficialDocType',
+    'official_doc_number': 'libOfficialDocNumber',
+    'version': 'libVersion',
+    'issuing_authority': 'libIssuingAuthority',
+    'approval_date': 'libApprovalDate',
+    'effective_date': 'libEffectiveDate',
+    'superseded_ref': 'libSupersededRef'
+  };
+
+  fields.forEach(f => {
+    const el = document.getElementById(mapFieldToInput[f]);
+    if (el && el.value !== undefined) {
+      formData.append(f, el.value);
+    }
+  });
+
+  const saveBtn = document.getElementById('btnSaveLibraryResource');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+  }
+
+  const progressWrap = document.getElementById('libProgressWrap');
+  const progressBar = document.getElementById('libProgressBar');
+  const progressText = document.getElementById('libProgressText');
+
+  if (hasFile) {
+    if (progressWrap) progressWrap.style.display = 'block';
+    if (progressText) progressText.style.display = 'block';
+  }
+
+  const xhr = new XMLHttpRequest();
+  const url = editId ? `/api/library/resources/${editId}` : '/api/library/resources';
+  const method = editId ? 'PUT' : 'POST';
+
+  xhr.open(method, url, true);
+  if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+
+  if (hasFile) {
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        if (progressBar) progressBar.style.width = percent + '%';
+        if (progressText) progressText.textContent = `Uploading: ${percent}%`;
+      }
+    };
+  }
+
+  xhr.onload = () => {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save & Upload Resource';
+    }
+
+    try {
+      const response = JSON.parse(xhr.responseText);
+      if (xhr.status >= 200 && xhr.status < 300 && response.success) {
+        showToast(response.message || (editId ? 'Resource updated successfully.' : 'Resource uploaded and cataloged!'), 'success');
+        closeAdminModal('modalLibraryUpload');
+        loadLibraryStats();
+        loadLibraryResources(currentLibraryPage);
+      } else {
+        showToast(response.error || 'Server rejected the upload.', 'error');
+      }
+    } catch (e) {
+      showToast('Unexpected response from server: ' + xhr.responseText.substr(0, 100), 'error');
+    }
+  };
+
+  xhr.onerror = () => {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save & Upload Resource';
+    }
+    showToast('Network error during upload. Please check server connectivity.', 'error');
+  };
+
+  xhr.send(formData);
+}
+
+async function openLibraryPreviewModal(id) {
+  try {
+    const token = await ensureAuthToken();
+    const res = await fetch(`/api/library/resources/${id}`, {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+    });
+    const data = await res.json();
+    if (!data.success || !data.resource) {
+      showToast(data.error || 'Failed to retrieve document details.', 'error');
+      return;
+    }
+
+    const r = data.resource;
+    const content = document.getElementById('modalLibraryPreviewContent');
+    const downloadBtn = document.getElementById('btnLibraryPreviewDownload');
+    const titleHeading = document.getElementById('modalLibraryPreviewTitle');
+
+    if (titleHeading) titleHeading.innerHTML = `<i class="fa-solid fa-book-open" style="color: var(--primary-orange);"></i> ${escapeHtml(r.title)}`;
+    if (downloadBtn) {
+      downloadBtn.href = `/api/library/resources/${id}/download`;
+      downloadBtn.setAttribute('download', `${r.slug || 'document'}.pdf`);
+    }
+
+    const mime = (r.mime_type || '').toLowerCase();
+    const previewUrl = `/api/library/resources/${id}/preview`;
+
+    let viewerHtml = '';
+    if (mime.includes('pdf')) {
+      viewerHtml = `<iframe src="${previewUrl}" class="library-preview-frame"></iframe>`;
+    } else if (mime.startsWith('image/')) {
+      viewerHtml = `<div style="text-align: center; background: #000; border-radius: 8px; padding: 12px;"><img src="${previewUrl}" style="max-height: 480px; max-width: 100%; object-fit: contain;"></div>`;
+    } else if (mime.startsWith('audio/')) {
+      viewerHtml = `<div style="padding: 30px; text-align: center; background: #F8FAFC; border-radius: 8px;"><audio controls src="${previewUrl}" style="width: 100%; max-width: 500px;"></audio></div>`;
+    } else if (mime.startsWith('video/')) {
+      viewerHtml = `<div style="text-align: center; background: #000; border-radius: 8px;"><video controls src="${previewUrl}" style="width: 100%; max-height: 480px;"></video></div>`;
+    } else {
+      viewerHtml = `
+        <div style="background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px; padding: 30px; text-align: center;">
+          <i class="fa-solid fa-file-lines" style="font-size: 40px; color: #64748B; margin-bottom: 12px;"></i>
+          <h4 style="margin: 0 0 6px; color: var(--dark-navy);">Direct Inline Preview Not Available for this File Format</h4>
+          <p style="font-size: 13px; color: #64748B; margin: 0 0 16px;">This document (${escapeHtml(r.mime_type || 'binary')}) can be securely downloaded via authorized streaming.</p>
+          <a href="/api/library/resources/${id}/download" class="btn-admin btn-admin-primary" download>
+            <i class="fa-solid fa-download"></i> Download ${escapeHtml(r.file_size_formatted || '')} File
+          </a>
+        </div>
+      `;
+    }
+
+    if (content) {
+      content.innerHTML = `
+        <div style="display: flex; gap: 20px; margin-bottom: 16px; flex-wrap: wrap;">
+          <div style="flex: 1;">
+            <div style="font-size: 11px; font-weight: 800; color: var(--primary-orange); text-transform: uppercase;">Official Dossier &bull; v${escapeHtml(r.version || '1.0')}</div>
+            <h3 style="margin: 2px 0 6px; color: var(--dark-navy); font-size: 18px;">${escapeHtml(r.title)}</h3>
+            <div style="font-size: 12.5px; color: #64748B; margin-bottom: 8px;">
+              <strong>Author:</strong> ${escapeHtml(r.author || 'SSD')} &bull; 
+              <strong>Category:</strong> ${escapeHtml(r.category || 'Archival')} &bull; 
+              <strong>Language:</strong> ${escapeHtml(r.language || 'English')}
+            </div>
+            <p style="font-size: 13px; color: #334155; line-height: 1.5; margin: 0 0 10px;">${escapeHtml(r.description || '')}</p>
+          </div>
+          <div style="min-width: 200px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; font-size: 12px;">
+            <div style="margin-bottom: 4px;"><strong>Access Tier:</strong> <span class="badge-access-${(r.access_level || 'public').toLowerCase()}">${r.access_level || 'PUBLIC'}</span></div>
+            <div style="margin-bottom: 4px;"><strong>Status:</strong> <span class="badge-status-${(r.status || 'draft').toLowerCase()}">${r.status || 'DRAFT'}</span></div>
+            <div style="margin-bottom: 4px;"><strong>File Size:</strong> ${escapeHtml(r.file_size_formatted || '0 KB')}</div>
+            <div style="margin-bottom: 4px;"><strong>Downloads:</strong> ${r.downloads_count || 0}</div>
+          </div>
+        </div>
+
+        <div style="background: #001F3F; color: #94A3B8; padding: 8px 12px; border-radius: 6px; font-size: 11px; font-family: monospace; margin-bottom: 16px; word-break: break-all;">
+          <strong style="color: #FFAE66;">SHA-256:</strong> ${escapeHtml(r.sha256_checksum || 'N/A')}
+        </div>
+
+        ${viewerHtml}
+      `;
+    }
+
+    const modal = document.getElementById('modalLibraryPreview');
+    if (modal) {
+      modal.style.display = 'flex';
+      modal.classList.add('active');
+    }
+  } catch (err) {
+    showToast('Failed to open preview: ' + err.message, 'error');
+  }
+}
+
+function openLibraryNewVersionModal(id) {
+  const modal = document.getElementById('modalLibraryNewVersion');
+  const resId = document.getElementById('verResourceId');
+  const form = document.getElementById('formLibraryNewVersion');
+  if (form) form.reset();
+
+  if (resId) resId.value = id;
+
+  // Fetch resource metadata to show title & version
+  ensureAuthToken().then(token => {
+    fetch(`/api/library/resources/${id}`, {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+    }).then(r => r.json()).then(data => {
+      if (data.success && data.resource) {
+        const titleEl = document.getElementById('verResourceTitle');
+        const verEl = document.getElementById('verCurrentVersion');
+        if (titleEl) titleEl.textContent = data.resource.title;
+        if (verEl) verEl.textContent = data.resource.version || '1.0';
+
+        // Suggest next version
+        const curVer = parseFloat(data.resource.version || '1.0');
+        const nextVer = isNaN(curVer) ? '2.0' : (curVer + 0.1).toFixed(1);
+        const newNumInput = document.getElementById('verNewNumber');
+        if (newNumInput) newNumInput.value = nextVer;
+      }
+    });
+  });
+
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+  }
+}
+
+async function handleSaveLibraryNewVersion(event) {
+  event.preventDefault();
+  const id = document.getElementById('verResourceId')?.value;
+  const fileInput = document.getElementById('verFileInput');
+  const verNumber = document.getElementById('verNewNumber')?.value;
+  const changeNotes = document.getElementById('verChangeNotes')?.value;
+  const effectiveDate = document.getElementById('verEffectiveDate')?.value;
+
+  if (!id || !fileInput || !fileInput.files || fileInput.files.length === 0) {
+    showToast('Please attach the replacement version file.', 'error');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('file', fileInput.files[0]);
+  formData.append('version_number', verNumber);
+  formData.append('change_summary', changeNotes);
+  if (effectiveDate) formData.append('effective_date', effectiveDate);
+
+  try {
+    const token = await ensureAuthToken();
+    const res = await fetch(`/api/library/resources/${id}/version`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: formData
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || 'New document version successfully uploaded and preserved!', 'success');
+      closeAdminModal('modalLibraryNewVersion');
+      loadLibraryStats();
+      loadLibraryResources(currentLibraryPage);
+    } else {
+      showToast(data.error || 'Failed to upload new version.', 'error');
+    }
+  } catch (err) {
+    showToast('Version upload error: ' + err.message, 'error');
+  }
+}
+
+async function openLibraryVersionsModal(id) {
+  try {
+    const token = await ensureAuthToken();
+    const res = await fetch(`/api/library/resources/${id}/versions`, {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+    });
+    const data = await res.json();
+    if (!data.success) {
+      showToast(data.error || 'Failed to load version history.', 'error');
+      return;
+    }
+
+    const titleEl = document.getElementById('verHistoryTitle');
+    if (titleEl) titleEl.textContent = `Document History: ${data.resourceTitle || 'Resource'}`;
+
+    const tbody = document.getElementById('verHistoryTableBody');
+    if (tbody) {
+      if (data.versions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No historical versions recorded.</td></tr>';
+      } else {
+        tbody.innerHTML = data.versions.map(v => `
+          <tr>
+            <td>
+              <strong style="color: var(--dark-navy); font-size: 13.5px;">v${escapeHtml(v.version_number)}</strong>
+              ${v.change_summary ? `<div style="font-size: 11.5px; color: #64748B;">${escapeHtml(v.change_summary)}</div>` : ''}
+            </td>
+            <td>
+              <div style="font-size: 12px; font-weight: 600;">${escapeHtml(v.file_size_formatted || '0 KB')}</div>
+              <div style="font-size: 11px; color: #64748B;">${escapeHtml(v.mime_type || '')}</div>
+            </td>
+            <td>
+              ${v.is_current 
+                ? '<span style="background: #DCFCE7; color: #15803D; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">CURRENT ACTIVE</span>'
+                : '<span style="background: #F1F5F9; color: #64748B; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">SUPERSEDED</span>'}
+            </td>
+            <td style="font-family: monospace; font-size: 11px; color: #001F3F;" title="${v.sha256_checksum}">
+              ${v.sha256_checksum ? v.sha256_checksum.substr(0, 12) + '...' : 'N/A'}
+            </td>
+            <td style="font-size: 11.5px; color: #64748B;">
+              ${(v.created_at || '').substr(0, 16).replace('T', ' ')}
+            </td>
+            <td>
+              <a href="/api/library/resources/${id}/download?version=${v.version_number}" class="btn-admin btn-admin-outline" style="padding: 3px 8px; font-size: 11px;" download>
+                <i class="fa-solid fa-download"></i>
+              </a>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    const modal = document.getElementById('modalLibraryVersions');
+    if (modal) {
+      modal.style.display = 'flex';
+      modal.classList.add('active');
+    }
+  } catch (err) {
+    showToast('Failed to load versions: ' + err.message, 'error');
+  }
+}
+
+async function openLibraryAuditModal(id) {
+  try {
+    const token = await ensureAuthToken();
+    const res = await fetch(`/api/library/resources/${id}/audit`, {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+    });
+    const data = await res.json();
+    if (!data.success) {
+      showToast(data.error || 'Failed to retrieve audit trail.', 'error');
+      return;
+    }
+
+    const tbody = document.getElementById('libAuditTableBody');
+    if (tbody) {
+      if (data.auditLogs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">No audit events recorded for this resource.</td></tr>';
+      } else {
+        tbody.innerHTML = data.auditLogs.map(log => `
+          <tr>
+            <td style="font-size: 12px; color: #64748B;">${(log.created_at || '').substr(0, 19).replace('T', ' ')}</td>
+            <td>
+              <strong style="color: var(--dark-navy); font-size: 12.5px;">${escapeHtml(log.user_id || 'System')}</strong>
+              <div style="font-size: 11px; color: #64748B;">${escapeHtml(log.user_role || '')}</div>
+            </td>
+            <td>
+              <span style="background: #EFF6FF; color: #1D4ED8; font-weight: 700; font-size: 11px; padding: 2px 6px; border-radius: 4px;">
+                ${escapeHtml(log.action)}
+              </span>
+            </td>
+            <td style="font-size: 12px; color: #334155;">
+              ${log.details ? escapeHtml(JSON.stringify(log.details)) : '-'}
+            </td>
+            <td style="font-size: 11.5px; font-family: monospace; color: #64748B;">
+              ${escapeHtml(log.ip_address || '-')}
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    const modal = document.getElementById('modalLibraryAudit');
+    if (modal) {
+      modal.style.display = 'flex';
+      modal.classList.add('active');
+    }
+  } catch (err) {
+    showToast('Failed to load audit logs: ' + err.message, 'error');
+  }
+}
+
+async function handleLibraryWorkflowAction(id, action) {
+  const actionLabels = {
+    'submit_review': 'Submit for Review',
+    'approve': 'Approve Document',
+    'publish': 'Publish Live',
+    'unpublish': 'Unpublish',
+    'request_correction': 'Request Corrections',
+    'archive': 'Archive Resource',
+    'restore': 'Restore to Draft'
+  };
+
+  let note = '';
+  if (action === 'request_correction') {
+    note = prompt('Please specify the required corrections or amendments:');
+    if (!note) return;
+  } else {
+    if (!confirm(`Are you sure you want to perform '${actionLabels[action] || action}' on this resource?`)) return;
+  }
+
+  try {
+    const token = await ensureAuthToken();
+    const res = await fetch(`/api/library/resources/${id}/workflow`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ action, note })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || `Workflow transition '${action}' completed.`, 'success');
+      loadLibraryStats();
+      loadLibraryResources(currentLibraryPage);
+    } else {
+      showToast(data.error || 'Workflow transition failed.', 'error');
+    }
+  } catch (err) {
+    showToast('Workflow error: ' + err.message, 'error');
+  }
+}
+
+async function deleteLibraryResource(id) {
+  if (!confirm('Are you sure you want to delete this resource? This action will remove the physical files, versions, and record an immutable audit trail.')) return;
+
+  try {
+    const token = await ensureAuthToken();
+    const res = await fetch(`/api/library/resources/${id}`, {
+      method: 'DELETE',
+      headers: {
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || 'Resource deleted and logged in audit history.', 'success');
+      loadLibraryStats();
+      loadLibraryResources(currentLibraryPage);
+    } else {
+      showToast(data.error || 'Failed to delete resource.', 'error');
+    }
+  } catch (err) {
+    showToast('Deletion error: ' + err.message, 'error');
+  }
+}
+
+function downloadLibraryResource(id) {
+  window.open(`/api/library/resources/${id}/download`, '_blank');
+}
+
+// Categories Management
+function openLibraryCategoriesModal() {
+  loadLibraryCategories();
+  const modal = document.getElementById('modalLibraryCategories');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+  }
+}
+
+function showAddCategoryForm(editId = null) {
+  const form = document.getElementById('categoryInlineForm');
+  const title = document.getElementById('catFormTitle');
+  const idInput = document.getElementById('catFormId');
+  const nameInput = document.getElementById('catFormName');
+  const iconInput = document.getElementById('catFormIcon');
+  const descInput = document.getElementById('catFormDesc');
+
+  if (editId) {
+    const cat = cachedLibraryCategories.find(c => c.id === editId);
+    if (cat) {
+      if (title) title.textContent = `Edit Category: ${cat.name}`;
+      if (idInput) idInput.value = cat.id;
+      if (nameInput) nameInput.value = cat.name;
+      if (iconInput) iconInput.value = cat.icon || 'fa-book-bookmark';
+      if (descInput) descInput.value = cat.description || '';
+    }
+  } else {
+    if (title) title.textContent = 'Create New Archival Category';
+    if (idInput) idInput.value = '';
+    if (nameInput) nameInput.value = '';
+    if (iconInput) iconInput.value = 'fa-book-bookmark';
+    if (descInput) descInput.value = '';
+  }
+
+  if (form) form.style.display = 'block';
+}
+
+function hideAddCategoryForm() {
+  const form = document.getElementById('categoryInlineForm');
+  if (form) form.style.display = 'none';
+}
+
+async function handleSaveCategory() {
+  const id = document.getElementById('catFormId')?.value;
+  const name = document.getElementById('catFormName')?.value;
+  const icon = document.getElementById('catFormIcon')?.value;
+  const description = document.getElementById('catFormDesc')?.value;
+
+  if (!name || !name.trim()) {
+    showToast('Category name is required.', 'error');
+    return;
+  }
+
+  try {
+    const token = await ensureAuthToken();
+    const url = id ? `/api/library/categories/${id}` : '/api/library/categories';
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ name: name.trim(), icon, description })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || (id ? 'Category updated.' : 'Category created!'), 'success');
+      hideAddCategoryForm();
+      loadLibraryCategories();
+    } else {
+      showToast(data.error || 'Failed to save category.', 'error');
+    }
+  } catch (err) {
+    showToast('Category save error: ' + err.message, 'error');
+  }
+}
+
+async function toggleCategoryStatus(id, currentActive) {
+  try {
+    const token = await ensureAuthToken();
+    const res = await fetch(`/api/library/categories/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ is_active: !currentActive })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || 'Category status updated.', 'success');
+      loadLibraryCategories();
+    } else {
+      showToast(data.error || 'Failed to toggle status.', 'error');
+    }
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+// Window Bindings for Digital Library
+window.loadLibraryView = loadLibraryView;
+window.loadLibraryCategories = loadLibraryCategories;
+window.loadLibraryStats = loadLibraryStats;
+window.loadLibraryResources = loadLibraryResources;
+window.openLibraryUploadModal = openLibraryUploadModal;
+window.handleLibraryFileSelected = handleLibraryFileSelected;
+window.clearLibrarySelectedFile = clearLibrarySelectedFile;
+window.toggleOfficialDocFields = toggleOfficialDocFields;
+window.handleSaveLibraryResource = handleSaveLibraryResource;
+window.openLibraryPreviewModal = openLibraryPreviewModal;
+window.openLibraryNewVersionModal = openLibraryNewVersionModal;
+window.handleSaveLibraryNewVersion = handleSaveLibraryNewVersion;
+window.openLibraryVersionsModal = openLibraryVersionsModal;
+window.openLibraryCategoriesModal = openLibraryCategoriesModal;
+window.showAddCategoryForm = showAddCategoryForm;
+window.hideAddCategoryForm = hideAddCategoryForm;
+window.handleSaveCategory = handleSaveCategory;
+window.toggleCategoryStatus = toggleCategoryStatus;
+window.openLibraryAuditModal = openLibraryAuditModal;
+window.handleLibraryWorkflowAction = handleLibraryWorkflowAction;
+window.deleteLibraryResource = deleteLibraryResource;
+window.downloadLibraryResource = downloadLibraryResource;
+window.debounceLibrarySearch = debounceLibrarySearch;
+window.resetLibraryFilters = resetLibraryFilters;
+window.toggleSelectAllLibraryResources = toggleSelectAllLibraryResources;
+window.toggleLibraryResourceSelect = toggleLibraryResourceSelect;
+window.handleBulkLibraryAction = handleBulkLibraryAction;
 

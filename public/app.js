@@ -227,7 +227,7 @@ const ssdSampleData = {
       excerpt: "Central Command announces nationwide 100-Year commemorative march pasts, constitutional literacy yatras, and youth cadet enlistment drives.",
       date: "October 14, 2026",
       category: "Centenary",
-      imageUrl: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80"
+      imageUrl: "ssd-cadets-march.jpg"
     },
     "news_2": {
       title: "Over 2,500 Cadets Graduate from State Physical Drill & Leadership Camp",
@@ -302,7 +302,7 @@ const ssdSampleData = {
       category: "Historical"
     },
     "gal_2": {
-      imageUrl: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80",
+      imageUrl: "ssd-cadets-march.jpg",
       caption: "Mahila Samata Sainik Dal Volunteers at National Equality Rally",
       category: "Mahila Dal"
     },
@@ -442,7 +442,7 @@ const ssdSampleData = {
       id: "centenary",
       title: "SSD Centenary 1927–2027 Mission (शताब्दी महोत्सव)",
       category: "Centenary Drive",
-      imageUrl: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80",
+      imageUrl: "ssd-cadets-march.jpg",
       description: "Nationwide 100-Year commemorative march pasts, building 1,000 Ambedkar Study Libraries, and establishing the Centenary National Memorial at Mahad & Nagpur.",
       targetAmount: 5000000,
       raisedAmount: 3650000,
@@ -5497,6 +5497,11 @@ window.scrollToAboutSection = scrollToAboutSection;
 function applyHomepageCms(hp) {
   if (!hp) return;
   if (hp.hero) {
+    const heroEl = document.getElementById('hero');
+    if (heroEl) {
+      const bgImg = (hp.hero.bgImage && !hp.hero.bgImage.includes('544717305')) ? hp.hero.bgImage : 'ssd-cadets-march.jpg';
+      heroEl.style.background = `linear-gradient(135deg, rgba(8, 22, 50, 0.66) 0%, rgba(6, 17, 40, 0.72) 100%), url('${bgImg}') center 25%/cover no-repeat`;
+    }
     const hl = document.getElementById('heroHeadline');
     if (hl && hp.hero.headline) hl.innerHTML = hp.hero.headline;
     const sub = document.getElementById('heroSubheadline');

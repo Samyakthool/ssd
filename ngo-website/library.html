@@ -116,7 +116,7 @@
       <div class="library-filter-panel">
         <div class="library-filters-row">
           <div>
-            <input type="text" id="libSearch" class="library-search-input" placeholder="Search by title, author, topic, or keyword (e.g. Mahad, Yeola, Drill, Constitution)..." oninput="applyLibraryFilters()">
+            <input type="text" id="libSearch" class="library-search-input" placeholder="Search by title, author, document #, or keyword (e.g. Mahad, Yeola, Drill, Constitution)..." oninput="applyLibraryFilters()">
           </div>
           <div>
             <select id="libCategory" class="library-select" onchange="applyLibraryFilters()">
@@ -133,6 +133,15 @@
             </select>
           </div>
           <div>
+            <select id="libFormat" class="library-select" onchange="applyLibraryFilters()">
+              <option value="all">All Resource Types</option>
+              <option value="document">PDF & Treatises</option>
+              <option value="image">Photographs & Scans</option>
+              <option value="audio">Audio & Speeches</option>
+              <option value="video">Historical Videos</option>
+            </select>
+          </div>
+          <div>
             <select id="libYear" class="library-select" onchange="applyLibraryFilters()">
               <option value="all">All Eras</option>
               <option value="1927">1927 (Foundation Era)</option>
@@ -144,9 +153,9 @@
           </div>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; padding-top: 14px; border-top: 1px solid #F1F5F9; font-size: 13px; color: #64748B;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; padding-top: 14px; border-top: 1px solid #F1F5F9; font-size: 13px; color: #64748B; flex-wrap: wrap; gap: 10px;">
           <div>Showing <strong id="libCount">0</strong> archival resources</div>
-          <div style="display: flex; gap: 14px; align-items: center;">
+          <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
             <span style="display: inline-flex; align-items: center; gap: 6px;"><span class="badge-access-public">Public</span> Free Access</span>
             <span style="display: inline-flex; align-items: center; gap: 6px;"><span class="badge-access-member">Member</span> Cadet Login</span>
             <span style="display: inline-flex; align-items: center; gap: 6px;"><span class="badge-access-restricted">Restricted</span> Officers Only</span>
@@ -163,9 +172,9 @@
   </main>
 
   <!-- DOCUMENT VIEWER MODAL -->
-  <div id="docViewerModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-    <div style="background: #FFFFFF; border-radius: 14px; max-width: 800px; width: 92%; max-height: 90vh; overflow-y: auto; padding: 34px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); position: relative;">
-      <button type="button" onclick="closeDocViewer()" style="position: absolute; top: 20px; right: 20px; border: none; background: transparent; font-size: 22px; cursor: pointer; color: #64748B;"><i class="fa-solid fa-xmark"></i></button>
+  <div id="docViewerModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px); padding: 20px;">
+    <div style="background: #FFFFFF; border-radius: 14px; max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 30px; box-shadow: 0 15px 50px rgba(0,0,0,0.35); position: relative;">
+      <button type="button" onclick="closeDocViewer()" style="position: absolute; top: 16px; right: 18px; border: none; background: transparent; font-size: 22px; cursor: pointer; color: #64748B;" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
       
       <div id="modalContent">
         <!-- Injected dynamically -->
@@ -253,10 +262,11 @@
 
     function populateCategoryDropdown(categories) {
       const select = document.getElementById('libCategory');
+      select.innerHTML = '<option value="all">All Categories</option>';
       categories.forEach(cat => {
         const opt = document.createElement('option');
         opt.value = cat.id;
-        opt.innerText = cat.name;
+        opt.innerText = `${cat.name} (${cat.resource_count || 0})`;
         select.appendChild(opt);
       });
     }
@@ -265,19 +275,36 @@
       const q = document.getElementById('libSearch').value.toLowerCase().trim();
       const cat = document.getElementById('libCategory').value;
       const lang = document.getElementById('libLanguage').value;
+      const format = document.getElementById('libFormat')?.value || 'all';
       const year = document.getElementById('libYear').value;
 
       let filtered = allResources.filter(item => {
-        if (cat !== 'all' && item.category !== cat) return false;
-        if (lang !== 'all' && !item.language.toLowerCase().includes(lang.toLowerCase())) return false;
-        if (year !== 'all' && String(item.year) !== String(year)) return false;
+        if (cat !== 'all') {
+          const cid = (item.category_id || '').toLowerCase();
+          const cslug = (item.category || '').toLowerCase();
+          if (cid !== cat.toLowerCase() && cslug !== cat.toLowerCase()) return false;
+        }
+
+        if (lang !== 'all' && !(item.language || '').toLowerCase().includes(lang.toLowerCase())) return false;
+
+        if (format !== 'all') {
+          const itemType = (item.resource_type || item.format || '').toLowerCase();
+          if (!itemType.includes(format.toLowerCase())) return false;
+        }
+
+        if (year !== 'all') {
+          const itemYear = String(item.year || item.publication_date || '');
+          if (!itemYear.includes(year)) return false;
+        }
 
         if (q) {
           const titleMatch = (item.title || '').toLowerCase().includes(q);
           const descMatch = (item.description || '').toLowerCase().includes(q);
           const authorMatch = (item.author || '').toLowerCase().includes(q);
+          const pubMatch = (item.publisher || '').toLowerCase().includes(q);
+          const docNumMatch = (item.document_number || item.official_doc_number || '').toLowerCase().includes(q);
           const tagsMatch = Array.isArray(item.tags) && item.tags.some(t => t.toLowerCase().includes(q));
-          return titleMatch || descMatch || authorMatch || tagsMatch;
+          return titleMatch || descMatch || authorMatch || pubMatch || docNumMatch || tagsMatch;
         }
 
         return true;
@@ -296,7 +323,7 @@
           <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background: #FFFFFF; border-radius: 12px; border: 1px dashed #CBD5E1;">
             <i class="fa-solid fa-book-open" style="font-size: 38px; color: #CBD5E1; margin-bottom: 14px;"></i>
             <h3 style="color: var(--dark-navy); margin-bottom: 6px;">No Matching Archival Resources Found</h3>
-            <p style="font-size: 14px; color: #64748B;">Try broadening your keywords or clearing the category and language filters.</p>
+            <p style="font-size: 14px; color: #64748B;">Try broadening your keywords or clearing the category, language, and format filters.</p>
           </div>
         `;
         return;
@@ -306,23 +333,31 @@
         const card = document.createElement('div');
         card.className = 'library-card';
         
+        const accessTier = (res.access_level || res.accessLevel || 'public').toLowerCase();
         let accessBadge = '<span class="badge-access-public">Public Document</span>';
-        if (res.accessLevel === 'member') accessBadge = '<span class="badge-access-member">Member Portal Access</span>';
-        if (res.accessLevel === 'restricted') accessBadge = '<span class="badge-access-restricted">Restricted Document</span>';
+        if (accessTier === 'member') accessBadge = '<span class="badge-access-member">Member Portal Access</span>';
+        if (accessTier === 'restricted') accessBadge = '<span class="badge-access-restricted">Restricted Document</span>';
+        if (accessTier === 'admin') accessBadge = '<span class="badge-access-restricted">Officer Only</span>';
+
+        const coverSrc = res.cover_image || (res.thumbnail_path ? ('/uploads/library/thumbnails/' + res.thumbnail_path) : (res.coverImage || 'logo.png'));
+        const yearVal = res.year || (res.publication_date ? res.publication_date.substr(0,4) : 'Historical');
+        const formatVal = res.resource_type || res.format || 'PDF';
+        const sizeVal = res.file_size_formatted || res.fileSize || 'Available';
 
         card.innerHTML = `
-          <img src="${res.coverImage}" alt="${res.title}" class="library-card-cover" onerror="this.src='https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'">
+          <img src="${coverSrc}" alt="${res.title}" class="library-card-cover" onerror="this.src='logo.png'">
           <div class="library-card-content">
             <div class="library-meta-tags">
               ${accessBadge}
-              <span style="font-size: 11px; color: #64748B; font-weight: 700;"><i class="fa-solid fa-calendar"></i> ${res.year}</span>
-              <span style="font-size: 11px; color: #64748B; font-weight: 700;"><i class="fa-solid fa-language"></i> ${res.language}</span>
+              <span style="font-size: 11px; color: #64748B; font-weight: 700;"><i class="fa-solid fa-calendar"></i> ${yearVal}</span>
+              <span style="font-size: 11px; color: #64748B; font-weight: 700;"><i class="fa-solid fa-language"></i> ${res.language || 'English'}</span>
+              ${res.document_number || res.official_doc_number ? `<span style="font-size: 11px; color: #2563EB; font-weight: 700;"><i class="fa-solid fa-stamp"></i> ${res.document_number || res.official_doc_number}</span>` : ''}
             </div>
             <h3 class="library-card-title">${res.title}</h3>
-            <div class="library-card-author"><i class="fa-solid fa-pen-nib"></i> ${res.author}</div>
-            <p class="library-card-desc">${res.description}</p>
+            <div class="library-card-author"><i class="fa-solid fa-pen-nib"></i> ${res.author || 'Samata Sainik Dal'} &bull; v${res.version || '1.0'}</div>
+            <p class="library-card-desc">${res.description || ''}</p>
             <div class="library-card-footer">
-              <span style="font-size: 12px; color: #64748B; font-weight: 600;"><i class="fa-solid fa-file-pdf" style="color: #E11D48;"></i> ${res.format} &bull; ${res.fileSize}</span>
+              <span style="font-size: 12px; color: #64748B; font-weight: 600;"><i class="fa-solid fa-file-pdf" style="color: #E11D48;"></i> ${formatVal} &bull; ${sizeVal}</span>
               <button type="button" onclick="openDocViewer('${res.id}')" class="library-card-cta">
                 <i class="fa-solid fa-book-reader"></i> View Document
               </button>
@@ -339,36 +374,73 @@
 
       const modal = document.getElementById('docViewerModal');
       const content = document.getElementById('modalContent');
+      const accessTier = (item.access_level || item.accessLevel || 'public').toLowerCase();
+      const coverSrc = item.cover_image || (item.thumbnail_path ? ('/uploads/library/thumbnails/' + item.thumbnail_path) : (item.coverImage || 'logo.png'));
+      const formatVal = item.resource_type || item.format || 'PDF';
+      const sizeVal = item.file_size_formatted || item.fileSize || 'Standard';
+      const downloadUrl = `/api/library/resources/${item.id}/download`;
+      const previewUrl = `/api/library/resources/${item.id}/preview`;
+
+      // Related recommendations
+      const related = allResources
+        .filter(r => r.id !== item.id && (r.category_id === item.category_id || r.category === item.category))
+        .slice(0, 3);
+
+      const relatedHtml = related.length > 0 ? `
+        <div style="border-top: 1px solid #E2E8F0; padding-top: 18px; margin-top: 20px;">
+          <h4 style="font-size: 14px; font-weight: 700; color: var(--dark-navy); margin-bottom: 12px;">Related Archival Publications:</h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+            ${related.map(rel => `
+              <div onclick="openDocViewer('${rel.id}')" style="cursor: pointer; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px; display: flex; gap: 10px; align-items: center;">
+                <img src="${rel.cover_image || rel.coverImage || 'logo.png'}" style="width: 38px; height: 48px; object-fit: cover; border-radius: 4px;" onerror="this.src='logo.png'">
+                <div style="min-width: 0;">
+                  <strong style="display: block; font-size: 12px; color: var(--dark-navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${rel.title}</strong>
+                  <span style="font-size: 11px; color: #64748B;">${rel.author || 'SSD'}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : '';
 
       content.innerHTML = `
-        <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap;">
-          <img src="${item.coverImage}" alt="${item.title}" style="width: 140px; height: 180px; object-fit: cover; border-radius: 8px; border: 1px solid #E2E8F0;" onerror="this.src='logo.png'">
-          <div style="flex: 1;">
-            <div style="font-size: 12px; font-weight: 800; color: var(--primary-orange); text-transform: uppercase; margin-bottom: 4px;">Archival Document Dossier</div>
-            <h2 style="font-family: var(--font-heading); font-size: 22px; color: var(--dark-navy); font-weight: 800; margin-bottom: 6px;">${item.title}</h2>
-            <div style="font-size: 13px; color: #64748B; margin-bottom: 12px;"><strong>Author:</strong> ${item.author} &bull; <strong>Publisher:</strong> ${item.publisher} (${item.year})</div>
+        <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap;">
+          <img src="${coverSrc}" alt="${item.title}" style="width: 130px; height: 170px; object-fit: cover; border-radius: 8px; border: 1px solid #E2E8F0; background: #001F3F;" onerror="this.src='logo.png'">
+          <div style="flex: 1; min-width: 250px;">
+            <div style="font-size: 11px; font-weight: 800; color: var(--primary-orange); text-transform: uppercase; margin-bottom: 4px;">Archival Document Dossier &bull; v${item.version || '1.0'}</div>
+            <h2 style="font-family: var(--font-heading); font-size: 20px; color: var(--dark-navy); font-weight: 800; margin-bottom: 6px;">${item.title}</h2>
+            <div style="font-size: 13px; color: #64748B; margin-bottom: 12px;">
+              <strong>Author:</strong> ${item.author || 'SSD'} &bull; 
+              <strong>Publisher:</strong> ${item.publisher || 'Samata Sainik Dal Press'} (${item.year || 'Historical'})
+            </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
-              <span class="badge-access-public">${item.accessLevel.toUpperCase()}</span>
-              <span style="background: #F1F5F9; color: #475569; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">${item.language}</span>
-              <span style="background: #F1F5F9; color: #475569; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">${item.format} (${item.fileSize})</span>
+              <span class="badge-access-${accessTier}">${accessTier.toUpperCase()}</span>
+              <span style="background: #F1F5F9; color: #475569; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">${item.language || 'English'}</span>
+              <span style="background: #F1F5F9; color: #475569; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">${formatVal} (${sizeVal})</span>
+              ${item.document_number || item.official_doc_number ? `<span style="background: #EFF6FF; color: #1D4ED8; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">#${item.document_number || item.official_doc_number}</span>` : ''}
             </div>
           </div>
         </div>
 
-        <div style="border-top: 1px solid #E2E8F0; padding-top: 20px; margin-bottom: 20px;">
-          <h4 style="font-size: 15px; color: var(--dark-navy); margin-bottom: 8px;">Document Overview & Provenance</h4>
-          <p style="font-size: 14px; line-height: 1.7; color: #334155; margin-bottom: 14px;">${item.description}</p>
-          <div style="background: #F8FAFC; border-radius: 8px; padding: 12px 16px; font-size: 12px; color: #475569;">
-            <strong>Provenance:</strong> ${item.provenance}
-          </div>
+        <div style="border-top: 1px solid #E2E8F0; padding-top: 18px; margin-bottom: 18px;">
+          <h4 style="font-size: 14px; font-weight: 700; color: var(--dark-navy); margin-bottom: 6px;">Document Overview & Historical Significance</h4>
+          <p style="font-size: 13.5px; line-height: 1.6; color: #334155; margin-bottom: 12px;">${item.description || 'No detailed abstract recorded.'}</p>
+          ${item.provenance ? `<div style="background: #F8FAFC; border-radius: 6px; padding: 10px 14px; font-size: 12px; color: #475569; margin-bottom: 12px;"><strong>Provenance / Archives:</strong> ${item.provenance}</div>` : ''}
         </div>
 
-        <div style="background: #F1F5F9; border-radius: 8px; padding: 12px 16px; font-size: 12px; margin-bottom: 24px;">
-          <strong>SHA-256 Checksum:</strong> <code style="word-break: break-all; color: var(--dark-navy); font-weight: 700;">${item.sha256Checksum || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'}</code>
+        <!-- INLINE DOCUMENT VIEWER IFRAME FOR PDF -->
+        <div style="margin-bottom: 20px;">
+          <iframe src="${previewUrl}" style="width: 100%; height: 420px; border: 1px solid #E2E8F0; border-radius: 8px; background: #0F172A;" title="Document Preview"></iframe>
         </div>
 
-        <div style="display: flex; justify-content: flex-end; gap: 12px;">
-          <a href="${item.fileUrl}" download="${item.title}.pdf" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
+        <div style="background: #F1F5F9; border-radius: 6px; padding: 10px 14px; font-size: 11.5px; margin-bottom: 20px;">
+          <strong>Cryptographic SHA-256 Checksum:</strong> <code style="word-break: break-all; color: var(--dark-navy); font-weight: 700;">${item.sha256_checksum || item.sha256Checksum || 'Verified Authentic'}</code>
+        </div>
+
+        ${relatedHtml}
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #E2E8F0;">
+          <a href="${downloadUrl}" class="btn btn-primary" download style="display: inline-flex; align-items: center; gap: 8px;">
             <i class="fa-solid fa-download"></i> Download Publication
           </a>
           <button type="button" onclick="closeDocViewer()" class="btn btn-secondary">Close</button>

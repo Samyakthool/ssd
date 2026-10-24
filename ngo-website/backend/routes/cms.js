@@ -70,7 +70,7 @@ router.get('/homepage', (req, res) => {
         secondaryCtaLink: "membership.html",
         tertiaryCtaText: "Explore Digital Library",
         tertiaryCtaLink: "library.html",
-        bgImage: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1920&q=80"
+        bgImage: "ssd-cadets-march.jpg"
       },
       aimMottoHighlight: {
         aimShort: "To organize, educate, and discipline the oppressed masses to safeguard constitutional morality, eliminate caste barriers, and establish an enlightened democratic fraternity.",

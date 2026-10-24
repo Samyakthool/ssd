@@ -659,12 +659,18 @@ export const defaultSeedData = {
   // DIGITAL LIBRARY CATEGORIES & RESOURCES
   // --------------------------------------------------------------------------
   library_categories: [
-    { id: "cat_hist", name: "SSD History & Inception", slug: "history", icon: "fa-book-bookmark", count: 18 },
-    { id: "cat_const", name: "Constitution & Law", slug: "constitution", icon: "fa-scale-balanced", count: 12 },
-    { id: "cat_speeches", name: "Speeches of Dr. Ambedkar", slug: "speeches", icon: "fa-microphone", count: 24 },
-    { id: "cat_training", name: "Cadet Drill & Manuals", slug: "training", icon: "fa-shield", count: 9 },
-    { id: "cat_gazettes", name: "Centenary Gazettes & Bulletins", slug: "gazettes", icon: "fa-newspaper", count: 32 },
-    { id: "cat_archives", name: "Photo & Document Archives", slug: "archives", icon: "fa-images", count: 45 }
+    { id: "cat_const", name: "SSD Constitution and Official Documents", slug: "constitution-official", icon: "fa-book-bookmark", sort_order: 1, is_active: true, description: "Official charters, statutory bylaws, and constitutional regulations of Samata Sainik Dal" },
+    { id: "cat_hist", name: "Historical Documents and Archives", slug: "historical-archives", icon: "fa-timeline", sort_order: 2, is_active: true, description: "Primary archival records, 1927 Mahad Satyagraha dispatches, and founding documents" },
+    { id: "cat_books", name: "Books and E-books", slug: "books-ebooks", icon: "fa-book-open", sort_order: 3, is_active: true, description: "Published volumes, historical monographs, treatises, and digitized literature" },
+    { id: "cat_research", name: "Research Papers and Publications", slug: "research-papers", icon: "fa-file-lines", sort_order: 4, is_active: true, description: "Peer-reviewed papers, sociological studies, and Dal historical research analyses" },
+    { id: "cat_speeches", name: "Speeches and Lectures", slug: "speeches-lectures", icon: "fa-microphone", sort_order: 5, is_active: true, description: "Historic addresses of Dr. B. R. Ambedkar and keynote national rally transcripts" },
+    { id: "cat_circulars", name: "Circulars and Notices", slug: "circulars-notices", icon: "fa-bullhorn", sort_order: 6, is_active: true, description: "Official executive orders, national directives, and organizational notifications" },
+    { id: "cat_training", name: "Training and Educational Materials", slug: "training-educational", icon: "fa-shield-halved", sort_order: 7, is_active: true, description: "Parade drill manuals, command field handbooks, and cadre leadership modules" },
+    { id: "cat_awareness", name: "Social Awareness Resources", slug: "social-awareness", icon: "fa-hand-holding-heart", sort_order: 8, is_active: true, description: "Educational leaflets, constitutional rights guides, and anti-caste campaign materials" },
+    { id: "cat_photos", name: "Photographs and Historical Images", slug: "photographs-images", icon: "fa-images", sort_order: 9, is_active: true, description: "Rare historical photographs, rally archives, and uniform reference galleries" },
+    { id: "cat_multimedia", name: "Audio and Video Resources", slug: "audio-video", icon: "fa-photo-film", sort_order: 10, is_active: true, description: "Archival sound recordings, centenary documentaries, and parade training footage" },
+    { id: "cat_reports", name: "Reports and Documentation", slug: "reports-documentation", icon: "fa-clipboard-check", sort_order: 11, is_active: true, description: "Annual state convention reports, relief force documentation, and audit filings" },
+    { id: "cat_other", name: "Other Resources", slug: "other-resources", icon: "fa-box-archive", sort_order: 12, is_active: true, description: "Miscellaneous historical publications, reference bulletins, and external papers" }
   ],
 
   library_resources: [
@@ -925,7 +931,7 @@ export const defaultSeedData = {
       secondaryCtaLink: "membership.html",
       tertiaryCtaText: "Explore Digital Library",
       tertiaryCtaLink: "library.html",
-      bgImage: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1920&q=80"
+      bgImage: "ssd-cadets-march.jpg"
     },
     aimMottoHighlight: {
       aimShort: "To organize, educate, and discipline the oppressed masses to safeguard constitutional morality, eliminate caste barriers, and establish an enlightened democratic fraternity.",

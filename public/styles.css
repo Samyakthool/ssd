@@ -121,7 +121,7 @@ button, input, select, textarea {
 
 /* Page Banner / Header for Inner Pages */
 .page-banner {
-  background: linear-gradient(rgba(10, 31, 68, 0.85), rgba(10, 31, 68, 0.85)), url('https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+  background: linear-gradient(rgba(10, 31, 68, 0.88), rgba(10, 31, 68, 0.92)), url('ssd-cadets-march.jpg') center/cover no-repeat;
   color: var(--white);
   padding: 85px 0;
   text-align: center;
@@ -4093,8 +4093,8 @@ body.nav-open .header-wrapper {
 /* 1. HERO COMMAND BANNER */
 .hero-command-section {
   position: relative;
-  background: linear-gradient(135deg, rgba(10, 31, 68, 0.94) 0%, rgba(7, 21, 46, 0.98) 100%),
-              url('https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+  background: linear-gradient(135deg, rgba(8, 22, 50, 0.66) 0%, rgba(6, 17, 40, 0.72) 100%),
+              url('ssd-cadets-march.jpg') center 25%/cover no-repeat;
   color: var(--white);
   padding: 100px 0 90px;
   overflow: hidden;
@@ -4157,19 +4157,21 @@ body.nav-open .header-wrapper {
   letter-spacing: -0.5px;
   color: var(--white);
   margin-bottom: 20px;
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.9);
 }
 
 .hero-headline span.highlight {
   color: var(--primary-orange);
-  text-shadow: 0 2px 10px rgba(255, 107, 0, 0.3);
+  text-shadow: 0 2px 10px rgba(255, 107, 0, 0.4), 0 3px 14px rgba(0, 0, 0, 0.9);
 }
 
 .hero-subheadline {
   font-size: 18px;
   line-height: 1.65;
-  color: #D6E0EA;
+  color: #E2E8F0;
   margin-bottom: 34px;
   max-width: 680px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
 }
 
 .hero-cta-group {

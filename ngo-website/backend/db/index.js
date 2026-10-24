@@ -94,6 +94,8 @@ const embeddedStore = {
   constitution: new Map(),
   library_categories: new Map(),
   library_resources: new Map(),
+  library_document_versions: new Map(),
+  library_audit_logs: new Map(),
   terms_conditions: new Map(),
   privacy_policy: new Map(),
   content_audit_logs: new Map(),
@@ -101,7 +103,9 @@ const embeddedStore = {
   batches: new Map(),
   batch_history: new Map(),
   batch_config: new Map(),
-  sainik_id_counters: new Map()
+  sainik_id_counters: new Map(),
+  enlistment_questionnaires: new Map(),
+  applicant_organizations: new Map()
 };
 
 // Persistence file for embedded storage (using /tmp on Vercel)
@@ -221,7 +225,7 @@ function loadEmbeddedStore() {
       });
       seeded = true;
     }
-    if (embeddedStore.library_categories.size === 0 && defaultSeedData.library_categories) {
+    if ((embeddedStore.library_categories.size === 0 || embeddedStore.library_categories.size < 12) && defaultSeedData.library_categories) {
       defaultSeedData.library_categories.forEach(item => {
         embeddedStore.library_categories.set(item.id, item);
       });

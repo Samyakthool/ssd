@@ -193,6 +193,15 @@
           <span class="sidebar-badge" style="background: rgba(255, 107, 0, 0.2); color: var(--primary-orange); font-weight: 700;">PRO</span>
         </a>
 
+        <div class="menu-category-label">Knowledge & Publications</div>
+        <a class="sidebar-item" onclick="switchView('library')" id="nav-library">
+          <div class="sidebar-item-left">
+            <i class="fa-solid fa-book-bookmark"></i>
+            <span>Digital Library Desk</span>
+          </div>
+          <span class="sidebar-badge" id="badgeLibraryCount">0</span>
+        </a>
+
         <div class="menu-category-label">System & Access Control</div>
         <a class="sidebar-item" onclick="switchView('admins')" id="nav-admins">
           <div class="sidebar-item-left">
@@ -1964,6 +1973,220 @@
           </div>
         </section>
 
+        <!-- ==========================================================================
+             VIEW: DIGITAL LIBRARY & ARCHIVES MANAGEMENT DESK
+             ========================================================================== -->
+        <section id="viewLibrary" class="view-panel">
+          
+          <!-- COMMAND BANNER -->
+          <div class="card-panel" style="margin-bottom: 20px; background: linear-gradient(135deg, #001F3F 0%, #0A3264 100%); color: #FFFFFF; border-left: 5px solid var(--primary-orange);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+              <div>
+                <span style="font-size: 11px; font-weight: 800; color: #FFAE66; text-transform: uppercase; letter-spacing: 1.5px;">Samata Sainik Dal Central Archival Repository</span>
+                <h3 style="font-family: var(--font-heading); font-size: 20px; color: #FFFFFF; margin: 2px 0 6px;">Digital Library & Publications Command Desk</h3>
+                <div style="font-size: 12.5px; color: #D6E0EA;">
+                  <span><i class="fa-solid fa-layer-group"></i> 12 Curated Categories</span> &bull; 
+                  <span><i class="fa-solid fa-code-branch"></i> Immutability & Version Control</span> &bull; 
+                  <span><i class="fa-solid fa-shield-halved"></i> 4-Tier Access Control (Public, Member, Restricted, Admin)</span>
+                </div>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn-admin btn-admin-primary" onclick="openLibraryUploadModal()">
+                  <i class="fa-solid fa-cloud-arrow-up"></i> Upload Resource
+                </button>
+                <button type="button" class="btn-admin btn-admin-outline" style="border-color: rgba(255,255,255,0.4); color: #fff;" onclick="openLibraryCategoriesModal()">
+                  <i class="fa-solid fa-folder-tree"></i> Manage Categories
+                </button>
+                <button type="button" class="btn-admin btn-admin-outline" style="border-color: rgba(255,255,255,0.4); color: #fff;" onclick="loadLibraryView()">
+                  <i class="fa-solid fa-arrows-rotate"></i> Refresh Catalog
+                </button>
+                <a href="library.html" target="_blank" class="btn-admin btn-admin-outline" style="border-color: rgba(255,255,255,0.4); color: #fff;">
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i> Public Library
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 8-POINT KPI STATS BAR -->
+          <div class="library-kpi-grid">
+            <div class="library-kpi-card">
+              <div class="library-kpi-icon" style="background: rgba(0, 31, 63, 0.08); color: var(--dark-navy);">
+                <i class="fa-solid fa-book-bookmark"></i>
+              </div>
+              <div class="library-kpi-info">
+                <span class="library-kpi-value" id="statLibTotal">0</span>
+                <span class="library-kpi-label">Total Resources</span>
+              </div>
+            </div>
+
+            <div class="library-kpi-card">
+              <div class="library-kpi-icon" style="background: #DCFCE7; color: #15803D;">
+                <i class="fa-solid fa-circle-check"></i>
+              </div>
+              <div class="library-kpi-info">
+                <span class="library-kpi-value" id="statLibPublished" style="color: #15803D;">0</span>
+                <span class="library-kpi-label">Published (Live)</span>
+              </div>
+            </div>
+
+            <div class="library-kpi-card">
+              <div class="library-kpi-icon" style="background: #F1F5F9; color: #475569;">
+                <i class="fa-solid fa-file-lines"></i>
+              </div>
+              <div class="library-kpi-info">
+                <span class="library-kpi-value" id="statLibDrafts">0</span>
+                <span class="library-kpi-label">Drafts</span>
+              </div>
+            </div>
+
+            <div class="library-kpi-card">
+              <div class="library-kpi-icon" style="background: #FEF3C7; color: #B45309;">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+              </div>
+              <div class="library-kpi-info">
+                <span class="library-kpi-value" id="statLibInReview" style="color: #B45309;">0</span>
+                <span class="library-kpi-label">In Review</span>
+              </div>
+            </div>
+
+            <div class="library-kpi-card">
+              <div class="library-kpi-icon" style="background: #E0E7FF; color: #3730A3;">
+                <i class="fa-solid fa-stamp"></i>
+              </div>
+              <div class="library-kpi-info">
+                <span class="library-kpi-value" id="statLibApproved" style="color: #3730A3;">0</span>
+                <span class="library-kpi-label">Approved</span>
+              </div>
+            </div>
+
+            <div class="library-kpi-card">
+              <div class="library-kpi-icon" style="background: #FFEDD5; color: #C2410C;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <div class="library-kpi-info">
+                <span class="library-kpi-value" id="statLibCorrection" style="color: #C2410C;">0</span>
+                <span class="library-kpi-label">Needs Correction</span>
+              </div>
+            </div>
+
+            <div class="library-kpi-card">
+              <div class="library-kpi-icon" style="background: #E2E8F0; color: #475569;">
+                <i class="fa-solid fa-box-archive"></i>
+              </div>
+              <div class="library-kpi-info">
+                <span class="library-kpi-value" id="statLibArchived">0</span>
+                <span class="library-kpi-label">Archived</span>
+              </div>
+            </div>
+
+            <div class="library-kpi-card">
+              <div class="library-kpi-icon" style="background: rgba(255, 107, 0, 0.1); color: var(--primary-orange);">
+                <i class="fa-solid fa-hard-drive"></i>
+              </div>
+              <div class="library-kpi-info">
+                <span class="library-kpi-value" id="statLibStorage" style="font-size: 16px;">0 KB</span>
+                <span class="library-kpi-label">Storage Usage</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SEARCH, FILTER & BULK CONTROLS -->
+          <div class="card-panel" style="margin-bottom: 20px;">
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+              <div style="display: flex; gap: 10px; flex-wrap: wrap; flex: 1; min-width: 280px;">
+                <div style="position: relative; flex: 1; min-width: 220px;">
+                  <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 12px; color: #94A3B8; font-size: 13px;"></i>
+                  <input type="text" id="libFilterSearch" class="filter-input" placeholder="Search by title, author, document #, tags..." style="padding-left: 34px; width: 100%;" oninput="debounceLibrarySearch()">
+                </div>
+                <select id="libFilterCategory" class="filter-select" style="min-width: 170px;" onchange="loadLibraryResources()">
+                  <option value="all">All Categories</option>
+                  <!-- Populated dynamically -->
+                </select>
+                <select id="libFilterAccess" class="filter-select" style="min-width: 140px;" onchange="loadLibraryResources()">
+                  <option value="all">All Access Tiers</option>
+                  <option value="public">Public (Everyone)</option>
+                  <option value="member">Cadet / Member</option>
+                  <option value="restricted">Restricted (Officer)</option>
+                  <option value="admin">Admin Only</option>
+                </select>
+                <select id="libFilterStatus" class="filter-select" style="min-width: 140px;" onchange="loadLibraryResources()">
+                  <option value="all">All Statuses</option>
+                  <option value="published">Published</option>
+                  <option value="draft">Draft</option>
+                  <option value="in_review">In Review</option>
+                  <option value="approved">Approved</option>
+                  <option value="correction_required">Correction Required</option>
+                  <option value="archived">Archived</option>
+                </select>
+                <select id="libFilterFormat" class="filter-select" style="min-width: 130px;" onchange="loadLibraryResources()">
+                  <option value="all">All Formats</option>
+                  <option value="document">PDF / Documents</option>
+                  <option value="image">Photographs / Scans</option>
+                  <option value="audio">Audio / Speeches</option>
+                  <option value="video">Video Archives</option>
+                </select>
+                <button type="button" class="btn-admin btn-admin-outline" onclick="resetLibraryFilters()" title="Reset Filters">
+                  <i class="fa-solid fa-filter-circle-xmark"></i> Clear
+                </button>
+              </div>
+
+              <!-- BULK ACTION BAR -->
+              <div id="libBulkBar" style="display: none; align-items: center; gap: 8px; background: #FFF7ED; border: 1px solid #FFEDD5; padding: 6px 12px; border-radius: 8px;">
+                <span style="font-size: 12px; font-weight: 700; color: #C2410C;"><span id="libBulkCount">0</span> selected</span>
+                <button type="button" class="btn-admin btn-admin-outline" style="padding: 4px 8px; font-size: 11px;" onclick="handleBulkLibraryAction('publish')">
+                  <i class="fa-solid fa-cloud-arrow-up"></i> Publish
+                </button>
+                <button type="button" class="btn-admin btn-admin-outline" style="padding: 4px 8px; font-size: 11px;" onclick="handleBulkLibraryAction('archive')">
+                  <i class="fa-solid fa-box-archive"></i> Archive
+                </button>
+                <button type="button" class="btn-admin btn-admin-outline" style="padding: 4px 8px; font-size: 11px; color: #DC2626; border-color: #FECACA;" onclick="handleBulkLibraryAction('delete')">
+                  <i class="fa-solid fa-trash"></i> Delete
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- RESOURCES MANAGEMENT DATA TABLE -->
+          <div class="card-panel">
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th style="width: 38px; text-align: center;">
+                      <input type="checkbox" id="libSelectAll" onchange="toggleSelectAllLibraryResources(this.checked)">
+                    </th>
+                    <th style="width: 60px;">Cover</th>
+                    <th>Title & Document Details</th>
+                    <th>Category & Language</th>
+                    <th>Access Tier</th>
+                    <th>Workflow Status</th>
+                    <th>File Specs & Checksum</th>
+                    <th>Uploader / Dates</th>
+                    <th style="text-align: right; width: 140px;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="libraryTableBody">
+                  <tr>
+                    <td colspan="9" style="text-align: center; padding: 40px; color: #64748B;">
+                      <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; color: var(--primary-orange); margin-bottom: 8px; display: block;"></i>
+                      Loading digital library catalog...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- PAGINATION -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 8px 0; border-top: 1px solid #E2E8F0; margin-top: 16px; font-size: 13px; color: #64748B;">
+              <div>Showing <strong id="libPageInfo">0</strong> resources</div>
+              <div style="display: flex; gap: 8px; align-items: center;" id="libPaginationWrap">
+                <!-- Dynamically generated pagination -->
+              </div>
+            </div>
+          </div>
+
+        </section>
+
       </div>
     </main>
   </div>
@@ -3110,6 +3333,49 @@
           <!-- Dynamically populated -->
         </div>
 
+        <!-- Enlistment Questionnaire & Background Scrutiny Panel -->
+        <div id="questionnaireScrutinyContainer" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 18px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h4 style="margin: 0 0 3px; font-size: 15px; color: var(--navy-dark); display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-clipboard-question" style="color: var(--primary-orange);"></i>
+                Enlistment Questionnaire & Background Scrutiny
+              </h4>
+              <span style="font-size: 11.5px; color: #64748b; font-weight: 500;">Comprehensive 19-Question Ideological, Civic & Service Record</span>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span id="questionnaireScrutinyStatusBadge" class="badge-status badge-pending" style="font-size: 11px;">PENDING SCRUTINY</span>
+              <button type="button" class="btn-admin btn-admin-outline" style="font-size: 11.5px; padding: 4px 10px;" onclick="toggleQuestionnaireScrutinyCollapse()" id="btnToggleQuestionnaireScrutiny">
+                <i class="fa-solid fa-chevron-down" id="iconToggleQuestionnaireScrutiny"></i> <span id="textToggleQuestionnaireScrutiny">View Responses</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Collapsible Scrutiny Details -->
+          <div id="questionnaireScrutinyContent" style="display: none;">
+            <div id="questionnaireSectionsBody">
+              <!-- Dynamically populated by renderQuestionnaireScrutiny() -->
+            </div>
+
+            <!-- Officer Internal Scrutiny Remarks & Actions -->
+            <div style="margin-top: 18px; padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                <label for="questionnaireInternalRemarks" style="font-weight: 700; font-size: 12.5px; color: var(--navy-dark); margin: 0; display: flex; align-items: center; gap: 6px;">
+                  <i class="fa-solid fa-user-shield" style="color: var(--primary-orange);"></i> Officer Internal Scrutiny Remarks (Non-Mutating)
+                </label>
+                <span id="questionnaireLastReviewedMeta" style="font-size: 11.5px; color: #64748b; font-weight: 500;"></span>
+              </div>
+              <textarea id="questionnaireInternalRemarks" rows="2" style="width: 100%; font-size: 12.5px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box;" placeholder="Enter internal background check remarks, territorial verification notes, or vetting observations..."></textarea>
+              <div style="margin-top: 8px; display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" class="btn-admin btn-admin-primary" style="font-size: 12px; padding: 6px 14px;" id="btnSaveQuestionnaireRemarks" onclick="saveQuestionnaireReviewRemarks()">
+                  <i class="fa-solid fa-floppy-disk"></i> Save Scrutiny Remark
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Sainik Cadre Assessment & Evaluation Rubric (SSD-STD-1927) -->
         <div style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 18px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
@@ -3784,6 +4050,436 @@
           <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-upload"></i> Process Historical Import</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       DIGITAL LIBRARY MODALS
+       ========================================================================== -->
+
+  <!-- 1. Upload / Edit Resource Modal -->
+  <div id="modalLibraryUpload" class="admin-modal" style="display: none;">
+    <div class="admin-modal-card" style="max-width: 900px;">
+      <div class="admin-modal-header">
+        <h3 id="modalLibraryUploadTitle"><i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary-orange);"></i> Upload Archival Resource</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalLibraryUpload')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formLibraryUpload" onsubmit="handleSaveLibraryResource(event)">
+        <div class="admin-modal-body" style="max-height: 75vh; overflow-y: auto;">
+          <input type="hidden" id="libResourceId">
+
+          <!-- DRAG & DROP FILE ZONE -->
+          <div style="margin-bottom: 20px;">
+            <label style="font-weight: 700; display: block; margin-bottom: 6px;">File Attachment * <span style="font-weight: 400; color: #64748B; font-size: 12px;">(PDF, EPUB, PNG, JPG, WEBP, MP3, MP4 &bull; Max 50 MB)</span></label>
+            <div id="libDropZone" class="library-dropzone" onclick="document.getElementById('libFileInput').click()">
+              <i class="fa-solid fa-file-arrow-up library-dropzone-icon"></i>
+              <div class="library-dropzone-title">Click to browse or drag and drop document here</div>
+              <div class="library-dropzone-hint">Strict cryptographic magic-byte validation and SHA-256 hashing applied automatically</div>
+              <input type="file" id="libFileInput" style="display: none;" onchange="handleLibraryFileSelected(event)" accept=".pdf,.png,.jpg,.jpeg,.webp,.mp3,.mp4,.epub,.docx">
+            </div>
+
+            <!-- SELECTED FILE CHIP -->
+            <div id="libFileChip" class="library-file-chip" style="display: none;">
+              <i class="fa-solid fa-file-pdf" id="libFileChipIcon" style="font-size: 26px; color: #E11D48;"></i>
+              <div style="flex: 1; min-width: 0;">
+                <strong id="libFileName" style="display: block; font-size: 13px; color: var(--dark-navy); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">document.pdf</strong>
+                <span id="libFileSize" style="font-size: 11.5px; color: #64748B;">0 KB</span>
+              </div>
+              <button type="button" class="btn-pdf-chip-action remove" onclick="clearLibrarySelectedFile()" title="Remove file"><i class="fa-solid fa-trash"></i></button>
+            </div>
+
+            <!-- UPLOAD PROGRESS BAR -->
+            <div id="libProgressWrap" style="display: none;" class="library-progress-bar-wrap">
+              <div id="libProgressBar" class="library-progress-bar-fill"></div>
+            </div>
+            <div id="libProgressText" style="display: none; font-size: 11px; color: #64748B; margin-top: 4px; text-align: right;">0%</div>
+          </div>
+
+          <!-- CORE REQUIRED METADATA -->
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; margin-bottom: 18px;">
+            <div style="font-size: 12px; font-weight: 800; color: var(--dark-navy); text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-asterisk" style="color: var(--primary-orange); font-size: 10px;"></i> Essential Resource Metadata
+            </div>
+
+            <div class="form-grid-modal">
+              <div class="form-group-modal" style="grid-column: 1 / -1;">
+                <label for="libTitle">Resource Title *</label>
+                <input type="text" id="libTitle" required placeholder="e.g. Samata Sainik Dal Vidhan va Niyamavali (1927)">
+              </div>
+
+              <div class="form-group-modal">
+                <label for="libCategorySelect">Resource Category *</label>
+                <select id="libCategorySelect" required>
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
+
+              <div class="form-group-modal">
+                <label for="libLanguage">Language *</label>
+                <select id="libLanguage" required>
+                  <option value="English">English</option>
+                  <option value="Marathi">मराठी (Marathi)</option>
+                  <option value="Hindi">हिन्दी (Hindi)</option>
+                  <option value="Bilingual">Bilingual (English + Marathi/Hindi)</option>
+                  <option value="Other">Other Indian Language</option>
+                </select>
+              </div>
+
+              <div class="form-group-modal">
+                <label for="libAccessLevel">Access Clearance Tier *</label>
+                <select id="libAccessLevel" required>
+                  <option value="public">Public (Open to All Visitors)</option>
+                  <option value="member">Registered Cadets & Members Only</option>
+                  <option value="restricted">Restricted (Designated Officers)</option>
+                  <option value="admin">Central Command Admin Only</option>
+                </select>
+              </div>
+
+              <div class="form-group-modal">
+                <label for="libStatus">Publication Workflow Status *</label>
+                <select id="libStatus" required>
+                  <option value="draft">Save as Draft</option>
+                  <option value="in_review">Submit for Review</option>
+                  <option value="approved">Approved</option>
+                  <option value="published">Published (Live Immediately)</option>
+                </select>
+              </div>
+
+              <div class="form-group-modal" style="grid-column: 1 / -1;">
+                <label for="libDescription">Short Description / Abstract *</label>
+                <textarea id="libDescription" rows="3" required placeholder="Detailed summary of the archival document, historical significance, principles, or contents..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- OPTIONAL ARCHIVAL METADATA -->
+          <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; margin-bottom: 18px;">
+            <div style="font-size: 12px; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-scroll" style="color: var(--primary-orange);"></i> Provenance & Historical Context
+            </div>
+
+            <div class="form-grid-modal">
+              <div class="form-group-modal">
+                <label for="libAuthor">Author / Creator</label>
+                <input type="text" id="libAuthor" placeholder="e.g. Dr. B. R. Ambedkar">
+              </div>
+
+              <div class="form-group-modal">
+                <label for="libPublisher">Publisher / Directorate</label>
+                <input type="text" id="libPublisher" placeholder="e.g. Samata Sainik Dal Central Press">
+              </div>
+
+              <div class="form-group-modal">
+                <label for="libPubDate">Publication Date</label>
+                <input type="date" id="libPubDate">
+              </div>
+
+              <div class="form-group-modal">
+                <label for="libYear">Historical Era / Year</label>
+                <input type="text" id="libYear" placeholder="e.g. 1927, 1935, 1956, 2026">
+              </div>
+
+              <div class="form-group-modal">
+                <label for="libTags">Tags & Keywords (comma separated)</label>
+                <input type="text" id="libTags" placeholder="Constitution, Mahad, Drill, Babasaheb, Centenary">
+              </div>
+
+              <div class="form-group-modal">
+                <label for="libProvenance">Source / Provenance</label>
+                <input type="text" id="libProvenance" placeholder="e.g. Central Command Archives, Deekshabhoomi, Nagpur">
+              </div>
+
+              <div class="form-group-modal">
+                <label for="libRelatedEntity">Related Organization, Event, or Subject</label>
+                <input type="text" id="libRelatedEntity" placeholder="e.g. Mahad Satyagraha, Yeola Declaration">
+              </div>
+
+              <div class="form-group-modal">
+                <label for="libCopyrightHolder">Copyright Holder</label>
+                <input type="text" id="libCopyrightHolder" placeholder="Samata Sainik Dal (SSD) / Public Domain">
+              </div>
+
+              <div class="form-group-modal">
+                <label for="libUsagePermissions">Usage Permissions</label>
+                <input type="text" id="libUsagePermissions" placeholder="Public Archival and Educational Use">
+              </div>
+
+              <div class="form-group-modal">
+                <label for="libRefUrl">Reference URL</label>
+                <input type="url" id="libRefUrl" placeholder="https://...">
+              </div>
+
+              <div class="form-group-modal" style="grid-column: 1 / -1;">
+                <label for="libCoverImage">Cover Image / Thumbnail URL</label>
+                <input type="text" id="libCoverImage" placeholder="https://... (or leave blank for category default)">
+              </div>
+
+              <div class="form-group-modal" style="grid-column: 1 / -1;">
+                <label for="libReviewerNotes">Internal Notes for Reviewers & Approvers</label>
+                <textarea id="libReviewerNotes" rows="2" placeholder="Archival context, verification steps, or specific instructions for the editorial board..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- OFFICIAL DOCUMENTS SECTION -->
+          <div style="background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 8px; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <label style="font-size: 12px; font-weight: 800; color: var(--dark-navy); text-transform: uppercase; display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0;">
+                <input type="checkbox" id="libIsOfficialDoc" onchange="toggleOfficialDocFields(this.checked)">
+                <i class="fa-solid fa-stamp" style="color: #2563EB;"></i> This is an Official SSD Governance Document
+              </label>
+              <span style="font-size: 11px; color: #64748B;">Requires formal versioning & approvals</span>
+            </div>
+
+            <div id="libOfficialDocSection" style="display: none; margin-top: 14px;" class="form-grid-modal">
+              <div class="form-group-modal">
+                <label for="libOfficialDocType">Official Document Type</label>
+                <select id="libOfficialDocType">
+                  <option value="Constitution">SSD Constitution & By-Laws</option>
+                  <option value="General Directive">General Command Directive</option>
+                  <option value="Gazette Circular">Gazette Circular & Bulletin</option>
+                  <option value="Official Resolution">Supreme Council Resolution</option>
+                  <option value="Cadet Regulation">Cadet Drill & Uniform Regulation</option>
+                  <option value="Legal Advisory">Legal Cell Advisory</option>
+                </select>
+              </div>
+
+              <div class="form-group-modal">
+                <label for="libOfficialDocNumber">Official Document Reference #</label>
+                <input type="text" id="libOfficialDocNumber" placeholder="e.g. SSD/CC/DIR/2026-004">
+              </div>
+
+              <div class="form-group-modal">
+                <label for="libVersion">Version Number</label>
+                <input type="text" id="libVersion" value="1.0" placeholder="1.0">
+              </div>
+
+              <div class="form-group-modal">
+                <label for="libIssuingAuthority">Issuing Authority</label>
+                <input type="text" id="libIssuingAuthority" placeholder="e.g. Supreme Command Council">
+              </div>
+
+              <div class="form-group-modal">
+                <label for="libApprovalDate">Formal Approval Date</label>
+                <input type="date" id="libApprovalDate">
+              </div>
+
+              <div class="form-group-modal">
+                <label for="libEffectiveDate">Effective Date</label>
+                <input type="date" id="libEffectiveDate">
+              </div>
+
+              <div class="form-group-modal" style="grid-column: 1 / -1;">
+                <label for="libSupersededRef">Superseded Document Reference (if any)</label>
+                <input type="text" id="libSupersededRef" placeholder="e.g. Supersedes Directive SSD/CC/DIR/2024-001">
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalLibraryUpload')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary" id="btnSaveLibraryResource">
+            <i class="fa-solid fa-floppy-disk"></i> Save & Upload Resource
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. Preview Modal -->
+  <div id="modalLibraryPreview" class="admin-modal" style="display: none;">
+    <div class="admin-modal-card" style="max-width: 950px;">
+      <div class="admin-modal-header">
+        <h3 id="modalLibraryPreviewTitle"><i class="fa-solid fa-book-open" style="color: var(--primary-orange);"></i> Document Preview</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalLibraryPreview')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="admin-modal-body" id="modalLibraryPreviewContent" style="padding: 20px;">
+        <!-- Injected dynamically -->
+      </div>
+      <div class="admin-modal-footer">
+        <a id="btnLibraryPreviewDownload" href="#" class="btn-admin btn-admin-primary" target="_blank" download>
+          <i class="fa-solid fa-download"></i> Download File
+        </a>
+        <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalLibraryPreview')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. New Document Version Modal -->
+  <div id="modalLibraryNewVersion" class="admin-modal" style="display: none;">
+    <div class="admin-modal-card" style="max-width: 650px;">
+      <div class="admin-modal-header">
+        <h3><i class="fa-solid fa-code-branch" style="color: var(--primary-orange);"></i> Upload Replacement Version</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalLibraryNewVersion')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="formLibraryNewVersion" onsubmit="handleSaveLibraryNewVersion(event)">
+        <div class="admin-modal-body">
+          <input type="hidden" id="verResourceId">
+          
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
+            <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748B;">Target Document</div>
+            <strong id="verResourceTitle" style="color: var(--dark-navy); font-size: 14px;">SSD Constitution</strong>
+            <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Current Active Version: <span id="verCurrentVersion" style="font-weight: 700; color: var(--primary-orange);">1.0</span></div>
+          </div>
+
+          <div style="margin-bottom: 14px;">
+            <label style="font-weight: 700; display: block; margin-bottom: 4px;">New Replacement File *</label>
+            <input type="file" id="verFileInput" class="filter-input" style="width: 100%;" required>
+          </div>
+
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="verNewNumber">New Version Number *</label>
+              <input type="text" id="verNewNumber" required placeholder="e.g. 1.1 or 2.0">
+            </div>
+
+            <div class="form-group-modal">
+              <label for="verEffectiveDate">Effective Date</label>
+              <input type="date" id="verEffectiveDate">
+            </div>
+
+            <div class="form-group-modal" style="grid-column: 1 / -1;">
+              <label for="verChangeNotes">Summary of Modifications / Revision Notes *</label>
+              <textarea id="verChangeNotes" rows="3" required placeholder="Describe the amendments, editorial revisions, or updates in this version..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalLibraryNewVersion')">Cancel</button>
+          <button type="submit" class="btn-admin btn-admin-primary"><i class="fa-solid fa-upload"></i> Publish New Version</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. Version History Modal -->
+  <div id="modalLibraryVersions" class="admin-modal" style="display: none;">
+    <div class="admin-modal-card" style="max-width: 850px;">
+      <div class="admin-modal-header">
+        <h3><i class="fa-solid fa-clock-rotate-left" style="color: var(--primary-orange);"></i> Complete Document Version History</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalLibraryVersions')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="admin-modal-body">
+        <div style="margin-bottom: 16px;">
+          <h4 id="verHistoryTitle" style="color: var(--dark-navy); margin: 0 0 4px;">Document</h4>
+          <p style="font-size: 12px; color: #64748B; margin: 0;">Preserving historical versions with unalterable cryptographic checksums.</p>
+        </div>
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Version</th>
+                <th>File Specs</th>
+                <th>Status</th>
+                <th>SHA-256 Checksum</th>
+                <th>Recorded Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="verHistoryTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalLibraryVersions')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Category Management Modal -->
+  <div id="modalLibraryCategories" class="admin-modal" style="display: none;">
+    <div class="admin-modal-card" style="max-width: 820px;">
+      <div class="admin-modal-header">
+        <h3><i class="fa-solid fa-folder-tree" style="color: var(--primary-orange);"></i> Digital Library Categories Directory</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalLibraryCategories')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="admin-modal-body">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <span style="font-size: 13px; color: #64748B;">Manage the 12 primary archival classifications:</span>
+          <button type="button" class="btn-admin btn-admin-outline" style="font-size: 12px;" onclick="showAddCategoryForm()">
+            <i class="fa-solid fa-plus"></i> New Category
+          </button>
+        </div>
+
+        <!-- ADD / EDIT CATEGORY FORM (INLINE) -->
+        <div id="categoryInlineForm" style="display: none; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; padding: 16px; margin-bottom: 18px;">
+          <h5 id="catFormTitle" style="margin: 0 0 10px; color: var(--dark-navy);">Create New Category</h5>
+          <input type="hidden" id="catFormId">
+          <div class="form-grid-modal">
+            <div class="form-group-modal">
+              <label for="catFormName">Category Name *</label>
+              <input type="text" id="catFormName" placeholder="e.g. Audio and Video Resources">
+            </div>
+            <div class="form-group-modal">
+              <label for="catFormIcon">FontAwesome Icon</label>
+              <input type="text" id="catFormIcon" placeholder="fa-book-bookmark">
+            </div>
+            <div class="form-group-modal" style="grid-column: 1 / -1;">
+              <label for="catFormDesc">Description</label>
+              <input type="text" id="catFormDesc" placeholder="Scope and contents of this category...">
+            </div>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
+            <button type="button" class="btn-admin btn-admin-outline" onclick="hideAddCategoryForm()">Cancel</button>
+            <button type="button" class="btn-admin btn-admin-primary" onclick="handleSaveCategory()"><i class="fa-solid fa-check"></i> Save Category</button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Order</th>
+                <th>Category Name</th>
+                <th>Icon</th>
+                <th>Resources</th>
+                <th>Status</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="libraryCategoriesTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalLibraryCategories')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Audit Trail Modal -->
+  <div id="modalLibraryAudit" class="admin-modal" style="display: none;">
+    <div class="admin-modal-card" style="max-width: 800px;">
+      <div class="admin-modal-header">
+        <h3><i class="fa-solid fa-list-check" style="color: var(--primary-orange);"></i> Resource Audit Trail</h3>
+        <button type="button" class="admin-modal-close" onclick="closeAdminModal('modalLibraryAudit')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="admin-modal-body">
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Actor</th>
+                <th>Action</th>
+                <th>Details</th>
+                <th>IP Address</th>
+              </tr>
+            </thead>
+            <tbody id="libAuditTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin btn-admin-outline" onclick="closeAdminModal('modalLibraryAudit')">Close</button>
+      </div>
     </div>
   </div>
 

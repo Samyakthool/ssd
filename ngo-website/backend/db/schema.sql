@@ -205,6 +205,60 @@ CREATE TABLE IF NOT EXISTS membership_applications (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 7B. NEW SAINIK ENLISTMENT QUESTIONNAIRE
+CREATE TABLE IF NOT EXISTS enlistment_questionnaires (
+    id VARCHAR(64) PRIMARY KEY,
+    application_id VARCHAR(64) UNIQUE REFERENCES membership_applications(id) ON DELETE CASCADE,
+    q1_aim TEXT,
+    q2_motto TEXT,
+    q3_reasons TEXT,
+    q4_responsibilities TEXT,
+    q5_history_principles TEXT,
+    q6_social_service_participation VARCHAR(100),
+    q6a_social_service_details TEXT,
+    q7_ssd_role_nation_building TEXT,
+    q8_areas_of_interest JSONB DEFAULT '[]'::jsonb,
+    q9_community_contribution TEXT,
+    q10_civic_political_participation VARCHAR(100),
+    q10a_civic_political_details TEXT,
+    q11_held_leadership_role VARCHAR(50),
+    q12_currently_involved_other_org VARCHAR(50),
+    q12a_other_org_name VARCHAR(255),
+    q12a_other_org_type VARCHAR(100),
+    q12a_other_org_role VARCHAR(150),
+    q14_previous_experience_skills TEXT,
+    q15_organized_public_events VARCHAR(50),
+    q15a_public_events_details TEXT,
+    q16_preferred_wings JSONB DEFAULT '[]'::jsonb,
+    q17_time_commitment VARCHAR(100),
+    q18_skills_contribution JSONB DEFAULT '[]'::jsonb,
+    q19_additional_info TEXT,
+    declaration_accepted BOOLEAN DEFAULT FALSE,
+    declaration_timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    internal_review_remarks TEXT,
+    reviewed_by VARCHAR(100),
+    reviewed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 7C. APPLICANT ORGANIZATIONS (REPEATABLE RELATIONAL STRUCTURED RECORDS)
+CREATE TABLE IF NOT EXISTS applicant_organizations (
+    id VARCHAR(64) PRIMARY KEY,
+    application_id VARCHAR(64) REFERENCES membership_applications(id) ON DELETE CASCADE,
+    question_ref VARCHAR(20) DEFAULT 'Q13',
+    org_name VARCHAR(255) NOT NULL,
+    org_type VARCHAR(100) NOT NULL,
+    role_designation VARCHAR(150),
+    start_year VARCHAR(50),
+    end_year VARCHAR(50),
+    responsibilities TEXT,
+    contributions TEXT,
+    supporting_documents JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- 8. APPROVAL ACTIONS & IMMUTABLE AUDIT TRAIL FOR APPLICATIONS
 CREATE TABLE IF NOT EXISTS approval_actions (
     id VARCHAR(64) PRIMARY KEY,
@@ -473,3 +527,111 @@ CREATE INDEX IF NOT EXISTS idx_approval_actions_app_id ON approval_actions(appli
 CREATE INDEX IF NOT EXISTS idx_donations_order_id ON donations(order_id);
 CREATE INDEX IF NOT EXISTS idx_receipts_number ON receipts(receipt_number);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_questionnaires_application_id ON enlistment_questionnaires(application_id);
+CREATE INDEX IF NOT EXISTS idx_applicant_orgs_application_id ON applicant_organizations(application_id);
+
+-- 18. DIGITAL LIBRARY & ARCHIVES TABLES
+CREATE TABLE IF NOT EXISTS library_categories (
+    id VARCHAR(64) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    slug VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT,
+    icon VARCHAR(50) DEFAULT 'fa-book-bookmark',
+    sort_order INT DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS library_resources (
+    id VARCHAR(64) PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255),
+    description TEXT,
+    category_id VARCHAR(64) REFERENCES library_categories(id) ON DELETE RESTRICT,
+    resource_type VARCHAR(50) DEFAULT 'document',
+    language VARCHAR(50) DEFAULT 'English',
+    author VARCHAR(255) DEFAULT 'Samata Sainik Dal Central Directorate',
+    publisher VARCHAR(255) DEFAULT 'Samata Sainik Dal Press',
+    publication_date DATE,
+    year VARCHAR(20),
+    document_number VARCHAR(100),
+    version VARCHAR(50) DEFAULT '1.0',
+    tags JSONB DEFAULT '[]',
+    storage_path VARCHAR(500),
+    file_url VARCHAR(500),
+    file_name VARCHAR(255),
+    thumbnail_path VARCHAR(500),
+    cover_image VARCHAR(500),
+    mime_type VARCHAR(100) DEFAULT 'application/pdf',
+    file_size_bytes BIGINT DEFAULT 0,
+    file_size_formatted VARCHAR(50) DEFAULT '0 B',
+    sha256_checksum VARCHAR(64),
+    access_level VARCHAR(30) DEFAULT 'public',
+    status VARCHAR(30) DEFAULT 'draft',
+    is_featured BOOLEAN DEFAULT FALSE,
+    historical_period VARCHAR(100),
+    provenance VARCHAR(255) DEFAULT 'Central Archives, Nagpur',
+    related_entity VARCHAR(255),
+    copyright_holder VARCHAR(255) DEFAULT 'Samata Sainik Dal (SSD)',
+    usage_permissions VARCHAR(255) DEFAULT 'Public Archival and Educational Use',
+    reference_url VARCHAR(500),
+    reviewer_notes TEXT,
+    official_doc_type VARCHAR(100),
+    official_doc_number VARCHAR(100),
+    issuing_authority VARCHAR(255),
+    approval_date DATE,
+    effective_date DATE,
+    superseded_ref VARCHAR(100),
+    current_version_id VARCHAR(64),
+    downloads_count INT DEFAULT 0,
+    views_count INT DEFAULT 0,
+    uploaded_by VARCHAR(64),
+    reviewed_by VARCHAR(64),
+    approved_by VARCHAR(64),
+    published_at TIMESTAMP WITH TIME ZONE,
+    archived_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS library_document_versions (
+    id VARCHAR(64) PRIMARY KEY,
+    resource_id VARCHAR(64) REFERENCES library_resources(id) ON DELETE CASCADE,
+    version_number VARCHAR(50) NOT NULL,
+    storage_path VARCHAR(500) NOT NULL,
+    file_name VARCHAR(255),
+    mime_type VARCHAR(100),
+    file_size_bytes BIGINT DEFAULT 0,
+    file_size_formatted VARCHAR(50),
+    sha256_checksum VARCHAR(64),
+    change_summary TEXT,
+    is_current BOOLEAN DEFAULT TRUE,
+    is_superseded BOOLEAN DEFAULT FALSE,
+    approval_date DATE,
+    effective_date DATE,
+    uploaded_by VARCHAR(64),
+    approved_by VARCHAR(64),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS library_audit_logs (
+    id VARCHAR(64) PRIMARY KEY,
+    resource_id VARCHAR(64),
+    user_id VARCHAR(64),
+    user_name VARCHAR(255),
+    user_role VARCHAR(50),
+    action VARCHAR(100) NOT NULL,
+    details JSONB DEFAULT '{}',
+    ip_address VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_lib_resources_category ON library_resources(category_id);
+CREATE INDEX IF NOT EXISTS idx_lib_resources_status ON library_resources(status);
+CREATE INDEX IF NOT EXISTS idx_lib_resources_access ON library_resources(access_level);
+CREATE INDEX IF NOT EXISTS idx_lib_resources_year ON library_resources(year);
+CREATE INDEX IF NOT EXISTS idx_lib_resources_featured ON library_resources(is_featured);
+CREATE INDEX IF NOT EXISTS idx_lib_versions_resource ON library_document_versions(resource_id);
+CREATE INDEX IF NOT EXISTS idx_lib_audit_resource ON library_audit_logs(resource_id);
+CREATE INDEX IF NOT EXISTS idx_lib_audit_created ON library_audit_logs(created_at);

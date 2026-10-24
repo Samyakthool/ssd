@@ -94,6 +94,8 @@ const embeddedStore = {
   constitution: new Map(),
   library_categories: new Map(),
   library_resources: new Map(),
+  library_document_versions: new Map(),
+  library_audit_logs: new Map(),
   terms_conditions: new Map(),
   privacy_policy: new Map(),
   content_audit_logs: new Map(),
@@ -223,7 +225,7 @@ function loadEmbeddedStore() {
       });
       seeded = true;
     }
-    if (embeddedStore.library_categories.size === 0 && defaultSeedData.library_categories) {
+    if ((embeddedStore.library_categories.size === 0 || embeddedStore.library_categories.size < 12) && defaultSeedData.library_categories) {
       defaultSeedData.library_categories.forEach(item => {
         embeddedStore.library_categories.set(item.id, item);
       });
