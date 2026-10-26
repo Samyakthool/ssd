@@ -346,25 +346,27 @@ router.post('/apply', applicationRateLimiter, upload.single('photo'), async (req
       updated_at: new Date().toISOString()
     };
 
-    // Parse and Validate Enlistment Questionnaire if provided
+    // Parse and Validate Enlistment Questionnaire if provided (Standard new enlistment only, excluded from legacy)
     let questionnaireData = null;
-    if (req.body.questionnaire) {
-      try {
-        questionnaireData = typeof req.body.questionnaire === 'string' ? JSON.parse(req.body.questionnaire) : req.body.questionnaire;
-      } catch (e) {
-        questionnaireData = req.body.questionnaire;
+    if (!isLegacy) {
+      if (req.body.questionnaire) {
+        try {
+          questionnaireData = typeof req.body.questionnaire === 'string' ? JSON.parse(req.body.questionnaire) : req.body.questionnaire;
+        } catch (e) {
+          questionnaireData = req.body.questionnaire;
+        }
+      } else if (
+        req.body.q1_aim || req.body.q1_official_aim || req.body.q2_motto || req.body.q2_official_motto_meaning ||
+        req.body.q3_reasons || req.body.q3_reasons_for_joining || req.body.q4_responsibilities || req.body.q4_sainik_responsibilities ||
+        req.body.q5_history_principles || req.body.q5_historical_inspiration || req.body.q6_social_service_participation ||
+        req.body.q6_social_work_experience !== undefined || req.body.q10_civic_political_participation ||
+        req.body.q10_political_office_held !== undefined || req.body.q12_pending_proceedings !== undefined ||
+        req.body.q17_time_commitment || req.body.declaration_accepted !== undefined || req.body.declarationAccepted !== undefined ||
+        req.body.enlistment_declaration_accepted !== undefined || req.body.enlistmentDeclarationAccepted !== undefined ||
+        req.body.repeatableOrganizations || req.body.organizations
+      ) {
+        questionnaireData = req.body;
       }
-    } else if (
-      req.body.q1_aim || req.body.q1_official_aim || req.body.q2_motto || req.body.q2_official_motto_meaning ||
-      req.body.q3_reasons || req.body.q3_reasons_for_joining || req.body.q4_responsibilities || req.body.q4_sainik_responsibilities ||
-      req.body.q5_history_principles || req.body.q5_historical_inspiration || req.body.q6_social_service_participation ||
-      req.body.q6_social_work_experience !== undefined || req.body.q10_civic_political_participation ||
-      req.body.q10_political_office_held !== undefined || req.body.q12_pending_proceedings !== undefined ||
-      req.body.q17_time_commitment || req.body.declaration_accepted !== undefined || req.body.declarationAccepted !== undefined ||
-      req.body.enlistment_declaration_accepted !== undefined || req.body.enlistmentDeclarationAccepted !== undefined ||
-      req.body.repeatableOrganizations || req.body.organizations
-    ) {
-      questionnaireData = req.body;
     }
 
     if (questionnaireData) {

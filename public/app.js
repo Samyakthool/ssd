@@ -4519,6 +4519,17 @@ function setRegistrationMode(mode) {
   const submitBtn = document.getElementById("memberSubmitBtn");
   const btnText = submitBtn ? submitBtn.querySelector(".btn-text") : null;
 
+  const btnStep2Next = document.getElementById("btnStep2Next");
+  const btnStep2NextText = document.getElementById("btnStep2NextText");
+  const btnStep7Back = document.getElementById("btnStep7Back");
+  const btnStep7BackText = document.getElementById("btnStep7BackText");
+  const declContainer = document.getElementById("enlistmentDeclarationContainer");
+  const declCheckbox = document.getElementById("enlistmentDeclaration");
+  const step8Title = document.getElementById("step8Title");
+  const step8Subtitle = document.getElementById("step8Subtitle");
+  const step8Icon = document.getElementById("step8Icon");
+  const wizardLabel2 = document.getElementById("wizardLabel2");
+
   if (mode === "LEGACY") {
     if (tabNew) {
       tabNew.classList.remove("active");
@@ -4536,7 +4547,30 @@ function setRegistrationMode(mode) {
     if (legacyContainer) legacyContainer.style.display = "block";
     if (emailReq) emailReq.style.display = "none";
     if (emailInput) emailInput.removeAttribute("required");
+
+    if (wizardLabel2) wizardLabel2.textContent = "Seniority & Org";
+    if (btnStep2NextText) btnStep2NextText.textContent = "Continue to Review & Pledge";
+    if (btnStep2Next) btnStep2Next.setAttribute("onclick", "wizardNextStep(7)");
+    if (btnStep7BackText) btnStep7BackText.textContent = "Back to Seniority & Org";
+    if (btnStep7Back) btnStep7Back.setAttribute("onclick", "wizardPrevStep(2)");
+
+    if (declContainer) declContainer.style.display = "none";
+    if (declCheckbox) {
+      declCheckbox.removeAttribute("required");
+      declCheckbox.checked = false;
+    }
+
+    if (step8Title) step8Title.textContent = "Ready to Submit Legacy Veteran Verification Dossier";
+    if (step8Subtitle) step8Subtitle.textContent = "Your historical seniority credentials and personal information are ready for verification. Upon submission, your dossier will be routed to your assigned Chapter and District Command for archival verification.";
+    if (step8Icon) step8Icon.className = "fa-solid fa-award";
     if (btnText) btnText.innerHTML = '<i class="fa-solid fa-award"></i> Submit Legacy Sainik Verification Dossier';
+
+    // If currently on any questionnaire step (3, 4, 5, 6), move back to step 2
+    if (currentWizardStep >= 3 && currentWizardStep <= 6) {
+      updateWizardUI(2);
+    } else {
+      updateWizardUI(currentWizardStep);
+    }
   } else {
     if (tabNew) {
       tabNew.classList.add("active");
@@ -4554,7 +4588,22 @@ function setRegistrationMode(mode) {
     if (legacyContainer) legacyContainer.style.display = "none";
     if (emailReq) emailReq.style.display = "inline";
     if (emailInput) emailInput.setAttribute("required", "required");
+
+    if (wizardLabel2) wizardLabel2.textContent = "Org Background";
+    if (btnStep2NextText) btnStep2NextText.textContent = "Continue to Step 3";
+    if (btnStep2Next) btnStep2Next.setAttribute("onclick", "wizardNextStep(3)");
+    if (btnStep7BackText) btnStep7BackText.textContent = "Back to Step 6";
+    if (btnStep7Back) btnStep7Back.setAttribute("onclick", "wizardPrevStep(6)");
+
+    if (declContainer) declContainer.style.display = "block";
+    if (declCheckbox) declCheckbox.setAttribute("required", "required");
+
+    if (step8Title) step8Title.textContent = "Ready to Submit Official Enlistment Dossier";
+    if (step8Subtitle) step8Subtitle.textContent = "All 7 stages of your questionnaire and personal details are complete. Upon submission, your application will receive a tracking dossier ID and be routed to your assigned District Command for official verification.";
+    if (step8Icon) step8Icon.className = "fa-solid fa-shield-cat";
     if (btnText) btnText.innerHTML = '<i class="fa-solid fa-user-shield"></i> Submit Enlistment Application';
+
+    updateWizardUI(currentWizardStep);
   }
 }
 
@@ -4588,6 +4637,11 @@ let currentWizardStep = 1;
 
 function updateWizardUI(step) {
   currentWizardStep = step;
+  const isLegacy = (document.getElementById("membershipType")?.value === "LEGACY");
+  const legacySteps = [1, 2, 7, 8];
+  const standardSteps = [1, 2, 3, 4, 5, 6, 7, 8];
+  const activeSteps = isLegacy ? legacySteps : standardSteps;
+
   for (let s = 1; s <= 8; s++) {
     const stepEl = document.getElementById("step" + s);
     if (stepEl) {
@@ -4595,18 +4649,40 @@ function updateWizardUI(step) {
     }
     const nodeEl = document.getElementById("wizardNode" + s);
     if (nodeEl) {
+      if (isLegacy && (s >= 3 && s <= 6)) {
+        nodeEl.style.display = "none";
+      } else {
+        nodeEl.style.display = "flex";
+      }
+
       nodeEl.classList.remove("active", "completed");
-      if (s === step) {
-        nodeEl.classList.add("active");
-      } else if (s < step) {
-        nodeEl.classList.add("completed");
+      const currentIdx = activeSteps.indexOf(step);
+      const nodeIdx = activeSteps.indexOf(s);
+
+      if (nodeIdx !== -1) {
+        if (s === step) {
+          nodeEl.classList.add("active");
+        } else if (nodeIdx < currentIdx) {
+          nodeEl.classList.add("completed");
+        }
       }
     }
   }
 
+  const node7Circle = document.getElementById("wizardCircle7") || document.querySelector("#wizardNode7 .wizard-step-circle");
+  const node8Circle = document.getElementById("wizardCircle8") || document.querySelector("#wizardNode8 .wizard-step-circle");
+  if (node7Circle) node7Circle.textContent = isLegacy ? "3" : "7";
+  if (node8Circle) node8Circle.textContent = isLegacy ? "4" : "8";
+
   const progressBar = document.getElementById("wizardProgressBar");
   if (progressBar) {
-    const pct = Math.min(Math.round((step / 8) * 100), 100);
+    let pct = 0;
+    if (isLegacy) {
+      const idx = legacySteps.indexOf(step);
+      pct = idx >= 0 ? Math.round(((idx + 1) / legacySteps.length) * 100) : 25;
+    } else {
+      pct = Math.min(Math.round((step / 8) * 100), 100);
+    }
     progressBar.style.width = pct + "%";
   }
 
@@ -4617,6 +4693,10 @@ function updateWizardUI(step) {
 }
 
 function wizardGoToStep(targetStep) {
+  const isLegacy = (document.getElementById("membershipType")?.value === "LEGACY");
+  if (isLegacy && (targetStep >= 3 && targetStep <= 6)) {
+    return;
+  }
   if (targetStep < currentWizardStep) {
     updateWizardUI(targetStep);
   } else if (targetStep > currentWizardStep) {
@@ -4625,7 +4705,18 @@ function wizardGoToStep(targetStep) {
 }
 
 function wizardPrevStep(targetStep) {
-  const prev = targetStep || Math.max(1, currentWizardStep - 1);
+  const isLegacy = (document.getElementById("membershipType")?.value === "LEGACY");
+  let prev = targetStep;
+  if (!prev) {
+    if (isLegacy) {
+      if (currentWizardStep === 8) prev = 7;
+      else if (currentWizardStep === 7) prev = 2;
+      else if (currentWizardStep === 2) prev = 1;
+      else prev = 1;
+    } else {
+      prev = Math.max(1, currentWizardStep - 1);
+    }
+  }
   updateWizardUI(prev);
 }
 
@@ -4684,11 +4775,17 @@ function wizardNextStep(targetStep) {
         document.getElementById("legacyJoiningDate")?.focus();
         return;
       }
+
+      // Legacy mode bypasses questions (steps 3-6) directly to Step 7 (Review & Pledge)
+      renderWizardReviewSummary();
+      updateWizardUI(7);
+      saveEnlistmentDraft(false);
+      return;
     }
   }
 
-  // Step 4 Validation: Social Service Conditional
-  if (current === 4) {
+  // Step 4 Validation: Social Service Conditional (Standard mode only)
+  if (!isLegacy && current === 4) {
     const q6Val = document.getElementById("q6_social_service")?.value;
     if ((q6Val === "Yes, regularly." || q6Val === "Yes, occasionally.")) {
       const q6a = document.getElementById("q6a_details")?.value.trim();
@@ -4700,8 +4797,8 @@ function wizardNextStep(targetStep) {
     }
   }
 
-  // Step 5 Validation: Civic Participation Conditional
-  if (current === 5) {
+  // Step 5 Validation: Civic Participation Conditional (Standard mode only)
+  if (!isLegacy && current === 5) {
     const q10Val = document.getElementById("q10_civic_political")?.value;
     if ((q10Val === "Yes, actively." || q10Val === "Yes, occasionally.")) {
       const q10a = document.getElementById("q10a_details")?.value.trim();
@@ -4741,21 +4838,34 @@ function wizardNextStep(targetStep) {
   // Step 7 Validation: Declarations
   if (current === 7) {
     const pledge = document.getElementById("memberConsent")?.checked;
-    const decl = document.getElementById("enlistmentDeclaration")?.checked;
-
     if (!pledge) {
       showToast("Please accept the Solemn Sainik Pledge to proceed.", "warning");
       document.getElementById("memberConsent")?.focus();
       return;
     }
-    if (!decl) {
-      showToast("Please accept the Section F Official Enlistment Questionnaire Declaration to proceed.", "warning");
-      document.getElementById("enlistmentDeclaration")?.focus();
-      return;
+
+    // Section F Declaration is only required for Standard enlistment
+    if (!isLegacy) {
+      const decl = document.getElementById("enlistmentDeclaration")?.checked;
+      if (!decl) {
+        showToast("Please accept the Section F Official Enlistment Questionnaire Declaration to proceed.", "warning");
+        document.getElementById("enlistmentDeclaration")?.focus();
+        return;
+      }
     }
   }
 
-  const next = targetStep || Math.min(8, current + 1);
+  let next = targetStep;
+  if (!next) {
+    if (isLegacy) {
+      if (current === 1) next = 2;
+      else if (current === 2) next = 7;
+      else if (current === 7) next = 8;
+      else next = 8;
+    } else {
+      next = Math.min(8, current + 1);
+    }
+  }
   updateWizardUI(next);
   saveEnlistmentDraft(false); // auto-save on successful step transition
 }
@@ -4894,6 +5004,7 @@ function renderWizardReviewSummary() {
   const container = document.getElementById("wizardReviewSummary");
   if (!container) return;
 
+  const isLegacy = (document.getElementById("membershipType")?.value === "LEGACY");
   const name = document.getElementById("memberName")?.value.trim() || "N/A";
   const email = document.getElementById("memberEmail")?.value.trim() || "N/A";
   const phone = document.getElementById("memberPhone")?.value.trim() || "N/A";
@@ -4905,6 +5016,50 @@ function renderWizardReviewSummary() {
   const state = document.getElementById("memberState")?.value || "N/A";
   const city = document.getElementById("memberCity")?.value.trim() || "N/A";
   const wing = document.getElementById("memberWing")?.value || "N/A";
+
+  if (isLegacy) {
+    const legacyJoiningDate = document.getElementById("legacyJoiningDate")?.value || "Archival Verification Required";
+    const legacyPrecision = document.getElementById("legacyDatePrecision")?.value || "EXACT_DATE";
+    const legacyExistingId = document.getElementById("legacyExistingId")?.value.trim() || "None / To be allocated";
+    const legacyCurrentDesignation = document.getElementById("legacyCurrentDesignation")?.value.trim() || "Veteran Cadre";
+    const legacyChapter = document.getElementById("legacyChapter")?.value.trim() || "Not specified";
+    const legacyPreviousResponsibilities = document.getElementById("legacyPreviousResponsibilities")?.value.trim() || "None recorded";
+    const legacyRecommendingOfficial = document.getElementById("legacyRecommendingOfficial")?.value.trim() || "None specified";
+    const legacyHistoricalNotes = document.getElementById("legacyHistoricalNotes")?.value.trim() || "None provided";
+    const specialSkills = document.getElementById("memberMessage")?.value.trim() || "";
+
+    container.innerHTML = `
+      <div class="wizard-review-section">
+        <h5><i class="fa-solid fa-user-check"></i> 1. Personal & Contact Information (वैयक्तिक माहिती)</h5>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+          <div class="wizard-review-item"><span class="wizard-review-item-label">Full Legal Name</span><span class="wizard-review-item-val">${name}</span></div>
+          <div class="wizard-review-item"><span class="wizard-review-item-label">Email Address</span><span class="wizard-review-item-val">${email}</span></div>
+          <div class="wizard-review-item"><span class="wizard-review-item-label">Mobile Number</span><span class="wizard-review-item-val">${phone}</span></div>
+          <div class="wizard-review-item"><span class="wizard-review-item-label">DOB / Gender</span><span class="wizard-review-item-val">${dob} (${gender})</span></div>
+          <div class="wizard-review-item"><span class="wizard-review-item-label">Blood Group</span><span class="wizard-review-item-val">${blood}</span></div>
+          <div class="wizard-review-item"><span class="wizard-review-item-label">Location</span><span class="wizard-review-item-val">${city}, ${state}</span></div>
+          <div class="wizard-review-item"><span class="wizard-review-item-label">Qualification / Occupation</span><span class="wizard-review-item-val">${edu} &bull; ${occ}</span></div>
+          <div class="wizard-review-item"><span class="wizard-review-item-label">Selected Wing</span><span class="wizard-review-item-val" style="color: #001f3f; font-weight: 700;">${wing}</span></div>
+        </div>
+      </div>
+
+      <div class="wizard-review-section">
+        <h5><i class="fa-solid fa-award" style="color: #c5a059;"></i> 2. Historical Membership & Seniority Credentials (वरिष्ठता व सेवा तपशील)</h5>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+          <div class="wizard-review-item"><span class="wizard-review-item-label">Original Joining Date</span><span class="wizard-review-item-val" style="color: #b45309; font-weight: 700;">${legacyJoiningDate} (${legacyPrecision})</span></div>
+          <div class="wizard-review-item"><span class="wizard-review-item-label">Existing Sainik ID</span><span class="wizard-review-item-val">${legacyExistingId}</span></div>
+          <div class="wizard-review-item"><span class="wizard-review-item-label">Current Designation</span><span class="wizard-review-item-val">${legacyCurrentDesignation}</span></div>
+          <div class="wizard-review-item"><span class="wizard-review-item-label">SSD Chapter / Shakha</span><span class="wizard-review-item-val">${legacyChapter}</span></div>
+          <div class="wizard-review-item"><span class="wizard-review-item-label">Recommending Official</span><span class="wizard-review-item-val">${legacyRecommendingOfficial}</span></div>
+          <div class="wizard-review-item"><span class="wizard-review-item-label">Seniority Attestation</span><span class="wizard-review-item-val" style="color: #16a34a; font-weight: 700;"><i class="fa-solid fa-check-circle"></i> Confirmed by Veteran</span></div>
+        </div>
+        <div class="wizard-review-item" style="margin-top: 8px;"><span class="wizard-review-item-label">Past Responsibilities & Service</span><span class="wizard-review-item-val">${legacyPreviousResponsibilities}</span></div>
+        <div class="wizard-review-item" style="margin-top: 6px;"><span class="wizard-review-item-label">Archival Notes / Citations</span><span class="wizard-review-item-val">${legacyHistoricalNotes}</span></div>
+        ${specialSkills ? `<div class="wizard-review-item" style="margin-top: 6px;"><span class="wizard-review-item-label">Prior Service / Special Skills</span><span class="wizard-review-item-val">${specialSkills}</span></div>` : ''}
+      </div>
+    `;
+    return;
+  }
 
   const q1 = document.getElementById("q1_aim")?.value.trim() || "Not provided";
   const q2 = document.getElementById("q2_motto")?.value.trim() || "Not provided";
@@ -5157,17 +5312,19 @@ async function handleEnhancedMemberRegistration(e) {
   const message = document.getElementById("memberMessage") ? document.getElementById("memberMessage").value.trim() : "";
   const pledgeAccepted = document.getElementById("memberConsent") ? document.getElementById("memberConsent").checked : false;
 
-  // SECTION F DECLARATION (REQUIRED)
-  const declCheckbox = document.getElementById("enlistmentDeclaration");
-  const declarationAccepted = declCheckbox ? declCheckbox.checked : true;
+  // SECTION F DECLARATION (REQUIRED FOR STANDARD ENLISTMENT ONLY)
+  if (!isLegacy) {
+    const declCheckbox = document.getElementById("enlistmentDeclaration");
+    const declarationAccepted = declCheckbox ? declCheckbox.checked : false;
 
-  if (!declarationAccepted) {
-    showToast("Declaration required: Please read and accept the Section F Official Enlistment Questionnaire Declaration before submitting.", "warning");
-    if (declCheckbox) {
-      updateWizardUI(7);
-      declCheckbox.focus();
+    if (!declarationAccepted) {
+      showToast("Declaration required: Please read and accept the Section F Official Enlistment Questionnaire Declaration before submitting.", "warning");
+      if (declCheckbox) {
+        updateWizardUI(7);
+        declCheckbox.focus();
+      }
+      return;
     }
-    return;
   }
 
   if (!pledgeAccepted) {
@@ -5217,40 +5374,45 @@ async function handleEnhancedMemberRegistration(e) {
     }
   }
 
-  // Questionnaire Structure Fields
-  const q8Boxes = Array.from(document.querySelectorAll('input[name="q8_areas"]:checked')).map(cb => cb.value);
-  const q16Boxes = Array.from(document.querySelectorAll('input[name="q16_wings"]:checked')).map(cb => cb.value);
-  const q18Boxes = Array.from(document.querySelectorAll('input[name="q18_skills"]:checked')).map(cb => cb.value);
-  const repeatableOrgs = getRepeatableOrganizationsData();
+  // Questionnaire Structure Fields & Repeatable Organizations (Standard mode only)
+  let questionnairePayload = null;
+  let repeatableOrgs = [];
 
-  const questionnairePayload = {
-    q1_aim: document.getElementById("q1_aim")?.value.trim() || "",
-    q2_motto: document.getElementById("q2_motto")?.value.trim() || "",
-    q3_reasons: document.getElementById("q3_reasons")?.value.trim() || "",
-    q4_responsibilities: document.getElementById("q4_responsibilities")?.value.trim() || "",
-    q5_history_principles: document.getElementById("q5_history_principles")?.value.trim() || "",
-    q6_social_service_participation: document.getElementById("q6_social_service")?.value || "",
-    q6a_social_service_details: document.getElementById("q6a_details")?.value.trim() || "",
-    q7_ssd_role_nation_building: document.getElementById("q7_ssd_role")?.value.trim() || "",
-    q8_areas_of_interest: q8Boxes,
-    q9_community_contribution: document.getElementById("q9_community_contribution")?.value.trim() || "",
-    q10_civic_political_participation: document.getElementById("q10_civic_political")?.value || "",
-    q10a_civic_political_details: document.getElementById("q10a_details")?.value.trim() || "",
-    q11_held_leadership_role: document.getElementById("q11_leadership")?.value || "",
-    q12_currently_involved_other_org: document.getElementById("q12_other_org")?.value || "",
-    q12a_other_org_name: document.getElementById("q12a_name")?.value.trim() || "",
-    q12a_other_org_type: document.getElementById("q12a_type")?.value.trim() || "",
-    q12a_other_org_role: document.getElementById("q12a_role")?.value.trim() || "",
-    q14_previous_experience_skills: document.getElementById("q14_previous_skills")?.value.trim() || "",
-    q15_organized_public_events: document.getElementById("q15_public_events")?.value || "",
-    q15a_public_events_details: document.getElementById("q15a_details")?.value.trim() || "",
-    q16_preferred_wings: q16Boxes,
-    q17_time_commitment: document.getElementById("q17_time_commitment")?.value || "",
-    q18_skills_contribution: q18Boxes,
-    q19_additional_info: document.getElementById("q19_additional_info")?.value.trim() || "",
-    declaration_accepted: true,
-    organizations: repeatableOrgs
-  };
+  if (!isLegacy) {
+    const q8Boxes = Array.from(document.querySelectorAll('input[name="q8_areas"]:checked')).map(cb => cb.value);
+    const q16Boxes = Array.from(document.querySelectorAll('input[name="q16_wings"]:checked')).map(cb => cb.value);
+    const q18Boxes = Array.from(document.querySelectorAll('input[name="q18_skills"]:checked')).map(cb => cb.value);
+    repeatableOrgs = getRepeatableOrganizationsData();
+
+    questionnairePayload = {
+      q1_aim: document.getElementById("q1_aim")?.value.trim() || "",
+      q2_motto: document.getElementById("q2_motto")?.value.trim() || "",
+      q3_reasons: document.getElementById("q3_reasons")?.value.trim() || "",
+      q4_responsibilities: document.getElementById("q4_responsibilities")?.value.trim() || "",
+      q5_history_principles: document.getElementById("q5_history_principles")?.value.trim() || "",
+      q6_social_service_participation: document.getElementById("q6_social_service")?.value || "",
+      q6a_social_service_details: document.getElementById("q6a_details")?.value.trim() || "",
+      q7_ssd_role_nation_building: document.getElementById("q7_ssd_role")?.value.trim() || "",
+      q8_areas_of_interest: q8Boxes,
+      q9_community_contribution: document.getElementById("q9_community_contribution")?.value.trim() || "",
+      q10_civic_political_participation: document.getElementById("q10_civic_political")?.value || "",
+      q10a_civic_political_details: document.getElementById("q10a_details")?.value.trim() || "",
+      q11_held_leadership_role: document.getElementById("q11_leadership")?.value || "",
+      q12_currently_involved_other_org: document.getElementById("q12_other_org")?.value || "",
+      q12a_other_org_name: document.getElementById("q12a_name")?.value.trim() || "",
+      q12a_other_org_type: document.getElementById("q12a_type")?.value.trim() || "",
+      q12a_other_org_role: document.getElementById("q12a_role")?.value.trim() || "",
+      q14_previous_experience_skills: document.getElementById("q14_previous_skills")?.value.trim() || "",
+      q15_organized_public_events: document.getElementById("q15_public_events")?.value || "",
+      q15a_public_events_details: document.getElementById("q15a_details")?.value.trim() || "",
+      q16_preferred_wings: q16Boxes,
+      q17_time_commitment: document.getElementById("q17_time_commitment")?.value || "",
+      q18_skills_contribution: q18Boxes,
+      q19_additional_info: document.getElementById("q19_additional_info")?.value.trim() || "",
+      declaration_accepted: true,
+      organizations: repeatableOrgs
+    };
+  }
 
   const photoFileInput = document.getElementById("memberPhotoFile");
   const photoFile = photoFileInput && photoFileInput.files ? photoFileInput.files[0] : null;
@@ -5282,17 +5444,18 @@ async function handleEnhancedMemberRegistration(e) {
     formData.append("address", address);
     formData.append("specialSkills", message);
     formData.append("solemnPledge", pledgeAccepted);
-    formData.append("declarationAccepted", "true");
-    formData.append("declaration_accepted", "true");
 
-    // Questionnaire and Repeatable Organizations
-    formData.append("questionnaire", JSON.stringify(questionnairePayload));
-    formData.append("organizations", JSON.stringify(repeatableOrgs));
+    if (!isLegacy && questionnairePayload) {
+      formData.append("declarationAccepted", "true");
+      formData.append("declaration_accepted", "true");
+      formData.append("questionnaire", JSON.stringify(questionnairePayload));
+      formData.append("organizations", JSON.stringify(repeatableOrgs));
 
-    // Top-level mapped fields for direct DB sync
-    for (const [k, v] of Object.entries(questionnairePayload)) {
-      if (k !== "organizations") {
-        formData.append(k, Array.isArray(v) ? JSON.stringify(v) : v);
+      // Top-level mapped fields for direct DB sync
+      for (const [k, v] of Object.entries(questionnairePayload)) {
+        if (k !== "organizations") {
+          formData.append(k, Array.isArray(v) ? JSON.stringify(v) : v);
+        }
       }
     }
 

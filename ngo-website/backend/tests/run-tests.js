@@ -19,7 +19,8 @@ async function runTests() {
   // Purge any transient records from prior test runs to ensure complete idempotency
   const testMobiles = [
     '9422111222', '9422955555', '9422133444', '9422233333', '9422344444',
-    '9822399999', '9822388888', '9822377777', '9422911212', '9422915151', '9422999001'
+    '9822399999', '9822388888', '9822377777', '9422911212', '9422915151', '9422999001',
+    '9422999002', '9422999003', '9422999004'
   ];
   function isTestRecord(entity) {
     if (!entity) return false;
@@ -27,7 +28,7 @@ async function runTests() {
     for (const tm of testMobiles) {
       if (mob.endsWith(tm) || mob === tm) return true;
     }
-    if (entity.full_name && (entity.full_name.includes('Rambhau') || entity.full_name.includes('Pune Sainik') || entity.full_name.includes('Veteran D. G. Kamble') || entity.full_name.includes('Duplicate Mobile') || entity.full_name.includes('Imposter') || entity.full_name.includes('Second 2012') || entity.full_name.includes('2015 Cadet') || entity.full_name.includes('Unverified Date'))) {
+    if (entity.full_name && (entity.full_name.includes('Rambhau') || entity.full_name.includes('Pune Sainik') || entity.full_name.includes('Veteran D. G. Kamble') || entity.full_name.includes('Duplicate Mobile') || entity.full_name.includes('Imposter') || entity.full_name.includes('Second 2012') || entity.full_name.includes('2015 Cadet') || entity.full_name.includes('Unverified Date') || entity.full_name.includes('Rahul Anand Kamble') || entity.full_name.includes('Pune Questionnaire') || entity.full_name.includes('Applicant Without Declaration'))) {
       return true;
     }
     if (entity.legacy_sainik_id === 'LEGACY-MH-1998' || entity.existing_sainik_id === 'LEGACY-MH-1998') return true;
@@ -46,6 +47,20 @@ async function runTests() {
       for (const [id, a] of Array.from(embeddedStore.membership_applications.entries())) {
         if (isTestRecord(a)) {
           embeddedStore.membership_applications.delete(id);
+        }
+      }
+    }
+    if (embeddedStore.enlistment_questionnaires) {
+      for (const [id, q] of Array.from(embeddedStore.enlistment_questionnaires.entries())) {
+        if (!embeddedStore.membership_applications.has(q.application_id) && !embeddedStore.members.has(q.application_id)) {
+          embeddedStore.enlistment_questionnaires.delete(id);
+        }
+      }
+    }
+    if (embeddedStore.applicant_organizations) {
+      for (const [id, o] of Array.from(embeddedStore.applicant_organizations.entries())) {
+        if (!embeddedStore.membership_applications.has(o.application_id) && !embeddedStore.members.has(o.application_id)) {
+          embeddedStore.applicant_organizations.delete(id);
         }
       }
     }
@@ -1144,7 +1159,699 @@ async function runTests() {
       throw new Error('Security Violation: Private PII (mobile/email/address) leaked in public QR verification!');
     }
   });
-  console.log(` 🏁 TEST SUITE SUMMARY: ${passed} PASSED, ${failed} FAILED`);
+
+  // ==========================================================================
+  // 11. NEW SAINIK ENLISTMENT QUESTIONNAIRE TEST SUITE
+  // ==========================================================================
+  let testQuestionnaireAppId = '';
+  let testPuneQuestionnaireAppId = '';
+
+  await assert('Questionnaire Rejection when Section F Declaration is missing', async () => {
+    const res = await fetch('http://localhost:3000/api/membership/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        membershipType: 'NEW',
+        fullName: 'Applicant Without Declaration',
+        mobile: '+91 94229 99003',
+        email: 'nodecl@example.org',
+        stateId: 'state_mh',
+        stateName: 'Maharashtra',
+        districtId: 'dist_mh_nagpur',
+        districtName: 'Nagpur',
+        wingId: 'central_cadet_corps',
+        wingName: 'Central Cadet Corps',
+        solemnPledge: true,
+        // Questionnaire provided, but Section F declaration omitted / false
+        q1_official_aim: 'To serve social equality.',
+        enlistment_declaration_accepted: false
+      })
+    });
+    const data = await res.json();
+    if (res.status !== 400 || data.success) {
+      throw new Error(`Expected 400 rejection for missing Section F declaration, got ${res.status}: ${JSON.stringify(data)}`);
+    }
+    if (!data.error || !data.error.includes('Section F')) {
+      throw new Error(`Expected error message to reference Section F declaration, got: ${data.error}`);
+    }
+  });
+
+  await assert('Public Enlistment Application with Complete 19-Question Questionnaire & Repeatable Organizations', async () => {
+    const res = await fetch('http://localhost:3000/api/membership/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        membershipType: 'NEW',
+        fullName: 'Rahul Anand Kamble',
+        dob: '1998-04-14',
+        gender: 'Male',
+        bloodGroup: 'B+',
+        education: 'Bachelor of Social Work (BSW)',
+        occupation: 'Social Worker & Legal Aid Volunteer',
+        mobile: '+91 94229 99002',
+        email: 'rahul.kamble@ssd-test.org',
+        address: '14, Dr. Ambedkar Marg, Sitabuldi',
+        stateId: 'state_mh',
+        stateName: 'Maharashtra',
+        districtId: 'dist_mh_nagpur',
+        districtName: 'Nagpur',
+        talukaId: 'tal_sitabuldi',
+        talukaName: 'Nagpur Urban',
+        wingId: 'central_cadet_corps',
+        wingName: 'Central Cadet Corps',
+        solemnPledge: true,
+        enlistment_declaration_accepted: true,
+        // Section A: Understanding of SSD
+        q1_official_aim: 'To safeguard human rights, eradicate caste distinctions, and uphold constitutional fraternity.',
+        q2_official_motto_meaning: 'Self-Help, Self-Respect, Self-Sacrifice. Practicing self-reliance and selfless service for social elevation.',
+        q3_reasons_for_joining: 'Deep commitment to Dr. Babasaheb Ambedkar\'s ideology of disciplined organization.',
+        q4_sainik_responsibilities: 'Upholding strict parade discipline, peaceful civic duty, and defense of constitutional morality.',
+        q5_historical_inspiration: 'The 1927 Mahad Satyagraha and the establishment of Samata Sainik Dal.',
+        // Section B: Social Service & Nation-Building
+        q6_social_work_experience: true,
+        q6a_social_work_details: 'Organized community blood donation camps and disaster relief supplies.',
+        q7_service_areas_interest: ['disaster_relief', 'education_tutoring', 'legal_literacy'],
+        q8_emergency_relief_preparedness: 'immediate',
+        q9_community_programs_experience: 'Served as head coordinator for Dr. Ambedkar Jayanti civic peace brigade.',
+        // Section C: Civic, Social & Political Disclosures
+        q10_political_office_held: false,
+        q10a_political_office_details: '',
+        q11_non_partisan_understanding: 'Samata Sainik Dal is an independent social defense force that operates above electoral political interests.',
+        q12_pending_proceedings: false,
+        q12a_pending_proceedings_details: '',
+        // Section D: Previous Organizational Experience
+        repeatableOrganizations: [
+          {
+            organizationName: 'Vidarbha Youth Social Forum',
+            roleTitle: 'General Secretary',
+            natureOfWork: 'Student educational support and library drives',
+            periodFrom: '2020-01',
+            periodTo: '2022-12',
+            currentStatus: 'past'
+          },
+          {
+            organizationName: 'Dr. Ambedkar Student Union',
+            roleTitle: 'Unit Organizer',
+            natureOfWork: 'Youth leadership seminars',
+            periodFrom: '2023-01',
+            periodTo: '',
+            currentStatus: 'active'
+          }
+        ],
+        q14_leadership_lessons: 'Organized discipline and transparent communication build community trust.',
+        q15_disagreement_departure: false,
+        q15a_departure_circumstances: '',
+        q16_ssd_wings_interest: ['central_corps', 'medical_unit'],
+        // Section E: Personal Commitment & Contributions
+        q17_time_commitment: '8_15_hours_weekly',
+        q18_skills_contribution: 'First aid certification, crowd management, and public speaking in Marathi/Hindi.',
+        q19_additional_info: 'Ready for deployment in emergency disaster relief operations anytime.'
+      })
+    });
+    const data = await res.json();
+    if (res.status !== 201 || !data.success || !data.applicationId) {
+      throw new Error(`Enlistment submission failed: ${res.status} ${JSON.stringify(data)}`);
+    }
+    testQuestionnaireAppId = data.applicationId;
+  });
+
+  await assert('Relational Persistence Verification: Questionnaire & Repeatable Organizations', async () => {
+    const res = await fetch(`http://localhost:3000/api/membership/applications/${testQuestionnaireAppId}`, {
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const data = await res.json();
+    if (!data.success || !data.application) {
+      throw new Error('Failed to retrieve application: ' + JSON.stringify(data));
+    }
+    if (!data.questionnaire) {
+      throw new Error('Questionnaire data was not returned in application payload');
+    }
+    const q = data.questionnaire;
+    if (q.q1_official_aim !== 'To safeguard human rights, eradicate caste distinctions, and uphold constitutional fraternity.') {
+      throw new Error('Q1 answer mismatch: ' + q.q1_official_aim);
+    }
+    if (q.q8_emergency_relief_preparedness !== 'immediate') {
+      throw new Error('Q8 value mismatch: ' + q.q8_emergency_relief_preparedness);
+    }
+    if (!q.declaration_accepted) {
+      throw new Error('Section F declaration was not recorded as accepted');
+    }
+
+    // Verify Repeatable Organizations
+    if (!Array.isArray(data.organizations) || data.organizations.length !== 2) {
+      throw new Error(`Expected 2 repeatable organizations, found: ${data.organizations ? data.organizations.length : 0}`);
+    }
+    const orgNames = data.organizations.map(o => o.organization_name);
+    if (!orgNames.includes('Vidarbha Youth Social Forum') || !orgNames.includes('Dr. Ambedkar Student Union')) {
+      throw new Error('Expected organization names missing from applicant_organizations table: ' + JSON.stringify(orgNames));
+    }
+  });
+
+  await assert('Dedicated Questionnaire Endpoint: Authenticated & Structured Retrieval', async () => {
+    const res = await fetch(`http://localhost:3000/api/membership/applications/${testQuestionnaireAppId}/questionnaire`, {
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const data = await res.json();
+    if (!data.success || !data.questionnaire || !Array.isArray(data.organizations)) {
+      throw new Error('Failed to retrieve from dedicated questionnaire endpoint: ' + JSON.stringify(data));
+    }
+    if (data.organizations.length !== 2) {
+      throw new Error('Organizations count mismatch on dedicated endpoint');
+    }
+  });
+
+  await assert('Jurisdiction RBAC Enforcement on Questionnaire Scrutiny Endpoint', async () => {
+    // 1. Unauthenticated request must return 401
+    const unauthRes = await fetch(`http://localhost:3000/api/membership/applications/${testQuestionnaireAppId}/questionnaire`);
+    if (unauthRes.status !== 401) {
+      throw new Error(`Expected 401 for unauthenticated access, got ${unauthRes.status}`);
+    }
+
+    // 2. Nagpur officer can access Nagpur application
+    const nagpurRes = await fetch(`http://localhost:3000/api/membership/applications/${testQuestionnaireAppId}/questionnaire`, {
+      headers: { 'Authorization': `Bearer ${authTokenNagpur}` }
+    });
+    if (nagpurRes.status !== 200) {
+      throw new Error(`Nagpur officer should have access to Nagpur application, got: ${nagpurRes.status}`);
+    }
+
+    // 3. Create a Pune application with questionnaire
+    const puneAppRes = await fetch('http://localhost:3000/api/membership/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        membershipType: 'NEW',
+        fullName: 'Pune Questionnaire Applicant',
+        mobile: '+91 94229 99004',
+        email: 'pune.q@example.org',
+        stateId: 'state_mh',
+        stateName: 'Maharashtra',
+        districtId: 'dist_mh_pune',
+        districtName: 'Pune',
+        wingId: 'central_cadet_corps',
+        wingName: 'Central Cadet Corps',
+        solemnPledge: true,
+        enlistment_declaration_accepted: true,
+        q1_official_aim: 'Social unity in Pune',
+        q2_official_motto_meaning: 'Dedication to service'
+      })
+    });
+    const puneAppData = await puneAppRes.json();
+    testPuneQuestionnaireAppId = puneAppData.applicationId;
+
+    // 4. Nagpur officer attempting to inspect Pune questionnaire must receive 403 Forbidden
+    const outOfJurisdictionRes = await fetch(`http://localhost:3000/api/membership/applications/${testPuneQuestionnaireAppId}/questionnaire`, {
+      headers: { 'Authorization': `Bearer ${authTokenNagpur}` }
+    });
+    if (outOfJurisdictionRes.status !== 403) {
+      throw new Error(`Security breach: Nagpur officer accessed Pune questionnaire! Status: ${outOfJurisdictionRes.status}`);
+    }
+  });
+
+  await assert('Officer Internal Scrutiny Remark Recording without Mutating Applicant Responses', async () => {
+    const scrutinyRemark = 'Territorial verification complete. Chapter contact confirmed active community standing.';
+    const res = await fetch(`http://localhost:3000/api/membership/applications/${testQuestionnaireAppId}/questionnaire/review`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenNagpur}`
+      },
+      body: JSON.stringify({ remarks: scrutinyRemark })
+    });
+    const data = await res.json();
+    if (!data.success) {
+      throw new Error('Failed to record internal scrutiny remarks: ' + JSON.stringify(data));
+    }
+    if (data.review.internal_review_remarks !== scrutinyRemark) {
+      throw new Error('Remarks mismatch in review response');
+    }
+
+    // Verify applicant original responses remain 100% intact
+    const verifyRes = await fetch(`http://localhost:3000/api/membership/applications/${testQuestionnaireAppId}/questionnaire`, {
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const verifyData = await verifyRes.json();
+    const q = verifyData.questionnaire;
+    if (q.q1_official_aim !== 'To safeguard human rights, eradicate caste distinctions, and uphold constitutional fraternity.') {
+      throw new Error('Applicant original response was mutated after officer review!');
+    }
+    if (q.internal_review_remarks !== scrutinyRemark) {
+      throw new Error('Internal scrutiny remark was not persisted correctly on questionnaire entity');
+    }
+    if (!q.reviewed_by) {
+      throw new Error('Officer reviewer identity was not recorded');
+    }
+  });
+
+  await assert('Public Verification Privacy: Zero Questionnaire & Political Disclosures Leaked', async () => {
+    // 1. Approve application into active Sainik status
+    const approveRes = await fetch(`http://localhost:3000/api/membership/applications/${testQuestionnaireAppId}/approve`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: JSON.stringify({ remarks: 'Enlistment criteria fully satisfied' })
+    });
+    const approveData = await approveRes.json();
+    if (!approveData.success) {
+      throw new Error('Failed to approve application: ' + JSON.stringify(approveData));
+    }
+    const approvedSainikId = approveData.sainikId || approveData.sainik_id;
+    if (!approvedSainikId) {
+      throw new Error('No sainikId returned after approval');
+    }
+
+    // 2. Fetch public verification unauthenticated
+    const verifyRes = await fetch(`http://localhost:3000/api/verify/${approvedSainikId}`);
+    const verifyData = await verifyRes.json();
+    if (!verifyData.verified || !verifyData.member) {
+      throw new Error('Public verification lookup failed: ' + JSON.stringify(verifyData));
+    }
+
+    const publicMember = verifyData.member;
+    // Check that public verification fields exist
+    if (!publicMember.sainikId || !publicMember.fullName || !publicMember.status) {
+      throw new Error('Standard public card fields missing');
+    }
+
+    // CRITICAL DPDP PRIVACY ASSERTION: No questionnaire fields or political answers allowed in public payload
+    const forbiddenFields = [
+      'q1_official_aim', 'q2_official_motto_meaning', 'q3_reasons_for_joining',
+      'q10_political_office_held', 'q10a_political_office_details', 'q11_non_partisan_understanding',
+      'q12_pending_proceedings', 'q12a_pending_proceedings_details', 'questionnaire',
+      'organizations', 'repeatableOrganizations', 'internal_review_remarks'
+    ];
+    for (const f of forbiddenFields) {
+      if (publicMember[f] !== undefined || verifyData[f] !== undefined) {
+        throw new Error(`DPDP Privacy Violation: Sensitive questionnaire disclosure '${f}' leaked in public verification endpoint!`);
+      }
+    }
+  });
+
+  await assert('Legacy Enlistment: Excludes Entrance Questionnaire & Declaration Requirements', async () => {
+    // 1. Submit Legacy Application without questionnaire and without Section F declaration
+    const randSuffix = Math.floor(1000000 + Math.random() * 9000000);
+    const legacyRes = await fetch('http://localhost:3000/api/membership/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fullName: 'Ramdas B. Meshram (Veteran)',
+        dob: '1968-05-10',
+        gender: 'Male',
+        mobile: `+91 98${randSuffix}`,
+        email: `ramdas.${randSuffix}@ssd-test.org`,
+        membershipType: 'LEGACY',
+        stateName: 'Maharashtra',
+        districtName: 'Nagpur',
+        address: 'Sitabuldi, Nagpur',
+        originalJoiningDate: '1995-10-14',
+        joiningDatePrecision: 'EXACT_DATE',
+        chapter: 'Sitabuldi Shakha',
+        existingSainikId: `LEGACY-NGP-${randSuffix}`,
+        applicantAttestation: true,
+        solemnPledge: true
+      })
+    });
+    const legacyData = await legacyRes.json();
+    if (legacyRes.status !== 201 || !legacyData.success || !legacyData.applicationId) {
+      throw new Error('Legacy application submission without questionnaire failed: ' + JSON.stringify(legacyData));
+    }
+
+    // 2. Dedicated questionnaire endpoint must return questionnaire: null
+    const qRes = await fetch(`http://localhost:3000/api/membership/applications/${legacyData.applicationId}/questionnaire`, {
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const qData = await qRes.json();
+    if (qRes.status !== 200 || !qData.success) {
+      throw new Error('Failed to query questionnaire for legacy app: ' + JSON.stringify(qData));
+    }
+    if (qData.questionnaire !== null) {
+      throw new Error('Expected questionnaire to be null for legacy application, got: ' + JSON.stringify(qData.questionnaire));
+    }
+  });
+
+  // ==========================================================================
+  // DIGITAL LIBRARY MANAGEMENT SYSTEM - ACCEPTANCE TEST SUITE
+  // ==========================================================================
+  let libraryTestDocId = '';
+  let libraryRestrictedDocId = '';
+  let testCatId = '';
+
+  await assert('Library Acceptance 1: Categories Directory returns all 12 official classifications', async () => {
+    const res = await fetch('http://localhost:3000/api/library/categories?all=true');
+    const data = await res.json();
+    if (res.status !== 200 || !data.success || !Array.isArray(data.categories)) {
+      throw new Error('Failed to retrieve categories: ' + JSON.stringify(data));
+    }
+    if (data.categories.length < 12) {
+      throw new Error(`Expected at least 12 categories, found ${data.categories.length}`);
+    }
+
+    const expectedCategories = [
+      'SSD Constitution and Official Documents',
+      'Historical Documents and Archives',
+      'Books and E-books',
+      'Research Papers and Publications',
+      'Speeches and Lectures',
+      'Circulars and Notices',
+      'Training and Educational Materials',
+      'Social Awareness Resources',
+      'Photographs and Historical Images',
+      'Audio and Video Resources',
+      'Reports and Documentation',
+      'Other Resources'
+    ];
+
+    for (const exp of expectedCategories) {
+      const match = data.categories.find(c => c.name.toLowerCase() === exp.toLowerCase());
+      if (!match) {
+        throw new Error(`Mandatory category '${exp}' missing from categories registry`);
+      }
+    }
+  });
+
+  await assert('Library Acceptance 2: Authorized Category Management (Create, Update & Soft-Deactivate)', async () => {
+    // 1. Create custom category
+    const createRes = await fetch('http://localhost:3000/api/library/categories', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: JSON.stringify({
+        name: 'Centennial Special Memorabilia 2026',
+        icon: 'fa-gem',
+        description: 'Special centenary centenary archives and documents'
+      })
+    });
+    const createData = await createRes.json();
+    if (!createData.success || !createData.category) {
+      throw new Error('Failed to create category: ' + JSON.stringify(createData));
+    }
+    testCatId = createData.category.id;
+
+    // 2. Update category
+    const updateRes = await fetch(`http://localhost:3000/api/library/categories/${testCatId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: JSON.stringify({
+        description: 'Updated centenary centenary description'
+      })
+    });
+    const updateData = await updateRes.json();
+    if (!updateData.success || updateData.category.description !== 'Updated centenary centenary description') {
+      throw new Error('Failed to update category description');
+    }
+
+    // 3. Deactivate category
+    const deactRes = await fetch(`http://localhost:3000/api/library/categories/${testCatId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: JSON.stringify({ is_active: false })
+    });
+    const deactData = await deactRes.json();
+    if (!deactData.success || deactData.category.is_active !== false) {
+      throw new Error('Failed to deactivate category');
+    }
+  });
+
+  await assert('Library Acceptance 3: Upload resource with magic bytes inspection, SHA-256 & official doc fields', async () => {
+    const formData = new FormData();
+    const mockPdfBuffer = Buffer.from('%PDF-1.4\n1 0 obj\n<< /Title (Samata Sainik Dal Vidhan) >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF');
+    const pdfBlob = new Blob([mockPdfBuffer], { type: 'application/pdf' });
+    formData.append('file', pdfBlob, 'ssd-constitution-1927.pdf');
+
+    formData.append('title', 'SSD Constitution & Supreme By-Laws (1927)');
+    formData.append('category_id', 'cat_ssd_constitution_official');
+    formData.append('description', 'Fundamental founding statute, by-laws, and moral charter of Samata Sainik Dal.');
+    formData.append('language', 'English');
+    formData.append('access_level', 'public');
+    formData.append('status', 'draft');
+    formData.append('author', 'Bodhisattva Dr. B. R. Ambedkar');
+    formData.append('publisher', 'Central Command Press');
+    formData.append('year', '1927');
+    formData.append('tags', 'Constitution, Vidhan, ByLaws, Babasaheb');
+    formData.append('official_doc_type', 'Constitution');
+    formData.append('official_doc_number', 'SSD/CONST/1927-V1');
+    formData.append('version', '1.0');
+    formData.append('issuing_authority', 'Supreme Command Council');
+
+    const res = await fetch('http://localhost:3000/api/library/resources', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authTokenSuper}`
+      },
+      body: formData
+    });
+    const data = await res.json();
+    if ((res.status !== 200 && res.status !== 201) || !data.success || !data.resource) {
+      throw new Error('Upload failed: ' + JSON.stringify(data));
+    }
+
+    libraryTestDocId = data.resource.id;
+    if (!data.resource.sha256_checksum || data.resource.sha256_checksum.length !== 64) {
+      throw new Error('Invalid SHA-256 checksum generated');
+    }
+    if (data.resource.version !== '1.0') {
+      throw new Error('Expected initial version 1.0, got ' + data.resource.version);
+    }
+    if (data.resource.status !== 'draft') {
+      throw new Error('Expected initial status draft, got ' + data.resource.status);
+    }
+  });
+
+  await assert('Library Acceptance 4: Security Rejection of Prohibited Executable Uploads (.exe, script payloads)', async () => {
+    // 1. Extension check rejection (.exe)
+    const exeForm = new FormData();
+    const fakeExeBlob = new Blob(['MZ\x90\x00\x03\x00\x00\x00This is a fake executable'], { type: 'application/octet-stream' });
+    exeForm.append('file', fakeExeBlob, 'malicious_virus.exe');
+    exeForm.append('title', 'Trojan Payload');
+    exeForm.append('category_id', 'cat_other_resources');
+
+    const exeRes = await fetch('http://localhost:3000/api/library/resources', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` },
+      body: exeForm
+    });
+    const exeData = await exeRes.json();
+    if (exeRes.status !== 400 || exeData.success) {
+      throw new Error('Security Breach: Prohibited .exe file was accepted by upload middleware!');
+    }
+
+    // 2. Magic byte check rejection (script disguised as PDF)
+    const scriptForm = new FormData();
+    const scriptBlob = new Blob(['#!/bin/bash\nrm -rf / --no-preserve-root'], { type: 'application/pdf' });
+    scriptForm.append('file', scriptBlob, 'innocent_report.pdf');
+    scriptForm.append('title', 'Disguised Shell Script');
+    scriptForm.append('category_id', 'cat_other_resources');
+
+    const scriptRes = await fetch('http://localhost:3000/api/library/resources', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` },
+      body: scriptForm
+    });
+    const scriptData = await scriptRes.json();
+    if (scriptRes.status !== 400 || scriptData.success) {
+      throw new Error('Security Breach: Fake PDF with shell script magic bytes was accepted!');
+    }
+  });
+
+  await assert('Library Acceptance 5: 4-Tier Access Control Enforcement on Backend Storage Layer', async () => {
+    // 1. Create Restricted Officer-Only Resource
+    const restrForm = new FormData();
+    const restrPdf = Buffer.from('%PDF-1.4\nRestricted National Defense Dossier Content');
+    restrForm.append('file', new Blob([restrPdf], { type: 'application/pdf' }), 'restricted-tactics.pdf');
+    restrForm.append('title', 'SSD National Cadet Operational Tactics (Classified)');
+    restrForm.append('category_id', 'cat_training_educational');
+    restrForm.append('description', 'Confidential drill formations and parade tactics for commanding officers.');
+    restrForm.append('access_level', 'restricted');
+    restrForm.append('status', 'published');
+
+    const restrRes = await fetch('http://localhost:3000/api/library/resources', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` },
+      body: restrForm
+    });
+    const restrData = await restrRes.json();
+    if (!restrData.success) throw new Error('Failed to create restricted resource: ' + JSON.stringify(restrData));
+    libraryRestrictedDocId = restrData.resource.id;
+
+    // 2. Anonymous Visitor cannot download restricted file (returns 401/403)
+    const anonDownload = await fetch(`http://localhost:3000/api/library/resources/${libraryRestrictedDocId}/download`);
+    if (anonDownload.status !== 401 && anonDownload.status !== 403) {
+      throw new Error(`Security Breach: Anonymous visitor downloaded restricted resource! Status: ${anonDownload.status}`);
+    }
+
+    // 3. Anonymous Visitor cannot preview restricted file
+    const anonPreview = await fetch(`http://localhost:3000/api/library/resources/${libraryRestrictedDocId}/preview`);
+    if (anonPreview.status !== 401 && anonPreview.status !== 403) {
+      throw new Error(`Security Breach: Anonymous visitor accessed restricted preview! Status: ${anonPreview.status}`);
+    }
+
+    // 4. Authorized Officer CAN download and receive proper attachment headers
+    const officerDownload = await fetch(`http://localhost:3000/api/library/resources/${libraryRestrictedDocId}/download`, {
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    if (officerDownload.status !== 200) {
+      throw new Error(`Officer download failed with status ${officerDownload.status}`);
+    }
+    const cdHeader = officerDownload.headers.get('content-disposition');
+    if (!cdHeader || !cdHeader.includes('attachment')) {
+      throw new Error('Expected Content-Disposition: attachment on download stream');
+    }
+  });
+
+  await assert('Library Acceptance 6: Publication Workflow Lifecycle (Draft -> In Review -> Approved -> Published -> Archived -> Restored)', async () => {
+    const doTransition = async (action, note = '') => {
+      const res = await fetch(`http://localhost:3000/api/library/resources/${libraryTestDocId}/workflow`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authTokenSuper}`
+        },
+        body: JSON.stringify({ action, note })
+      });
+      return await res.json();
+    };
+
+    // 1. Submit for Review
+    let r = await doTransition('submit_review');
+    if (!r.success || r.resource.status !== 'in_review') throw new Error('Expected in_review status');
+
+    // 2. Request Correction
+    r = await doTransition('request_correction', 'Please format the preamble heading correctly');
+    if (!r.success || r.resource.status !== 'correction_required') throw new Error('Expected correction_required status');
+
+    // 3. Resubmit
+    r = await doTransition('submit_review');
+    if (!r.success || r.resource.status !== 'in_review') throw new Error('Expected in_review status after resubmission');
+
+    // 4. Approve
+    r = await doTransition('approve');
+    if (!r.success || r.resource.status !== 'approved') throw new Error('Expected approved status');
+
+    // 5. Publish
+    r = await doTransition('publish');
+    if (!r.success || r.resource.status !== 'published' || !r.resource.is_published) throw new Error('Expected published status');
+
+    // 6. Unpublish
+    r = await doTransition('unpublish');
+    if (!r.success || r.resource.status !== 'unpublished' || r.resource.is_published) throw new Error('Expected unpublished status');
+
+    // 7. Archive
+    r = await doTransition('archive');
+    if (!r.success || r.resource.status !== 'archived') throw new Error('Expected archived status');
+
+    // 8. Restore to draft
+    r = await doTransition('restore');
+    if (!r.success || r.resource.status !== 'draft') throw new Error('Expected restored draft status');
+
+    // 9. Re-publish for subsequent tests
+    await doTransition('submit_review');
+    await doTransition('approve');
+    r = await doTransition('publish');
+    if (!r.success || r.resource.status !== 'published') throw new Error('Failed to set published for subsequent tests');
+  });
+
+  await assert('Library Acceptance 7: Document Version Control (Preserving Previous Versions & Superseded Status)', async () => {
+    const verForm = new FormData();
+    const amendedPdfBuffer = Buffer.from('%PDF-1.4\nAmended 2026 Centenary Constitution Revision Content');
+    verForm.append('file', new Blob([amendedPdfBuffer], { type: 'application/pdf' }), 'constitution-v2.pdf');
+    verForm.append('version_number', '2.0');
+    verForm.append('change_summary', 'Ratified amendments passed by the Centenary National Council.');
+    verForm.append('effective_date', '2026-10-14');
+
+    const res = await fetch(`http://localhost:3000/api/library/resources/${libraryTestDocId}/version`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` },
+      body: verForm
+    });
+    const data = await res.json();
+    if (!data.success || data.resource.version !== '2.0') {
+      throw new Error('Version update failed: ' + JSON.stringify(data));
+    }
+
+    // Inspect version history
+    const verListRes = await fetch(`http://localhost:3000/api/library/resources/${libraryTestDocId}/versions`, {
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const verListData = await verListRes.json();
+    if (!verListData.success || verListData.versions.length < 2) {
+      throw new Error(`Expected at least 2 versions preserved, found ${verListData.versions?.length}`);
+    }
+
+    const v1 = verListData.versions.find(v => v.version_number === '1.0');
+    const v2 = verListData.versions.find(v => v.version_number === '2.0');
+
+    if (!v1 || !v2) throw new Error('Both v1.0 and v2.0 must exist in version history');
+    if (v1.is_current !== false || v1.is_superseded !== true) {
+      throw new Error('Version 1.0 must be marked as superseded');
+    }
+    if (v2.is_current !== true || v2.is_superseded !== false) {
+      throw new Error('Version 2.0 must be marked as active/current');
+    }
+    if (v1.sha256_checksum === v2.sha256_checksum) {
+      throw new Error('Cryptographic anomaly: Both versions have identical checksums despite different content!');
+    }
+  });
+
+  await assert('Library Acceptance 8: Public Search & Category Filtering on Published Catalog', async () => {
+    const res = await fetch('http://localhost:3000/api/library/resources?search=Constitution');
+    const data = await res.json();
+    if (!data.success || !Array.isArray(data.resources)) {
+      throw new Error('Failed to query resources with search term: ' + JSON.stringify(data));
+    }
+    const match = data.resources.find(r => r.id === libraryTestDocId);
+    if (!match) {
+      throw new Error('Published constitution was not returned in public search query!');
+    }
+  });
+
+  await assert('Library Acceptance 9: Immutable Audit Logging of Administrative Operations', async () => {
+    const res = await fetch(`http://localhost:3000/api/library/resources/${libraryTestDocId}/audit`, {
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const data = await res.json();
+    if (!data.success || !Array.isArray(data.auditLogs) || data.auditLogs.length < 3) {
+      throw new Error(`Expected at least 3 audit logs for create, workflow and versioning, got ${data.auditLogs?.length}`);
+    }
+    const hasCreate = data.auditLogs.some(l => l.action.includes('CREATE'));
+    const hasWorkflow = data.auditLogs.some(l => l.action.includes('WORKFLOW') || l.action.includes('PUBLISH'));
+    const hasVersion = data.auditLogs.some(l => l.action.includes('VERSION'));
+
+    if (!hasCreate || !hasWorkflow || !hasVersion) {
+      throw new Error('Audit trail missing required event categories');
+    }
+  });
+
+  await assert('Library Acceptance 10: Dashboard Analytics & Storage Utilization Statistics', async () => {
+    const res = await fetch('http://localhost:3000/api/library/stats', {
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const data = await res.json();
+    if (!data.success || !data.stats) {
+      throw new Error('Stats endpoint failed: ' + JSON.stringify(data));
+    }
+    const s = data.stats;
+    if (typeof s.totalResources !== 'number' || s.totalResources < 1) {
+      throw new Error('Total resources KPI invalid: ' + s.totalResources);
+    }
+    if (typeof s.totalStorageBytes !== 'number' || s.totalStorageBytes <= 0) {
+      throw new Error('Storage utilization metric invalid: ' + s.totalStorageBytes);
+    }
+    if (!s.totalStorageFormatted) {
+      throw new Error('Formatted storage string missing');
+    }
+  });
+
+  console.log(`\n 🏁 TEST SUITE SUMMARY: ${passed} PASSED, ${failed} FAILED`);
   console.log(`==========================================================================\n`);
 
   if (failed > 0) {

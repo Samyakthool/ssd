@@ -1449,6 +1449,48 @@ async function runTests() {
     }
   });
 
+  await assert('Legacy Enlistment: Excludes Entrance Questionnaire & Declaration Requirements', async () => {
+    // 1. Submit Legacy Application without questionnaire and without Section F declaration
+    const randSuffix = Math.floor(1000000 + Math.random() * 9000000);
+    const legacyRes = await fetch('http://localhost:3000/api/membership/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fullName: 'Ramdas B. Meshram (Veteran)',
+        dob: '1968-05-10',
+        gender: 'Male',
+        mobile: `+91 98${randSuffix}`,
+        email: `ramdas.${randSuffix}@ssd-test.org`,
+        membershipType: 'LEGACY',
+        stateName: 'Maharashtra',
+        districtName: 'Nagpur',
+        address: 'Sitabuldi, Nagpur',
+        originalJoiningDate: '1995-10-14',
+        joiningDatePrecision: 'EXACT_DATE',
+        chapter: 'Sitabuldi Shakha',
+        existingSainikId: `LEGACY-NGP-${randSuffix}`,
+        applicantAttestation: true,
+        solemnPledge: true
+      })
+    });
+    const legacyData = await legacyRes.json();
+    if (legacyRes.status !== 201 || !legacyData.success || !legacyData.applicationId) {
+      throw new Error('Legacy application submission without questionnaire failed: ' + JSON.stringify(legacyData));
+    }
+
+    // 2. Dedicated questionnaire endpoint must return questionnaire: null
+    const qRes = await fetch(`http://localhost:3000/api/membership/applications/${legacyData.applicationId}/questionnaire`, {
+      headers: { 'Authorization': `Bearer ${authTokenSuper}` }
+    });
+    const qData = await qRes.json();
+    if (qRes.status !== 200 || !qData.success) {
+      throw new Error('Failed to query questionnaire for legacy app: ' + JSON.stringify(qData));
+    }
+    if (qData.questionnaire !== null) {
+      throw new Error('Expected questionnaire to be null for legacy application, got: ' + JSON.stringify(qData.questionnaire));
+    }
+  });
+
   // ==========================================================================
   // DIGITAL LIBRARY MANAGEMENT SYSTEM - ACCEPTANCE TEST SUITE
   // ==========================================================================
