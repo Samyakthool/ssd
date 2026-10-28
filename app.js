@@ -5666,9 +5666,33 @@ function applyHomepageCms(hp) {
       heroEl.style.background = `linear-gradient(135deg, rgba(8, 22, 50, 0.66) 0%, rgba(6, 17, 40, 0.72) 100%), url('${bgImg}') center 25%/cover no-repeat`;
     }
     const hl = document.getElementById('heroHeadline');
-    if (hl && hp.hero.headline) hl.innerHTML = hp.hero.headline;
+    if (hl) {
+      if (!hp.hero.headline || hp.hero.headline.includes("DEFENDERS OF EQUALITY")) {
+        hl.innerHTML = "Samata Sainik Dal";
+      } else {
+        hl.innerHTML = hp.hero.headline;
+      }
+    }
+    const tag = document.getElementById('heroTaglineText');
+    if (tag) {
+      tag.innerText = (hp.hero.tagline && !hp.hero.tagline.includes("DEFENDERS"))
+        ? hp.hero.tagline
+        : "Discipline \u2022 Patience \u2022 Continuity";
+    }
     const sub = document.getElementById('heroSubheadline');
-    if (sub && hp.hero.subheadline) sub.innerText = hp.hero.subheadline;
+    if (sub) {
+      const subVal = (hp.hero.subheadline || '').trim();
+      const isOldLongSub = subVal.startsWith("Founded on 24th December 1927 at Mahad") || subVal.includes("constitutional literacy") || !subVal;
+      let namePart = 'Dr. BR Ambedkar';
+      if (!isOldLongSub) {
+        if (/founder/i.test(subVal)) {
+          namePart = subVal.replace(/^founder:?\s*/i, '').trim();
+        } else {
+          namePart = subVal;
+        }
+      }
+      sub.innerHTML = `<span class="founder-label-badge"><i class="fa-solid fa-feather-pointed"></i> Founder</span> <strong class="founder-name-text" id="heroFounderName">${namePart || 'Dr. BR Ambedkar'}</strong>`;
+    }
     const pCta = document.getElementById('heroPrimaryCta');
     if (pCta) {
       if (hp.hero.primaryCtaText) {

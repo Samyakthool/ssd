@@ -62,8 +62,10 @@ router.get('/homepage', (req, res) => {
   try {
     const homepage = embeddedStore.cms_sections.get('homepage') || {
       hero: {
-        headline: "DEFENDERS OF EQUALITY, LIBERTY & FRATERNITY",
-        subheadline: "Founded on 24th December 1927 at Mahad by Bodhisattva Dr. B.R. Ambedkar, Samata Sainik Dal is the premier non-violent volunteer corps dedicated to constitutional literacy, disciplined social defense, and universal brotherhood.",
+        headline: "Samata Sainik Dal",
+        tagline: "Discipline • Patience • Continuity",
+        founder: "Dr. BR Ambedkar",
+        subheadline: "Founder Dr. BR Ambedkar",
         primaryCtaText: "Explore SSD",
         primaryCtaLink: "#about-ssd",
         secondaryCtaText: "Become a Sainik",
