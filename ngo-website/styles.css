@@ -4482,7 +4482,7 @@ body.nav-open .header-wrapper {
   font-size: 24px;
   font-weight: 800;
   color: #FFFFFF;
-  margin: 0 0 4px;
+  margin: 0;
   letter-spacing: 0.5px;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
