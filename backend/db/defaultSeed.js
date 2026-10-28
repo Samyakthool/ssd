@@ -925,8 +925,7 @@ export const defaultSeedData = {
     hero: {
       headline: "Samata Sainik Dal",
       tagline: "Discipline • Patience • Continuity",
-      founder: "Dr. BR Ambedkar",
-      subheadline: "Founder Dr. BR Ambedkar",
+      subheadline: "",
       primaryCtaText: "Explore SSD",
       primaryCtaLink: "#about-ssd",
       secondaryCtaText: "Become a Sainik",

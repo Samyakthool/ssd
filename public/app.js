@@ -5681,17 +5681,7 @@ function applyHomepageCms(hp) {
     }
     const sub = document.getElementById('heroSubheadline');
     if (sub) {
-      const subVal = (hp.hero.subheadline || '').trim();
-      const isOldLongSub = subVal.startsWith("Founded on 24th December 1927 at Mahad") || subVal.includes("constitutional literacy") || !subVal;
-      let namePart = 'Dr. BR Ambedkar';
-      if (!isOldLongSub) {
-        if (/founder/i.test(subVal)) {
-          namePart = subVal.replace(/^founder:?\s*/i, '').trim();
-        } else {
-          namePart = subVal;
-        }
-      }
-      sub.innerHTML = `<span class="founder-label-badge"><i class="fa-solid fa-feather-pointed"></i> Founder</span> <strong class="founder-name-text" id="heroFounderName">${namePart || 'Dr. BR Ambedkar'}</strong>`;
+      sub.remove();
     }
     const pCta = document.getElementById('heroPrimaryCta');
     if (pCta) {
