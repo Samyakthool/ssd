@@ -4230,19 +4230,27 @@ body.nav-open .header-wrapper {
   width: 82px;
   height: 82px;
   object-fit: contain;
-  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 16px rgba(45, 127, 249, 0.45));
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 16px rgba(255, 255, 255, 0.75));
   flex-shrink: 0;
-  animation: logoAura 6s ease-in-out infinite alternate;
-  transition: transform 0.3s ease;
+  animation: logoWhiteAura 5s ease-in-out infinite alternate;
+  transition: transform 0.3s ease, filter 0.3s ease;
 }
 
 .hero-brand-logo:hover {
   transform: scale(1.06) rotate(3deg);
+  filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 24px rgba(255, 255, 255, 0.95));
 }
 
-@keyframes logoAura {
-  0% { filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 12px rgba(45, 127, 249, 0.35)); }
-  100% { filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 22px rgba(255, 107, 0, 0.5)); }
+@keyframes logoWhiteAura {
+  0% {
+    filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.55));
+  }
+  50% {
+    filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 32px rgba(255, 255, 255, 0.45));
+  }
+  100% {
+    filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 14px rgba(255, 255, 255, 0.7));
+  }
 }
 
 .hero-headline {
