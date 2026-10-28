@@ -1383,6 +1383,9 @@ function checkAuthSession() {
     if (authGate) authGate.style.display = "none";
     if (adminApp) adminApp.style.display = "flex";
 
+    // Auto-rehydrate and synchronize auth token across localStorage, sessionStorage, and cookie
+    ensureAuthToken().catch(err => console.warn("Session token refresh notice:", err));
+
     // Use getActiveOfficer() to ensure name/fullName normalization for both API and local logins
     const officer = getActiveOfficer();
 
@@ -1761,9 +1764,67 @@ function collectAllPendingItems() {
   return pending;
 }
 
+function saveAllAuthTokens(token) {
+  if (!token) return;
+  try {
+    localStorage.setItem("ssd_auth_token", token);
+    localStorage.setItem("ssd_token", token);
+    sessionStorage.setItem("ssd_admin_token", token);
+    sessionStorage.setItem("ssd_token", token);
+    document.cookie = `ssd_token=${encodeURIComponent(token)}; path=/; max-age=604800; SameSite=Lax`;
+  } catch (e) {
+    console.warn("Error saving auth tokens:", e);
+  }
+}
+
+function clearAllAuthTokens() {
+  try {
+    localStorage.removeItem("ssd_auth_token");
+    localStorage.removeItem("ssd_token");
+    sessionStorage.removeItem("ssd_admin_token");
+    sessionStorage.removeItem("ssd_token");
+    sessionStorage.removeItem("ssd_admin_auth");
+    sessionStorage.removeItem("ssd_admin_user");
+    document.cookie = "ssd_token=; path=/; max-age=0; SameSite=Lax";
+  } catch (e) {
+    console.warn("Error clearing auth tokens:", e);
+  }
+}
+
+function isTokenValid(token) {
+  if (!token || typeof token !== "string") return false;
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return false;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+    if (payload.exp && Date.now() >= (payload.exp * 1000 - 30000)) {
+      return false;
+    }
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function getAuthToken() {
+  const token = localStorage.getItem("ssd_auth_token") ||
+                localStorage.getItem("ssd_token") ||
+                sessionStorage.getItem("ssd_admin_token") ||
+                sessionStorage.getItem("ssd_token");
+  if (token) return token;
+  try {
+    const match = document.cookie.match(/(?:^|;\s*)ssd_token=([^;]+)/);
+    if (match) return decodeURIComponent(match[1]);
+  } catch (e) {}
+  return null;
+}
+
 async function ensureAuthToken(forceRefresh = false) {
-  let token = localStorage.getItem("ssd_auth_token");
-  if (token && !forceRefresh) return token;
+  let token = getAuthToken();
+  if (token && !forceRefresh && isTokenValid(token)) {
+    saveAllAuthTokens(token);
+    return token;
+  }
 
   try {
     const officer = (typeof getActiveOfficer === 'function') ? getActiveOfficer() : {};
@@ -1786,7 +1847,7 @@ async function ensureAuthToken(forceRefresh = false) {
     const loginData = await loginRes.json();
     if (loginData.success && loginData.token) {
       token = loginData.token;
-      localStorage.setItem("ssd_auth_token", token);
+      saveAllAuthTokens(token);
       return token;
     }
   } catch (e) {
@@ -1794,6 +1855,12 @@ async function ensureAuthToken(forceRefresh = false) {
   }
   return token || null;
 }
+
+window.saveAllAuthTokens = saveAllAuthTokens;
+window.clearAllAuthTokens = clearAllAuthTokens;
+window.isTokenValid = isTokenValid;
+window.getAuthToken = getAuthToken;
+window.ensureAuthToken = ensureAuthToken;
 
 async function loadEnlistmentApplications() {
   const token = await ensureAuthToken();
@@ -2176,7 +2243,7 @@ function bulkApproveAllPending() {
   if (!confirm(`Are you sure you want to 1-click authorize all ${pending.length} pending submissions and publish them live?`)) return;
 
   const officer = getActiveOfficer();
-  const token = localStorage.getItem("ssd_auth_token");
+  const token = getAuthToken();
   const updatePayload = {
     approvalStatus: 'approved',
     approvedBy: `${officer.name} (Supreme Commander Bulk Authorization)`,
@@ -2281,7 +2348,7 @@ async function handleAdminLogin(e) {
 
     if (data.success && data.token) {
       recordSuccessfulLogin();
-      localStorage.setItem("ssd_auth_token", data.token);
+      saveAllAuthTokens(data.token);
       sessionStorage.setItem("ssd_admin_auth", "true");
       // Normalize user object: ensure both 'name' and 'fullName' are set
       const normalizedUser = { ...data.user, name: data.user.fullName || data.user.name, fullName: data.user.fullName || data.user.name };
@@ -2331,6 +2398,7 @@ async function handleAdminLogin(e) {
     };
     sessionStorage.setItem("ssd_admin_auth", "true");
     sessionStorage.setItem("ssd_admin_user", JSON.stringify(superAdmin));
+    ensureAuthToken(true).catch(e => console.warn("Master token handshake warning:", e));
     showToast("Master Command Access Granted. Welcome, Commander.", "success");
     checkAuthSession();
     if (submitBtn) {
@@ -2390,6 +2458,7 @@ async function handleAdminLogin(e) {
     recordSuccessfulLogin();
     sessionStorage.setItem("ssd_admin_auth", "true");
     sessionStorage.setItem("ssd_admin_user", JSON.stringify(matchedOfficer));
+    ensureAuthToken(true).catch(e => console.warn("Officer token handshake warning:", e));
     showToast(`Access Granted. Welcome, ${matchedOfficer.name || matchedOfficer.email}.`, "success");
     checkAuthSession();
   } else {
@@ -2403,8 +2472,7 @@ async function handleAdminLogin(e) {
 
 function handleAdminLogout() {
   if (inactivityTimer) clearTimeout(inactivityTimer);
-  sessionStorage.removeItem("ssd_admin_auth");
-  sessionStorage.removeItem("ssd_admin_user");
+  clearAllAuthTokens();
   showToast("Command session locked.", "info");
   checkAuthSession();
 }
@@ -5632,7 +5700,7 @@ async function renderAdminsTable() {
   }
 
   // 2. Fetch fresh list from server in background with 3-second abort timeout
-  const token = localStorage.getItem("ssd_auth_token") || localStorage.getItem("ssd_token");
+  const token = getAuthToken();
   if (token) {
     try {
       const controller = new AbortController();
@@ -5758,7 +5826,7 @@ async function handleSaveAdminUser(e) {
     return;
   }
 
-  const token = localStorage.getItem("ssd_token");
+  const token = await ensureAuthToken();
 
   if (token) {
     try {
@@ -5838,7 +5906,7 @@ async function handleSaveAdminUser(e) {
 
 async function toggleAdminStatus(id, currentStatus) {
   const newStatus = (currentStatus || 'ACTIVE').toUpperCase() === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
-  const token = localStorage.getItem("ssd_token");
+  const token = await ensureAuthToken();
 
   if (token) {
     try {
@@ -5870,7 +5938,7 @@ async function toggleAdminStatus(id, currentStatus) {
 async function deleteAdminUser(id) {
   if (!confirm(`Are you sure you want to revoke authorization for this officer?`)) return;
 
-  const token = localStorage.getItem("ssd_token");
+  const token = await ensureAuthToken();
   if (token) {
     try {
       const res = await fetch(`/api/auth/officers/${encodeURIComponent(id)}`, {
@@ -7487,7 +7555,7 @@ async function handleSaveTestimonial(e) {
     updatedAt: Date.now()
   };
 
-  const token = localStorage.getItem("ssd_token");
+  const token = await ensureAuthToken();
   try {
     const url = key ? `/api/testimonials/${encodeURIComponent(key)}` : `/api/testimonials`;
     const method = key ? 'PUT' : 'POST';
@@ -7525,7 +7593,7 @@ async function toggleTestimonialPublish(id) {
     return;
   }
 
-  const token = localStorage.getItem("ssd_token");
+  const token = await ensureAuthToken();
   try {
     const res = await fetch(`/api/testimonials/${encodeURIComponent(id)}/toggle`, {
       method: 'PATCH',
@@ -7569,7 +7637,7 @@ async function deleteTestimonial(id) {
 
   if (!confirm("Are you sure you want to remove this cadre testimony?")) return;
 
-  const token = localStorage.getItem("ssd_token");
+  const token = await ensureAuthToken();
   try {
     const res = await fetch(`/api/testimonials/${encodeURIComponent(id)}`, {
       method: 'DELETE',
@@ -7812,14 +7880,26 @@ async function clearDemoDataFromAdmin() {
   }
 
   try {
-    const token = localStorage.getItem('ssd_token') || sessionStorage.getItem('ssd_token');
+    let token = await ensureAuthToken();
     const headers = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const res = await fetch('/api/admin/clear-demo-data', {
+    let res = await fetch('/api/admin/clear-demo-data', {
       method: 'POST',
       headers
     });
+
+    if (res.status === 401) {
+      token = await ensureAuthToken(true);
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        res = await fetch('/api/admin/clear-demo-data', {
+          method: 'POST',
+          headers
+        });
+      }
+    }
+
     const data = await res.json();
 
     if (data.success) {
@@ -8422,7 +8502,7 @@ async function loadAuditLogsView() {
   if (!tbody) return;
 
   tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 24px;"><i class="fa-solid fa-spinner fa-spin"></i> Fetching audit records...</td></tr>';
-  const token = localStorage.getItem("ssd_auth_token");
+  const token = await ensureAuthToken();
 
   try {
     const res = await fetch("/api/admin/audit-logs", {
@@ -9502,7 +9582,7 @@ let cmsCache = {
 };
 
 function getCmsAuthHeaders() {
-  const token = localStorage.getItem("ssd_auth_token") || "";
+  const token = getAuthToken() || "";
   return {
     "Content-Type": "application/json",
     "Authorization": `Bearer ${token}`
@@ -10217,7 +10297,7 @@ async function loadLegacyView() {
 
 async function loadLegacyStats() {
   try {
-    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const token = getAuthToken();
     const res = await fetch('/api/legacy/stats', {
       headers: token ? { "Authorization": `Bearer ${token}` } : {}
     });
@@ -10282,7 +10362,7 @@ async function loadLegacyApplications() {
   }
 
   try {
-    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const token = getAuthToken();
     const searchVal = document.getElementById('legacySearchInput') ? document.getElementById('legacySearchInput').value.trim() : '';
     const statusVal = document.getElementById('legacyStatusFilter') ? document.getElementById('legacyStatusFilter').value : 'ALL';
     const stateVal = document.getElementById('legacyStateFilter') ? document.getElementById('legacyStateFilter').value : 'ALL';
@@ -10407,7 +10487,7 @@ function resetLegacyFilters() {
 
 async function openLegacyReviewModal(appId) {
   try {
-    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const token = getAuthToken();
     const res = await fetch(`/api/legacy/applications/${appId}`, {
       headers: token ? { "Authorization": `Bearer ${token}` } : {}
     });
@@ -10523,7 +10603,7 @@ async function submitLegacyDateVerification() {
   }
 
   try {
-    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const token = getAuthToken();
     const res = await fetch(`/api/legacy/applications/${appId}/verify-date`, {
       method: 'POST',
       headers: {
@@ -10555,7 +10635,7 @@ async function previewPolicyBatch() {
   }
 
   try {
-    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const token = getAuthToken();
     const res = await fetch('/api/batches/calculate', {
       method: 'POST',
       headers: {
@@ -10580,7 +10660,7 @@ async function submitLegacyBatchAssignment() {
   const reason = document.getElementById('actionBatchReason').value.trim();
 
   try {
-    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const token = getAuthToken();
     const res = await fetch(`/api/legacy/applications/${appId}/assign-batch`, {
       method: 'POST',
       headers: {
@@ -10610,7 +10690,7 @@ async function submitLegacyFinalApproval() {
   const remarks = document.getElementById('actionCommissionRemarks') ? document.getElementById('actionCommissionRemarks').value.trim() : '';
 
   try {
-    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const token = getAuthToken();
     const res = await fetch(`/api/legacy/applications/${appId}/approve`, {
       method: 'POST',
       headers: {
@@ -10644,7 +10724,7 @@ async function submitLegacyCorrection() {
   }
 
   try {
-    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const token = getAuthToken();
     const res = await fetch(`/api/legacy/applications/${appId}/correction`, {
       method: 'POST',
       headers: {
@@ -10675,7 +10755,7 @@ async function submitLegacyRejection() {
   }
 
   try {
-    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const token = getAuthToken();
     const res = await fetch(`/api/legacy/applications/${appId}/reject`, {
       method: 'POST',
       headers: {
@@ -10705,7 +10785,7 @@ async function loadBatchesDesk() {
   }
 
   try {
-    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const token = getAuthToken();
     
     // 1. Fetch Config
     const cfgRes = await fetch('/api/batches/config', {
@@ -10782,7 +10862,7 @@ async function handleSaveBatchConfig(e) {
   const notes = document.getElementById('cfgNotes').value.trim();
 
   try {
-    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const token = getAuthToken();
     const res = await fetch('/api/batches/config', {
       method: 'PUT',
       headers: {
@@ -10811,7 +10891,7 @@ async function handleCreateBatch(e) {
   const startDate = document.getElementById('newBatchStart').value;
 
   try {
-    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const token = getAuthToken();
     const res = await fetch('/api/batches', {
       method: 'POST',
       headers: {
@@ -10851,7 +10931,7 @@ async function handleBatchCorrection(e) {
   }
 
   try {
-    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const token = getAuthToken();
     const res = await fetch('/api/batches/correct', {
       method: 'POST',
       headers: {
@@ -10883,7 +10963,7 @@ async function loadBatchHistory() {
   }
 
   try {
-    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const token = getAuthToken();
     const res = await fetch('/api/batches/history', {
       headers: token ? { "Authorization": `Bearer ${token}` } : {}
     });
@@ -10945,7 +11025,7 @@ async function handleLegacyBulkImport(e) {
   }
 
   try {
-    const token = sessionStorage.getItem("ssd_admin_token") || localStorage.getItem("ssd_token");
+    const token = getAuthToken();
     const res = await fetch('/api/legacy/bulk-import', {
       method: 'POST',
       headers: {

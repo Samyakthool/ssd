@@ -83,6 +83,18 @@ router.post('/login', authRateLimiter, async (req, res) => {
       ]
     );
 
+    try {
+      res.cookie('ssd_token', token, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 3600 * 1000,
+        path: '/'
+      });
+    } catch (cookieErr) {
+      // Ignore if cookie cannot be set
+    }
+
     return res.json({
       success: true,
       token: token,

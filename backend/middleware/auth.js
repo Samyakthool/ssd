@@ -13,10 +13,19 @@ export async function authenticate(req, res, next) {
 
     // Check Authorization Header: Bearer <token>
     const authHeader = req.headers.authorization || req.headers.Authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.split(' ')[1];
+    if (authHeader) {
+      if (authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+      } else {
+        token = authHeader.trim();
+      }
     } else if (req.cookies && req.cookies.ssd_token) {
       token = req.cookies.ssd_token;
+    } else if (req.headers && req.headers.cookie) {
+      const match = req.headers.cookie.match(/(?:^|;\s*)ssd_token=([^;]+)/);
+      if (match) token = decodeURIComponent(match[1]);
+    } else if (req.query && req.query.token) {
+      token = req.query.token;
     }
 
     if (!token) {
@@ -27,7 +36,16 @@ export async function authenticate(req, res, next) {
     }
 
     // Verify Token
-    const decoded = jwt.verify(token, JWT_SECRET);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (jwtErr) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication Token expired or invalid. Please re-authenticate.'
+      });
+    }
+
     if (!decoded || !decoded.userId) {
       return res.status(401).json({
         success: false,
