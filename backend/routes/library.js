@@ -577,7 +577,7 @@ router.post('/resources', authenticate, (req, res) => {
         file_name: file.filename,
         file_url: `/api/library/resources/${id}/download`,
         thumbnail_path: thumbnailPath,
-        cover_image: thumbnailPath || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
+        cover_image: thumbnailPath || 'ssd-cadets-march.jpg',
         mime_type: file.mimetype,
         file_size_bytes: file.size,
         file_size_formatted: fileSizeFormatted,

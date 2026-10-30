@@ -102,7 +102,7 @@ router.post('/', optionalAuth, checkTestimonialsPermission, (req, res) => {
       tenure: data.tenure ? data.tenure.trim() : 'Active Cadre',
       highlight: data.highlight ? data.highlight.trim() : '',
       quote: data.quote.trim(),
-      photoUrl: data.photoUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=240&q=80',
+      photoUrl: data.photoUrl || 'logo.png',
       approvalStatus: data.approvalStatus || 'approved',
       is_published: isPub,
       published: isPub,

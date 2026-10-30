@@ -190,7 +190,7 @@ router.post('/history/organizations', authenticate, (req, res) => {
       significance: data.significance.trim(),
       verifiedSource: data.verifiedSource || 'Archival record',
       status: data.status || 'Verified Historical Document',
-      imageUrl: data.imageUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
+      imageUrl: data.imageUrl || 'ssd-cadets-march.jpg',
       is_published: data.is_published !== undefined ? !!data.is_published : true,
       updated_at: new Date().toISOString(),
       updated_by: req.user.id

@@ -208,6 +208,54 @@ router.post('/clear-demo-data', authenticate, requireRole('super_admin'), async 
     embeddedStore.audit_logs.clear();
     embeddedStore.contact_messages.clear();
     embeddedStore.event_registrations.clear();
+    if (embeddedStore.batch_history) embeddedStore.batch_history.clear();
+    if (embeddedStore.content_audit_logs) embeddedStore.content_audit_logs.clear();
+    if (embeddedStore.enlistment_questionnaires) embeddedStore.enlistment_questionnaires.clear();
+    if (embeddedStore.applicant_organizations) embeddedStore.applicant_organizations.clear();
+    if (embeddedStore.user_terms_acceptances) embeddedStore.user_terms_acceptances.clear();
+
+    // Reset Gallery to authentic historical records only (zero Unsplash stock photos)
+    embeddedStore.gallery.clear();
+    embeddedStore.gallery.set('gal_1', {
+      id: 'gal_1',
+      imageUrl: 'dr-ambedkar-with-ssd-cadets.jpg',
+      caption: 'Historic Archival Record: Dr. Babasaheb Ambedkar with Uniformed Samata Sainik Dal Cadets',
+      category: 'Historical',
+      approvalStatus: 'approved',
+      updatedAt: Date.now()
+    });
+    embeddedStore.gallery.set('gal_2', {
+      id: 'gal_2',
+      imageUrl: 'ssd-cadets-march.jpg',
+      caption: 'Samata Sainik Dal Uniform Cadet Corps Ceremonial March Past - Deekshabhoomi',
+      category: 'Cadet Drills',
+      approvalStatus: 'approved',
+      updatedAt: Date.now()
+    });
+    embeddedStore.gallery.set('gal_3', {
+      id: 'gal_3',
+      imageUrl: 'dr-ambedkar-founder.jpg',
+      caption: 'Bodhisattva Dr. B.R. Ambedkar - Founder, Samata Sainik Dal (Est. 24 September 1927)',
+      category: 'Historical',
+      approvalStatus: 'approved',
+      updatedAt: Date.now()
+    });
+
+    // Strip any Unsplash stock photos from leadership & testimonials
+    if (embeddedStore.leadership) {
+      for (const [id, l] of embeddedStore.leadership.entries()) {
+        if (l.photoUrl && l.photoUrl.includes('unsplash.com')) {
+          l.photoUrl = 'logo.png';
+        }
+      }
+    }
+    if (embeddedStore.testimonials) {
+      for (const [id, t] of embeddedStore.testimonials.entries()) {
+        if (t.photoUrl && t.photoUrl.includes('unsplash.com')) {
+          t.photoUrl = 'logo.png';
+        }
+      }
+    }
 
     const officialEmails = new Set([
       'admin@ssd.org',
@@ -242,7 +290,7 @@ router.post('/clear-demo-data', authenticate, requireRole('super_admin'), async 
 
     return res.json({
       success: true,
-      message: 'All demo applications, members, donations, receipts, and audit logs cleared successfully.'
+      message: 'All demo applications, members, donations, receipts, and demo photos cleared successfully. Authentic archives preserved.'
     });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });

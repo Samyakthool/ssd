@@ -61,7 +61,7 @@ router.post('/', optionalAuth, async (req, res) => {
       excerpt: excerpt || '',
       content: content || excerpt || '',
       category: category.trim(),
-      imageUrl: imageUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80',
+      imageUrl: imageUrl || 'ssd-cadets-march.jpg',
       pdfUrl: pdfUrl || '',
       date: date || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
       is_published: isPublished ?? true,

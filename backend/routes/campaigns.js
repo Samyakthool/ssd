@@ -49,7 +49,7 @@ router.post('/', (req, res) => {
       id: id,
       title: data.title.trim(),
       category: data.category || 'General Advocacy',
-      imageUrl: data.imageUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
+      imageUrl: data.imageUrl || 'ssd-cadets-march.jpg',
       description: data.description || '',
       targetAmount: Number(data.targetAmount) || 1000000,
       raisedAmount: Number(data.raisedAmount) || 0,

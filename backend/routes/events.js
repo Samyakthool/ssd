@@ -70,7 +70,7 @@ router.post('/', optionalAuth, async (req, res) => {
       state_name: stateName || 'National',
       district_name: districtName || 'Central HQ',
       wing_name: wingName || 'Central Cadet Corps (Sainik Wing)',
-      banner_url: bannerUrl || 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1200&q=80',
+      banner_url: bannerUrl || 'ssd-cadets-march.jpg',
       pdfUrl: pdfUrl || '',
       status: (status || 'upcoming').toLowerCase(),
       approvalStatus: approvalStatus || 'approved',

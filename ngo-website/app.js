@@ -234,35 +234,35 @@ const ssdSampleData = {
       excerpt: "Intensive residential camp at Deekshabhoomi ground concludes with ceremonial salute, flag drill, and constitutional law seminars.",
       date: "October 08, 2026",
       category: "Cadet Training",
-      imageUrl: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=600&q=80"
+      imageUrl: "ssd-cadets-march.jpg"
     },
     "news_3": {
       title: "Annual Mahad Satyagraha & Water Rights Memorial March Announced",
       excerpt: "Sainiks from 20 states to assemble at Chavdar Tale on 25 December to commemorate the historic 1927 struggle for human dignity.",
       date: "September 29, 2026",
       category: "History & Memorial",
-      imageUrl: "https://images.unsplash.com/photo-1532375810709-75b1da00537c?auto=format&fit=crop&w=600&q=80"
+      imageUrl: "ssd-cadets-march.jpg"
     },
     "news_4": {
       title: "Mahila Samata Sainik Dal National Convention Demands Strict Action on Atrocities",
       excerpt: "Over 3,000 women commanders and delegates pass unanimous resolutions on women's safety, legal defense cells, and educational scholarships.",
       date: "September 20, 2026",
       category: "Mahila Dal",
-      imageUrl: "https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=600&q=80"
+      imageUrl: "logo.png"
     },
     "news_5": {
       title: "SSD Legal Advisory Cell Files High Court Petitions for Rural Land Rights",
       excerpt: "Dedicated panel of advocate sainiks secures legal relief for 120 landless families under constitutional protections.",
       date: "September 12, 2026",
       category: "Legal Cell",
-      imageUrl: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80"
+      imageUrl: "logo.png"
     },
     "news_6": {
       title: "Constitution Day (26 Nov) Mass Preamble Reading Across 500 Districts",
       excerpt: "All state units instructed to organize village-level public assemblies for collective reading of the Preamble of the Constitution of India.",
       date: "September 05, 2026",
       category: "Constitution",
-      imageUrl: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=600&q=80"
+      imageUrl: "logo.png"
     }
   },
   events: {
@@ -303,38 +303,13 @@ const ssdSampleData = {
     },
     "gal_2": {
       imageUrl: "ssd-cadets-march.jpg",
-      caption: "Mahila Samata Sainik Dal Volunteers at National Equality Rally",
-      category: "Mahila Dal"
+      caption: "Samata Sainik Dal Uniform Cadet Corps Ceremonial March Past - Deekshabhoomi",
+      category: "Cadet Drills"
     },
     "gal_3": {
-      imageUrl: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80",
-      caption: "Constitution Day Mass Preamble Reading Assembly",
-      category: "Constitution"
-    },
-    "gal_4": {
-      imageUrl: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80",
-      caption: "Youth Cadet Physical Training & Non-Violent Defense Drill",
-      category: "Youth Front"
-    },
-    "gal_5": {
-      imageUrl: "https://images.unsplash.com/photo-1532375810709-75b1da00537c?auto=format&fit=crop&w=800&q=80",
-      caption: "Chavdar Tale Mahad Satyagraha Memorial Gathering",
+      imageUrl: "dr-ambedkar-founder.jpg",
+      caption: "Bodhisattva Dr. B.R. Ambedkar - Founder, Samata Sainik Dal (Est. 24 September 1927)",
       category: "Historical"
-    },
-    "gal_6": {
-      imageUrl: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80",
-      caption: "SSD Medical & Disaster Relief Task Force Health Camp",
-      category: "Community Sewa"
-    },
-    "gal_7": {
-      imageUrl: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80",
-      caption: "Dr. Ambedkar Study Library & Free Educational Tutoring Center",
-      category: "Education"
-    },
-    "gal_8": {
-      imageUrl: "https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=800&q=80",
-      caption: "State Command Conference & Centenary Roadmap Meeting",
-      category: "Leadership"
     }
   },
   testimonials: {
@@ -350,7 +325,7 @@ const ssdSampleData = {
       tenure: "35 Years Active Service",
       highlight: "Discipline in khaki is not militarism; it is moral readiness to protect the constitutional dignity of our people.",
       quote: "Serving in Samata Sainik Dal for 35 years has taught me the true meaning of Babasaheb's mission. When we put on the uniform and march in unison, caste barriers dissolve. Whether conducting flood rescues in Kolhapur or guarding peaceful assembly at Chaityabhoomi, our cadres stand fearless in defense of constitutional brotherhood.",
-      photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=240&q=80"
+      photoUrl: "logo.png"
     },
     "test_2": {
       id: "test_2",
@@ -364,7 +339,7 @@ const ssdSampleData = {
       tenure: "20 Years Active Service",
       highlight: "Babasaheb envisioned women leading the vanguard of social democracy, not standing behind.",
       quote: "Through Mahila Samata Sainik Dal, we have trained more than 8,500 young women across rural Vidarbha in lathi drill, self-defense, and legal literacy. When rural women know their constitutional rights and have the courage to walk with head held high, entire communities transform.",
-      photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=240&q=80"
+      photoUrl: "logo.png"
     },
     "test_3": {
       id: "test_3",
@@ -378,7 +353,7 @@ const ssdSampleData = {
       tenure: "13 Years Pro-Bono Counsel",
       highlight: "We transform constitutional guarantees from ink on parchment into an impenetrable shield in courtrooms.",
       quote: "Our pro-bono legal wing intervenes across district courts and high courts whenever marginalized citizens face institutional apathy or atrocities. We fight without charging a single rupee because Babasaheb gave us the Constitution as our supreme weapon. SSD ensures no citizen is left defenseless.",
-      photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80"
+      photoUrl: "logo.png"
     },
     "test_4": {
       id: "test_4",
@@ -392,7 +367,7 @@ const ssdSampleData = {
       tenure: "9 Years Disaster Relief",
       highlight: "In disaster zones and medical crises, an SSD volunteer arrives first and leaves last.",
       quote: "During regional floods and epidemics, our volunteer doctors and trained youth cadets establish emergency medical outposts within hours. We run a 24/7 volunteer blood donor brigade that has answered over 12,000 emergency requests. For us, humanitarian relief is pure constitutional brotherhood in action.",
-      photoUrl: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=240&q=80"
+      photoUrl: "logo.png"
     },
     "test_5": {
       id: "test_5",
@@ -406,7 +381,7 @@ const ssdSampleData = {
       tenure: "26 Years Active Service",
       highlight: "The uniform gives our youth pride, discipline, and a collective purpose beyond caste divisions.",
       quote: "Across Uttar Pradesh and North India, rural youth often lack positive mentorship. When they attend our drill parades, study Dr. Ambedkar's writings, and march in centenary rallies, their entire perspective transforms. They become vigilant protectors of peace, democracy, and community harmony.",
-      photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=240&q=80"
+      photoUrl: "logo.png"
     },
     "test_6": {
       id: "test_6",
@@ -420,7 +395,7 @@ const ssdSampleData = {
       tenure: "6 Years Youth Leadership",
       highlight: "Teaching children the Preamble before dogma is how we build a casteless, democratic India.",
       quote: "I enlisted as a Bal Sainik at age ten. Today, I train collegiate youth to lead weekly Constitution reading circles in schools, slums, and rural bastis. Watching a 12-year-old recite the Preamble with glowing pride and saluting the national flag gives me absolute conviction in our movement's future.",
-      photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80"
+      photoUrl: "logo.png"
     },
     "test_7": {
       id: "test_7",
@@ -434,7 +409,7 @@ const ssdSampleData = {
       tenure: "43 Years Lifelong Service",
       highlight: "For over four decades, our khaki uniform has stood as a guardian of Dr. Ambedkar's vision.",
       quote: "I took my first pledge in 1981 under veteran leaders who stood side-by-side with Babasaheb. As we approach the historic Centenary of Samata Sainik Dal (1927–2027), seeing modern youth, software engineers, and scholars enlist with equal fervor proves that our movement is timeless and unbreakable.",
-      photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=240&q=80"
+      photoUrl: "logo.png"
     }
   },
   campaigns: {
@@ -454,7 +429,7 @@ const ssdSampleData = {
       id: "constitution",
       title: "National Constitutional Literacy & Preamble Yatra",
       category: "Legal & Rights",
-      imageUrl: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80",
+      imageUrl: "logo.png",
       description: "Distributing pocket Constitutions in rural villages, mass Preamble recitation camps, and training grassroots advocates to resist caste atrocities legally.",
       targetAmount: 2500000,
       raisedAmount: 1720000,
@@ -466,7 +441,7 @@ const ssdSampleData = {
       id: "mahila_defense",
       title: "Mahila Self-Defense & Savitribai Phule Academy",
       category: "Women Wing",
-      imageUrl: "https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=600&q=80",
+      imageUrl: "logo.png",
       description: "Physical stick drill, martial self-defense training, anti-harassment rapid action units, and educational scholarships for Bahujan female students.",
       targetAmount: 3000000,
       raisedAmount: 1950000,
@@ -478,7 +453,7 @@ const ssdSampleData = {
       id: "blood_relief",
       title: "Samata 24/7 Voluntary Blood Donor & Disaster Force",
       category: "Community Sewa",
-      imageUrl: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=600&q=80",
+      imageUrl: "logo.png",
       description: "Nationwide emergency voluntary blood donor registry, flood rescue battalions, free medical diagnosis, and community health camps in underprivileged bastis.",
       targetAmount: 2000000,
       raisedAmount: 1580000,
@@ -494,7 +469,7 @@ const ssdSampleData = {
       level: "national",
       state: "National HQ",
       rankBadge: "National Command",
-      photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "Eminent Constitutional scholar and veteran Ambedkarite leader with 40+ years in social transformation; overseeing national policy and the Centenary 2027 vision.",
       credentials: "Ph.D. Constitutional Law | Nagpur HQ",
       order: 1
@@ -505,7 +480,7 @@ const ssdSampleData = {
       level: "national",
       state: "National HQ",
       rankBadge: "Executive Council",
-      photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "Former NCC Gold Medalist and grassroots organizer; coordinates operations across 28 State Chapters and directs the national cadet syllabus.",
       credentials: "M.A. Public Admin | New Delhi Secretariat",
       order: 2
@@ -516,7 +491,7 @@ const ssdSampleData = {
       level: "national",
       state: "National HQ",
       rankBadge: "Drill & Defense",
-      photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "Indian Armed Forces Veteran; leads cadet drill curriculum, ceremonial parade standards, emergency disaster rescue wings, and physical fitness camps.",
       credentials: "Ex-Indian Army | Central Cadet Directorate",
       order: 3
@@ -527,7 +502,7 @@ const ssdSampleData = {
       level: "national",
       state: "National HQ",
       rankBadge: "Mahila Front",
-      photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "Social activist and educator; leading women's frontline self-defense wings, legal crisis support networks, and Savitribai Phule girls' educational scholarships.",
       credentials: "M.S.W., LL.B. | Mumbai State HQ",
       order: 4
@@ -538,7 +513,7 @@ const ssdSampleData = {
       level: "national",
       state: "National HQ",
       rankBadge: "Supreme Court Panel",
-      photoUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "Senior Advocate with extensive experience in the Supreme Court of India; spearheading pro-bono defense, SC/ST Act enforcement, and constitutional litigation.",
       credentials: "LL.M. Constitutional Law | Supreme Court of India",
       order: 5
@@ -550,7 +525,7 @@ const ssdSampleData = {
       category: "Finance & Audit",
       state: "National HQ",
       rankBadge: "Finance & Audit",
-      photoUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "Chartered Accountant and academician; ensures 100% organizational transparency, public audit compliance, 80G tax exemptions, and Centenary 2027 trust governance.",
       credentials: "FCA, M.Com | Central Audit Bureau",
       order: 6
@@ -562,7 +537,7 @@ const ssdSampleData = {
       category: "IT & Digital Media Cell",
       state: "National HQ",
       rankBadge: "IT & Cyber Directorate",
-      photoUrl: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "Cloud & Cyber Systems Architect; oversees centralized portal databases, digital member IDs, automated enrollment systems, and nationwide digital infrastructure.",
       credentials: "B.Tech Computer Science | Nagpur Central IT Cell",
       order: 7
@@ -574,7 +549,7 @@ const ssdSampleData = {
       category: "IT & Digital Media Cell",
       state: "National HQ",
       rankBadge: "Digital Media Wing",
-      photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "Digital communications specialist leading social broadcast networks, multimedia archives, digital gazette publications, and centenary cyber outreach.",
       credentials: "M.A. Mass Communication | Mumbai Directorate",
       order: 8
@@ -586,7 +561,7 @@ const ssdSampleData = {
       state: "Maharashtra",
       district: "Nagpur & Mumbai State Directorate",
       rankBadge: "Maharashtra State Command",
-      photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "Spearheads statewide cadre building across 36 districts of Maharashtra; organizes annual Deekshabhoomi rally defense drills, cadre discipline, and Dr. Ambedkar youth training camps.",
       credentials: "M.A. Social Work | Mumbai & Nagpur State HQ",
       order: 10
@@ -598,7 +573,7 @@ const ssdSampleData = {
       state: "Maharashtra",
       district: "Pune & Western Maharashtra",
       rankBadge: "State Executive",
-      photoUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "Coordinates district dalpatis and administers constitutional awareness camps across Vidarbha, Marathwada, and Western Maharashtra.",
       credentials: "B.A., LL.B. | Pune State Secretariat",
       order: 11
@@ -610,7 +585,7 @@ const ssdSampleData = {
       state: "Maharashtra",
       district: "Amravati & Vidarbha Division",
       rankBadge: "Maharashtra Cadet Directorate",
-      photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "Directs statewide cadet physical drills, ceremonial guard of honour, and emergency disaster rescue corps across all Maharashtra districts.",
       credentials: "Cadet Training Instructor | Nagpur HQ",
       order: 12
@@ -622,7 +597,7 @@ const ssdSampleData = {
       state: "Maharashtra",
       district: "Chhatrapati Sambhaji Nagar & Marathwada",
       rankBadge: "State Mahila Wing",
-      photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "Leads women's self-defense squads, Savitribai Phule girls' education cells, and district legal support desks across Maharashtra.",
       credentials: "M.S.W. | Aurangabad / Chh. Sambhaji Nagar",
       order: 13
@@ -634,7 +609,7 @@ const ssdSampleData = {
       state: "Maharashtra",
       district: "Mumbai High Court Bench",
       rankBadge: "High Court Panel",
-      photoUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "High Court Advocate leading pro-bono defense, SC/ST Act implementation monitoring, and legal assistance for grassroots volunteers across Maharashtra.",
       credentials: "LL.M. | Bombay High Court",
       order: 14
@@ -646,7 +621,7 @@ const ssdSampleData = {
       state: "Maharashtra",
       district: "Nagpur",
       rankBadge: "Nagpur District Command",
-      photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "Leads field cadet battalions and Deekshabhoomi rally security cordons across Nagpur district urban and rural divisions.",
       credentials: "Ex-Cadet Instructor | Nagpur Urban & Rural HQ",
       order: 20
@@ -658,7 +633,7 @@ const ssdSampleData = {
       state: "Maharashtra",
       district: "Mumbai City",
       rankBadge: "Mumbai City Command",
-      photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "Coordinates Chaityabhoomi VIP volunteer protocols, legal assistance clinics, and harbor-line youth cadet units across Mumbai City.",
       credentials: "LL.B. High Court Advocate | Mumbai City District HQ",
       order: 21
@@ -670,7 +645,7 @@ const ssdSampleData = {
       state: "Maharashtra",
       district: "Pune",
       rankBadge: "Pune District Command",
-      photoUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "Oversees student study circles, Koregaon Bhima peace volunteer platoons, and youth physical training camps across Pune district.",
       credentials: "M.Sc., B.Ed. | Pune District Directorate",
       order: 22
@@ -682,7 +657,7 @@ const ssdSampleData = {
       state: "Maharashtra",
       district: "Amravati",
       rankBadge: "Amravati District Wing",
-      photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "Directs women's rights awareness wings, self-defense workshops, and Savitribai Phule girls' education cells in Amravati district.",
       credentials: "M.S.W. | Amravati District Council",
       order: 23
@@ -694,7 +669,7 @@ const ssdSampleData = {
       state: "Maharashtra",
       district: "Thane",
       rankBadge: "Thane District Command",
-      photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "Spearheads industrial belt worker rights defense, civic disaster assistance squads, and cadet induction in Thane & Navi Mumbai.",
       credentials: "Dip. Mech. Engg. | Thane District HQ",
       order: 24
@@ -706,7 +681,7 @@ const ssdSampleData = {
       state: "Maharashtra",
       district: "Nashik",
       rankBadge: "Nashik District Command",
-      photoUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80",
+      photoUrl: "logo.png",
       bio: "Oversees Kalaram Temple memorial heritage security, youth blood donation networks, and cadet parades throughout Nashik district.",
       credentials: "B.A. Public Admin | Nashik District Unit",
       order: 25
@@ -774,7 +749,7 @@ const ssdSampleData = {
       rankBadge: "Senior Ideologue & Historian",
       credentials: "Ph.D. History, Author & Senior Historian | Pune HQ",
       bio: "Prof. Yashwantrao More is a veteran Ambedkarite scholar with over 45 years dedicated to social movement historiography. Author of 12+ authoritative treatises on Babasaheb Ambedkar's Satyagrahas and the founding of Samata Sainik Dal, he guides the Central Command on ideological preservation and youth cadet curriculum.",
-      photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80"
+      photoUrl: "logo.png"
     },
     {
       id: "adv_2",
@@ -786,7 +761,7 @@ const ssdSampleData = {
       rankBadge: "Constitutional & Human Rights Jurist",
       credentials: "Senior Human Rights Defender, High Court Advocate | Mumbai Central HQ",
       bio: "Adv. Rekha Gaikwad is an eminent constitutional lawyer and social activist with four decades of frontline advocacy in western India. She mentors SSD's National Legal Cell on high-impact public interest litigations, atrocities defense tribunals, and grassroots women self-defense workshops.",
-      photoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80"
+      photoUrl: "logo.png"
     },
     {
       id: "adv_3",
@@ -798,7 +773,7 @@ const ssdSampleData = {
       rankBadge: "1956 Deekshabhoomi Parade Organizer",
       credentials: "Veteran Guard of Honor Dalpati | Nagpur HQ",
       bio: "Commander Suresh Jadhav stands as a living legend of the movement, having personally marshaled the volunteer cadet platoons during the historic 14 October 1956 Deekshabhoomi Dhamma Deeksha in Nagpur under Dr. Babasaheb Ambedkar. He continues to instruct Dalpatis in parade discipline and ceremonial honor drills.",
-      photoUrl: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=400&q=80"
+      photoUrl: "logo.png"
     }
   ]
 };
@@ -1141,7 +1116,7 @@ function renderNews(newsArray) {
   container.innerHTML = newsArray.map((item, idx) => `
     <div class="news-card">
       <div class="news-image-wrapper">
-        <img src="${item.imageUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'}" alt="${escapeHtml(item.title)}" class="news-img" onerror="this.onerror=null; this.src='logo.png';">
+        <img src="${item.imageUrl || 'ssd-cadets-march.jpg'}" alt="${escapeHtml(item.title)}" class="news-img" onerror="this.onerror=null; this.src='logo.png';">
         <span class="news-category-badge">${escapeHtml(item.category || 'Gazette')}</span>
       </div>
       <div class="news-body">
@@ -1238,7 +1213,7 @@ function loadGallery() {
   fetch('/api/gallery')
     .then(r => r.json())
     .then(data => {
-      if (data && data.success && Array.isArray(data.gallery) && data.gallery.length > 0) {
+      if (data && data.success && Array.isArray(data.gallery)) {
         renderCurrent(data.gallery);
       }
     })
@@ -1423,7 +1398,7 @@ function renderTestimonialCards() {
     const state = item.state || 'India';
     const tenure = item.tenure || 'Active Cadre';
     const highlight = item.highlight ? `<div class="testimonial-highlight">${item.highlight}</div>` : '';
-    const photo = item.photoUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=240&q=80';
+    const photo = item.photoUrl || 'logo.png';
 
     return `
       <article class="testimonial-card" id="testCard_${idx}" data-index="${idx}">
@@ -1912,7 +1887,7 @@ function openNewsModal(index) {
   const modal = document.getElementById("newsModal");
 
   if (modalTitle) modalTitle.textContent = item.title;
-  if (modalImg) modalImg.src = item.imageUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80';
+  if (modalImg) modalImg.src = item.imageUrl || 'ssd-cadets-march.jpg';
   if (modalDate) modalDate.innerHTML = `<i class="fa-solid fa-calendar"></i> ${item.date || 'Recent'}`;
   if (modalCat) modalCat.innerHTML = `<i class="fa-solid fa-tag"></i> ${item.category || 'SSD Gazette'}`;
   if (modalText) {
@@ -4248,7 +4223,7 @@ function openOfficerPortfolioModal(leaderOrId, isAdvisory = false) {
   const stateName = leader.state || (isDistrict || isState ? 'Maharashtra' : 'National HQ');
 
   if (photoEl) {
-    photoEl.src = leader.photoUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80";
+    photoEl.src = leader.photoUrl || "logo.png";
     photoEl.alt = leader.name || "Officer Portfolio";
   }
   if (nameEl) nameEl.textContent = leader.name || "Command Leader";
