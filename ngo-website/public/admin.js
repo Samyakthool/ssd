@@ -3108,6 +3108,15 @@ function repairAndSanitizeAdminData() {
     });
   }
 
+  if (adminData.gallery && typeof adminData.gallery === 'object') {
+    Object.entries(adminData.gallery).forEach(([k, item]) => {
+      if (isDisallowedGalleryPhoto(item)) {
+        delete adminData.gallery[k];
+        modified = true;
+      }
+    });
+  }
+
   if (modified) {
     saveLocalStore();
   }
@@ -7137,18 +7146,29 @@ function deleteCampaign(id) {
 // ==========================================================================
 // RENDERERS: GALLERY (/gallery)
 // ==========================================================================
-function isBlackAndWhiteArchivePhoto(item) {
-  if (!item) return false;
+function isDisallowedGalleryPhoto(item) {
+  if (!item) return true;
   const url = (item.imageUrl || item.image_url || '').toLowerCase();
   const cap = (item.caption || '').toLowerCase();
-  return url.includes('dr-ambedkar-with-ssd-cadets') ||
-         url.includes('dr-ambedkar-founder') ||
-         url.includes('yeola') ||
-         url.includes('renouncing_hinduism') ||
-         url.includes('ambedkar_delivering_speech') ||
-         cap.includes('renouncing hinduism') ||
-         cap.includes('address at yeola');
+
+  // 1. Strict ban on all Unsplash stock/demo images
+  if (url.includes('unsplash.com')) return true;
+
+  // 2. Strict ban on all black and white historical stock photos
+  if (url.includes('dr-ambedkar-with-ssd-cadets') ||
+      url.includes('dr-ambedkar-founder') ||
+      url.includes('yeola') ||
+      url.includes('renouncing_hinduism') ||
+      url.includes('ambedkar_delivering_speech') ||
+      cap.includes('renouncing hinduism') ||
+      cap.includes('address at yeola') ||
+      cap.includes('historic archival record')) {
+    return true;
+  }
+
+  return false;
 }
+const isBlackAndWhiteArchivePhoto = isDisallowedGalleryPhoto;
 
 function renderGalleryGrid() {
   const container = document.getElementById("galleryAdminGrid");
@@ -7157,7 +7177,7 @@ function renderGalleryGrid() {
   const galObj = adminData.gallery || {};
   const list = Object.entries(galObj)
     .map(([key, val]) => ({ id: key, ...val }))
-    .filter(item => !isBlackAndWhiteArchivePhoto(item));
+    .filter(item => !isDisallowedGalleryPhoto(item));
 
   if (list.length === 0) {
     container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px;">No archive photos added yet.</div>';

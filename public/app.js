@@ -1056,8 +1056,32 @@ function animateStatsCounters() {
   });
 }
 
+function isDisallowedGalleryPhoto(item) {
+  if (!item) return true;
+  const url = (item.imageUrl || item.image_url || '').toLowerCase();
+  const cap = (item.caption || '').toLowerCase();
+
+  // 1. Strict ban on all Unsplash stock/demo images
+  if (url.includes('unsplash.com')) return true;
+
+  // 2. Strict ban on all black and white historical stock photos
+  if (url.includes('dr-ambedkar-with-ssd-cadets') ||
+      url.includes('dr-ambedkar-founder') ||
+      url.includes('yeola') ||
+      url.includes('renouncing_hinduism') ||
+      url.includes('ambedkar_delivering_speech') ||
+      cap.includes('renouncing hinduism') ||
+      cap.includes('address at yeola') ||
+      cap.includes('historic archival record')) {
+    return true;
+  }
+
+  return false;
+}
+
 function isContentApproved(item) {
   if (!item) return false;
+  if (isDisallowedGalleryPhoto(item)) return false;
   const s = item.approvalStatus ? String(item.approvalStatus).toLowerCase() : 'approved';
   return s === 'approved';
 }
@@ -1189,21 +1213,8 @@ function renderEvents(eventsArray) {
 // ==========================================================================
 // OFFICIAL PHOTO ARCHIVES ENGINE (gallery.html)
 // ==========================================================================
-function isBlackAndWhiteArchivePhoto(item) {
-  if (!item) return false;
-  const url = (item.imageUrl || item.image_url || '').toLowerCase();
-  const cap = (item.caption || '').toLowerCase();
-  return url.includes('dr-ambedkar-with-ssd-cadets') ||
-         url.includes('dr-ambedkar-founder') ||
-         url.includes('yeola') ||
-         url.includes('renouncing_hinduism') ||
-         url.includes('ambedkar_delivering_speech') ||
-         cap.includes('renouncing hinduism') ||
-         cap.includes('address at yeola');
-}
-
-// Auto-purge any stale black and white photos from browser localStorage
-(function purgeBlackAndWhitePhotosFromLocalStorage() {
+// Auto-purge any stale demo or black & white photos from browser localStorage
+(function purgeDisallowedPhotosFromLocalStorage() {
   try {
     const raw = localStorage.getItem("ssd_admin_local_data");
     if (!raw) return;
@@ -1212,9 +1223,9 @@ function isBlackAndWhiteArchivePhoto(item) {
 
     let modified = false;
     if (Array.isArray(parsed.gallery)) {
-      const filtered = parsed.gallery.filter(item => {
-        const target = item[1] || item;
-        return !isBlackAndWhiteArchivePhoto(target);
+      const filtered = parsed.gallery.filter(entry => {
+        const item = entry[1] || entry;
+        return !isDisallowedGalleryPhoto(item);
       });
       if (filtered.length !== parsed.gallery.length) {
         parsed.gallery = filtered;
@@ -1222,7 +1233,7 @@ function isBlackAndWhiteArchivePhoto(item) {
       }
     } else if (typeof parsed.gallery === 'object') {
       for (const [k, v] of Object.entries(parsed.gallery)) {
-        if (isBlackAndWhiteArchivePhoto(v)) {
+        if (isDisallowedGalleryPhoto(v)) {
           delete parsed.gallery[k];
           modified = true;
         }
@@ -1244,19 +1255,39 @@ function loadGallery() {
   const container = document.getElementById("galleryContainer");
   if (!container) return;
 
-  const updateFromRaw = (galleryList) => {
-    const rawList = galleryList || getLiveDataset("gallery", ssdSampleData.gallery);
-    const listArray = Array.isArray(rawList) ? rawList : Object.values(rawList);
-    allMasterGalleryItems = listArray
-      .filter(isContentApproved)
-      .filter(item => !isBlackAndWhiteArchivePhoto(item));
+  const galleryMap = new Map();
+
+  const mergeAndRender = (newItems) => {
+    if (Array.isArray(newItems)) {
+      newItems.forEach(item => {
+        if (item && !isDisallowedGalleryPhoto(item) && isContentApproved(item)) {
+          const key = item.id || item.imageUrl || (item.caption ? item.caption.slice(0, 30) : JSON.stringify(item));
+          galleryMap.set(key, item);
+        }
+      });
+    }
+
+    allMasterGalleryItems = Array.from(galleryMap.values());
     updateGalleryPillCounts();
     applyGalleryFilters();
   };
 
-  updateFromRaw();
+  // 1. Load locally uploaded photos from localStorage
+  const localList = getLiveDataset("gallery", ssdSampleData.gallery);
+  const localArr = Array.isArray(localList) ? localList : Object.values(localList || {});
+  mergeAndRender(localArr);
 
-  // Listen to Firebase Realtime Database
+  // 2. Fetch /api/gallery from server
+  fetch('/api/gallery')
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.success && Array.isArray(data.gallery) && data.gallery.length > 0) {
+        mergeAndRender(data.gallery);
+      }
+    })
+    .catch(() => {});
+
+  // 3. Listen to Firebase Realtime Database
   if (typeof db !== 'undefined' && db) {
     try {
       db.ref('gallery').on('value', (snap) => {
@@ -1264,22 +1295,12 @@ function loadGallery() {
         if (val) {
           const items = Object.entries(val).map(([k, v]) => ({ id: k, ...v }));
           if (items.length > 0) {
-            updateFromRaw(items);
+            mergeAndRender(items);
           }
         }
       });
     } catch (e) {}
   }
-
-  // Fetch /api/gallery
-  fetch('/api/gallery')
-    .then(r => r.json())
-    .then(data => {
-      if (data && data.success && Array.isArray(data.gallery) && data.gallery.length > 0) {
-        updateFromRaw(data.gallery);
-      }
-    })
-    .catch(() => {});
 }
 
 function updateGalleryPillCounts() {
@@ -3868,14 +3889,14 @@ function loadHomeGallery() {
     db.ref('gallery').on('value', (snapshot) => {
       const data = snapshot.val();
       const rawList = data ? Object.values(data) : Object.values(ssdSampleData.gallery);
-      allHomeGalleryItems = rawList.filter(isContentApproved).filter(item => !isBlackAndWhiteArchivePhoto(item));
+      allHomeGalleryItems = rawList.filter(isContentApproved).filter(item => !isDisallowedGalleryPhoto(item));
       renderHomeGallery();
     }, (err) => {
-      allHomeGalleryItems = Object.values(ssdSampleData.gallery).filter(isContentApproved).filter(item => !isBlackAndWhiteArchivePhoto(item));
+      allHomeGalleryItems = Object.values(ssdSampleData.gallery).filter(isContentApproved).filter(item => !isDisallowedGalleryPhoto(item));
       renderHomeGallery();
     });
   } else {
-    allHomeGalleryItems = Object.values(ssdSampleData.gallery).filter(isContentApproved).filter(item => !isBlackAndWhiteArchivePhoto(item));
+    allHomeGalleryItems = Object.values(ssdSampleData.gallery).filter(isContentApproved).filter(item => !isDisallowedGalleryPhoto(item));
     renderHomeGallery();
   }
 }

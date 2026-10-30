@@ -14,7 +14,8 @@ router.get('/', (req, res) => {
     const list = Array.from(embeddedStore.gallery.values()).filter(item => {
       const url = (item.imageUrl || '').toLowerCase();
       const cap = (item.caption || '').toLowerCase();
-      return !url.includes('dr-ambedkar-with-ssd-cadets') &&
+      return !url.includes('unsplash.com') &&
+             !url.includes('dr-ambedkar-with-ssd-cadets') &&
              !url.includes('dr-ambedkar-founder') &&
              !url.includes('yeola') &&
              !url.includes('renouncing_hinduism') &&

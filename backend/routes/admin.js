@@ -214,29 +214,13 @@ router.post('/clear-demo-data', authenticate, requireRole('super_admin'), async 
     if (embeddedStore.applicant_organizations) embeddedStore.applicant_organizations.clear();
     if (embeddedStore.user_terms_acceptances) embeddedStore.user_terms_acceptances.clear();
 
-    // Reset Gallery to authentic historical records only (zero Unsplash stock photos)
+    // Reset Gallery to authentic active photos only (zero stock or black/white photos)
     embeddedStore.gallery.clear();
     embeddedStore.gallery.set('gal_1', {
       id: 'gal_1',
-      imageUrl: 'dr-ambedkar-with-ssd-cadets.jpg',
-      caption: 'Historic Archival Record: Dr. Babasaheb Ambedkar with Uniformed Samata Sainik Dal Cadets',
-      category: 'Historical',
-      approvalStatus: 'approved',
-      updatedAt: Date.now()
-    });
-    embeddedStore.gallery.set('gal_2', {
-      id: 'gal_2',
       imageUrl: 'ssd-cadets-march.jpg',
       caption: 'Samata Sainik Dal Uniform Cadet Corps Ceremonial March Past - Deekshabhoomi',
       category: 'Cadet Drills',
-      approvalStatus: 'approved',
-      updatedAt: Date.now()
-    });
-    embeddedStore.gallery.set('gal_3', {
-      id: 'gal_3',
-      imageUrl: 'dr-ambedkar-founder.jpg',
-      caption: 'Bodhisattva Dr. B.R. Ambedkar - Founder, Samata Sainik Dal (Est. 24 September 1927)',
-      category: 'Historical',
       approvalStatus: 'approved',
       updatedAt: Date.now()
     });

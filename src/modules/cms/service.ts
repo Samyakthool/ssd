@@ -69,17 +69,19 @@ export class CmsService {
       gallery = res.rows;
     }
 
-    // Filter out black and white photos
+    // Filter out disallowed demo and black & white stock photos
     gallery = gallery.filter((item: any) => {
       const url = (item.imageUrl || item.image_url || '').toLowerCase();
       const cap = (item.caption || '').toLowerCase();
-      return !url.includes('dr-ambedkar-with-ssd-cadets') &&
+      return !url.includes('unsplash.com') &&
+             !url.includes('dr-ambedkar-with-ssd-cadets') &&
              !url.includes('dr-ambedkar-founder') &&
              !url.includes('yeola') &&
              !url.includes('renouncing_hinduism') &&
              !url.includes('ambedkar_delivering_speech') &&
              !cap.includes('renouncing hinduism') &&
-             !cap.includes('address at yeola');
+             !cap.includes('address at yeola') &&
+             !cap.includes('historic archival record');
     });
 
     if (options.tag) {

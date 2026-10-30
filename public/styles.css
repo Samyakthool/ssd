@@ -7,6 +7,7 @@
   --primary-orange: #FF6B00;
   --primary-orange-hover: #E65C00;
   --dark-navy: #0A1F44;
+  --navy: #0A1F44;
   --medium-blue: #1A3A6B;
   --light-blue: #2E6DB4;
   --white: #FFFFFF;
@@ -2553,44 +2554,49 @@ textarea.form-control {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 8px 18px;
   border-radius: 30px;
   font-size: 13px;
   font-weight: 600;
-  background: var(--light-bg);
-  color: var(--text-dark);
-  border: 1px solid var(--border-color);
+  background: #F1F5F9;
+  color: #1E293B;
+  border: 1px solid #CBD5E1;
   cursor: pointer;
   transition: all 0.25s ease;
   user-select: none;
 }
 
 .gallery-pill:hover {
-  background: #EBF1F7;
-  border-color: #CBD5E1;
-  color: var(--navy);
+  background: #E2E8F0;
+  border-color: #94A3B8;
+  color: #0A1F44;
   transform: translateY(-1px);
 }
 
 .gallery-pill.active {
-  background: var(--navy);
-  color: var(--white);
-  border-color: var(--navy);
-  box-shadow: 0 4px 14px rgba(10, 31, 68, 0.22);
+  background: #0A1F44 !important;
+  color: #FFFFFF !important;
+  border-color: #0A1F44 !important;
+  box-shadow: 0 4px 14px rgba(10, 31, 68, 0.25) !important;
+}
+
+.gallery-pill.active i,
+.gallery-pill.active .pill-label {
+  color: #FFFFFF !important;
 }
 
 .gallery-pill .pill-count {
   font-size: 11px;
   font-weight: 700;
-  padding: 2px 7px;
+  padding: 2px 8px;
   border-radius: 12px;
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.1);
   color: inherit;
 }
 
 .gallery-pill.active .pill-count {
-  background: var(--primary-orange);
-  color: var(--white);
+  background: #FF6B00 !important;
+  color: #FFFFFF !important;
 }
 
 .gallery-search-row {

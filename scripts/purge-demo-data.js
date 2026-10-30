@@ -60,37 +60,15 @@ for (const filePath of dbFiles) {
   // 3. Filter jurisdictions
   ds.user_jurisdictions = ds.user_jurisdictions.filter(([id, j]) => preservedUserIds.has(j.user_id));
 
-  // 4. Authentic historical gallery (zero Unsplash stock photos)
+  // 4. Authentic historical gallery (zero Unsplash stock photos, zero B&W photos)
   ds.gallery = [
     [
       'gal_1',
       {
         id: 'gal_1',
-        imageUrl: 'dr-ambedkar-with-ssd-cadets.jpg',
-        caption: 'Historic Archival Record: Dr. Babasaheb Ambedkar with Uniformed Samata Sainik Dal Cadets',
-        category: 'Historical',
-        approvalStatus: 'approved',
-        updatedAt: Date.now()
-      }
-    ],
-    [
-      'gal_2',
-      {
-        id: 'gal_2',
         imageUrl: 'ssd-cadets-march.jpg',
         caption: 'Samata Sainik Dal Uniform Cadet Corps Ceremonial March Past - Deekshabhoomi',
         category: 'Cadet Drills',
-        approvalStatus: 'approved',
-        updatedAt: Date.now()
-      }
-    ],
-    [
-      'gal_3',
-      {
-        id: 'gal_3',
-        imageUrl: 'dr-ambedkar-founder.jpg',
-        caption: 'Bodhisattva Dr. B.R. Ambedkar - Founder, Samata Sainik Dal (Est. 24 September 1927)',
-        category: 'Historical',
         approvalStatus: 'approved',
         updatedAt: Date.now()
       }
