@@ -146,9 +146,50 @@
     <section class="gallery-section">
       <div class="container">
         <div class="section-header">
-          <span class="section-badge"><i class="fa-solid fa-camera-retro"></i> Dynamic Gallery</span>
-          <h2 class="section-title">March Past & Ground Action</h2>
-          <p class="section-subtitle">Click on any image to open the high-definition fullscreen Lightbox viewer.</p>
+          <span class="section-badge"><i class="fa-solid fa-camera-retro"></i> Official Visual Repository</span>
+          <h2 class="section-title">March Past, Historical Records & Ground Action</h2>
+          <p class="section-subtitle">Official photographic archives of Samata Sainik Dal from 1927 to present. Click any photograph to open the high-definition fullscreen archival viewer.</p>
+        </div>
+
+        <!-- Archival Provenance Callout -->
+        <div class="archival-notice-banner">
+          <div class="archival-notice-icon"><i class="fa-solid fa-landmark-dome"></i></div>
+          <div class="archival-notice-content">
+            <strong>Central Command Archival Repository (1927–2026)</strong>
+            <p>All photographs cataloged here represent verified historical records of the Samata Sainik Dal Central Command, Cadet Corps drills, and commemorative assemblies. Click any record to inspect in high-definition fullscreen viewer.</p>
+          </div>
+          <div class="archival-badge-pill">
+            <i class="fa-solid fa-shield-check"></i> Verified SSD Archives
+          </div>
+        </div>
+
+        <!-- Gallery Controls Toolbar -->
+        <div class="gallery-toolbar">
+          <div class="gallery-filter-pills" id="galleryFilterPills" role="tablist" aria-label="Archive Categories">
+            <button type="button" class="gallery-pill active" data-filter="all" onclick="filterGalleryByCategory('all')">
+              <i class="fa-solid fa-border-all"></i> All Archives <span class="pill-count" id="countAll">4</span>
+            </button>
+            <button type="button" class="gallery-pill" data-filter="historical" onclick="filterGalleryByCategory('historical')">
+              <i class="fa-solid fa-scroll"></i> Historical Records <span class="pill-count" id="countHistorical">3</span>
+            </button>
+            <button type="button" class="gallery-pill" data-filter="cadet" onclick="filterGalleryByCategory('cadet')">
+              <i class="fa-solid fa-person-military-pointing"></i> Cadet Drills & Parades <span class="pill-count" id="countCadet">1</span>
+            </button>
+            <button type="button" class="gallery-pill" data-filter="ambedkar" onclick="filterGalleryByCategory('ambedkar')">
+              <i class="fa-solid fa-feather-pointed"></i> Dr. B.R. Ambedkar <span class="pill-count" id="countAmbedkar">3</span>
+            </button>
+          </div>
+
+          <div class="gallery-search-row">
+            <div class="gallery-search-wrapper">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" id="gallerySearchInput" class="gallery-search-input" placeholder="Search archives by keyword, place, or era (e.g. Deekshabhoomi, Cadets, Yeola)..." oninput="handleGallerySearch(this.value)" autocomplete="off" aria-label="Search photo archives">
+              <button type="button" id="clearGallerySearchBtn" class="clear-search-btn" onclick="clearGallerySearch()" style="display: none;" aria-label="Clear search"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="gallery-counter-tag" id="galleryStatusCounter">
+              <i class="fa-solid fa-photo-film"></i> <span id="galleryCounterText">Showing 4 archival records</span>
+            </div>
+          </div>
         </div>
 
         <div class="gallery-grid" id="galleryContainer">
@@ -221,13 +262,21 @@
   </footer>
 
   <!-- LIGHTBOX MODAL -->
-  <div class="lightbox-modal" id="lightboxModal" onclick="closeLightboxOnBackdrop(event)">
+  <div class="lightbox-modal" id="lightboxModal" onclick="closeLightboxOnBackdrop(event)" role="dialog" aria-modal="true" aria-label="Archival Photo Viewer">
     <div class="lightbox-content-box">
-      <button type="button" class="lightbox-close-btn" onclick="closeLightbox()">&times;</button>
-      <img src="" alt="Expanded View" id="lightboxMainImg" class="lightbox-main-img">
-      <div id="lightboxCaption" class="lightbox-caption-text"></div>
-      <button type="button" class="lightbox-btn-prev" onclick="prevLightboxImage()"><i class="fa-solid fa-chevron-left"></i></button>
-      <button type="button" class="lightbox-btn-next" onclick="nextLightboxImage()"><i class="fa-solid fa-chevron-right"></i></button>
+      <div class="lightbox-top-bar">
+        <span class="lightbox-counter-badge" id="lightboxCounter">Archival Record 1 of 4</span>
+        <button type="button" class="lightbox-close-btn" onclick="closeLightbox()" aria-label="Close Lightbox">&times;</button>
+      </div>
+      <div class="lightbox-img-wrapper">
+        <img src="" alt="Expanded Archival Record" id="lightboxMainImg" class="lightbox-main-img">
+      </div>
+      <div class="lightbox-caption-box">
+        <div id="lightboxCaption" class="lightbox-caption-text"></div>
+        <div class="lightbox-meta-tag"><i class="fa-solid fa-shield-halved"></i> Samata Sainik Dal Central Command Official Archive</div>
+      </div>
+      <button type="button" class="lightbox-btn-prev" onclick="prevLightboxImage()" aria-label="Previous Record"><i class="fa-solid fa-chevron-left"></i></button>
+      <button type="button" class="lightbox-btn-next" onclick="nextLightboxImage()" aria-label="Next Record"><i class="fa-solid fa-chevron-right"></i></button>
     </div>
   </div>
 

@@ -310,6 +310,11 @@ const ssdSampleData = {
       imageUrl: "dr-ambedkar-founder.jpg",
       caption: "Bodhisattva Dr. B.R. Ambedkar - Founder, Samata Sainik Dal (Est. 24 September 1927)",
       category: "Historical"
+    },
+    "gal_4": {
+      imageUrl: "dr-ambedkar-yeola-1935.jpg",
+      caption: "Historic Archival Record: Dr. Babasaheb Ambedkar delivering historic address at Yeola, Nashik (13 October 1935)",
+      category: "Historical"
     }
   },
   testimonials: {
@@ -1196,28 +1201,139 @@ function renderEvents(eventsArray) {
   }).join('');
 }
 
-// Load Gallery
+// ==========================================================================
+// OFFICIAL PHOTO ARCHIVES ENGINE (gallery.html)
+// ==========================================================================
+let allMasterGalleryItems = [];
 let currentGalleryItems = [];
+let currentGalleryCategory = 'all';
+let currentGallerySearch = '';
 let currentLightboxIndex = 0;
+
 function loadGallery() {
   const container = document.getElementById("galleryContainer");
   if (!container) return;
 
-  const renderCurrent = (galleryList) => {
+  const updateFromRaw = (galleryList) => {
     const rawList = galleryList || getLiveDataset("gallery", ssdSampleData.gallery);
-    renderGallery(rawList.filter(isContentApproved));
+    const listArray = Array.isArray(rawList) ? rawList : Object.values(rawList);
+    allMasterGalleryItems = listArray.filter(isContentApproved);
+    updateGalleryPillCounts();
+    applyGalleryFilters();
   };
 
-  renderCurrent();
+  updateFromRaw();
 
   fetch('/api/gallery')
     .then(r => r.json())
     .then(data => {
       if (data && data.success && Array.isArray(data.gallery)) {
-        renderCurrent(data.gallery);
+        updateFromRaw(data.gallery);
       }
     })
     .catch(() => {});
+}
+
+function updateGalleryPillCounts() {
+  const total = allMasterGalleryItems.length;
+  const historical = allMasterGalleryItems.filter(item => isHistoricalArchive(item)).length;
+  const cadet = allMasterGalleryItems.filter(item => isCadetArchive(item)).length;
+  const ambedkar = allMasterGalleryItems.filter(item => isAmbedkarArchive(item)).length;
+
+  const countAll = document.getElementById("countAll");
+  const countHist = document.getElementById("countHistorical");
+  const countCad = document.getElementById("countCadet");
+  const countAmb = document.getElementById("countAmbedkar");
+
+  if (countAll) countAll.textContent = total;
+  if (countHist) countHist.textContent = historical;
+  if (countCad) countCad.textContent = cadet;
+  if (countAmb) countAmb.textContent = ambedkar;
+}
+
+function isHistoricalArchive(item) {
+  if (!item) return false;
+  const cat = (item.category || '').toLowerCase();
+  const cap = (item.caption || '').toLowerCase();
+  return cat.includes('historic') || cap.includes('historic') || cap.includes('1927') || cap.includes('1935') || cap.includes('1956') || cap.includes('genesis');
+}
+
+function isCadetArchive(item) {
+  if (!item) return false;
+  const cat = (item.category || '').toLowerCase();
+  const cap = (item.caption || '').toLowerCase();
+  return cat.includes('cadet') || cat.includes('drill') || cap.includes('cadet') || cap.includes('drill') || cap.includes('march') || cap.includes('deekshabhoomi');
+}
+
+function isAmbedkarArchive(item) {
+  if (!item) return false;
+  const cat = (item.category || '').toLowerCase();
+  const cap = (item.caption || '').toLowerCase();
+  return cat.includes('ambedkar') || cap.includes('ambedkar') || cap.includes('babasaheb') || cap.includes('founder');
+}
+
+function filterGalleryByCategory(category) {
+  currentGalleryCategory = category;
+  document.querySelectorAll("#galleryFilterPills .gallery-pill").forEach(pill => {
+    pill.classList.toggle("active", pill.getAttribute("data-filter") === category);
+  });
+  applyGalleryFilters();
+}
+
+function handleGallerySearch(query) {
+  currentGallerySearch = (query || '').trim().toLowerCase();
+  const clearBtn = document.getElementById("clearGallerySearchBtn");
+  if (clearBtn) {
+    clearBtn.style.display = currentGallerySearch ? 'block' : 'none';
+  }
+  applyGalleryFilters();
+}
+
+function clearGallerySearch() {
+  const input = document.getElementById("gallerySearchInput");
+  if (input) input.value = '';
+  currentGallerySearch = '';
+  const clearBtn = document.getElementById("clearGallerySearchBtn");
+  if (clearBtn) clearBtn.style.display = 'none';
+  applyGalleryFilters();
+}
+
+function resetGalleryFilters() {
+  currentGalleryCategory = 'all';
+  clearGallerySearch();
+  document.querySelectorAll("#galleryFilterPills .gallery-pill").forEach(pill => {
+    pill.classList.toggle("active", pill.getAttribute("data-filter") === 'all');
+  });
+  applyGalleryFilters();
+}
+
+function applyGalleryFilters() {
+  let filtered = allMasterGalleryItems;
+
+  if (currentGalleryCategory !== 'all') {
+    filtered = filtered.filter(item => {
+      if (currentGalleryCategory === 'historical') return isHistoricalArchive(item);
+      if (currentGalleryCategory === 'cadet') return isCadetArchive(item);
+      if (currentGalleryCategory === 'ambedkar') return isAmbedkarArchive(item);
+      return true;
+    });
+  }
+
+  if (currentGallerySearch) {
+    filtered = filtered.filter(item => {
+      const cap = (item.caption || '').toLowerCase();
+      const cat = (item.category || '').toLowerCase();
+      return cap.includes(currentGallerySearch) || cat.includes(currentGallerySearch);
+    });
+  }
+
+  // Update status counter
+  const counterText = document.getElementById("galleryCounterText");
+  if (counterText) {
+    counterText.textContent = `Showing ${filtered.length} of ${allMasterGalleryItems.length} archival records`;
+  }
+
+  renderGallery(filtered);
 }
 
 function renderGallery(galleryArray) {
@@ -1225,15 +1341,63 @@ function renderGallery(galleryArray) {
   if (!container) return;
 
   currentGalleryItems = galleryArray;
-  container.innerHTML = galleryArray.map((item, idx) => `
-    <div class="gallery-item" onclick="openLightbox(${idx})">
-      <img src="${item.imageUrl}" alt="${item.caption || 'SSD Drill Action'}" class="gallery-img" onerror="this.onerror=null; this.src='logo.png';">
-      <div class="gallery-overlay">
-        <div class="gallery-zoom-icon"><i class="fa-solid fa-magnifying-glass-plus"></i></div>
-        <p class="gallery-caption">${item.caption || 'Samata Sainik Dal Archive'}</p>
+
+  if (!galleryArray || galleryArray.length === 0) {
+    container.innerHTML = `
+      <div class="gallery-empty-state">
+        <div class="empty-icon"><i class="fa-solid fa-photo-film"></i></div>
+        <h3>No Archival Photographs Found</h3>
+        <p>No records matched your search query or selected category. Try selecting another filter or resetting your search.</p>
+        <button type="button" class="btn btn-outline btn-sm" onclick="resetGalleryFilters()">
+          <i class="fa-solid fa-rotate-left"></i> Reset All Filters
+        </button>
       </div>
-    </div>
-  `).join('');
+    `;
+    return;
+  }
+
+  container.innerHTML = galleryArray.map((item, idx) => {
+    let categoryIcon = "fa-solid fa-images";
+    let categoryLabel = item.category || "Archival Record";
+    if (isHistoricalArchive(item)) {
+      categoryIcon = "fa-solid fa-scroll";
+    } else if (isCadetArchive(item)) {
+      categoryIcon = "fa-solid fa-person-military-pointing";
+    }
+
+    const captionSafe = escapeHtml(item.caption || 'Samata Sainik Dal Archival Record');
+    const imageSafe = item.imageUrl || 'logo.png';
+    const recordId = `SSD-ARC-0${idx + 1}`;
+
+    return `
+      <div class="gallery-card" onclick="openLightbox(${idx})" tabindex="0" role="button" aria-label="${captionSafe}" onkeydown="if(event.key==='Enter'||event.key===' ')openLightbox(${idx})">
+        <div class="gallery-card-media">
+          <img src="${imageSafe}" alt="${captionSafe}" loading="lazy" onerror="this.onerror=null; this.src='logo.png';">
+          <div class="gallery-media-badges">
+            <span class="gallery-badge category-badge"><i class="${categoryIcon}"></i> ${escapeHtml(categoryLabel)}</span>
+            <span class="gallery-badge verified-badge"><i class="fa-solid fa-circle-check"></i> Verified</span>
+          </div>
+          <div class="gallery-card-overlay">
+            <div class="gallery-inspect-cta">
+              <i class="fa-solid fa-magnifying-glass-plus"></i>
+              <span>Inspect High-Res</span>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-card-body">
+          <div class="gallery-card-meta">
+            <span class="gallery-meta-tag"><i class="fa-solid fa-shield-halved"></i> SSD Central Archive</span>
+            <span class="gallery-meta-id">${recordId}</span>
+          </div>
+          <h3 class="gallery-card-title">${captionSafe}</h3>
+          <div class="gallery-card-footer">
+            <span class="gallery-action-link"><i class="fa-solid fa-expand"></i> Fullscreen View</span>
+            <span class="gallery-resolution-pill"><i class="fa-solid fa-file-image"></i> HD Photo</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 // Lightbox
@@ -1243,9 +1407,11 @@ function openLightbox(index) {
   const modal = document.getElementById("lightboxModal");
   const img = document.getElementById("lightboxMainImg");
   const cap = document.getElementById("lightboxCaption");
+  const counter = document.getElementById("lightboxCounter");
 
   if (img) img.src = currentGalleryItems[index].imageUrl;
-  if (cap) cap.textContent = currentGalleryItems[index].caption || "Samata Sainik Dal Archive";
+  if (cap) cap.textContent = currentGalleryItems[index].caption || "Samata Sainik Dal Archival Record";
+  if (counter) counter.textContent = `Archival Record ${index + 1} of ${currentGalleryItems.length}`;
 
   if (modal) {
     modal.classList.add("active");

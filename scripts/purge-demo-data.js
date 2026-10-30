@@ -166,3 +166,4 @@ for (const filePath of dbFiles) {
   fs.writeFileSync(filePath, JSON.stringify(ds, null, 2), 'utf8');
   console.log(`Successfully purged demo data and stock photos in ${filePath}`);
 }
+

@@ -143,6 +143,13 @@ export const defaultSeedData = {
       caption: "Bodhisattva Dr. B.R. Ambedkar - Founder, Samata Sainik Dal (Est. 24 September 1927)",
       category: "Historical",
       approvalStatus: "approved"
+    },
+    "gal_4": {
+      id: "gal_4",
+      imageUrl: "dr-ambedkar-yeola-1935.jpg",
+      caption: "Historic Archival Record: Dr. Babasaheb Ambedkar delivering historic address at Yeola, Nashik (13 October 1935)",
+      category: "Historical",
+      approvalStatus: "approved"
     }
   },
   leadership: {
