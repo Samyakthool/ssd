@@ -325,27 +325,9 @@ const ssdInitialSeed = {
   gallery: {
     "gal_1": {
       id: "gal_1",
-      imageUrl: "dr-ambedkar-with-ssd-cadets.jpg",
-      caption: "Historic Archival Record: Dr. Babasaheb Ambedkar with Uniformed Samata Sainik Dal Cadets",
-      category: "Historical"
-    },
-    "gal_2": {
-      id: "gal_2",
       imageUrl: "ssd-cadets-march.jpg",
       caption: "Samata Sainik Dal Uniform Cadet Corps Ceremonial March Past - Deekshabhoomi",
       category: "Cadet Drills"
-    },
-    "gal_3": {
-      id: "gal_3",
-      imageUrl: "dr-ambedkar-founder.jpg",
-      caption: "Bodhisattva Dr. B.R. Ambedkar - Founder, Samata Sainik Dal (Est. 24 September 1927)",
-      category: "Historical"
-    },
-    "gal_4": {
-      id: "gal_4",
-      imageUrl: "dr-ambedkar-yeola-1935.jpg",
-      caption: "Historic Archival Record: Dr. Babasaheb Ambedkar delivering historic address at Yeola, Nashik (13 October 1935)",
-      category: "Historical"
     }
   },
   members: {},
@@ -7155,12 +7137,27 @@ function deleteCampaign(id) {
 // ==========================================================================
 // RENDERERS: GALLERY (/gallery)
 // ==========================================================================
+function isBlackAndWhiteArchivePhoto(item) {
+  if (!item) return false;
+  const url = (item.imageUrl || item.image_url || '').toLowerCase();
+  const cap = (item.caption || '').toLowerCase();
+  return url.includes('dr-ambedkar-with-ssd-cadets') ||
+         url.includes('dr-ambedkar-founder') ||
+         url.includes('yeola') ||
+         url.includes('renouncing_hinduism') ||
+         url.includes('ambedkar_delivering_speech') ||
+         cap.includes('renouncing hinduism') ||
+         cap.includes('address at yeola');
+}
+
 function renderGalleryGrid() {
   const container = document.getElementById("galleryAdminGrid");
   if (!container) return;
 
   const galObj = adminData.gallery || {};
-  const list = Object.entries(galObj).map(([key, val]) => ({ id: key, ...val }));
+  const list = Object.entries(galObj)
+    .map(([key, val]) => ({ id: key, ...val }))
+    .filter(item => !isBlackAndWhiteArchivePhoto(item));
 
   if (list.length === 0) {
     container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px;">No archive photos added yet.</div>';

@@ -167,27 +167,27 @@
         <div class="gallery-toolbar">
           <div class="gallery-filter-pills" id="galleryFilterPills" role="tablist" aria-label="Archive Categories">
             <button type="button" class="gallery-pill active" data-filter="all" onclick="filterGalleryByCategory('all')">
-              <i class="fa-solid fa-border-all"></i> All Archives <span class="pill-count" id="countAll">4</span>
-            </button>
-            <button type="button" class="gallery-pill" data-filter="historical" onclick="filterGalleryByCategory('historical')">
-              <i class="fa-solid fa-scroll"></i> Historical Records <span class="pill-count" id="countHistorical">3</span>
+              <i class="fa-solid fa-border-all"></i> All Photos <span class="pill-count" id="countAll">0</span>
             </button>
             <button type="button" class="gallery-pill" data-filter="cadet" onclick="filterGalleryByCategory('cadet')">
-              <i class="fa-solid fa-person-military-pointing"></i> Cadet Drills & Parades <span class="pill-count" id="countCadet">1</span>
+              <i class="fa-solid fa-person-military-pointing"></i> Cadet Drills & March Past <span class="pill-count" id="countCadet">0</span>
             </button>
-            <button type="button" class="gallery-pill" data-filter="ambedkar" onclick="filterGalleryByCategory('ambedkar')">
-              <i class="fa-solid fa-feather-pointed"></i> Dr. B.R. Ambedkar <span class="pill-count" id="countAmbedkar">3</span>
+            <button type="button" class="gallery-pill" data-filter="mahila" onclick="filterGalleryByCategory('mahila')">
+              <i class="fa-solid fa-venus"></i> Mahila Dal <span class="pill-count" id="countMahila">0</span>
+            </button>
+            <button type="button" class="gallery-pill" data-filter="events" onclick="filterGalleryByCategory('events')">
+              <i class="fa-solid fa-calendar-check"></i> Events & Rallies <span class="pill-count" id="countEvents">0</span>
             </button>
           </div>
 
           <div class="gallery-search-row">
             <div class="gallery-search-wrapper">
               <i class="fa-solid fa-magnifying-glass search-icon"></i>
-              <input type="text" id="gallerySearchInput" class="gallery-search-input" placeholder="Search archives by keyword, place, or era (e.g. Deekshabhoomi, Cadets, Yeola)..." oninput="handleGallerySearch(this.value)" autocomplete="off" aria-label="Search photo archives">
+              <input type="text" id="gallerySearchInput" class="gallery-search-input" placeholder="Search uploaded photos by caption, location, or tag..." oninput="handleGallerySearch(this.value)" autocomplete="off" aria-label="Search photo archives">
               <button type="button" id="clearGallerySearchBtn" class="clear-search-btn" onclick="clearGallerySearch()" style="display: none;" aria-label="Clear search"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="gallery-counter-tag" id="galleryStatusCounter">
-              <i class="fa-solid fa-photo-film"></i> <span id="galleryCounterText">Showing 4 archival records</span>
+              <i class="fa-solid fa-photo-film"></i> <span id="galleryCounterText">Showing photos</span>
             </div>
           </div>
         </div>

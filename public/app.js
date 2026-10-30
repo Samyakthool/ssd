@@ -297,24 +297,9 @@ const ssdSampleData = {
   },
   gallery: {
     "gal_1": {
-      imageUrl: "dr-ambedkar-with-ssd-cadets.jpg",
-      caption: "Historic Archival Record: Dr. Babasaheb Ambedkar with Uniformed Samata Sainik Dal Cadets",
-      category: "Historical"
-    },
-    "gal_2": {
       imageUrl: "ssd-cadets-march.jpg",
       caption: "Samata Sainik Dal Uniform Cadet Corps Ceremonial March Past - Deekshabhoomi",
       category: "Cadet Drills"
-    },
-    "gal_3": {
-      imageUrl: "dr-ambedkar-founder.jpg",
-      caption: "Bodhisattva Dr. B.R. Ambedkar - Founder, Samata Sainik Dal (Est. 24 September 1927)",
-      category: "Historical"
-    },
-    "gal_4": {
-      imageUrl: "dr-ambedkar-yeola-1935.jpg",
-      caption: "Historic Archival Record: Dr. Babasaheb Ambedkar delivering historic address at Yeola, Nashik (13 October 1935)",
-      category: "Historical"
     }
   },
   testimonials: {
@@ -1204,6 +1189,51 @@ function renderEvents(eventsArray) {
 // ==========================================================================
 // OFFICIAL PHOTO ARCHIVES ENGINE (gallery.html)
 // ==========================================================================
+function isBlackAndWhiteArchivePhoto(item) {
+  if (!item) return false;
+  const url = (item.imageUrl || item.image_url || '').toLowerCase();
+  const cap = (item.caption || '').toLowerCase();
+  return url.includes('dr-ambedkar-with-ssd-cadets') ||
+         url.includes('dr-ambedkar-founder') ||
+         url.includes('yeola') ||
+         url.includes('renouncing_hinduism') ||
+         url.includes('ambedkar_delivering_speech') ||
+         cap.includes('renouncing hinduism') ||
+         cap.includes('address at yeola');
+}
+
+// Auto-purge any stale black and white photos from browser localStorage
+(function purgeBlackAndWhitePhotosFromLocalStorage() {
+  try {
+    const raw = localStorage.getItem("ssd_admin_local_data");
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.gallery) return;
+
+    let modified = false;
+    if (Array.isArray(parsed.gallery)) {
+      const filtered = parsed.gallery.filter(item => {
+        const target = item[1] || item;
+        return !isBlackAndWhiteArchivePhoto(target);
+      });
+      if (filtered.length !== parsed.gallery.length) {
+        parsed.gallery = filtered;
+        modified = true;
+      }
+    } else if (typeof parsed.gallery === 'object') {
+      for (const [k, v] of Object.entries(parsed.gallery)) {
+        if (isBlackAndWhiteArchivePhoto(v)) {
+          delete parsed.gallery[k];
+          modified = true;
+        }
+      }
+    }
+    if (modified) {
+      localStorage.setItem("ssd_admin_local_data", JSON.stringify(parsed));
+    }
+  } catch (e) {}
+})();
+
 let allMasterGalleryItems = [];
 let currentGalleryItems = [];
 let currentGalleryCategory = 'all';
@@ -1217,17 +1247,35 @@ function loadGallery() {
   const updateFromRaw = (galleryList) => {
     const rawList = galleryList || getLiveDataset("gallery", ssdSampleData.gallery);
     const listArray = Array.isArray(rawList) ? rawList : Object.values(rawList);
-    allMasterGalleryItems = listArray.filter(isContentApproved);
+    allMasterGalleryItems = listArray
+      .filter(isContentApproved)
+      .filter(item => !isBlackAndWhiteArchivePhoto(item));
     updateGalleryPillCounts();
     applyGalleryFilters();
   };
 
   updateFromRaw();
 
+  // Listen to Firebase Realtime Database
+  if (typeof db !== 'undefined' && db) {
+    try {
+      db.ref('gallery').on('value', (snap) => {
+        const val = snap.val();
+        if (val) {
+          const items = Object.entries(val).map(([k, v]) => ({ id: k, ...v }));
+          if (items.length > 0) {
+            updateFromRaw(items);
+          }
+        }
+      });
+    } catch (e) {}
+  }
+
+  // Fetch /api/gallery
   fetch('/api/gallery')
     .then(r => r.json())
     .then(data => {
-      if (data && data.success && Array.isArray(data.gallery)) {
+      if (data && data.success && Array.isArray(data.gallery) && data.gallery.length > 0) {
         updateFromRaw(data.gallery);
       }
     })
@@ -1236,40 +1284,40 @@ function loadGallery() {
 
 function updateGalleryPillCounts() {
   const total = allMasterGalleryItems.length;
-  const historical = allMasterGalleryItems.filter(item => isHistoricalArchive(item)).length;
   const cadet = allMasterGalleryItems.filter(item => isCadetArchive(item)).length;
-  const ambedkar = allMasterGalleryItems.filter(item => isAmbedkarArchive(item)).length;
+  const mahila = allMasterGalleryItems.filter(item => isMahilaArchive(item)).length;
+  const events = allMasterGalleryItems.filter(item => isEventsArchive(item)).length;
 
   const countAll = document.getElementById("countAll");
-  const countHist = document.getElementById("countHistorical");
   const countCad = document.getElementById("countCadet");
-  const countAmb = document.getElementById("countAmbedkar");
+  const countMah = document.getElementById("countMahila");
+  const countEvt = document.getElementById("countEvents");
 
   if (countAll) countAll.textContent = total;
-  if (countHist) countHist.textContent = historical;
   if (countCad) countCad.textContent = cadet;
-  if (countAmb) countAmb.textContent = ambedkar;
-}
-
-function isHistoricalArchive(item) {
-  if (!item) return false;
-  const cat = (item.category || '').toLowerCase();
-  const cap = (item.caption || '').toLowerCase();
-  return cat.includes('historic') || cap.includes('historic') || cap.includes('1927') || cap.includes('1935') || cap.includes('1956') || cap.includes('genesis');
+  if (countMah) countMah.textContent = mahila;
+  if (countEvt) countEvt.textContent = events;
 }
 
 function isCadetArchive(item) {
   if (!item) return false;
   const cat = (item.category || '').toLowerCase();
   const cap = (item.caption || '').toLowerCase();
-  return cat.includes('cadet') || cat.includes('drill') || cap.includes('cadet') || cap.includes('drill') || cap.includes('march') || cap.includes('deekshabhoomi');
+  return cat.includes('cadet') || cat.includes('drill') || cap.includes('cadet') || cap.includes('drill') || cap.includes('march') || cap.includes('sainik');
 }
 
-function isAmbedkarArchive(item) {
+function isMahilaArchive(item) {
   if (!item) return false;
   const cat = (item.category || '').toLowerCase();
   const cap = (item.caption || '').toLowerCase();
-  return cat.includes('ambedkar') || cap.includes('ambedkar') || cap.includes('babasaheb') || cap.includes('founder');
+  return cat.includes('mahila') || cat.includes('women') || cap.includes('mahila') || cap.includes('women');
+}
+
+function isEventsArchive(item) {
+  if (!item) return false;
+  const cat = (item.category || '').toLowerCase();
+  const cap = (item.caption || '').toLowerCase();
+  return cat.includes('event') || cat.includes('rally') || cat.includes('convention') || cap.includes('rally') || cap.includes('event') || cap.includes('deekshabhoomi');
 }
 
 function filterGalleryByCategory(category) {
@@ -1312,9 +1360,9 @@ function applyGalleryFilters() {
 
   if (currentGalleryCategory !== 'all') {
     filtered = filtered.filter(item => {
-      if (currentGalleryCategory === 'historical') return isHistoricalArchive(item);
       if (currentGalleryCategory === 'cadet') return isCadetArchive(item);
-      if (currentGalleryCategory === 'ambedkar') return isAmbedkarArchive(item);
+      if (currentGalleryCategory === 'mahila') return isMahilaArchive(item);
+      if (currentGalleryCategory === 'events') return isEventsArchive(item);
       return true;
     });
   }
@@ -1330,7 +1378,7 @@ function applyGalleryFilters() {
   // Update status counter
   const counterText = document.getElementById("galleryCounterText");
   if (counterText) {
-    counterText.textContent = `Showing ${filtered.length} of ${allMasterGalleryItems.length} archival records`;
+    counterText.textContent = `Showing ${filtered.length} of ${allMasterGalleryItems.length} photos`;
   }
 
   renderGallery(filtered);
@@ -1346,10 +1394,10 @@ function renderGallery(galleryArray) {
     container.innerHTML = `
       <div class="gallery-empty-state">
         <div class="empty-icon"><i class="fa-solid fa-photo-film"></i></div>
-        <h3>No Archival Photographs Found</h3>
-        <p>No records matched your search query or selected category. Try selecting another filter or resetting your search.</p>
+        <h3>No Photographs Available</h3>
+        <p>No photographs found matching your filter. Photographs uploaded from the Command Admin Portal will appear here automatically.</p>
         <button type="button" class="btn btn-outline btn-sm" onclick="resetGalleryFilters()">
-          <i class="fa-solid fa-rotate-left"></i> Reset All Filters
+          <i class="fa-solid fa-rotate-left"></i> View All Photos
         </button>
       </div>
     `;
@@ -1358,16 +1406,18 @@ function renderGallery(galleryArray) {
 
   container.innerHTML = galleryArray.map((item, idx) => {
     let categoryIcon = "fa-solid fa-images";
-    let categoryLabel = item.category || "Archival Record";
-    if (isHistoricalArchive(item)) {
-      categoryIcon = "fa-solid fa-scroll";
-    } else if (isCadetArchive(item)) {
+    let categoryLabel = item.category || "Field Photo";
+    if (isCadetArchive(item)) {
       categoryIcon = "fa-solid fa-person-military-pointing";
+    } else if (isMahilaArchive(item)) {
+      categoryIcon = "fa-solid fa-venus";
+    } else if (isEventsArchive(item)) {
+      categoryIcon = "fa-solid fa-calendar-check";
     }
 
-    const captionSafe = escapeHtml(item.caption || 'Samata Sainik Dal Archival Record');
+    const captionSafe = escapeHtml(item.caption || 'Samata Sainik Dal Field Photograph');
     const imageSafe = item.imageUrl || 'logo.png';
-    const recordId = `SSD-ARC-0${idx + 1}`;
+    const recordId = `SSD-IMG-0${idx + 1}`;
 
     return `
       <div class="gallery-card" onclick="openLightbox(${idx})" tabindex="0" role="button" aria-label="${captionSafe}" onkeydown="if(event.key==='Enter'||event.key===' ')openLightbox(${idx})">
@@ -1386,7 +1436,7 @@ function renderGallery(galleryArray) {
         </div>
         <div class="gallery-card-body">
           <div class="gallery-card-meta">
-            <span class="gallery-meta-tag"><i class="fa-solid fa-shield-halved"></i> SSD Central Archive</span>
+            <span class="gallery-meta-tag"><i class="fa-solid fa-shield-halved"></i> SSD Official Media</span>
             <span class="gallery-meta-id">${recordId}</span>
           </div>
           <h3 class="gallery-card-title">${captionSafe}</h3>
@@ -3818,14 +3868,14 @@ function loadHomeGallery() {
     db.ref('gallery').on('value', (snapshot) => {
       const data = snapshot.val();
       const rawList = data ? Object.values(data) : Object.values(ssdSampleData.gallery);
-      allHomeGalleryItems = rawList.filter(isContentApproved);
+      allHomeGalleryItems = rawList.filter(isContentApproved).filter(item => !isBlackAndWhiteArchivePhoto(item));
       renderHomeGallery();
     }, (err) => {
-      allHomeGalleryItems = Object.values(ssdSampleData.gallery).filter(isContentApproved);
+      allHomeGalleryItems = Object.values(ssdSampleData.gallery).filter(isContentApproved).filter(item => !isBlackAndWhiteArchivePhoto(item));
       renderHomeGallery();
     });
   } else {
-    allHomeGalleryItems = Object.values(ssdSampleData.gallery).filter(isContentApproved);
+    allHomeGalleryItems = Object.values(ssdSampleData.gallery).filter(isContentApproved).filter(item => !isBlackAndWhiteArchivePhoto(item));
     renderHomeGallery();
   }
 }

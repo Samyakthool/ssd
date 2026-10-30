@@ -125,30 +125,9 @@ export const defaultSeedData = {
   gallery: {
     "gal_1": {
       id: "gal_1",
-      imageUrl: "dr-ambedkar-with-ssd-cadets.jpg",
-      caption: "Historic Archival Record: Dr. Babasaheb Ambedkar with Uniformed Samata Sainik Dal Cadets",
-      category: "Historical",
-      approvalStatus: "approved"
-    },
-    "gal_2": {
-      id: "gal_2",
       imageUrl: "ssd-cadets-march.jpg",
       caption: "Samata Sainik Dal Uniform Cadet Corps Ceremonial March Past - Deekshabhoomi",
       category: "Cadet Drills",
-      approvalStatus: "approved"
-    },
-    "gal_3": {
-      id: "gal_3",
-      imageUrl: "dr-ambedkar-founder.jpg",
-      caption: "Bodhisattva Dr. B.R. Ambedkar - Founder, Samata Sainik Dal (Est. 24 September 1927)",
-      category: "Historical",
-      approvalStatus: "approved"
-    },
-    "gal_4": {
-      id: "gal_4",
-      imageUrl: "dr-ambedkar-yeola-1935.jpg",
-      caption: "Historic Archival Record: Dr. Babasaheb Ambedkar delivering historic address at Yeola, Nashik (13 October 1935)",
-      category: "Historical",
       approvalStatus: "approved"
     }
   },

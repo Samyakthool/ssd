@@ -11,7 +11,17 @@ const router = express.Router();
 // 1. GET ALL GALLERY ITEMS (Public & Admin)
 router.get('/', (req, res) => {
   try {
-    const list = Array.from(embeddedStore.gallery.values());
+    const list = Array.from(embeddedStore.gallery.values()).filter(item => {
+      const url = (item.imageUrl || '').toLowerCase();
+      const cap = (item.caption || '').toLowerCase();
+      return !url.includes('dr-ambedkar-with-ssd-cadets') &&
+             !url.includes('dr-ambedkar-founder') &&
+             !url.includes('yeola') &&
+             !url.includes('renouncing_hinduism') &&
+             !url.includes('ambedkar_delivering_speech') &&
+             !cap.includes('renouncing hinduism') &&
+             !cap.includes('address at yeola');
+    });
     return res.json({
       success: true,
       count: list.length,
