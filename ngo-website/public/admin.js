@@ -3117,6 +3117,26 @@ function repairAndSanitizeAdminData() {
     });
   }
 
+  ['news', 'campaigns'].forEach(key => {
+    if (adminData[key] && typeof adminData[key] === 'object') {
+      Object.values(adminData[key]).forEach(item => {
+        if (item && item.imageUrl && item.imageUrl.includes('unsplash.com')) {
+          item.imageUrl = 'ssd-cadets-march.jpg';
+          modified = true;
+        }
+      });
+    }
+  });
+
+  if (adminData.leadership && typeof adminData.leadership === 'object') {
+    Object.values(adminData.leadership).forEach(item => {
+      if (item && item.photoUrl && item.photoUrl.includes('unsplash.com')) {
+        item.photoUrl = 'logo.png';
+        modified = true;
+      }
+    });
+  }
+
   if (modified) {
     saveLocalStore();
   }

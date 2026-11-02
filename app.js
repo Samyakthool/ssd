@@ -1219,26 +1219,50 @@ function renderEvents(eventsArray) {
     const raw = localStorage.getItem("ssd_admin_local_data");
     if (!raw) return;
     const parsed = JSON.parse(raw);
-    if (!parsed || !parsed.gallery) return;
+    if (!parsed) return;
 
     let modified = false;
-    if (Array.isArray(parsed.gallery)) {
-      const filtered = parsed.gallery.filter(entry => {
-        const item = entry[1] || entry;
-        return !isDisallowedGalleryPhoto(item);
-      });
-      if (filtered.length !== parsed.gallery.length) {
-        parsed.gallery = filtered;
-        modified = true;
-      }
-    } else if (typeof parsed.gallery === 'object') {
-      for (const [k, v] of Object.entries(parsed.gallery)) {
-        if (isDisallowedGalleryPhoto(v)) {
-          delete parsed.gallery[k];
+    if (parsed.gallery) {
+      if (Array.isArray(parsed.gallery)) {
+        const filtered = parsed.gallery.filter(entry => {
+          const item = entry[1] || entry;
+          return !isDisallowedGalleryPhoto(item);
+        });
+        if (filtered.length !== parsed.gallery.length) {
+          parsed.gallery = filtered;
           modified = true;
+        }
+      } else if (typeof parsed.gallery === 'object') {
+        for (const [k, v] of Object.entries(parsed.gallery)) {
+          if (isDisallowedGalleryPhoto(v)) {
+            delete parsed.gallery[k];
+            modified = true;
+          }
         }
       }
     }
+
+    // Also strip any unsplash from news, campaigns, leadership
+    ['news', 'campaigns'].forEach(key => {
+      if (parsed[key] && typeof parsed[key] === 'object') {
+        Object.values(parsed[key]).forEach(item => {
+          if (item && item.imageUrl && item.imageUrl.includes('unsplash.com')) {
+            item.imageUrl = 'ssd-cadets-march.jpg';
+            modified = true;
+          }
+        });
+      }
+    });
+
+    if (parsed.leadership && typeof parsed.leadership === 'object') {
+      Object.values(parsed.leadership).forEach(item => {
+        if (item && item.photoUrl && item.photoUrl.includes('unsplash.com')) {
+          item.photoUrl = 'logo.png';
+          modified = true;
+        }
+      });
+    }
+
     if (modified) {
       localStorage.setItem("ssd_admin_local_data", JSON.stringify(parsed));
     }
